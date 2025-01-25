@@ -1,5 +1,5 @@
 # Interscore
-An overlay for OBS that displays scores and other info about streamed sports games.
+An overlay for OBS Studio that displays scores and other info about streamed sports games.
 
 
 ## TODO

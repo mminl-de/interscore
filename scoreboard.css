@@ -1,6 +1,8 @@
+/* TODO FINAL COMMENT ALL */
+
 body {
     font-family: "Kanit";   /* great font for the entire scoreboard */
-    font-size: 32px;         /* font is adaptable to window height */
+    font-size: 32px;        /* font is adaptable to window height */
 
     margin: 32px;           /* space from the top and left edges */
 }
@@ -17,7 +19,7 @@ body {
     gap: 10px;
 }
 
-.timer {
+.time-container {
     background-color: lime;
     font-size: 3vh;
 
