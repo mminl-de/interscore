@@ -1,41 +1,53 @@
 body {
-    font-family: "Kanit";
-    font-size: 4vh;
+    font-family: "Kanit";   /* great font for the entire scoreboard */
+    font-size: 32px;         /* font is adaptable to window height */
 
-    margin: 32px;
+    margin: 32px;           /* space from the top and left edges */
 }
 
 .scoreboard {
-    display: grid;
-    justify-content: start;
-
-    gap: 2vh;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .scoreboard-top {
     display: flex;
-
-    gap: 1vw;
+    align-items: flex-end;
+    gap: 10px;
 }
 
-.scoreboard-top > * {
-    padding: 1vh 1vw 1vh 1vw;
+.timer {
+    background-color: lime;
+    font-size: 3vh;
+
+    text-align: center;
+}
+
+.team {
+    width: 250px;
+    padding: 0 16px;
 }
 
 .team-left {
-    background: linear-gradient(0deg, orange 0%, cyan 100%);
+    background: linear-gradient(90deg, red 0%, white 100%);
+    border-top-left-radius: 64px;
+
+    text-align: right;
 }
 
 .team-right {
-    background: linear-gradient(0deg, white 0%, red 100%);
+    color: white;
+    background: linear-gradient(90deg, orange 0%, blue 100%);
+    border-top-right-radius: 64px;
 }
 
 .score {
-    background-color: lightgrey;
-}
+    color: white;
+    background-color: gray;
+    font-size: 4vh;
 
-.timebar {
-    background-color: lime;
+    padding: 10px 20px;
 }
 
 @font-face {
