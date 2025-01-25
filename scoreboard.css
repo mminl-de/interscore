@@ -1,23 +1,37 @@
 body {
     font-family: "Kanit";
+    font-size: 4vh;
+
+    margin: 32px;
 }
 
 .scoreboard {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    justify-content: start;
+
+    gap: 2vh;
 }
 
 .scoreboard-top {
     display: flex;
-    align-items: center;
+
+    gap: 1vw;
 }
 
-.team {
-    background-color: red;
+.scoreboard-top > * {
+    padding: 1vh 1vw 1vh 1vw;
+}
+
+.team-left {
+    background: linear-gradient(0deg, orange 0%, cyan 100%);
+}
+
+.team-right {
+    background: linear-gradient(0deg, white 0%, red 100%);
 }
 
 .score {
-    background-color: grey;
+    background-color: lightgrey;
 }
 
 .timebar {
