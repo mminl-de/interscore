@@ -1,2 +1,105 @@
 # radball-scoreboard
-A OBS stream overlay for keeping scores of Radball games
+An overlay for OBS that displays scores and other info about streamed sports games.
+
+
+## TODO
+- `README.md`:
+    - describe user API
+    - context about what (and why) this is
+- design decisions:
+    - bar layout
+    - font:
+        - Kanit
+        - Space Grotesk
+        - Lexend
+        - Funnel Sans
+- user API:
+    - data:
+        - team names and playing teams
+        - timer
+        - keeping results
+    - FINAL dealing red and yellow cards
+    - colors and other style elements
+- real time bar countdown
+- FINAL animations:
+    - ingame bar opening and closing
+    - players list spawning
+    - table spawning
+- How does the tiebreak work?
+- Logos in High Quality und mit OPAQUE Hintergrund
+- Farben für die Vereine raussuchen
+
+    
+## Included info on different scenes/moments in stream
+### FINAL Start of game/halftime
+- list of players in both teams (with roles)
+
+### Ingame
+- both team's names (and colors)
+- game timer
+- countdown bar
+- is second halftime?
+- FINAL team logos
+
+### Halftime pause
+- Score at halftime
+- first or second halftime?
+
+### Live table
+- Numbers list of 
+- All previous games calculated and printed with:
+    - team names
+    - numbers of games won
+    - number of games tied
+    - number of games lost
+    - points
+    - goals
+    - goals caseered
+    - tordiff 
+
+### Turnierverlauf
+- previous games' info in a table (see above)
+    - team names
+    - score at halftime
+    - final score
+    - FINAL Cards given to players 
+
+## Structure of data :moyai:
+```c
+struct Root {
+    struct current_game {
+        Game gamestate;
+        bool halftime;
+        int time_left;
+    }
+    struct all_games {
+        Game[] games;
+    }
+    String[] teams;
+}
+
+struct Game {
+    String team_1;
+    String team_2;
+    Score halftimescore;
+    Score score;
+    Card[] cards_handed; //FINAL
+}
+
+struct Score {
+    int team_1;
+    int team_2;
+}
+
+//FINAL
+struct Card {
+    Player player;
+    enum {YELLOW_CARD, RED_CARD};
+}
+
+//FINAL
+struct Team {
+    Player Torwart;
+    Player Außenspieler;
+}
+```
