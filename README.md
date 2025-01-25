@@ -1,4 +1,4 @@
-# radball-scoreboard
+# Interscore
 An overlay for OBS that displays scores and other info about streamed sports games.
 
 
