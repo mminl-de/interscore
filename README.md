@@ -4,7 +4,6 @@ An overlay for OBS that displays scores and other info about streamed sports gam
 
 ## TODO
 - `README.md`:
-    - describe user API
     - context about what (and why) this is
 - design decisions:
     - bar layout
@@ -63,6 +62,16 @@ An overlay for OBS that displays scores and other info about streamed sports gam
     - score at halftime
     - final score
     - FINAL Cards given to players 
+
+## User API description
+- user fills out a JSON with certain properties:
+    - team list:
+        - player list per team
+    - list of games
+    - time per game
+    - halftimes per game
+- program checks if every required field is filled (including array items)
+- server generates a hotkey table for quick goals assignment and transitions
 
 ## Structure of data :moyai:
 ```c
