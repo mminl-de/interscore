@@ -27,7 +27,7 @@
                 "name": "Pascal van Klev"
             }
         },
-        "Großkoschen 2": {
+        "Grosskoschen 2": {
             "logo": "logo/grosskoschen.jpg",
             "keeper": {
                 "name": "Franz Kieschnick"
@@ -91,12 +91,12 @@
             "team1": "Naurod 1",
             "team2": "Naurod 2",
             "halftimescore": {
-                "t1": "0",
-                "t2": "3"
+                "team1": "0",
+                "team2": "3"
             },
             "score": {
-                "t1": "4",
-                "t2": "4"
+                "team1": "4",
+                "team2": "4"
             },
             "cards": {
                 "card1": {
