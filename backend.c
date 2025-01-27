@@ -72,7 +72,7 @@ Possible User Actions:
 ## Error Handling
 - minus goal team 1 (DONE)
 - minus goal team 2 (DONE)
-- delete card 
+- delete card (DONE)
 ####### UI Stuff
 - Enable/Disable ==> Ingame Widget
 - Start ==> Start of the game/halftime animation
@@ -80,7 +80,7 @@ Possible User Actions:
 - enable/Disable ==> Live Table Widget
 - Enable/Disable ==> Tunierverlauf Widget
 ####### Debug Stuff
-- Exit
+- Exit (DONE)
 - Write State to JSON?
 - Reload JSON
 - Print State to Terminal?
