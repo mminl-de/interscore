@@ -1,7 +1,8 @@
-const socket = new WebSocket("ws://localhost:6969", "interscore")
+const socket = new WebSocket("ws://localhost:8080", "interscore")
 
-socket.onmessage = () => {
-	console.log("TODO just got a new event, yippie")
+socket.onmessage = (event) => {
+	console.log("TODO got a new event")
+	console.log(event)
 }
 
 socket.onopen = () => socket.send("TODO hi server")

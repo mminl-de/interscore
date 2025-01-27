@@ -11,6 +11,7 @@ static int callback_interscore(struct lws *wsi, enum lws_callback_reasons reason
 			lws_write(wsi, (unsigned char *)in, len, LWS_WRITE_TEXT);
 			break;
 		default:
+			printf("TODO: called callback but idk why\n");
 			break;
 	}
 	return 0;
@@ -300,6 +301,7 @@ void load_json(const char *path) {
 }
 
 // Set current_match to first match
+// TODO
 void init_matchday() {
 	if (md.games_count == 0) {
 		printf("There are no games, exiting\n");
@@ -364,23 +366,24 @@ int main(void) {
 	struct lws_context *ctx;
 
 	memset(&info, 0, sizeof(info));
-	info.port = 6969;
+	info.port = 8080;
 	info.protocols = protocols;
 
 	ctx = lws_create_context(&info);
 	if (!ctx) {
-		printf("EWebSocket init failed!\n");
+		printf("WebSocket init failed!\n");
 		return 1;
 	}
 
-	while (1) {
-	}
-
-	printf("Server running on port 6969 ...\n");
+	printf("WebSocket server started on ws://localhost:8080 ...\n");
 	bool close = false;
 	while (!close) {
+		// TODO WIP
+		lws_service(ctx, 0);
+
 		char c = getchar();
 		switch (c) {
+
 		// #### INGAME STUFF
 		case SET_TIME:
 			uint min, sec;
@@ -526,9 +529,6 @@ int main(void) {
 			printf("TODO: PRINT_HELP\n");
 			break;
 		}
-
-		// TODO WIP
-		lws_service(ctx, 100);
 	}
 
 	// TODO WIP
