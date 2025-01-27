@@ -5,6 +5,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 ## TODO
 - `README.md`:
     - context about what (and why) this is
+    - describe the backend
 - design decisions:
     - bar layout
     - font:
