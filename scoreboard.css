@@ -8,9 +8,9 @@ body {
 }
 
 .scoreboard {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 10px;
+    display: inline-flex;   /* children should not stretch to entire width */
+    flex-direction: column; /* children should be packed horizontally */
+    gap: 10px;              /* children should have 10 pixels between each other */
 }
 
 .scoreboard-top {

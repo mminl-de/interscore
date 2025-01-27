@@ -56,7 +56,7 @@ struct Matchday {
 	uint players_count;
 };
 
-/* 
+/*
 Possible User Actions:
 ####### Ingame Stuff
 - Set Time (DONE)
@@ -70,7 +70,7 @@ Possible User Actions:
 ## Error Handling
 - minus goal team 1 (DONE)
 - minus goal team 2 (DONE)
-- delete card 
+- delete card
 ####### UI Stuff
 - Enable/Disable ==> Ingame Widget
 - Start ==> Start of the game/halftime animation
@@ -141,11 +141,11 @@ void add_card(Matchday *md, bool card_type) {
 	uint ind = md->cur.gameindex;
 	if(md->games[ind].cards_count == 0)
 		md->games[ind].cards = malloc(1 * sizeof(Card));
-	else 
+	else
 		md->games[ind].cards = realloc(md->games[ind].cards, md->games[ind].cards_count+1 * sizeof(Card));
-	printf("Select Player: 1. %s (Torwart %s)\n2. %s (Feldspieler %s)\n3. %s (Torwart %s)\n4. %s (Feldspieler %s)\n", 
+	printf("Select Player: 1. %s (Torwart %s)\n2. %s (Feldspieler %s)\n3. %s (Torwart %s)\n4. %s (Feldspieler %s)\n",
 	        md->players[md->teams[md->games[ind].t1_index].keeper_index].name, md->teams[md->games[ind].t1_index].name,
-	        md->players[md->teams[md->games[ind].t1_index].field_index].name, md->teams[md->games[ind].t1_index].name, 
+	        md->players[md->teams[md->games[ind].t1_index].field_index].name, md->teams[md->games[ind].t1_index].name,
 	        md->players[md->teams[md->games[ind].t2_index].keeper_index].name, md->teams[md->games[ind].t2_index].name,
 	        md->players[md->teams[md->games[ind].t2_index].field_index].name, md->teams[md->games[ind].t2_index].name);
 	uint player;
@@ -246,7 +246,7 @@ int main(void) {
 				                          md.teams[md.players[md.games[ind].cards[i].player_index].team_index].name);
 				if(md.players[md.games[ind].cards[i].player_index].role == 0)
 					printf("(Keeper)\n");
-				else 
+				else
 					printf("(field)\n");
 			}
 			printf("Select a card to delete: ");
@@ -260,7 +260,7 @@ int main(void) {
 				                          md.teams[md.players[md.games[ind].cards[i].player_index].team_index].name);
 				if(md.players[md.games[ind].cards[i].player_index].role == 0)
 					printf("(Keeper)\n");
-				else 
+				else
 					printf("(field)\n");
 			}
 			break;
