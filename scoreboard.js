@@ -1,4 +1,4 @@
-const socket = new WebSocket("ws://localhost:6969", "callback_interscore")
+const socket = new WebSocket("ws://localhost:6969", "interscore")
 
 socket.onmessage = () => {
 	console.log("TODO just got a new event, yippie")
