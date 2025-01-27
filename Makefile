@@ -1,14 +1,15 @@
+OUT ?= interscore
 CC ?= cc
 
 install:
-	$(CC) -o backend backend.c \
-	-Wall -Wextra -Wpedantic \
-	-lwebsockets -ljson-c
-<<<<<<< HEAD
-=======
+	$(CC) -o $(OUT) backend.c \
+	-O3 -Wall -Wextra -Wpedantic \
+	-lwebsockets -lssl -ljson-c
 
 debug:
-	$(CC) -o backend backend.c \
+	$(CC) -o $(OUT) backend.c \
 	-Wall -Wextra -Wpedantic -g \
-	-lwebsockets -ljson-c
->>>>>>> 6a48314f6d18ebe9bd21e649549e20d52aaa0547
+	-lwebsockets -lssl -ljson-c
+
+run: debug
+	./interscore

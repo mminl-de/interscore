@@ -30,8 +30,9 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - Backend: Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
 - Feedback/Suggestions Site + Widget FINAL
 - Rauskriegen wer Feld und Außenspieler ist
+- FINAL abstract program to be applicable for other games:
+	- i.e. not harcoding player roles
 
-    
 ## Included info on different scenes/moments in stream
 ### FINAL Start of game/halftime
 - list of players in both teams (with roles)
@@ -48,7 +49,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - first or second halftime?
 
 ### Live table
-- Numbers list of 
+- Numbers list of
 - All previous games calculated and printed with:
     - team names
     - numbers of games won
@@ -57,14 +58,14 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
     - points
     - goals
     - goals caseered
-    - tordiff 
+    - tordiff
 
 ### Turnierverlauf
 - previous games' info in a table (see above)
     - team names
     - score at halftime
     - final score
-    - FINAL Cards given to players 
+    - FINAL Cards given to players
 
 ## User API description
 - user fills out a JSON with certain properties:
