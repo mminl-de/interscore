@@ -19,10 +19,18 @@ body {
     gap: 10px;
 }
 
-.time-container {
+.time-slider{
+    /* width: 100px; */
+    height: 8px;
     background-color: lime;
-    font-size: 3vh;
+}
 
+.time {
+    background-color: gray;
+    font-size: 3.5vh;
+
+    align-self: center;
+    width: 90px;
     text-align: center;
 }
 
@@ -32,16 +40,25 @@ body {
 }
 
 .team-left {
-    background: linear-gradient(90deg, red 0%, white 100%);
-    border-top-left-radius: 64px;
+    /*
+     * background: linear-gradient(90deg, red 0%, white 100%);
+     * border-top-left-radius: 64px;
+     */
+    background: rgb(255,70,0);
+    background: linear-gradient(94deg, rgba(255,70,0,1) 2%, rgba(250,3,1,1) 50%, rgba(145,0,0,1) 100%);
 
     text-align: right;
 }
 
 .team-right {
+    /*
     color: white;
     background: linear-gradient(90deg, orange 0%, blue 100%);
     border-top-right-radius: 64px;
+    */
+    background: rgb(200,255,0);
+    background: linear-gradient(94deg, rgba(255,199,0,1) 2%, rgba(240,230,0,1) 50%, rgba(200,255,0,1) 100%);
+    color: black;
 }
 
 .score {
