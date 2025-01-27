@@ -25,8 +25,10 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
     - players list spawning
     - table spawning
 - How does the tiebreak work?
-- Logos in High Quality und mit OPAQUE Hintergrund
 - Farben für die Vereine raussuchen
+- Backend: Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
+- Feedback/Suggestions Site + Widget FINAL
+- Rauskriegen wer Feld und Außenspieler ist
 
     
 ## Included info on different scenes/moments in stream
