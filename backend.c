@@ -88,6 +88,8 @@ Possible User Actions:
 - goal Team 2 (DONE)
 - Yellow Card to Player 1, 2, 3 or 4 (DONE)
 - Red Card to Player 1, 2, 3 or 4 (DONE)
+- Switch Team Sides (without halftime)
+- Half Time
 ## Error Handling
 - minus goal team 1 (DONE)
 - minus goal team 2 (DONE)
