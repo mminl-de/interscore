@@ -117,3 +117,9 @@ struct Team {
     Player Außenspieler;
 }
 ```
+
+## Design ideas
+- rectangles
+- light shadows
+- subtle gradients
+- black borders
