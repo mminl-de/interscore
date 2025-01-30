@@ -30,6 +30,7 @@ typedef struct {
 typedef struct {
 	u8 len; // amount of teams total
 	char *teams[TEAMS_NAME_MAX_LEN]; // sorted
+	u8 *points;
 	u8 *games_played;
 	u8 *games_won;
 	u8 *games_tied;
@@ -40,10 +41,10 @@ typedef struct {
 
 typedef struct {
 	u8 len; // amount of Games total
-	char *teams_left[TEAMS_NAME_MAX_LEN];
-	char *teams_right[TEAMS_NAME_MAX_LEN];
-	u8 *goals_left;
-	u8 *goals_right;
+	char *teams1[TEAMS_NAME_MAX_LEN];
+	char *teams2[TEAMS_NAME_MAX_LEN];
+	u8 *goals_t1;
+	u8 *goals_t2;
 } widget_spielplan;
 
 // #### In Game Structs
@@ -175,8 +176,12 @@ Possible User Actions:
 
 
 //TODO put all function definitions here
-int team_calc_points(int index);
-
+u16 team_calc_points(u8 index);
+u8 team_calc_games_played(u8 index);
+u8 team_calc_games_won(u8 index);
+u8 team_calc_games_tied(u8 index);
+u16 team_calc_goals(u8 index);
+u16 team_calc_goals_taken(u8 index);
 
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
@@ -239,15 +244,38 @@ widget_spielstart widget_spielstart_create() {
 
 widget_live_table widget_live_table_create() {
 	widget_live_table w;
+	w.len = md.teams_count;
 	for (u8 i = 0; i < md.teams_count; i++) {
-		u8 t_index = team_calc_points(i);
+		u8 best_index;
+		for(int j=0; j < md.teams_count; j++)
+			if(best_index < team_calc_points(i))
+				best_index = team_calc_points(i);
+
+		strcpy(w.teams[i], md.teams[best_index].name);
+		w.points[i] = team_calc_points(best_index);
+		w.games_played[i] = team_calc_games_played(best_index);
+		w.games_won[i] = team_calc_games_won(best_index);
+		w.games_tied[i] = team_calc_games_tied(best_index);
+		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
+		w.goals[i] = team_calc_goals(best_index);
 	}
 	return w;
 }
 
+widget_spielplan widget_spielplan_create() {
+	widget_spielplan w;
+	w.len = md.games_count;
+	for (u8 i = 0; i < md.games_count; i++){
+		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
+		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
+		w.goals_t1[i] = md.games[i].score.t1;
+		w.goals_t2[i] = md.games[i].score.t2;
+	}
+}
+
 // Calculate the points of all games played so far of the team with index index.
-int team_calc_points(int index) {
-	int p = 0;
+u16 team_calc_points(u8 index) {
+	u16 p = 0;
 	for (u8 i = 0; i < md.games_count; i++) {
 		if (md.games[i].t1_index == index) {
 			if (md.games[i].score.t1 > md.games[i].score.t2)
@@ -260,6 +288,58 @@ int team_calc_points(int index) {
 			else if (md.games[i].score.t2 == md.games[i].score.t1)
 				p++;
 		}
+	}
+	return p;
+}
+
+u8 team_calc_games_played(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++)
+		if (md.games[i].t1_index == index || md.games[i].t2_index == index)
+			p++;
+	return p;
+}
+
+u8 team_calc_games_won(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index && md.games[i].score.t1 > md.games[i].score.t2)
+			p++;
+		else if (md.games[i].t2_index == index && md.games[i].score.t2 > md.games[i].score.t1)
+			p++;
+	}
+	return p;
+}
+
+u8 team_calc_games_tied(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index && md.games[i].score.t1 == md.games[i].score.t2)
+			p++;
+		else if (md.games[i].t2_index == index && md.games[i].score.t2 == md.games[i].score.t1)
+			p++;
+	}
+	return p;
+}
+
+u16 team_calc_goals(u8 index){
+	u16 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index)
+			p += md.games[i].score.t1;
+		else if (md.games[i].t2_index == index)
+			p += md.games[i].score.t2;
+	}
+	return p;
+}
+
+u16 team_calc_goals_taken(u8 index){
+	u16 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index)
+			p += md.games[i].score.t2;
+		else if (md.games[i].t2_index == index)
+			p += md.games[i].score.t1;
 	}
 	return p;
 }
