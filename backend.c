@@ -8,25 +8,27 @@ typedef unsigned int uint;
 typedef char u8;
 
 // #### Javascript/ GUI Widgets Structs
+#define PLAYER_NAME_MAX_LEN 100
+#define TEAMS_NAME_MAX_LEN 100
 
 typedef struct {
-	char *team1;
-	char *team2;
-	u8 score_t1;
-	u8 score_t2;
+	char team1[TEAMS_NAME_MAX_LEN];
+	char team2[TEAMS_NAME_MAX_LEN];
+	int score_t1;
+	int score_t2;
 	bool is_halftime;
 } widget_ingame;
 
 typedef struct {
-	char *team1_keeper;
-	char *team1_field;
-	char *team2_keeper;
-	char *team2_field;
+	char team1_keeper[TEAMS_NAME_MAX_LEN];
+	char team1_field[TEAMS_NAME_MAX_LEN];
+	char team2_keeper[TEAMS_NAME_MAX_LEN];
+	char team2_field[TEAMS_NAME_MAX_LEN];
 } widget_spielstart;
 
 typedef struct {
-	u8 len; // amount of teams total
-	char **teams; // sorted
+	int len; //The amount of teams total
+	char *teams[TEAMS_NAME_MAX_LEN]; //sorted
 	int *games_played;
 	int *games_won;
 	int *games_tied;
@@ -36,9 +38,9 @@ typedef struct {
 } widget_live_table;
 
 typedef struct {
-	u8 len; // amount of games total
-	char **teams_left;
-	char **teams_right;
+	int len; //The amount of Games total
+	char *teams_left[TEAMS_NAME_MAX_LEN];
+	char *teams_right[TEAMS_NAME_MAX_LEN];
 	int *goals_left;
 	int *goals_right;
 } widget_spielplan;
@@ -171,6 +173,10 @@ Possible User Actions:
 #define WEBSOCKET_STATUS '7'
 
 
+//TODO put all function definitions here
+int team_calc_points(int index);
+
+
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
@@ -213,7 +219,48 @@ bool send_widget_spielplan(widget_ingame w){
 
 widget_ingame widget_ingame_create(){
 	widget_ingame w;
+	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	w.score_t1 = md.games[md.cur.gameindex].score.t1;
+	w.score_t2 = md.games[md.cur.gameindex].score.t2;
+	w.is_halftime = md.cur.halftime;
 	return w;
+}
+
+widget_spielstart widget_spielstart_create(){
+	widget_spielstart w;
+	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
+	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
+	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
+	strcpy(w.team2_field, md.players[md.teams[md.games[md.cur.gameindex].t2_index].field_index].name);
+	return w;
+}
+
+widget_live_table widget_live_table_create(){
+	widget_live_table w;
+	for(int i=0; i < md.teams_count; i++){
+		int t_index = team_calc_points(i);
+	}
+	return w;
+}
+
+//Calculate the points of all games played so far of the team with index index
+int team_calc_points(int index){
+	int p = 0;
+	for(int i = 0; i < md.games_count; i++){
+		if(md.games[i].t1_index == index){
+			if(md.games[i].score.t1 > md.games[i].score.t2)
+				p += 3;
+			else if (md.games[i].score.t1 == md.games[i].score.t2)
+				p++;
+		} else if(md.games[i].t2_index == index){
+			if(md.games[i].score.t2 > md.games[i].score.t1)
+				p += 3;
+			else if (md.games[i].score.t2 == md.games[i].score.t1)
+				p++;
+		}
+	}
+	return p;
 }
 
 bool send_message_to_site(char *message){
