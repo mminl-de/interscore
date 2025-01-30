@@ -4,8 +4,9 @@
 #include <json-c/json_object.h>
 #include "lib/mongoose.h"
 
-typedef unsigned int uint;
-typedef char u8;
+typedef unsigned int u32;
+typedef unsigned char u8;
+typedef unsigned short u16;
 
 // #### Javascript/ GUI Widgets Structs
 #define PLAYER_NAME_MAX_LEN 100
@@ -14,8 +15,8 @@ typedef char u8;
 typedef struct {
 	char team1[TEAMS_NAME_MAX_LEN];
 	char team2[TEAMS_NAME_MAX_LEN];
-	int score_t1;
-	int score_t2;
+	u8 score_t1;
+	u8 score_t2;
 	bool is_halftime;
 } widget_ingame;
 
@@ -27,22 +28,22 @@ typedef struct {
 } widget_spielstart;
 
 typedef struct {
-	int len; //The amount of teams total
-	char *teams[TEAMS_NAME_MAX_LEN]; //sorted
-	int *games_played;
-	int *games_won;
-	int *games_tied;
-	int *games_lost;
-	int *goals;
-	int *goals_taken;
+	u8 len; // amount of teams total
+	char *teams[TEAMS_NAME_MAX_LEN]; // sorted
+	u8 *games_played;
+	u8 *games_won;
+	u8 *games_tied;
+	u8 *games_lost;
+	u16 *goals;
+	u16 *goals_taken;
 } widget_live_table;
 
 typedef struct {
-	int len; //The amount of Games total
+	u8 len; // amount of Games total
 	char *teams_left[TEAMS_NAME_MAX_LEN];
 	char *teams_right[TEAMS_NAME_MAX_LEN];
-	int *goals_left;
-	int *goals_right;
+	u8 *goals_left;
+	u8 *goals_right;
 } widget_spielplan;
 
 // #### In Game Structs
@@ -53,44 +54,44 @@ typedef struct {
 } Score;
 
 typedef struct {
-	uint player_index;
+	u8 player_index;
 	bool card_type; // 0: yellow card, 1: red card
 } Card;
 
 typedef struct {
 	char *name;
-	uint team_index;
+	u8 team_index;
 	bool role; // 0: keeper, 1: field
 } Player;
 
 typedef struct {
-	uint keeper_index;
-	uint field_index;
+	u8 keeper_index;
+	u8 field_index;
 	char *name;
 	char *logo_filename;
 } Team;
 
 typedef struct {
-	uint t1_index;
-	uint t2_index;
+	u8 t1_index;
+	u8 t2_index;
 	Score halftimescore;
 	Score score;
 	Card *cards;
-	uint cards_count;
+	u8 cards_count;
 } Game;
 
 typedef struct {
 	struct {
-		uint gameindex; // index of the current game played in the games array
+		u8 gameindex; // index of the current game played in the games array
 		bool halftime; // 0: first half, 1: second half
-		uint time;
+		u16 time;
 	} cur;
 	Game *games;
-	uint games_count;
+	u8 games_count;
 	Team *teams;
-	uint teams_count;
+	u8 teams_count;
 	Player *players;
-	uint players_count;
+	u8 players_count;
 } Matchday;
 
 /*
@@ -181,8 +182,8 @@ Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
 
-bool send_widget_ingame(widget_ingame w){
-	if(client_con == NULL){
+bool send_widget_ingame(widget_ingame w) {
+	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_ingame\n");
 		return false;
 	}
@@ -190,8 +191,8 @@ bool send_widget_ingame(widget_ingame w){
 	return true;
 }
 
-bool send_widget_spielstart(widget_ingame w){
-	if(client_con == NULL){
+bool send_widget_spielstart(widget_ingame w) {
+	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
 	}
@@ -199,8 +200,8 @@ bool send_widget_spielstart(widget_ingame w){
 	return true;
 }
 
-bool send_widget_live_table(widget_ingame w){
-	if(client_con == NULL){
+bool send_widget_live_table(widget_ingame w) {
+	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
 		return false;
 	}
@@ -208,8 +209,8 @@ bool send_widget_live_table(widget_ingame w){
 	return true;
 }
 
-bool send_widget_spielplan(widget_ingame w){
-	if(client_con == NULL){
+bool send_widget_spielplan(widget_ingame w) {
+	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
 		return false;
 	}
@@ -217,7 +218,7 @@ bool send_widget_spielplan(widget_ingame w){
 	return true;
 }
 
-widget_ingame widget_ingame_create(){
+widget_ingame widget_ingame_create() {
 	widget_ingame w;
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -227,7 +228,7 @@ widget_ingame widget_ingame_create(){
 	return w;
 }
 
-widget_spielstart widget_spielstart_create(){
+widget_spielstart widget_spielstart_create() {
 	widget_spielstart w;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
@@ -236,25 +237,25 @@ widget_spielstart widget_spielstart_create(){
 	return w;
 }
 
-widget_live_table widget_live_table_create(){
+widget_live_table widget_live_table_create() {
 	widget_live_table w;
-	for(int i=0; i < md.teams_count; i++){
-		int t_index = team_calc_points(i);
+	for (u8 i = 0; i < md.teams_count; i++) {
+		u8 t_index = team_calc_points(i);
 	}
 	return w;
 }
 
-//Calculate the points of all games played so far of the team with index index
-int team_calc_points(int index){
+// Calculate the points of all games played so far of the team with index index.
+int team_calc_points(int index) {
 	int p = 0;
-	for(int i = 0; i < md.games_count; i++){
-		if(md.games[i].t1_index == index){
-			if(md.games[i].score.t1 > md.games[i].score.t2)
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index) {
+			if (md.games[i].score.t1 > md.games[i].score.t2)
 				p += 3;
 			else if (md.games[i].score.t1 == md.games[i].score.t2)
 				p++;
-		} else if(md.games[i].t2_index == index){
-			if(md.games[i].score.t2 > md.games[i].score.t1)
+		} else if (md.games[i].t2_index == index) {
+			if (md.games[i].score.t2 > md.games[i].score.t1)
 				p += 3;
 			else if (md.games[i].score.t2 == md.games[i].score.t1)
 				p++;
@@ -263,8 +264,8 @@ int team_calc_points(int index){
 	return p;
 }
 
-bool send_message_to_site(char *message){
-	if(client_con == NULL){
+bool send_message_to_site(char *message) {
+	if (client_con == NULL) {
 		printf("client is not connected, couldnt send Message: '%s'\n", message);
 		return false;
 	}
@@ -272,8 +273,8 @@ bool send_message_to_site(char *message){
 	return true;
 }
 
-void ev_handler(struct mg_connection *nc, int ev, void *p){
-	switch (ev){
+void ev_handler(struct mg_connection *nc, int ev, void *p) {
+	switch (ev) {
 	case MG_EV_HTTP_MSG:
 		struct mg_http_message *hm = (struct mg_http_message *)p;
 		mg_ws_upgrade(nc, hm, NULL);
@@ -302,7 +303,7 @@ void ev_handler(struct mg_connection *nc, int ev, void *p){
 // Return the index of a players name.
 // If the name does not exist, return -1.
 int player_index(const char *name) {
-	for (uint i = 0; i < md.players_count; i++)
+	for (u8 i = 0; i < md.players_count; i++)
 		if (!strcmp(md.players[i].name, name))
 			return i;
 	return -1;
@@ -311,22 +312,22 @@ int player_index(const char *name) {
 // Return the index of a team name.
 // If the name does not exist return -1.
 int team_index(const char *name) {
-	for (uint i = 0; i < md.teams_count; i++)
+	for (u8 i = 0; i < md.teams_count; i++)
 		if (strcmp(md.teams[i].name, name) == 0)
 			return i;
 	return -1;
 }
 
 void load_json(const char *path) {
-	//First convert path to actual string containing whole file
+	// First convert path to actual string containing whole file
 	FILE *f = fopen(path, "rb");
 	if (f == NULL) {
 		printf("Json Input file is not available! Exiting...\n");
 		exit(EXIT_FAILURE);
 	}
-	//seek to end to find length, then reset to the beginning
+	// seek to end to find length, then reset to the beginning
 	fseek(f, 0, SEEK_END);
-	long file_size = ftell(f);
+	u32 file_size = ftell(f);
 	rewind(f);
 
 	char *filestring = malloc((file_size + 1) * sizeof(char));
@@ -336,7 +337,7 @@ void load_json(const char *path) {
 		exit(EXIT_FAILURE);
 	}
 
-	long chars_read = fread(filestring, sizeof(char), file_size, f);
+	u32 chars_read = fread(filestring, sizeof(char), file_size, f);
 	if (chars_read != file_size) {
 		printf("Could not read whole json file! Exiting...");
 		free(filestring);
@@ -360,7 +361,7 @@ void load_json(const char *path) {
 	md.players = malloc(md.players_count * sizeof(Player));
 
 	// Read all the teams
-	uint i = 0;
+	u32 i = 0;
 	json_object_object_foreach(teams, teamname, teamdata) {
 		md.teams[i].name = teamname;
 		json_object *logo, *keeper, *field, *name;
@@ -426,7 +427,7 @@ void load_json(const char *path) {
 			md.games[i].cards_count = json_object_object_length(cards);
 			md.games[i].cards = malloc(md.games[i].cards_count * sizeof(Card));
 
-			uint j = 0;
+			u32 j = 0;
 			json_object_object_foreach(cards, cardname, carddata) {
 				json_object *player, *type;
 				json_object_object_get_ex(carddata, "player", &player);
@@ -474,7 +475,7 @@ bool copy_file(const char *source, const char *destination) {
 
 
 //@ret 1 if everything worked, 0 if there was any kind of error (e.g. cant write to file)
-bool save_json(char *path){
+bool save_json(char *path) {
 	FILE *f = fopen(path, "w+");
 	return true;
 }
@@ -491,7 +492,7 @@ void init_matchday() {
 	md.cur.gameindex = 0;
 	md.cur.halftime = 0;
 	md.cur.time = GAME_LENGTH;
-	for (uint i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i < md.games_count; i++) {
 		md.games[i].halftimescore.t1 = 0;
 		md.games[i].halftimescore.t2 = 0;
 		md.games[i].score.t1 = 0;
@@ -504,7 +505,7 @@ void init_matchday() {
 
 
 void add_card(bool card_type) {
-	uint ind = md.cur.gameindex;
+	u8 ind = md.cur.gameindex;
 	if (md.games[ind].cards_count == 0)
 		md.games[ind].cards = malloc(1 * sizeof(Card));
 	else
@@ -514,7 +515,7 @@ void add_card(bool card_type) {
 			md.players[md.teams[md.games[ind].t1_index].field_index].name, md.teams[md.games[ind].t1_index].name,
 			md.players[md.teams[md.games[ind].t2_index].keeper_index].name, md.teams[md.games[ind].t2_index].name,
 			md.players[md.teams[md.games[ind].t2_index].field_index].name, md.teams[md.games[ind].t2_index].name);
-	uint player;
+	u8 player;
 	scanf("%ud\n", &player);
 	switch(player) {
 	case 1:
@@ -555,9 +556,10 @@ int main(void) {
 
 		// #### INGAME STUFF
 		case SET_TIME:
-			uint min, sec;
+			u16 min;
+			u8 sec;
 			printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
-			scanf("%d:%d", &min, &sec); // TODO fix this, %ud breaks sec input
+			scanf("%ud:%ud", &min, &sec); // TODO fix this, %ud breaks sec input
 			md.cur.time = min*60 + sec;
 			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
@@ -640,8 +642,8 @@ int main(void) {
 			add_card(1);
 			break;
 		case DELETE_CARD:
-			uint cur_i = md.cur.gameindex;
-			for (uint i = 0; i < md.games[cur_i].cards_count; i++) {
+			u32 cur_i = md.cur.gameindex;
+			for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
 				printf("%d. ", i + 1);
 				if (md.games[cur_i].cards[i].card_type == 0)
 					printf("Y ");
@@ -655,12 +657,12 @@ int main(void) {
 					printf("(field)\n");
 			}
 			printf("Select a card to delete: ");
-			uint c = 0;
+			u32 c = 0;
 			scanf("%ud", &c);
 			// Overwrite c with the last element
 			md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
 			printf("Cards remaining:\n");
-			for (uint i = 0; i < md.games[cur_i].cards_count; i++) {
+			for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
 				printf("%d. ", i + 1);
 				if (md.games[cur_i].cards[i].card_type == 0)
 					printf("Y ");
