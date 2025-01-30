@@ -24,6 +24,7 @@ typedef struct {
 } widget_spielstart;
 
 typedef struct {
+	int len; //The amount of teams total
 	char **teams; //sorted
 	int *games_played;
 	int *games_won;
@@ -34,6 +35,7 @@ typedef struct {
 } widget_live_table;
 
 typedef struct {
+	int len; //The amount of Games total
 	char **teams_left;
 	char **teams_right;
 	int *goals_left;
