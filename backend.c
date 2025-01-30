@@ -1,18 +1,19 @@
 #include <stdbool.h>
 #include <time.h>
-#include <json-c/json_object.h>
 #include <json-c/json.h>
+#include <json-c/json_object.h>
 #include "lib/mongoose.h"
 
 typedef unsigned int uint;
+typedef char u8;
 
 // #### Javascript/ GUI Widgets Structs
 
 typedef struct {
 	char *team1;
 	char *team2;
-	int score_t1;
-	int score_t2;
+	u8 score_t1;
+	u8 score_t2;
 	bool is_halftime;
 } widget_ingame;
 
@@ -24,8 +25,8 @@ typedef struct {
 } widget_spielstart;
 
 typedef struct {
-	int len; //The amount of teams total
-	char **teams; //sorted
+	u8 len; // amount of teams total
+	char **teams; // sorted
 	int *games_played;
 	int *games_won;
 	int *games_tied;
@@ -35,7 +36,7 @@ typedef struct {
 } widget_live_table;
 
 typedef struct {
-	int len; //The amount of Games total
+	u8 len; // amount of games total
 	char **teams_left;
 	char **teams_right;
 	int *goals_left;
@@ -45,8 +46,8 @@ typedef struct {
 // #### In Game Structs
 
 typedef struct {
-	uint t1;
-	uint t2;
+	u8 t1;
+	u8 t2;
 } Score;
 
 typedef struct {
