@@ -6,6 +6,42 @@
 
 typedef unsigned int uint;
 
+// #### Javascript/ GUI Widgets Structs
+
+typedef struct {
+	char *team1;
+	char *team2;
+	int score_t1;
+	int score_t2;
+	bool is_halftime;
+} widget_ingame;
+
+typedef struct {
+	char *team1_keeper;
+	char *team1_field;
+	char *team2_keeper;
+	char *team2_field;
+} widget_spielstart;
+
+typedef struct {
+	char **teams; //sorted
+	int *games_played;
+	int *games_won;
+	int *games_tied;
+	int *games_lost;
+	int *goals;
+	int *goals_taken;
+} widget_live_table;
+
+typedef struct {
+	char **teams_left;
+	char **teams_right;
+	int *goals_left;
+	int *goals_right;
+} widget_spielplan;
+
+// #### In Game Structs
+
 typedef struct {
 	uint t1;
 	uint t2;
@@ -93,6 +129,7 @@ Possible User Actions:
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
 #define URL "http://localhost:8080"
+#define JSON_PATH "input.json"
 
 // Define the input characters:
 // Changing game time
@@ -130,11 +167,51 @@ Possible User Actions:
 #define TEST '6'
 #define WEBSOCKET_STATUS '7'
 
-#define JSON_PATH "input.json"
 
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
+
+bool send_widget_ingame(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_ingame\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_spielstart(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_live_table(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_spielplan(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+widget_ingame widget_ingame_create(){
+	widget_ingame w;
+	return w;
+}
 
 bool send_message_to_site(char *message){
 	if(client_con == NULL){
