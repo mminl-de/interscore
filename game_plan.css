@@ -1,3 +1,43 @@
+.game-plan {
+	font-size: 50px;
+
+	margin: auto;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 15px;
+
+	width: 70%;
+	height: 90vh;
+}
+
+.game-plan-heading {
+	font-size: 60px;
+}
+
 .game {
-	background-color: lime;
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
+.score-left, .score-right {
+	background-color: gray;
+	width: 60px;
+	padding: 0 10px;
+}
+
+.team-left, .team-right {
+	background-color: brown;
+	width: 100px;
+	flex-grow: 1;
+}
+
+.team-left {
+	color: gold;
+}
+
+.anticipated {
+	opacity: 0.6;
 }

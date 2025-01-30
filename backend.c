@@ -2,34 +2,47 @@
 #include <time.h>
 #include <json-c/json_object.h>
 #include <json-c/json.h>
-#include <libwebsockets.h>
-
-// TODO
-static int callback_interscore(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len) {
-	switch (reason) {
-		case LWS_CALLBACK_RECEIVE:
-			lws_write(wsi, (unsigned char *)in, len, LWS_WRITE_TEXT);
-			break;
-		default:
-			printf("TODO: called callback but idk why\n");
-			break;
-	}
-	return 0;
-}
-
-static struct lws_protocols protocols[] = {
-	{
-		.name = "interscore",
-		.callback = callback_interscore,
-		.per_session_data_size = 0,
-		.rx_buffer_size = 0,
-		.id = 0,
-		.user = NULL,
-	},
-	{ NULL, NULL, 0, 0 } // Terminator
-};
+#include "lib/mongoose.h"
 
 typedef unsigned int uint;
+
+// #### Javascript/ GUI Widgets Structs
+
+typedef struct {
+	char *team1;
+	char *team2;
+	int score_t1;
+	int score_t2;
+	bool is_halftime;
+} widget_ingame;
+
+typedef struct {
+	char *team1_keeper;
+	char *team1_field;
+	char *team2_keeper;
+	char *team2_field;
+} widget_spielstart;
+
+typedef struct {
+	int len; //The amount of teams total
+	char **teams; //sorted
+	int *games_played;
+	int *games_won;
+	int *games_tied;
+	int *games_lost;
+	int *goals;
+	int *goals_taken;
+} widget_live_table;
+
+typedef struct {
+	int len; //The amount of Games total
+	char **teams_left;
+	char **teams_right;
+	int *goals_left;
+	int *goals_right;
+} widget_spielplan;
+
+// #### In Game Structs
 
 typedef struct {
 	uint t1;
@@ -88,6 +101,8 @@ Possible User Actions:
 - goal Team 2 (DONE)
 - Yellow Card to Player 1, 2, 3 or 4 (DONE)
 - Red Card to Player 1, 2, 3 or 4 (DONE)
+- Switch Team Sides (without halftime)
+- Half Time
 ## Error Handling
 - minus goal team 1 (DONE)
 - minus goal team 2 (DONE)
@@ -115,6 +130,8 @@ Possible User Actions:
 
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
+#define URL "http://localhost:8080"
+#define JSON_PATH "input.json"
 
 // Define the input characters:
 // Changing game time
@@ -148,9 +165,91 @@ Possible User Actions:
 #define RELOAD_JSON 'j'
 #define PRINT_HELP '?'
 
-#define JSON_PATH "input.json"
+//OTHER
+#define TEST '6'
+#define WEBSOCKET_STATUS '7'
+
 
 Matchday md;
+// We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
+struct mg_connection *client_con = NULL;
+
+bool send_widget_ingame(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_ingame\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_spielstart(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_live_table(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_spielplan(widget_ingame w){
+	if(client_con == NULL){
+		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+widget_ingame widget_ingame_create(){
+	widget_ingame w;
+	return w;
+}
+
+bool send_message_to_site(char *message){
+	if(client_con == NULL){
+		printf("client is not connected, couldnt send Message: '%s'\n", message);
+		return false;
+	}
+	mg_ws_send(client_con, message, strlen(message), WEBSOCKET_OP_TEXT);
+	return true;
+}
+
+void ev_handler(struct mg_connection *nc, int ev, void *p){
+	switch (ev){
+	case MG_EV_HTTP_MSG:
+		struct mg_http_message *hm = (struct mg_http_message *)p;
+		mg_ws_upgrade(nc, hm, NULL);
+		printf("Client upgradede to WebSocket Connection\n");
+		break;
+	case MG_EV_CONNECT:
+		printf("New client connected!\n");
+		break;
+	case MG_EV_WS_OPEN:
+		printf("Connection opened!\n");
+		client_con = nc;
+		break;
+	case MG_EV_CLOSE:
+		printf("Client disconnected!\n");
+		client_con = NULL;
+		break;
+	case MG_EV_WS_MSG:
+		printf("This server is send only! Ignoring received Message from client!\n");
+		break;
+	default:
+		printf("received unknown signal: %d! Ignoring...\n", ev);
+	}
+	return;
+}
 
 // Return the index of a players name.
 // If the name does not exist, return -1.
@@ -201,7 +300,6 @@ void load_json(const char *path) {
 
 	// Then split json into teams and games
 	struct json_object *root = json_tokener_parse(filestring);
-	free(filestring);
 	struct json_object *teams = json_object_new_object();
 	struct json_object *games = json_object_new_object();
 	json_object_object_get_ex(root, "teams", &teams);
@@ -300,6 +398,41 @@ void load_json(const char *path) {
 	return;
 }
 
+//@ret 1 if everything worked, 0 if it couldnt open one of the files
+bool copy_file(const char *source, const char *destination) {
+    FILE *src = fopen(source, "rb");
+    if (!src) {
+        perror("Error opening source file");
+        return false;
+    }
+
+    FILE *dest = fopen(destination, "wb");
+    if (!dest) {
+        perror("Error opening destination file");
+        fclose(src);
+        return false;
+    }
+
+    // Directly copy the content
+    char ch;
+    while ((ch = fgetc(src)) != EOF) {
+        fputc(ch, dest);
+    }
+
+    fclose(src);
+    fclose(dest);
+	return true;
+}
+
+
+//@ret 1 if everything worked, 0 if there was any kind of error (e.g. cant write to file)
+bool save_json(char *path){
+	FILE *f = fopen(path, "w+");
+	return true;
+}
+
+
+
 // Set current_match to first match
 // TODO
 void init_matchday() {
@@ -359,28 +492,16 @@ void add_card(bool card_type) {
 }
 
 int main(void) {
+	//WebSocket stuff first
+	struct mg_mgr mgr;
+	mg_mgr_init(&mgr);
+	mg_http_listen(&mgr, URL, ev_handler, NULL);
+
 	load_json(JSON_PATH);
 	init_matchday();
 
-	struct lws_context_creation_info info;
-	struct lws_context *ctx;
-
-	memset(&info, 0, sizeof(info));
-	info.port = 8080;
-	info.protocols = protocols;
-
-	ctx = lws_create_context(&info);
-	if (!ctx) {
-		printf("WebSocket init failed!\n");
-		return 1;
-	}
-
-	printf("WebSocket server started on ws://localhost:8080 ...\n");
 	bool close = false;
 	while (!close) {
-		// TODO WIP
-		lws_service(ctx, 0);
-
 		char c = getchar();
 		switch (c) {
 
@@ -528,15 +649,22 @@ int main(void) {
 		case PRINT_HELP:
 			printf("TODO: PRINT_HELP\n");
 			break;
+		// #### ORIESNTIOERASNTEOI
+		case TEST:
+			char string[40];
+			sprintf(string, "Du bist eine %d", i++);
+			send_message_to_site(string);
+			break;
+		case WEBSOCKET_STATUS:
+			printf("listening... ");
+			mg_mgr_poll(&mgr, 1000);
+			mg_mgr_poll(&mgr, 1000);
+			mg_mgr_poll(&mgr, 1000);
+			printf("done\n");
+			break;
 		}
 	}
 
-	// TODO WIP
-	lws_context_destroy(ctx);
+	mg_mgr_free(&mgr);
 	return 0;
 }
-
-/* TODO NOTE lws stuff
-int main() {
-}
-*/
