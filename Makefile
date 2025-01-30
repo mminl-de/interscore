@@ -1,18 +1,19 @@
+SRC ?= backend.c lib/mongoose.c
 OUT ?= interscore
 CC ?= cc
 
 install:
-	$(CC) -o $(OUT) backend.c lib/mongoose.c \
+	$(CC) -o $(OUT) $(SRC) \
 	-O3 -Wall -Wextra -Wpedantic \
 	-ljson-c \
 
 debug:
-	$(CC) -o $(OUT) backend.c \
+	$(CC) -o $(OUT) $(SRC) \
 	-Wall -Wextra -Wpedantic -g \
 	-ljson-c
 
 fast:
-	$(CC) -o $(OUT) backend.c lib/mongoose.c \
+	$(CC) -o $(OUT) $(SRC) \
 	-ljson-c \
 
 run: debug

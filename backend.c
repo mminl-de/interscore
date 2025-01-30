@@ -4,9 +4,9 @@
 #include <json-c/json_object.h>
 #include "lib/mongoose.h"
 
-typedef unsigned int u32;
 typedef unsigned char u8;
 typedef unsigned short u16;
+typedef unsigned int u32;
 
 // #### Javascript/ GUI Widgets Structs
 #define PLAYER_NAME_MAX_LEN 100
@@ -275,11 +275,12 @@ bool send_message_to_site(char *message) {
 
 void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	switch (ev) {
-	case MG_EV_HTTP_MSG:
-		struct mg_http_message *hm = (struct mg_http_message *)p;
+	case MG_EV_HTTP_MSG: {
+		struct mg_http_message *hm = p;
 		mg_ws_upgrade(nc, hm, NULL);
 		printf("Client upgradede to WebSocket Connection\n");
 		break;
+	}
 	case MG_EV_CONNECT:
 		printf("New client connected!\n");
 		break;
@@ -516,7 +517,7 @@ void add_card(bool card_type) {
 			md.players[md.teams[md.games[ind].t2_index].keeper_index].name, md.teams[md.games[ind].t2_index].name,
 			md.players[md.teams[md.games[ind].t2_index].field_index].name, md.teams[md.games[ind].t2_index].name);
 	u8 player;
-	scanf("%ud\n", &player);
+	scanf("%hhu\n", &player);
 	switch(player) {
 	case 1:
 		player = md.teams[md.games[ind].t1_index].keeper_index;
@@ -541,7 +542,7 @@ void add_card(bool card_type) {
 }
 
 int main(void) {
-	//WebSocket stuff first
+	// WebSocket stuff first
 	struct mg_mgr mgr;
 	mg_mgr_init(&mgr);
 	mg_http_listen(&mgr, URL, ev_handler, NULL);
@@ -555,14 +556,14 @@ int main(void) {
 		switch (c) {
 
 		// #### INGAME STUFF
-		case SET_TIME:
-			u16 min;
-			u8 sec;
+		case SET_TIME: {
+			u16 min; u8 sec;
 			printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
-			scanf("%ud:%ud", &min, &sec); // TODO fix this, %ud breaks sec input
+			scanf("%hu:%hhu", &min, &sec); // TODO fix this, %ud breaks sec input
 			md.cur.time = min*60 + sec;
 			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
+		}
 		case ADD_SECOND:
 			md.cur.time++;
 			printf("Added 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
@@ -641,7 +642,7 @@ int main(void) {
 		case RED_CARD:
 			add_card(1);
 			break;
-		case DELETE_CARD:
+		case DELETE_CARD: {
 			u32 cur_i = md.cur.gameindex;
 			for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
 				printf("%d. ", i + 1);
@@ -676,6 +677,7 @@ int main(void) {
 					printf("(field)\n");
 			}
 			break;
+		}
 		// #### UI STUFF
 		case TOGGLE_WIDGET_INGAME:
 			printf("TODO: TOGGLE_WIDGET_INGAME\n");
@@ -700,11 +702,12 @@ int main(void) {
 			printf("TODO: PRINT_HELP\n");
 			break;
 		// #### ORIESNTIOERASNTEOI
-		case TEST:
+		case TEST: {
 			char string[40];
-			sprintf(string, "Du bist eine %d", i++);
+			sprintf(string, "Du bist eine");
 			send_message_to_site(string);
 			break;
+		}
 		case WEBSOCKET_STATUS:
 			printf("listening... ");
 			mg_mgr_poll(&mgr, 1000);
