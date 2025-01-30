@@ -2,14 +2,18 @@ OUT ?= interscore
 CC ?= cc
 
 install:
-	$(CC) -o $(OUT) backend.c \
+	$(CC) -o $(OUT) backend.c lib/mongoose.c \
 	-O3 -Wall -Wextra -Wpedantic \
-	-lwebsockets -lssl -ljson-c
+	-ljson-c \
 
 debug:
 	$(CC) -o $(OUT) backend.c \
 	-Wall -Wextra -Wpedantic -g \
-	-lwebsockets -lssl -ljson-c
+	-ljson-c
+
+fast:
+	$(CC) -o $(OUT) backend.c lib/mongoose.c \
+	-ljson-c \
 
 run: debug
 	./interscore
