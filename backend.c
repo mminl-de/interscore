@@ -11,6 +11,8 @@ typedef unsigned int u32;
 // #### Javascript/ GUI Widgets Structs
 #define PLAYER_NAME_MAX_LEN 100
 #define TEAMS_NAME_MAX_LEN 100
+#define TEAMS_COUNT_MAX 32
+#define GAMES_COUNT_MAX 64
 
 #pragma pack(push, 1)
 typedef struct {
