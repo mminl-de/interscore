@@ -8,7 +8,15 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
+
 // #### Javascript/ GUI Widgets Structs
+
+#define WIDGET_SCOREBOARD
+#define WIDGET_LIVETABLE
+#define WIDGET_SPIELPLAN
+#define WIDGET_SPIELSTART
+#define WIDGET_LIVETABLE
+
 #define PLAYER_NAME_MAX_LEN 100
 #define TEAMS_NAME_MAX_LEN 100
 #define TEAMS_COUNT_MAX 32
@@ -16,16 +24,18 @@ typedef unsigned int u32;
 
 #pragma pack(push, 1)
 typedef struct {
+	u8 widget_num = WIDGET_SCOREBOARD;
 	char team1[TEAMS_NAME_MAX_LEN];
 	char team2[TEAMS_NAME_MAX_LEN];
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
-} widget_ingame;
+} widget_scoreboard;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct {
+	u8 widget_num = WIDGET_SPIELSTART;
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
@@ -35,6 +45,7 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
+	u8 widget_num = WIDGET_LIVETABLE;
 	u8 len; // amount of teams total
 	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
 	u8 points[TEAMS_COUNT_MAX];
@@ -44,11 +55,12 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
-} widget_live_table;
+} widget_livetable;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct {
+	u8 widget_num = WIDGET_SPIELPLAN;
 	u8 len; // amount of Games total
 	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
@@ -123,7 +135,7 @@ Possible User Actions:
 - minus goal team 2 (DONE)
 - delete card (DONE)
 ####### UI Stuff
-- Enable/Disable ==> Ingame Widget
+- Enable/Disable ==> Scoreboard Widget
 - Start ==> Start of the game/halftime animation
 - Enable/Disable ==> Halftime Widget
 - enable/Disable ==> Live Table Widget
@@ -171,7 +183,7 @@ Possible User Actions:
 
 // Widget toggling
 #define TOGGLE_WIDGET_HALFTIME 'h'
-#define TOGGLE_WIDGET_INGAME 'i'
+#define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
 #define TOGGLE_WIDGET_RESULTS 'v'
 
@@ -197,16 +209,16 @@ Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
 
-bool send_widget_ingame(widget_ingame w) {
+bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_ingame\n");
+		printf("WARNING: client if not connected, couldnt send widget_scoreboard\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-bool send_widget_spielstart(widget_ingame w) {
+bool send_widget_spielstart(widget_spielstart w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
@@ -215,16 +227,16 @@ bool send_widget_spielstart(widget_ingame w) {
 	return true;
 }
 
-bool send_widget_live_table(widget_ingame w) {
+bool send_widget_livetable(widget_livetable w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
+		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-bool send_widget_spielplan(widget_ingame w) {
+bool send_widget_spielplan(widget_spielplan w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
 		return false;
@@ -252,14 +264,31 @@ widget_spielstart widget_spielstart_create() {
 	return w;
 }
 
-widget_live_table widget_live_table_create() {
-	widget_live_table w;
+widget_livetable widget_livetable_create() {
+	widget_livetable w;
 	w.len = md.teams_count;
+	int teams_done[md.teams_count];
 	for (u8 i = 0; i < md.teams_count; i++) {
-		u8 best_index;
-		for(int j=0; j < md.teams_count; j++)
-			if(best_index < team_calc_points(i))
-				best_index = team_calc_points(i);
+		//init best_index with first, not yet done team
+		u8 best_index = 0;
+		for(int k=0; k < i; k++){
+			if(k != teams_done[k]){
+				best_index = k;
+				break;
+			}
+		}
+		//search for better team without entry
+		for(int j=0; j < md.teams_count; j++){
+			int skip = false;
+			if(best_index < team_calc_points(i)){
+				for(int k=0; k < i; k++){
+					if(k == teams_done[k])
+						skip = true;
+				}
+				if(!skip)
+					best_index = team_calc_points(i);
+			}
+		}
 
 		strcpy(w.teams[i], md.teams[best_index].name);
 		w.points[i] = team_calc_points(best_index);
@@ -268,6 +297,8 @@ widget_live_table widget_live_table_create() {
 		w.games_tied[i] = team_calc_games_tied(best_index);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
 		w.goals[i] = team_calc_goals(best_index);
+
+		teams_done[i] = best_index;
 	}
 	return w;
 }
@@ -281,6 +312,7 @@ widget_spielplan widget_spielplan_create() {
 		w.goals_t1[i] = md.games[i].score.t1;
 		w.goals_t2[i] = md.games[i].score.t2;
 	}
+	return w;
 }
 
 // Calculate the points of all games played so far of the team with index index.
