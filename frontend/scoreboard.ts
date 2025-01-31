@@ -18,6 +18,8 @@ let card_message = document.querySelector(".card-message")!
 const BUFFER_LEN = 100
 
 function write_scoreboard(view: DataView) {
+	console.log("Writing data to scoreboard:\n", view)
+
 	let offset = 1
 	let team_1: String = ""
 	let team_2: String = ""
@@ -92,7 +94,8 @@ socket.onmessage = (event: MessageEvent) => {
 	switch (mode) {
 		case 0:
 			return
-		case 1:
+		case 2:
+			console.log("Operating in mode 0 (Scoreboard enabled)")
 			write_scoreboard(view)
 			break
 	}

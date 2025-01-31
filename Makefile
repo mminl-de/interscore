@@ -16,5 +16,8 @@ fast:
 	$(CC) -o $(OUT) $(SRC) \
 	-ljson-c \
 
-run: debug
+frontend/scoreboard.js:
+	tsc frontend/main.ts
+
+run: frontend debug
 	./interscore
