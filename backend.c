@@ -12,6 +12,7 @@ typedef unsigned int u32;
 #define PLAYER_NAME_MAX_LEN 100
 #define TEAMS_NAME_MAX_LEN 100
 
+#pragma pack(push, 1)
 typedef struct {
 	char team1[TEAMS_NAME_MAX_LEN];
 	char team2[TEAMS_NAME_MAX_LEN];
@@ -19,33 +20,40 @@ typedef struct {
 	u8 score_t2;
 	bool is_halftime;
 } widget_ingame;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
 } widget_spielstart;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	u8 len; // amount of teams total
-	char *teams[TEAMS_NAME_MAX_LEN]; // sorted
-	u8 *points;
-	u8 *games_played;
-	u8 *games_won;
-	u8 *games_tied;
-	u8 *games_lost;
-	u16 *goals;
-	u16 *goals_taken;
+	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
+	u8 points[TEAMS_COUNT_MAX];
+	u8 games_played[TEAMS_COUNT_MAX];
+	u8 games_won[TEAMS_COUNT_MAX];
+	u8 games_tied[TEAMS_COUNT_MAX];
+	u8 games_lost[TEAMS_COUNT_MAX];
+	u16 goals[TEAMS_COUNT_MAX];
+	u16 goals_taken[TEAMS_COUNT_MAX];
 } widget_live_table;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
 	u8 len; // amount of Games total
-	char *teams1[TEAMS_NAME_MAX_LEN];
-	char *teams2[TEAMS_NAME_MAX_LEN];
-	u8 *goals_t1;
-	u8 *goals_t2;
+	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
+	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
+	u8 goals_t1[GAMES_COUNT_MAX];
+	u8 goals_t2[GAMES_COUNT_MAX];
 } widget_spielplan;
+#pragma pack(pop)
 
 // #### In Game Structs
 
