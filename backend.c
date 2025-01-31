@@ -9,42 +9,66 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 // #### Javascript/ GUI Widgets Structs
+
+//The first element is disable, the second is enable/update
+enum widgets {
+	WIDGET_SCOREBOARD = 0,
+	WIDGET_LIVETABLE = 2,
+	WIDGET_GAMEPLAN = 4,
+	WIDGET_SPIELSTART = 6,
+};
+
 #define PLAYER_NAME_MAX_LEN 100
 #define TEAMS_NAME_MAX_LEN 100
+#define TEAMS_COUNT_MAX 32
+#define GAMES_COUNT_MAX 64
 
+#pragma pack(push, 1)
 typedef struct {
+	u8 widget_num;
 	char team1[TEAMS_NAME_MAX_LEN];
 	char team2[TEAMS_NAME_MAX_LEN];
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
 } widget_scoreboard;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
+	u8 widget_num;
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
 } widget_spielstart;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
+	u8 widget_num;
 	u8 len; // amount of teams total
-	char *teams[TEAMS_NAME_MAX_LEN]; // sorted
-	u8 *games_played;
-	u8 *games_won;
-	u8 *games_tied;
-	u8 *games_lost;
-	u16 *goals;
-	u16 *goals_taken;
-} widget_live_table;
+	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
+	u8 points[TEAMS_COUNT_MAX];
+	u8 games_played[TEAMS_COUNT_MAX];
+	u8 games_won[TEAMS_COUNT_MAX];
+	u8 games_tied[TEAMS_COUNT_MAX];
+	u8 games_lost[TEAMS_COUNT_MAX];
+	u16 goals[TEAMS_COUNT_MAX];
+	u16 goals_taken[TEAMS_COUNT_MAX];
+} widget_livetable;
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 typedef struct {
+	u8 widget_num;
 	u8 len; // amount of Games total
-	char *teams_left[TEAMS_NAME_MAX_LEN];
-	char *teams_right[TEAMS_NAME_MAX_LEN];
-	u8 *goals_left;
-	u8 *goals_right;
-} widget_game_plan;
+	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
+	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
+	u8 goals_t1[GAMES_COUNT_MAX];
+	u8 goals_t2[GAMES_COUNT_MAX];
+} widget_gameplan;
+#pragma pack(pop)
 
 // #### In Game Structs
 
@@ -112,7 +136,7 @@ Possible User Actions:
 - minus goal team 2 (DONE)
 - delete card (DONE)
 ####### UI Stuff
-- Enable/Disable ==> Ingame Widget
+- Enable/Disable ==> Scoreboard Widget
 - Start ==> Start of the game/halftime animation
 - Enable/Disable ==> Halftime Widget
 - enable/Disable ==> Live Table Widget
@@ -159,10 +183,11 @@ Possible User Actions:
 #define DELETE_CARD 'd'
 
 // Widget toggling
-#define TOGGLE_WIDGET_HALFTIME 'h'
-#define TOGGLE_WIDGET_INGAME 'i'
+//#define TOGGLE_WIDGET_HALFTIME 'h'
+#define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
-#define TOGGLE_WIDGET_RESULTS 'v'
+#define TOGGLE_WIDGET_GAMEPLAN 'v'
+#define TOGGLE_WIDGET_SPIELSTART 's'
 
 // Meta
 #define EXIT 'q'
@@ -175,12 +200,21 @@ Possible User Actions:
 
 
 //TODO put all function definitions here
-int team_calc_points(int index);
-
+u16 team_calc_points(u8 index);
+u8 team_calc_games_played(u8 index);
+u8 team_calc_games_won(u8 index);
+u8 team_calc_games_tied(u8 index);
+u16 team_calc_goals(u8 index);
+u16 team_calc_goals_taken(u8 index);
 
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
+
+bool widget_scoreboard_enabled = false;
+bool widget_spielstart_enabled = false;
+bool widget_livetable_enabled = false;
+bool widget_gameplan_enabled = false;
 
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
@@ -191,7 +225,7 @@ bool send_widget_scoreboard(widget_scoreboard w) {
 	return true;
 }
 
-bool send_widget_spielstart(widget_scoreboard w) {
+bool send_widget_spielstart(widget_spielstart w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
@@ -200,18 +234,18 @@ bool send_widget_spielstart(widget_scoreboard w) {
 	return true;
 }
 
-bool send_widget_live_table(widget_scoreboard w) {
+bool send_widget_livetable(widget_livetable w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
+		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-bool send_widget_game_plan(widget_scoreboard w) {
+bool send_widget_gameplan(widget_gameplan w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_game_plan\n");
+		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
@@ -220,6 +254,7 @@ bool send_widget_game_plan(widget_scoreboard w) {
 
 widget_scoreboard widget_scoreboard_create() {
 	widget_scoreboard w;
+	w.widget_num = WIDGET_SCOREBOARD + widget_scoreboard_enabled;
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	w.score_t1 = md.games[md.cur.gameindex].score.t1;
@@ -230,6 +265,7 @@ widget_scoreboard widget_scoreboard_create() {
 
 widget_spielstart widget_spielstart_create() {
 	widget_spielstart w;
+	w.widget_num = WIDGET_SPIELSTART + widget_spielstart_enabled;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
 	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
@@ -237,17 +273,62 @@ widget_spielstart widget_spielstart_create() {
 	return w;
 }
 
-widget_live_table widget_live_table_create() {
-	widget_live_table w;
+widget_livetable widget_livetable_create() {
+	widget_livetable w;
+	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
+	w.len = md.teams_count;
+	int teams_done[md.teams_count];
 	for (u8 i = 0; i < md.teams_count; i++) {
-		u8 t_index = team_calc_points(i);
+		//init best_index with first, not yet done team
+		u8 best_index = 0;
+		for(int k=0; k < i; k++){
+			if(k != teams_done[k]){
+				best_index = k;
+				break;
+			}
+		}
+		//search for better team without entry
+		for(int j=0; j < md.teams_count; j++){
+			int skip = false;
+			if(best_index < team_calc_points(i)){
+				for(int k=0; k < i; k++){
+					if(k == teams_done[k])
+						skip = true;
+				}
+				if(!skip)
+					best_index = team_calc_points(i);
+			}
+		}
+
+		strcpy(w.teams[i], md.teams[best_index].name);
+		w.points[i] = team_calc_points(best_index);
+		w.games_played[i] = team_calc_games_played(best_index);
+		w.games_won[i] = team_calc_games_won(best_index);
+		w.games_tied[i] = team_calc_games_tied(best_index);
+		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
+		w.goals[i] = team_calc_goals(best_index);
+
+		teams_done[i] = best_index;
+	}
+	return w;
+}
+
+widget_gameplan widget_gameplan_create() {
+	widget_gameplan w;
+	w.widget_num = WIDGET_SCOREBOARD + widget_gameplan_enabled;
+	w.len = md.games_count;
+	for (u8 i = 0; i < md.games_count; i++){
+		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
+		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
+		w.goals_t1[i] = md.games[i].score.t1;
+		w.goals_t2[i] = md.games[i].score.t2;
 	}
 	return w;
 }
 
 // Calculate the points of all games played so far of the team with index index.
-int team_calc_points(int index) {
-	int p = 0;
+u16 team_calc_points(u8 index) {
+	u16 p = 0;
 	for (u8 i = 0; i < md.games_count; i++) {
 		if (md.games[i].t1_index == index) {
 			if (md.games[i].score.t1 > md.games[i].score.t2)
@@ -260,6 +341,58 @@ int team_calc_points(int index) {
 			else if (md.games[i].score.t2 == md.games[i].score.t1)
 				p++;
 		}
+	}
+	return p;
+}
+
+u8 team_calc_games_played(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++)
+		if (md.games[i].t1_index == index || md.games[i].t2_index == index)
+			p++;
+	return p;
+}
+
+u8 team_calc_games_won(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index && md.games[i].score.t1 > md.games[i].score.t2)
+			p++;
+		else if (md.games[i].t2_index == index && md.games[i].score.t2 > md.games[i].score.t1)
+			p++;
+	}
+	return p;
+}
+
+u8 team_calc_games_tied(u8 index){
+	u8 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index && md.games[i].score.t1 == md.games[i].score.t2)
+			p++;
+		else if (md.games[i].t2_index == index && md.games[i].score.t2 == md.games[i].score.t1)
+			p++;
+	}
+	return p;
+}
+
+u16 team_calc_goals(u8 index){
+	u16 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index)
+			p += md.games[i].score.t1;
+		else if (md.games[i].t2_index == index)
+			p += md.games[i].score.t2;
+	}
+	return p;
+}
+
+u16 team_calc_goals_taken(u8 index){
+	u16 p = 0;
+	for (u8 i = 0; i < md.games_count; i++) {
+		if (md.games[i].t1_index == index)
+			p += md.games[i].score.t2;
+		else if (md.games[i].t2_index == index)
+			p += md.games[i].score.t1;
 	}
 	return p;
 }
@@ -679,17 +812,27 @@ int main(void) {
 			break;
 		}
 		// #### UI STUFF
-		case TOGGLE_WIDGET_INGAME:
-			printf("TODO: TOGGLE_WIDGET_INGAME\n");
+		case TOGGLE_WIDGET_SCOREBOARD:
+			widget_scoreboard_enabled = !widget_scoreboard_enabled;
+			send_widget_scoreboard(widget_scoreboard_create());
 			break;
+		/*
 		case TOGGLE_WIDGET_HALFTIME:
-			printf("TODO: TOGGLE_WIDGET_HALFTIME\n");
+			widget_halftime_enabled = !widget_halftime_enabled;
+			send_widget_halftime(widget_halftime_create());
 			break;
+		*/
 		case TOGGLE_WIDGET_LIVETABLE:
-			printf("TODO: WIDGET_LIVETABLE\n");
+			widget_livetable_enabled = !widget_livetable_enabled;
+			send_widget_livetable(widget_livetable_create());
 			break;
-		case TOGGLE_WIDGET_RESULTS:
-			printf("TODO: TOGGLE_WIDGET_TURNIERVERLAUF\n");
+		case TOGGLE_WIDGET_GAMEPLAN:
+			widget_gameplan_enabled = !widget_gameplan_enabled;
+			send_widget_gameplan(widget_gameplan_create());
+			break;
+		case TOGGLE_WIDGET_SPIELSTART:
+			widget_spielstart_enabled = !widget_spielstart_enabled;
+			send_widget_spielstart(widget_spielstart_create());
 			break;
 		// #### Debug Stuff
 		case EXIT:
