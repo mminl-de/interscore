@@ -183,10 +183,11 @@ Possible User Actions:
 #define DELETE_CARD 'd'
 
 // Widget toggling
-#define TOGGLE_WIDGET_HALFTIME 'h'
+//#define TOGGLE_WIDGET_HALFTIME 'h'
 #define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
 #define TOGGLE_WIDGET_GAMEPLAN 'v'
+#define TOGGLE_WIDGET_SPIELSTART 's'
 
 // Meta
 #define EXIT 'q'
@@ -264,7 +265,7 @@ widget_scoreboard widget_scoreboard_create() {
 
 widget_spielstart widget_spielstart_create() {
 	widget_spielstart w;
-	w.widget_num = WIDGET_SPIELSTART + enable;
+	w.widget_num = WIDGET_SPIELSTART + widget_spielstart_enabled;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
 	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
