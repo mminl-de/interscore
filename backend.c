@@ -13,7 +13,7 @@ typedef unsigned int u32;
 
 #define WIDGET_SCOREBOARD
 #define WIDGET_LIVETABLE
-#define WIDGET_SPIELPLAN
+#define WIDGET_GAMEPLAN
 #define WIDGET_SPIELSTART
 #define WIDGET_LIVETABLE
 
@@ -60,13 +60,13 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	u8 widget_num = WIDGET_SPIELPLAN;
+	u8 widget_num = WIDGET_GAMEPLAN;
 	u8 len; // amount of Games total
 	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-} widget_spielplan;
+} widget_gameplan;
 #pragma pack(pop)
 
 // #### In Game Structs
@@ -236,9 +236,9 @@ bool send_widget_livetable(widget_livetable w) {
 	return true;
 }
 
-bool send_widget_spielplan(widget_spielplan w) {
+bool send_widget_gameplan(widget_gameplan w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
+		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
@@ -303,8 +303,8 @@ widget_livetable widget_livetable_create() {
 	return w;
 }
 
-widget_spielplan widget_spielplan_create() {
-	widget_spielplan w;
+widget_gameplan_widget_gameplan_create() {
+	widget_gameplan w;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
