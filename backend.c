@@ -12,10 +12,10 @@ typedef unsigned int u32;
 
 //The first element is disable, the second is enable/update
 enum widgets {
-	WIDGET_SCOREBOARD = 0,
-	WIDGET_LIVETABLE = 2,
-	WIDGET_GAMEPLAN = 4,
-	WIDGET_SPIELSTART = 6,
+	WIDGET_SCOREBOARD = 1,
+	WIDGET_LIVETABLE = 3,
+	WIDGET_GAMEPLAN = 5,
+	WIDGET_SPIELSTART = 7,
 };
 
 #define PLAYER_NAME_MAX_LEN 100
