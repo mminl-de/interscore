@@ -1,15 +1,15 @@
 let socket = new WebSocket("ws://localhost:8080", "interscore")
 socket.binaryType = "arraybuffer"
 
-let scoreboard_team_1 = document.querySelector(".scoreboard > .team-1")!
-let scoreboard_team_2 = document.querySelector(".scoreboard > .team-2")!
-let scoreboard_score_1 = document.querySelector(".scoreboard > .score-1")!
-let scoreboard_score_2 = document.querySelector(".scoreboard > .score-2")!
+let scoreboard_t1 = document.querySelector(".scoreboard .t1")!
+let scoreboard_t2 = document.querySelector(".scoreboard .t2")!
+let scoreboard_score_1 = document.querySelector(".scoreboard .score-1")!
+let scoreboard_score_2 = document.querySelector(".scoreboard .score-2")!
 
-let game_plan_team_1 = document.querySelector(".game-plan > .team-1")!
-let game_plan_team_2 = document.querySelector(".game-plan > .team-2")!
-let game_plan_score_1 = document.querySelector(".game-plan > .score-1")!
-let game_plan_score_2 = document.querySelector(".game-plan > .score-2")!
+let game_plan_t1 = document.querySelector(".game-plan .t1")!
+let game_plan_t2 = document.querySelector(".game-plan .t2")!
+let game_plan_score_1 = document.querySelector(".game-plan .score-1")!
+let game_plan_score_2 = document.querySelector(".game-plan .score-2")!
 
 let card_graphic = document.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = document.querySelector(".card-receiver")!
@@ -21,15 +21,15 @@ function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
 
 	let offset = 1
-	let team_1: String = ""
-	let team_2: String = ""
+	let t1: String = ""
+	let t2: String = ""
 	for (let i = 0; i < BUFFER_LEN; ++i) {
-		team_1 += String.fromCharCode(view.getUint8(offset))
-		team_2 += String.fromCharCode(view.getUint8(offset + BUFFER_LEN))
+		t1 += String.fromCharCode(view.getUint8(offset))
+		t2 += String.fromCharCode(view.getUint8(offset + BUFFER_LEN))
 		++offset
 	}
-	scoreboard_team_1.innerHTML = team_1.toString()
-	scoreboard_team_2.innerHTML = team_2.toString()
+	scoreboard_t1.innerHTML = t1.toString()
+	scoreboard_t2.innerHTML = t2.toString()
 
 	scoreboard_score_1.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN).toString()
 	scoreboard_score_2.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN + 1).toString()
@@ -44,15 +44,15 @@ function write_game_plan(view: DataView) {
 	++offset
 
 	for (let game = 0; game < games_n; ++game) {
-		let team_1: String = ""
-		let team_2: String = ""
+		let t1: String = ""
+		let t2: String = ""
 		for (let name_char = 0; name_char < BUFFER_LEN; ++name_char) {
-			team_1 += String.fromCharCode(view.getUint8(offset))
-			team_2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN))
+			t1 += String.fromCharCode(view.getUint8(offset))
+			t2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN))
 			++offset
 		}
-		game_plan_team_1.innerHTML = team_1.toString()
-		game_plan_team_2.innerHTML = team_2.toString()
+		game_plan_t1.innerHTML = t1.toString()
+		game_plan_t2.innerHTML = t2.toString()
 		++offset
 	}
 }
@@ -83,9 +83,9 @@ socket.onopen = () => {
 
 socket.onmessage = (event: MessageEvent) => {
 	// TODO
+	console.log("TODO about to receive data")
 	if (!(event.data instanceof ArrayBuffer))
 		console.error("Sent data is not in proper binary format!")
-	console.log("TODO about to receive data")
 
 	let buffer = event.data
 	let view = new DataView(buffer)
@@ -98,9 +98,11 @@ socket.onmessage = (event: MessageEvent) => {
 			console.log("Operating in mode 0 (Scoreboard enabled)")
 			write_scoreboard(view)
 			break
+		// TODO
+		default:
+			console.log("TODO not a classical mode, anyways, here's the data: ", view)
+			break
 	}
-
-	console.log("done")
 }
 
 socket.onerror = (error: Event) => {

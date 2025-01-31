@@ -22,7 +22,7 @@
 	gap: 10px;
 }
 
-.score-left, .score-right {
+.score-1, .score-2 {
 	background-color: gray;
 	width: 60px;
 	padding: 0 10px;

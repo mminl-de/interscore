@@ -32,9 +32,7 @@ typedef struct {
 	u8 score_t2;
 	bool is_halftime;
 } widget_scoreboard;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct {
 	u8 widget_num;
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
@@ -42,9 +40,7 @@ typedef struct {
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
 } widget_spielstart;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct {
 	u8 widget_num;
 	u8 len; // amount of teams total
@@ -57,9 +53,7 @@ typedef struct {
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
 } widget_livetable;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct {
 	u8 widget_num;
 	u8 len; // amount of Games total
@@ -158,7 +152,7 @@ Possible User Actions:
 
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
-#define URL "http://localhost:8080"
+#define URL "http://0.0.0.0:8080"
 #define JSON_PATH "input.json"
 
 // Define the input characters:
@@ -194,7 +188,7 @@ Possible User Actions:
 #define RELOAD_JSON 'j'
 #define PRINT_HELP '?'
 
-//OTHER
+// Other
 #define TEST '6'
 #define WEBSOCKET_STATUS '7'
 
@@ -218,11 +212,12 @@ bool widget_gameplan_enabled = false;
 
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_scoreboard\n");
+		fprintf(stderr, "Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
-	printf("send scoreboard data to %d, enabled value: %d\n", w.widget_num - WIDGET_SCOREBOARD, client_con);
+	const char *data = (char *) &w;
+	mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+	printf("Sent '%s' to client!\n", data);
 	return true;
 }
 
@@ -231,7 +226,7 @@ bool send_widget_spielstart(widget_spielstart w) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -240,7 +235,7 @@ bool send_widget_livetable(widget_livetable w) {
 		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -249,7 +244,7 @@ bool send_widget_gameplan(widget_gameplan w) {
 		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -409,28 +404,36 @@ bool send_message_to_site(char *message) {
 
 void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	switch (ev) {
-	case MG_EV_HTTP_MSG: {
-		struct mg_http_message *hm = p;
-		mg_ws_upgrade(nc, hm, NULL);
-		printf("Client upgradede to WebSocket Connection\n");
-		break;
-	}
 	case MG_EV_CONNECT:
 		printf("New client connected!\n");
 		break;
-	case MG_EV_WS_OPEN:
-		printf("Connection opened!\n");
-		client_con = nc;
+	case MG_EV_ACCEPT:
+		printf("Connection accepted!\n");
 		break;
 	case MG_EV_CLOSE:
 		printf("Client disconnected!\n");
 		client_con = NULL;
 		break;
-	case MG_EV_WS_MSG:
-		printf("This server is send only! Ignoring received Message from client!\n");
+	case MG_EV_HTTP_MSG: {
+		struct mg_http_message *hm = p;
+		mg_ws_upgrade(nc, hm, NULL);
+		printf("Client upgraded to WebSocket Connection!\n");
 		break;
+	}
+	case MG_EV_WS_OPEN:
+		printf("Connection opened!\n");
+		client_con = nc;
+		break;
+	case MG_EV_WS_MSG:
+		printf("This server is send only! Ignoring incoming messages ...\n");
+		break;
+	case MG_EV_OPEN:
+	case MG_EV_POLL:
+	case MG_EV_READ:
+	case MG_EV_WRITE:
+	case MG_EV_HTTP_HDRS:
 	default:
-		printf("received unknown signal: %d! Ignoring...\n", ev);
+		printf("Ignoring unknown signal %d ...\n", ev);
 	}
 	return;
 }
@@ -676,20 +679,20 @@ void add_card(bool card_type) {
 }
 
 int main(void) {
-	// WebSocket stuff first
+	// WebSocket stuff
 	struct mg_mgr mgr;
 	mg_mgr_init(&mgr);
 	mg_http_listen(&mgr, URL, ev_handler, NULL);
 
+	// User data stuff
 	load_json(JSON_PATH);
 	init_matchday();
 
 	bool close = false;
 	while (!close) {
+		mg_mgr_poll(&mgr, 1000);
 		char c = getchar();
 		switch (c) {
-
-		// #### INGAME STUFF
 		case SET_TIME: {
 			u16 min; u8 sec;
 			printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
@@ -843,7 +846,12 @@ int main(void) {
 			printf("TODO: RELOAD_JSON\n");
 			break;
 		case PRINT_HELP:
-			printf("TODO: PRINT_HELP\n");
+			printf(
+				"=== Keyboard options ===\n"
+				"?  print help\n"
+				"q  quit\n"
+				"========================\n"
+			);
 			break;
 		// #### ORIESNTIOERASNTEOI
 		case TEST: {
@@ -853,11 +861,7 @@ int main(void) {
 			break;
 		}
 		case WEBSOCKET_STATUS:
-			printf("listening... ");
 			mg_mgr_poll(&mgr, 1000);
-			mg_mgr_poll(&mgr, 1000);
-			mg_mgr_poll(&mgr, 1000);
-			printf("done\n");
 			break;
 		}
 	}
