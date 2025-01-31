@@ -8,14 +8,15 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-
 // #### Javascript/ GUI Widgets Structs
 
-#define WIDGET_SCOREBOARD
-#define WIDGET_LIVETABLE
-#define WIDGET_GAMEPLAN
-#define WIDGET_SPIELSTART
-#define WIDGET_LIVETABLE
+//The first element is disable, the second is enable/update
+enum widgets {
+	WIDGET_SCOREBOARD = 0,
+	WIDGET_LIVETABLE = 2,
+	WIDGET_GAMEPLAN = 4,
+	WIDGET_SPIELSTART = 6,
+};
 
 #define PLAYER_NAME_MAX_LEN 100
 #define TEAMS_NAME_MAX_LEN 100
@@ -24,7 +25,7 @@ typedef unsigned int u32;
 
 #pragma pack(push, 1)
 typedef struct {
-	u8 widget_num = WIDGET_SCOREBOARD;
+	u8 widget_num;
 	char team1[TEAMS_NAME_MAX_LEN];
 	char team2[TEAMS_NAME_MAX_LEN];
 	u8 score_t1;
@@ -35,7 +36,7 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	u8 widget_num = WIDGET_SPIELSTART;
+	u8 widget_num;
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
@@ -45,7 +46,7 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	u8 widget_num = WIDGET_LIVETABLE;
+	u8 widget_num;
 	u8 len; // amount of teams total
 	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
 	u8 points[TEAMS_COUNT_MAX];
@@ -60,7 +61,7 @@ typedef struct {
 
 #pragma pack(push, 1)
 typedef struct {
-	u8 widget_num = WIDGET_GAMEPLAN;
+	u8 widget_num;
 	u8 len; // amount of Games total
 	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
@@ -185,7 +186,7 @@ Possible User Actions:
 #define TOGGLE_WIDGET_HALFTIME 'h'
 #define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
-#define TOGGLE_WIDGET_RESULTS 'v'
+#define TOGGLE_WIDGET_GAMEPLAN 'v'
 
 // Meta
 #define EXIT 'q'
@@ -208,6 +209,11 @@ u16 team_calc_goals_taken(u8 index);
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
+
+bool widget_scoreboard_enabled = false;
+bool widget_spielstart_enabled = false;
+bool widget_livetable_enabled = false;
+bool widget_gameplan_enabled = false;
 
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
@@ -245,8 +251,9 @@ bool send_widget_gameplan(widget_gameplan w) {
 	return true;
 }
 
-widget_ingame widget_ingame_create() {
-	widget_ingame w;
+widget_scoreboard widget_scoreboard_create() {
+	widget_scoreboard w;
+	w.widget_num = WIDGET_SCOREBOARD + widget_scoreboard_enabled;
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	w.score_t1 = md.games[md.cur.gameindex].score.t1;
@@ -257,6 +264,7 @@ widget_ingame widget_ingame_create() {
 
 widget_spielstart widget_spielstart_create() {
 	widget_spielstart w;
+	w.widget_num = WIDGET_SPIELSTART + enable;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
 	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
@@ -266,6 +274,7 @@ widget_spielstart widget_spielstart_create() {
 
 widget_livetable widget_livetable_create() {
 	widget_livetable w;
+	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
 	w.len = md.teams_count;
 	int teams_done[md.teams_count];
 	for (u8 i = 0; i < md.teams_count; i++) {
@@ -303,8 +312,9 @@ widget_livetable widget_livetable_create() {
 	return w;
 }
 
-widget_gameplan_widget_gameplan_create() {
+widget_gameplan widget_gameplan_create() {
 	widget_gameplan w;
+	w.widget_num = WIDGET_SCOREBOARD + widget_gameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
@@ -801,17 +811,27 @@ int main(void) {
 			break;
 		}
 		// #### UI STUFF
-		case TOGGLE_WIDGET_INGAME:
-			printf("TODO: TOGGLE_WIDGET_INGAME\n");
+		case TOGGLE_WIDGET_SCOREBOARD:
+			widget_scoreboard_enabled = !widget_scoreboard_enabled;
+			send_widget_scoreboard(widget_scoreboard_create());
 			break;
+		/*
 		case TOGGLE_WIDGET_HALFTIME:
-			printf("TODO: TOGGLE_WIDGET_HALFTIME\n");
+			widget_halftime_enabled = !widget_halftime_enabled;
+			send_widget_halftime(widget_halftime_create());
 			break;
+		*/
 		case TOGGLE_WIDGET_LIVETABLE:
-			printf("TODO: WIDGET_LIVETABLE\n");
+			widget_livetable_enabled = !widget_livetable_enabled;
+			send_widget_livetable(widget_livetable_create());
 			break;
-		case TOGGLE_WIDGET_RESULTS:
-			printf("TODO: TOGGLE_WIDGET_TURNIERVERLAUF\n");
+		case TOGGLE_WIDGET_GAMEPLAN:
+			widget_gameplan_enabled = !widget_gameplan_enabled;
+			send_widget_gameplan(widget_gameplan_create());
+			break;
+		case TOGGLE_WIDGET_SPIELSTART:
+			widget_spielstart_enabled = !widget_spielstart_enabled;
+			send_widget_spielstart(widget_spielstart_create());
 			break;
 		// #### Debug Stuff
 		case EXIT:
