@@ -222,7 +222,7 @@ bool send_widget_scoreboard(widget_scoreboard w) {
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
-	printf("send scoreboard data, enabled value: %d\n", w.widget_num - WIDGET_SCOREBOARD);
+	printf("send scoreboard data to %d, enabled value: %d\n", w.widget_num - WIDGET_SCOREBOARD, client_con);
 	return true;
 }
 
