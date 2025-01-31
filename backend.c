@@ -18,7 +18,7 @@ typedef struct {
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
-} widget_ingame;
+} widget_scoreboard;
 
 typedef struct {
 	char team1_keeper[TEAMS_NAME_MAX_LEN];
@@ -44,7 +44,7 @@ typedef struct {
 	char *teams_right[TEAMS_NAME_MAX_LEN];
 	u8 *goals_left;
 	u8 *goals_right;
-} widget_spielplan;
+} widget_game_plan;
 
 // #### In Game Structs
 
@@ -182,16 +182,16 @@ Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
 
-bool send_widget_ingame(widget_ingame w) {
+bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_ingame\n");
+		printf("WARNING: client if not connected, couldnt send widget_scoreboard\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-bool send_widget_spielstart(widget_ingame w) {
+bool send_widget_spielstart(widget_scoreboard w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
@@ -200,7 +200,7 @@ bool send_widget_spielstart(widget_ingame w) {
 	return true;
 }
 
-bool send_widget_live_table(widget_ingame w) {
+bool send_widget_live_table(widget_scoreboard w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_live_table\n");
 		return false;
@@ -209,17 +209,17 @@ bool send_widget_live_table(widget_ingame w) {
 	return true;
 }
 
-bool send_widget_spielplan(widget_ingame w) {
+bool send_widget_game_plan(widget_scoreboard w) {
 	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_spielplan\n");
+		printf("WARNING: client if not connected, couldnt send widget_game_plan\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *)&w, sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-widget_ingame widget_ingame_create() {
-	widget_ingame w;
+widget_scoreboard widget_scoreboard_create() {
+	widget_scoreboard w;
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	w.score_t1 = md.games[md.cur.gameindex].score.t1;
