@@ -79,13 +79,13 @@ function write_card(view: DataView) {
 
 socket.onopen = () => {
 	console.log("Connected to WebSocket server!")
-	socket.send("Send data")
 }
 
 socket.onmessage = (event: MessageEvent) => {
 	// TODO
 	if (!(event.data instanceof ArrayBuffer))
 		console.error("Sent data is not in proper binary format!")
+	console.log("TODO about to receive data")
 
 	let buffer = event.data
 	let view = new DataView(buffer)
@@ -99,6 +99,8 @@ socket.onmessage = (event: MessageEvent) => {
 			write_scoreboard(view)
 			break
 	}
+
+	console.log("done")
 }
 
 socket.onerror = (error: Event) => {

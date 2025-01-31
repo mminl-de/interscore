@@ -66,12 +66,12 @@ function write_card(view) {
 }
 socket.onopen = function () {
     console.log("Connected to WebSocket server!");
-    socket.send("Send data");
 };
 socket.onmessage = function (event) {
     // TODO
     if (!(event.data instanceof ArrayBuffer))
         console.error("Sent data is not in proper binary format!");
+    console.log("TODO about to receive data");
     var buffer = event.data;
     var view = new DataView(buffer);
     var mode = view.getUint8(0);
@@ -79,9 +79,11 @@ socket.onmessage = function (event) {
         case 0:
             return;
         case 2:
+            console.log("Operating in mode 0 (Scoreboard enabled)");
             write_scoreboard(view);
             break;
     }
+    console.log("done");
 };
 socket.onerror = function (error) {
     console.error("WebSocket Error: ", error);
