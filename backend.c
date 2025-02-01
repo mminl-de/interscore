@@ -215,6 +215,7 @@ bool send_widget_scoreboard(widget_scoreboard w) {
 		fprintf(stderr, "Client not connected, couldn't send widget!\n");
 		return false;
 	}
+	printf("%d:%d, %d\n", w.score_t1, w.score_t2, w.is_halftime);
 	const char *data = (char *) &w;
 	mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 	printf("Sent '%s' to client!\n", data);
@@ -252,7 +253,7 @@ widget_scoreboard widget_scoreboard_create() {
 	widget_scoreboard w;
 	w.widget_num = WIDGET_SCOREBOARD + widget_scoreboard_enabled;
 	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	w.score_t1 = md.games[md.cur.gameindex].score.t1;
 	w.score_t2 = md.games[md.cur.gameindex].score.t2;
 	w.is_halftime = md.cur.halftime;

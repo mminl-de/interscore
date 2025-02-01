@@ -17,9 +17,13 @@ function write_scoreboard(view) {
     var offset = 1;
     var t1 = "";
     var t2 = "";
-    for (var i = 0; i < BUFFER_LEN; ++i) {
+    for (var i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
         t1 += String.fromCharCode(view.getUint8(offset));
-        t2 += String.fromCharCode(view.getUint8(offset + BUFFER_LEN));
+        ++offset;
+    }
+    offset = 1;
+    for (var i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+        t2 += String.fromCharCode(view.getUint8(BUFFER_LEN + offset));
         ++offset;
     }
     scoreboard_t1.innerHTML = t1.toString();
@@ -87,7 +91,6 @@ socket.onmessage = function (event) {
             console.log("TODO not a classical mode, anyways, here's the data: ", view);
             break;
     }
-    console.log("done");
 };
 socket.onerror = function (error) {
     console.error("WebSocket Error: ", error);
