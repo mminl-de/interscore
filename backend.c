@@ -867,9 +867,10 @@ int main(void) {
 		case PRINT_HELP:
 			printf(
 				"=== Keyboard options ===\n"
+				"7  load/reload server connection\n"
 				"?  print help\n"
 				"t  set timer\n"
-				"=  pause/unpause timer\n"
+				"=  pause/resume timer\n"
 				"q  quit\n"
 				"========================\n"
 			);

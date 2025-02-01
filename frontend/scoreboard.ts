@@ -1,6 +1,7 @@
 let socket = new WebSocket("ws://localhost:8080", "interscore")
 socket.binaryType = "arraybuffer"
 
+let scoreboard = document.querySelector(".scoreboard")! as HTMLElement
 let scoreboard_t1 = document.querySelector(".scoreboard .t1")!
 let scoreboard_t2 = document.querySelector(".scoreboard .t2")!
 let scoreboard_score_1 = document.querySelector(".scoreboard .score-1")!
@@ -129,7 +130,6 @@ socket.onopen = () => {
 
 socket.onmessage = (event: MessageEvent) => {
 	// TODO
-	console.log("TODO about to receive data")
 	if (!(event.data instanceof ArrayBuffer))
 		console.error("Sent data is not in proper binary format!")
 
@@ -140,8 +140,11 @@ socket.onmessage = (event: MessageEvent) => {
 	switch (mode) {
 		case 0:
 			return
+		case 1:
+			scoreboard.style.display = "none"
+			break
 		case 2:
-			console.log("Operating in mode 0 (Scoreboard enabled)")
+			scoreboard.style.display = "inline-flex"
 			write_scoreboard(view)
 			break
 		case 9:
@@ -150,8 +153,13 @@ socket.onmessage = (event: MessageEvent) => {
 			break
 		// TODO WIP
 		case 10:
-			console.log("Pausing timer")
-			timer_is_paused ? start_timer(remaining_time) : scoreboard_pause_timer()
+			if (timer_is_paused) {
+				console.log("Resuming timer")
+				start_timer(remaining_time)
+			} else {
+				console.log("Pausing timer")
+				scoreboard_pause_timer()
+			}
 			break
 		// TODO
 		default:
