@@ -23,9 +23,13 @@ function write_scoreboard(view: DataView) {
 	let offset = 1
 	let t1: String = ""
 	let t2: String = ""
-	for (let i = 0; i < BUFFER_LEN; ++i) {
+	for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
 		t1 += String.fromCharCode(view.getUint8(offset))
-		t2 += String.fromCharCode(view.getUint8(offset + BUFFER_LEN))
+		++offset
+	}
+	offset = 1
+	for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+		t2 += String.fromCharCode(view.getUint8(BUFFER_LEN + offset))
 		++offset
 	}
 	scoreboard_t1.innerHTML = t1.toString()
