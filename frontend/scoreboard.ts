@@ -91,6 +91,30 @@ function scoreboard_set_timer(view: DataView) {
 	const time_in_s = view.getUint16(offset)
 	scoreboard_time_minutes.innerHTML = Math.floor(time_in_s / 60).toString().padStart(2, "0")
 	scoreboard_time_seconds.innerHTML = (time_in_s % 60).toString().padStart(2, "0")
+	start_timer(time_in_s)
+}
+
+// TODO FINAL MOVE TOP
+let countdown: number
+let remaining_time = 0
+function start_timer(time_in_s: number) {
+	clearInterval(countdown)
+	remaining_time = time_in_s
+	update_display()
+
+	countdown = setInterval(() => {
+		if (remaining_time > 0)  {
+			--remaining_time
+			update_display()
+		} else clearInterval(countdown)
+	}, 1000)
+}
+
+function update_display() {
+	const minutes = Math.floor(remaining_time / 60).toString().padStart(2, "0")
+	const seconds = (remaining_time % 60).toString().padStart(2, "0")
+	scoreboard_time_minutes.innerHTML = minutes
+	scoreboard_time_seconds.innerHTML = seconds
 }
 
 socket.onopen = () => {

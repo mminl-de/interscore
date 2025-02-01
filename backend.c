@@ -859,6 +859,7 @@ int main(void) {
 			printf(
 				"=== Keyboard options ===\n"
 				"?  print help\n"
+				"t  set timer\n"
 				"q  quit\n"
 				"========================\n"
 			);
