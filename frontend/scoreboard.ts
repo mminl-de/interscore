@@ -5,6 +5,8 @@ let scoreboard_t1 = document.querySelector(".scoreboard .t1")!
 let scoreboard_t2 = document.querySelector(".scoreboard .t2")!
 let scoreboard_score_1 = document.querySelector(".scoreboard .score-1")!
 let scoreboard_score_2 = document.querySelector(".scoreboard .score-2")!
+let scoreboard_time_minutes = document.querySelector(".scoreboard .time .minutes")!
+let scoreboard_time_seconds = document.querySelector(".scoreboard .time .seconds")!
 
 let game_plan_t1 = document.querySelector(".game-plan .t1")!
 let game_plan_t2 = document.querySelector(".game-plan .t2")!
@@ -35,11 +37,14 @@ function write_scoreboard(view: DataView) {
 	scoreboard_t1.innerHTML = t1.toString()
 	scoreboard_t2.innerHTML = t2.toString()
 
-	scoreboard_score_1.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN).toString()
-	scoreboard_score_2.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN + 1).toString()
+	scoreboard_score_1.innerHTML = view.getUint8(offset).toString()
+	++offset
+	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
+	++offset
 
 	// TODO
-	// let is_halftime = view.getUint8(202)
+	//const is_halftime = view.getUint8(offset)
+	//++offset
 }
 
 function write_game_plan(view: DataView) {
@@ -81,6 +86,13 @@ function write_card(view: DataView) {
 	}
 }
 
+function scoreboard_set_timer(view: DataView) {
+	let offset = 1
+	const time_in_s = view.getUint16(offset)
+	scoreboard_time_minutes.innerHTML = Math.floor(time_in_s / 60).toString().padStart(2, "0")
+	scoreboard_time_seconds.innerHTML = (time_in_s % 60).toString().padStart(2, "0")
+}
+
 socket.onopen = () => {
 	console.log("Connected to WebSocket server!")
 }
@@ -102,6 +114,10 @@ socket.onmessage = (event: MessageEvent) => {
 			console.log("Operating in mode 0 (Scoreboard enabled)")
 			write_scoreboard(view)
 			break
+		// TODO WIP
+		case 9:
+			console.log("Updating timer")
+			scoreboard_set_timer(view)
 		// TODO
 		default:
 			console.log("TODO not a classical mode, anyways, here's the data: ", view)

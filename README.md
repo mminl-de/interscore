@@ -123,3 +123,7 @@ struct Team {
 - light shadows
 - subtle gradients
 - black borders
+
+# NOW
+- `n` and `p` keys
+- timer

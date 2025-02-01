@@ -11,7 +11,7 @@
     gap: 10px;
 }
 
-.time-slider{
+.time-slider {
     /* width: 100px; */
     height: 8px;
     background-color: lime;
@@ -20,6 +20,9 @@
 .time {
     background-color: gray;
     font-size: 3.5vh;
+
+	display: flex;
+	justify-content: center;
 
     align-self: center;
     width: 90px;
@@ -31,7 +34,7 @@
     padding: 0 16px;
 }
 
-.team-left {
+.t1 {
     /*
      * background: linear-gradient(90deg, red 0%, white 100%);
      * border-top-left-radius: 64px;
@@ -42,7 +45,7 @@
     text-align: right;
 }
 
-.team-right {
+.t2 {
     /*
     color: white;
     background: linear-gradient(90deg, orange 0%, blue 100%);

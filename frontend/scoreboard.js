@@ -1,46 +1,51 @@
-var socket = new WebSocket("ws://localhost:8080", "interscore");
+let socket = new WebSocket("ws://localhost:8080", "interscore");
 socket.binaryType = "arraybuffer";
-var scoreboard_t1 = document.querySelector(".scoreboard .t1");
-var scoreboard_t2 = document.querySelector(".scoreboard .t2");
-var scoreboard_score_1 = document.querySelector(".scoreboard .score-1");
-var scoreboard_score_2 = document.querySelector(".scoreboard .score-2");
-var game_plan_t1 = document.querySelector(".game-plan .t1");
-var game_plan_t2 = document.querySelector(".game-plan .t2");
-var game_plan_score_1 = document.querySelector(".game-plan .score-1");
-var game_plan_score_2 = document.querySelector(".game-plan .score-2");
-var card_graphic = document.querySelector(".card-graphic");
-var card_receiver = document.querySelector(".card-receiver");
-var card_message = document.querySelector(".card-message");
-var BUFFER_LEN = 100;
+let scoreboard_t1 = document.querySelector(".scoreboard .t1");
+let scoreboard_t2 = document.querySelector(".scoreboard .t2");
+let scoreboard_score_1 = document.querySelector(".scoreboard .score-1");
+let scoreboard_score_2 = document.querySelector(".scoreboard .score-2");
+let scoreboard_time_minutes = document.querySelector(".scoreboard .time .minutes");
+let scoreboard_time_seconds = document.querySelector(".scoreboard .time .seconds");
+let game_plan_t1 = document.querySelector(".game-plan .t1");
+let game_plan_t2 = document.querySelector(".game-plan .t2");
+let game_plan_score_1 = document.querySelector(".game-plan .score-1");
+let game_plan_score_2 = document.querySelector(".game-plan .score-2");
+let card_graphic = document.querySelector(".card-graphic");
+let card_receiver = document.querySelector(".card-receiver");
+let card_message = document.querySelector(".card-message");
+const BUFFER_LEN = 100;
 function write_scoreboard(view) {
     console.log("Writing data to scoreboard:\n", view);
-    var offset = 1;
-    var t1 = "";
-    var t2 = "";
-    for (var i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+    let offset = 1;
+    let t1 = "";
+    let t2 = "";
+    for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
         t1 += String.fromCharCode(view.getUint8(offset));
         ++offset;
     }
     offset = 1;
-    for (var i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+    for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
         t2 += String.fromCharCode(view.getUint8(BUFFER_LEN + offset));
         ++offset;
     }
     scoreboard_t1.innerHTML = t1.toString();
     scoreboard_t2.innerHTML = t2.toString();
-    scoreboard_score_1.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN).toString();
-    scoreboard_score_2.innerHTML = view.getUint8(1 + 2 * BUFFER_LEN + 1).toString();
+    scoreboard_score_1.innerHTML = view.getUint8(offset).toString();
+    ++offset;
+    scoreboard_score_2.innerHTML = view.getUint8(offset).toString();
+    ++offset;
     // TODO
-    // let is_halftime = view.getUint8(202)
+    //const is_halftime = view.getUint8(offset)
+    //++offset
 }
 function write_game_plan(view) {
-    var offset = 1;
-    var games_n = view.getUint8(offset);
+    let offset = 1;
+    const games_n = view.getUint8(offset);
     ++offset;
-    for (var game = 0; game < games_n; ++game) {
-        var t1 = "";
-        var t2 = "";
-        for (var name_char = 0; name_char < BUFFER_LEN; ++name_char) {
+    for (let game = 0; game < games_n; ++game) {
+        let t1 = "";
+        let t2 = "";
+        for (let name_char = 0; name_char < BUFFER_LEN; ++name_char) {
             t1 += String.fromCharCode(view.getUint8(offset));
             t2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN));
             ++offset;
@@ -51,14 +56,14 @@ function write_game_plan(view) {
     }
 }
 function write_card(view) {
-    var offset = 1;
-    var receiver = "";
-    for (var name_1 = 0; name_1 < BUFFER_LEN; ++name_1) {
+    let offset = 1;
+    let receiver = "";
+    for (let name = 0; name < BUFFER_LEN; ++name) {
         receiver += String.fromCharCode(view.getUint8(offset));
         ++offset;
     }
     card_receiver.innerHTML = receiver.toString();
-    var is_red = view.getUint8(offset);
+    const is_red = view.getUint8(offset);
     if (is_red === 1) {
         card_graphic.style.backgroundColor = "#ff0000";
         card_message.innerHTML = "bekommt eine rote Karte";
@@ -68,17 +73,23 @@ function write_card(view) {
         card_message.innerHTML = "bekommt eine gelbe Karte";
     }
 }
-socket.onopen = function () {
+function scoreboard_set_timer(view) {
+    let offset = 1;
+    const time_in_s = view.getUint16(offset);
+    scoreboard_time_minutes.innerHTML = Math.floor(time_in_s / 60).toString().padStart(2, "0");
+    scoreboard_time_seconds.innerHTML = (time_in_s % 60).toString().padStart(2, "0");
+}
+socket.onopen = () => {
     console.log("Connected to WebSocket server!");
 };
-socket.onmessage = function (event) {
+socket.onmessage = (event) => {
     // TODO
     console.log("TODO about to receive data");
     if (!(event.data instanceof ArrayBuffer))
         console.error("Sent data is not in proper binary format!");
-    var buffer = event.data;
-    var view = new DataView(buffer);
-    var mode = view.getUint8(0);
+    let buffer = event.data;
+    let view = new DataView(buffer);
+    const mode = view.getUint8(0);
     switch (mode) {
         case 0:
             return;
@@ -86,16 +97,20 @@ socket.onmessage = function (event) {
             console.log("Operating in mode 0 (Scoreboard enabled)");
             write_scoreboard(view);
             break;
+        // TODO WIP
+        case 9:
+            console.log("Updating timer");
+            scoreboard_set_timer(view);
         // TODO
         default:
             console.log("TODO not a classical mode, anyways, here's the data: ", view);
             break;
     }
 };
-socket.onerror = function (error) {
+socket.onerror = (error) => {
     console.error("WebSocket Error: ", error);
 };
-socket.onclose = function () {
+socket.onclose = () => {
     console.log("WebSocket connection closed!");
 };
 console.log("TODO: hi from scoreboard.js (this always runs)");

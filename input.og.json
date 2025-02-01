@@ -1,6 +1,6 @@
 {
     "teams": {
-        "GIFHORN": {
+        "Gifhorn": {
             "logo": "logo/gifhorn.jpg",
             "keeper": {
                 "name": "Corvin Rowold"
@@ -9,7 +9,7 @@
                 "name": "Christian Kramer"
             }
         },
-        "NAUROD 1": {
+        "Naurod 1": {
             "logo": "logo/naurod.jpg",
             "keeper": {
                 "name": "Marco Wagner"
@@ -18,7 +18,7 @@
                 "name": "Till Wehner"
             }
         },
-        "NAUROD 2": {
+        "Naurod 2": {
             "logo": "logo/naurod.jpg",
             "keeper": {
                 "name": "Timo Wagner"
@@ -27,7 +27,7 @@
                 "name": "Pascal van Klev"
             }
         },
-        "GROSSKOSCHEN 2": {
+        "Grosskoschen 2": {
             "logo": "logo/grosskoschen.jpg",
             "keeper": {
                 "name": "Franz Kieschnick"
@@ -36,7 +36,7 @@
                 "name": "Leon Mambk"
             }
         },
-        "LUDWIGSFELDE": {
+        "Ludwigsfelde": {
             "logo": "logo/ludwigsfelde.svg",
             "keeper": {
                 "name": "Matthias Dunkel"
@@ -48,48 +48,48 @@
     },
     "games": {
         "1": {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2"
+            "team1": "Naurod 1",
+            "team2": "Naurod 2"
         },
         "2": {
-            "team1": "GROSSKOSCHEN 2",
-            "team2": "LUDWIGSFELDE"
+            "team1": "Grosskoschen 2",
+            "team2": "Ludwigsfelde"
         },
         "3": {
-            "team1": "GIFHORN",
-            "team2": "NAUROD 2"
+            "team1": "Gifhorn",
+            "team2": "Naurod 2"
         },
         "4": {
-            "team1": "NAUROD 1",
-            "team2": "LUDWIGSFELDE"
+            "team1": "Naurod 1",
+            "team2": "Ludwigsfelde"
         },
         "5": {
-            "team1": "GROSSKOSCHEN 2",
-            "team2": "GIFHORN"
+            "team1": "Grosskoschen 2",
+            "team2": "Gifhorn"
         },
         "6": {
-            "team1": "LUDWIGSFELDE",
-            "team2": "NAUROD 2"
+            "team1": "Ludwigsfelde",
+            "team2": "Naurod 2"
         },
         "7": {
-            "team1": "NAUROD 1",
-            "team2": "GIFHORN"
+            "team1": "Naurod 1",
+            "team2": "Gifhorn"
         },
         "8": {
-            "team1": "GROSSKOSCHEN 2",
-            "team2": "NAUROD 2"
+            "team1": "Grosskoschen 2",
+            "team2": "Naurod 2"
         },
         "9": {
-            "team1": "LUDWIGSFELDE",
-            "team2": "GIFHORN"
+            "team1": "Ludwigsfelde",
+            "team2": "Gifhorn"
         },
         "10": {
-            "team1": "NAUROD 1",
-            "team2": "GROSSKOSCHEN 2"
+            "team1": "Naurod 1",
+            "team2": "Grosskoschen 2"
         },
         "experimental": {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2",
+            "team1": "Naurod 1",
+            "team2": "Naurod 2",
             "halftimescore": {
                 "team1": "0",
                 "team2": "3"

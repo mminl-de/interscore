@@ -16,6 +16,7 @@ enum widgets {
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_SPIELSTART = 7,
+	SCOREBOARD_SET_TIMER = 9
 };
 
 #define PLAYER_NAME_MAX_LEN 100
@@ -418,7 +419,7 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	case MG_EV_HTTP_MSG: {
 		struct mg_http_message *hm = p;
 		mg_ws_upgrade(nc, hm, NULL);
-		printf("Client upgraded to WebSocket Connection!\n");
+		printf("Client upgraded to WebSocket connection!\n");
 		break;
 	}
 	case MG_EV_WS_OPEN:
@@ -428,11 +429,13 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	case MG_EV_WS_MSG:
 		printf("This server is send only! Ignoring incoming messages ...\n");
 		break;
+	// Signals not worth logging
 	case MG_EV_OPEN:
 	case MG_EV_POLL:
 	case MG_EV_READ:
 	case MG_EV_WRITE:
 	case MG_EV_HTTP_HDRS:
+		break;
 	default:
 		printf("Ignoring unknown signal %d ...\n", ev);
 	}
@@ -700,6 +703,12 @@ int main(void) {
 			scanf("%hu:%hhu", &min, &sec); // TODO fix this, %ud breaks sec input
 			md.cur.time = min*60 + sec;
 			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
+
+			u8 buffer[3];
+			buffer[0] = 9;
+			u16 time = htons(md.cur.time);
+			memcpy(&buffer[1], &time, sizeof(time));
+			mg_ws_send(client_con, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case ADD_SECOND:

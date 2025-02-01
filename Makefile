@@ -18,3 +18,6 @@ fast:
 
 run: frontend debug
 	./interscore
+
+js:
+	tsc --target es2017 frontend/scoreboard.ts
