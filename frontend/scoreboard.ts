@@ -110,6 +110,12 @@ function start_timer(time_in_s: number) {
 	}, 1000)
 }
 
+let timer_is_paused = false
+function scoreboard_pause_timer() {
+	clearInterval(countdown)
+	timer_is_paused = true
+}
+
 function update_display() {
 	const minutes = Math.floor(remaining_time / 60).toString().padStart(2, "0")
 	const seconds = (remaining_time % 60).toString().padStart(2, "0")
@@ -138,10 +144,15 @@ socket.onmessage = (event: MessageEvent) => {
 			console.log("Operating in mode 0 (Scoreboard enabled)")
 			write_scoreboard(view)
 			break
-		// TODO WIP
 		case 9:
 			console.log("Updating timer")
 			scoreboard_set_timer(view)
+			break
+		// TODO WIP
+		case 10:
+			console.log("Pausing timer")
+			timer_is_paused ? start_timer(remaining_time) : scoreboard_pause_timer()
+			break
 		// TODO
 		default:
 			console.log("TODO not a classical mode, anyways, here's the data: ", view)

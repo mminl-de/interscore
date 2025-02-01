@@ -16,7 +16,9 @@ enum widgets {
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_SPIELSTART = 7,
-	SCOREBOARD_SET_TIMER = 9
+	SCOREBOARD_SET_TIMER = 9,
+	// TODO WIP
+	SCOREBOARD_PAUSE_TIMER = 10
 };
 
 #define PLAYER_NAME_MAX_LEN 100
@@ -160,6 +162,7 @@ Possible User Actions:
 // Changing game time
 #define ADD_SECOND '+'
 #define REMOVE_SECOND '-'
+#define PAUSE_TIME '='
 #define SET_TIME 't'
 
 // Switching games
@@ -705,10 +708,16 @@ int main(void) {
 			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 
 			u8 buffer[3];
-			buffer[0] = 9;
+			buffer[0] = SCOREBOARD_SET_TIMER;
 			u16 time = htons(md.cur.time);
 			memcpy(&buffer[1], &time, sizeof(time));
 			mg_ws_send(client_con, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+			break;
+		}
+		case PAUSE_TIME: {
+				// TODO NOW
+			const u8 data = SCOREBOARD_PAUSE_TIMER;
+			mg_ws_send(client_con, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case ADD_SECOND:
@@ -860,6 +869,7 @@ int main(void) {
 				"=== Keyboard options ===\n"
 				"?  print help\n"
 				"t  set timer\n"
+				"=  pause/unpause timer\n"
 				"q  quit\n"
 				"========================\n"
 			);
