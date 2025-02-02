@@ -812,7 +812,9 @@ int main(void) {
 		}
 		case GAME_HALFTIME:
 			// TODO WIP
+			printf("TODO toggling halftime\n");
 			md.cur.halftime = !md.cur.halftime;
+			send_widget_scoreboard(widget_scoreboard_create());
 			break;
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;
