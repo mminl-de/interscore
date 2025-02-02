@@ -16,9 +16,12 @@ let gameplan_t2 = document.querySelector(".gameplan .t2")!
 let gameplan_score_1 = document.querySelector(".gameplan .score-1")!
 let gameplan_score_2 = document.querySelector(".gameplan .score-2")!
 
-let card_graphic = document.querySelector(".card-graphic")! as HTMLElement
-let card_receiver = document.querySelector(".card-receiver")!
-let card_message = document.querySelector(".card-message")!
+let playing_teams = document.querySelector(".playing-teams")! as HTMLElement
+
+let card = document.querySelector(".card")! as HTMLElement
+let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
+let card_receiver = card.querySelector(".card-receiver")!
+let card_message = card.querySelector(".card-message")!
 
 const BUFFER_LEN = 100
 
@@ -169,18 +172,28 @@ socket.onmessage = (event: MessageEvent) => {
 		//	livetable.style.display = "inline-flex"
 		//	break
 		case 5:
-			// TODO WIP
 			gameplan.style.display = "none"
 			break
 		case 6:
-			// TODO WIP
 			gameplan.style.display = "inline-flex"
 			break
+		case 7:
+			playing_teams.style.display = "none"
+			break
+		case 8:
+			playing_teams.style.display = "flex"
+			break
 		case 9:
+			card.style.display = "none"
+			break
+		case 10:
+			card.style.display = "flex"
+			break
+		case 11:
 			console.log("Updating timer")
 			scoreboard_set_timer(view)
 			break
-		case 10:
+		case 12:
 			if (timer_is_paused) {
 				console.log("Resuming timer")
 				start_timer(remaining_time)

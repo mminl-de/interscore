@@ -16,9 +16,11 @@ enum widgets {
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_SPIELSTART = 7,
-	SCOREBOARD_SET_TIMER = 9,
+	WIDGET_CARD = 9,
+	// TODO
+	SCOREBOARD_SET_TIMER = 11,
 	// TODO WIP
-	SCOREBOARD_PAUSE_TIMER = 10
+	SCOREBOARD_PAUSE_TIMER = 12
 };
 
 #define PLAYER_NAME_MAX_LEN 100
@@ -168,6 +170,7 @@ Possible User Actions:
 // Switching games
 #define GAME_FORWARD 'n'
 #define GAME_BACK 'p'
+#define GAME_HALFTIME 'h'
 
 // Goals
 #define GOAL_TEAM_1 '1'
@@ -181,7 +184,6 @@ Possible User Actions:
 #define DELETE_CARD 'd'
 
 // Widget toggling
-//#define TOGGLE_WIDGET_HALFTIME 'h'
 #define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
 #define TOGGLE_WIDGET_GAMEPLAN 'v'
@@ -213,6 +215,10 @@ bool widget_scoreboard_enabled = false;
 bool widget_spielstart_enabled = false;
 bool widget_livetable_enabled = false;
 bool widget_gameplan_enabled = false;
+
+// TODO send_widget_card(widget_card w) {
+//
+// }
 
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
@@ -258,10 +264,19 @@ bool send_widget_gameplan(widget_gameplan w) {
 widget_scoreboard widget_scoreboard_create() {
 	widget_scoreboard w;
 	w.widget_num = WIDGET_SCOREBOARD + widget_scoreboard_enabled;
-	strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	w.score_t1 = md.games[md.cur.gameindex].score.t1;
-	w.score_t2 = md.games[md.cur.gameindex].score.t2;
+
+	if (md.cur.halftime) {
+		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		w.score_t2 = md.games[md.cur.gameindex].score.t1;
+		w.score_t1 = md.games[md.cur.gameindex].score.t2;
+	} else {
+		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		w.score_t1 = md.games[md.cur.gameindex].score.t1;
+		w.score_t2 = md.games[md.cur.gameindex].score.t2;
+	}
+
 	w.is_halftime = md.cur.halftime;
 	return w;
 }
@@ -318,7 +333,7 @@ widget_livetable widget_livetable_create() {
 
 widget_gameplan widget_gameplan_create() {
 	widget_gameplan w;
-	w.widget_num = WIDGET_SCOREBOARD + widget_gameplan_enabled;
+	w.widget_num = WIDGET_GAMEPLAN + widget_gameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
@@ -771,12 +786,16 @@ int main(void) {
 			w.widget_num = WIDGET_SCOREBOARD + 1;
 			memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
 			memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
-			printf("TODO '%s' and '%s'\n", w.team1, w.team2);
+			printf("Currently playing: '%s' vs. '%s'\n", w.team1, w.team2);
 			const char *data = (char *) &w;
 			mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 
 			break;
 		}
+		case GAME_HALFTIME:
+			// TODO WIP
+			md.cur.halftime = !md.cur.halftime;
+			break;
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;
 			printf(
