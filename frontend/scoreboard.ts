@@ -50,18 +50,30 @@ function write_scoreboard(view: DataView) {
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
 	++offset
 
+	const is_halftime = view.getUint8(offset)
 	++offset // skipping `is_halftime`
 
 	let team1_color_left = ""
 	let team1_color_right = ""
 	let team2_color_left = ""
 	let team2_color_right = ""
-	for (let i = 0; i < HEX_COLOR_LEN; ++i) {
-		team1_color_left += String.fromCharCode(view.getUint8(offset))
-		team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
-		team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
-		team2_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
-		++offset
+	// TODO WIP
+	if (is_halftime) {
+		for (let i = 0; i < HEX_COLOR_LEN; ++i) {
+			team1_color_left += String.fromCharCode(view.getUint8(offset))
+			team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
+			team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
+			team2_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
+			++offset
+		}
+	} else {
+		for (let i = 0; i < HEX_COLOR_LEN; ++i) {
+			team2_color_left += String.fromCharCode(view.getUint8(offset))
+			team2_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
+			team1_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
+			team1_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
+			++offset
+		}
 	}
 
 	console.log(`team 1 color 1: ${team1_color_left}`)
