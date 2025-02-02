@@ -2,8 +2,8 @@ let socket = new WebSocket("ws://localhost:8080", "interscore")
 socket.binaryType = "arraybuffer"
 
 let scoreboard = document.querySelector(".scoreboard")! as HTMLElement
-let scoreboard_t1 = scoreboard.querySelector(".t1")!
-let scoreboard_t2 = scoreboard.querySelector(".t2")!
+let scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
+let scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
 let scoreboard_score_1 = scoreboard.querySelector(".score-1")!
 let scoreboard_score_2 = scoreboard.querySelector(".score-2")!
 let scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
@@ -24,6 +24,7 @@ let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
 const BUFFER_LEN = 100
+const HEX_COLOR_LEN = 7
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -49,9 +50,22 @@ function write_scoreboard(view: DataView) {
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
 	++offset
 
-	// TODO
-	//const is_halftime = view.getUint8(offset)
-	//++offset
+	++offset // skipping `is_halftime`
+
+	let team1_color_left = ""
+	let team1_color_right = ""
+	let team2_color_left = ""
+	let team2_color_right = ""
+	for (let i = 0; i < HEX_COLOR_LEN; ++i) {
+		team1_color_left += String.fromCharCode(view.getUint8(offset))
+		team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
+		team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
+		team2_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
+		++offset
+	}
+
+	scoreboard_t1.style.background = `linear-gradient(90deg, rgba(${team1_color_left}) 50%, rgba(${team1_color_right}) 100%)`
+	scoreboard_t2.style.background = `linear-gradient(90deg, rgba(${team2_color_left}) 50%, rgba(${team2_color_right}) 100%)`
 }
 
 function write_gameplan(view: DataView) {
