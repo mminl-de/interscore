@@ -2,17 +2,18 @@ let socket = new WebSocket("ws://localhost:8080", "interscore")
 socket.binaryType = "arraybuffer"
 
 let scoreboard = document.querySelector(".scoreboard")! as HTMLElement
-let scoreboard_t1 = document.querySelector(".scoreboard .t1")!
-let scoreboard_t2 = document.querySelector(".scoreboard .t2")!
-let scoreboard_score_1 = document.querySelector(".scoreboard .score-1")!
-let scoreboard_score_2 = document.querySelector(".scoreboard .score-2")!
-let scoreboard_time_minutes = document.querySelector(".scoreboard .time .minutes")!
-let scoreboard_time_seconds = document.querySelector(".scoreboard .time .seconds")!
+let scoreboard_t1 = scoreboard.querySelector(".t1")!
+let scoreboard_t2 = scoreboard.querySelector(".t2")!
+let scoreboard_score_1 = scoreboard.querySelector(".score-1")!
+let scoreboard_score_2 = scoreboard.querySelector(".score-2")!
+let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
+let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
-let game_plan_t1 = document.querySelector(".game-plan .t1")!
-let game_plan_t2 = document.querySelector(".game-plan .t2")!
-let game_plan_score_1 = document.querySelector(".game-plan .score-1")!
-let game_plan_score_2 = document.querySelector(".game-plan .score-2")!
+let gameplan = document.querySelector(".gameplan")! as HTMLElement
+let gameplan_t1 = document.querySelector(".gameplan .t1")!
+let gameplan_t2 = document.querySelector(".gameplan .t2")!
+let gameplan_score_1 = document.querySelector(".gameplan .score-1")!
+let gameplan_score_2 = document.querySelector(".gameplan .score-2")!
 
 let card_graphic = document.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = document.querySelector(".card-receiver")!
@@ -48,7 +49,7 @@ function write_scoreboard(view: DataView) {
 	//++offset
 }
 
-function write_game_plan(view: DataView) {
+function write_gameplan(view: DataView) {
 	let offset = 1
 	const games_n = view.getUint8(offset)
 	++offset
@@ -61,8 +62,8 @@ function write_game_plan(view: DataView) {
 			t2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN))
 			++offset
 		}
-		game_plan_t1.innerHTML = t1.toString()
-		game_plan_t2.innerHTML = t2.toString()
+		gameplan_t1.innerHTML = t1.toString()
+		gameplan_t2.innerHTML = t2.toString()
 		++offset
 	}
 }
@@ -147,11 +148,26 @@ socket.onmessage = (event: MessageEvent) => {
 			scoreboard.style.display = "inline-flex"
 			write_scoreboard(view)
 			break
+		//case 3:
+		//	// TODO WIP
+		//	livetable.style.display = "none"
+		//	break
+		//case 4:
+		//	// TODO WIP
+		//	livetable.style.display = "inline-flex"
+		//	break
+		case 5:
+			// TODO WIP
+			gameplan.style.display = "none"
+			break
+		case 6:
+			// TODO WIP
+			gameplan.style.display = "inline-flex"
+			break
 		case 9:
 			console.log("Updating timer")
 			scoreboard_set_timer(view)
 			break
-		// TODO WIP
 		case 10:
 			if (timer_is_paused) {
 				console.log("Resuming timer")
@@ -176,4 +192,4 @@ socket.onclose = () => {
 	console.log("WebSocket connection closed!")
 }
 
-console.log("TODO: hi from scoreboard.js (this always runs)")
+console.log("Client loaded!")

@@ -126,4 +126,5 @@ struct Team {
 
 # NOW
 - `n` and `p` keys
-- timer
+- gameplan widget
+- pass colors in json

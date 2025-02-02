@@ -1,7 +1,7 @@
 {
     "teams": {
         "GIFHORN": {
-            "logo": "logo/gifhorn.jpg",
+            "logo": "assets/gifhorn.jpg",
             "keeper": {
                 "name": "Corvin Rowold"
             },
@@ -10,7 +10,7 @@
             }
         },
         "NAUROD 1": {
-            "logo": "logo/naurod.jpg",
+            "logo": "assets/naurod.jpg",
             "keeper": {
                 "name": "Marco Wagner"
             },
@@ -19,7 +19,7 @@
             }
         },
         "NAUROD 2": {
-            "logo": "logo/naurod.jpg",
+            "logo": "assets/naurod.jpg",
             "keeper": {
                 "name": "Timo Wagner"
             },
@@ -28,7 +28,7 @@
             }
         },
         "GROSSKOSCHEN 2": {
-            "logo": "logo/grosskoschen.jpg",
+            "logo": "assets/grosskoschen.jpg",
             "keeper": {
                 "name": "Franz Kieschnick"
             },
@@ -37,7 +37,7 @@
             }
         },
         "LUDWIGSFELDE": {
-            "logo": "logo/ludwigsfelde.svg",
+            "logo": "assets/ludwigsfelde.svg",
             "keeper": {
                 "name": "Matthias Dunkel"
             },

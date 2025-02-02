@@ -4,10 +4,10 @@ var scoreboard_t1 = document.querySelector(".scoreboard > .t1");
 var scoreboard_t2 = document.querySelector(".scoreboard > .t2");
 var scoreboard_score_1 = document.querySelector(".scoreboard > .score-1");
 var scoreboard_score_2 = document.querySelector(".scoreboard > .score-2");
-var game_plan_t1 = document.querySelector(".game-plan > .t1");
-var game_plan_t2 = document.querySelector(".game-plan > .t2");
-var game_plan_score_1 = document.querySelector(".game-plan > .score-1");
-var game_plan_score_2 = document.querySelector(".game-plan > .score-2");
+var gameplan_t1 = document.querySelector(".gameplan > .t1");
+var gameplan_t2 = document.querySelector(".gameplan > .t2");
+var gameplan_score_1 = document.querySelector(".gameplan > .score-1");
+var gameplan_score_2 = document.querySelector(".gameplan > .score-2");
 var card_graphic = document.querySelector(".card-graphic");
 var card_receiver = document.querySelector(".card-receiver");
 var card_message = document.querySelector(".card-message");
@@ -28,7 +28,7 @@ function write_scoreboard(view) {
     // TODO
     // let is_halftime = view.getUint8(202)
 }
-function write_game_plan(view) {
+function write_gameplan(view) {
     var offset = 1;
     var games_n = view.getUint8(offset);
     ++offset;
@@ -40,8 +40,8 @@ function write_game_plan(view) {
             t2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN));
             ++offset;
         }
-        game_plan_t1.innerHTML = t1.toString();
-        game_plan_t2.innerHTML = t2.toString();
+        gameplan_t1.innerHTML = t1.toString();
+        gameplan_t2.innerHTML = t2.toString();
         ++offset;
     }
 }

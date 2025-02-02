@@ -240,7 +240,9 @@ bool send_widget_livetable(widget_livetable w) {
 		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
+	const char *data = (char *) &w;
+	mg_ws_send(client_con, data, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
+	printf("Send '%s' to client!\n", data);
 	return true;
 }
 
@@ -621,7 +623,7 @@ bool copy_file(const char *source, const char *destination) {
 
 //@ret 1 if everything worked, 0 if there was any kind of error (e.g. cant write to file)
 bool save_json(char *path) {
-	FILE *f = fopen(path, "w+");
+	// TODO FILE *f = fopen(path, "w+");
 	return true;
 }
 
@@ -737,31 +739,48 @@ int main(void) {
 			md.cur.halftime = 0;
 			md.cur.time = GAME_LENGTH;
 			printf(
-				"New Game %d: %s vs. %s\n",
+				"New same %d: %s vs. %s\n",
 				md.cur.gameindex + 1,
 				md.teams[md.games[md.cur.gameindex].t1_index].name,
 				md.teams[md.games[md.cur.gameindex].t2_index].name
 			);
+
+			widget_scoreboard data = widget_scoreboard_create();
+			data.widget_num = WIDGET_SCOREBOARD + 1;
+			memcpy(data.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
+			memcpy(data.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
+			mg_ws_send(client_con, &data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+
 			break;
-		case GAME_BACK:
+		case GAME_BACK: {
 			if (md.cur.gameindex == 0) {
-				printf("Already at first  ame! Doing nothing ...\n");
+				printf("Already at first game! Doing nothing ...\n");
 				break;
 			}
 			md.cur.gameindex--;
 			md.cur.halftime = 0;
 			md.cur.time = GAME_LENGTH;
 			printf(
-				"New Game %d: %s vs. %s\n",
+				"New game (%d): '%s' vs. '%s'\n",
 				md.cur.gameindex+1,
 				md.teams[md.games[md.cur.gameindex].t1_index].name,
 				md.teams[md.games[md.cur.gameindex].t2_index].name
 			);
+
+			widget_scoreboard w = widget_scoreboard_create();
+			w.widget_num = WIDGET_SCOREBOARD + 1;
+			memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
+			memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
+			printf("TODO '%s' and '%s'\n", w.team1, w.team2);
+			const char *data = (char *) &w;
+			mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+
 			break;
+		}
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;
 			printf(
-				"New Score: %d : %d\n",
+				"New score: %d : %d\n",
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
@@ -769,7 +788,7 @@ int main(void) {
 		case GOAL_TEAM_2:
 			md.games[md.cur.gameindex].score.t2++;
 			printf(
-				"New Score: %d : %d\n",
+				"New score: %d : %d\n",
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
@@ -778,7 +797,7 @@ int main(void) {
 			if (md.games[md.cur.gameindex].score.t1 > 0)
 				--md.games[md.cur.gameindex].score.t1;
 			printf(
-				"New Score: %d : %d\n",
+				"New score: %d : %d\n",
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
@@ -787,7 +806,7 @@ int main(void) {
 			if (md.games[md.cur.gameindex].score.t2 > 0)
 				--md.games[md.cur.gameindex].score.t2;
 			printf(
-				"New Score: %d : %d\n",
+				"New score: %d : %d\n",
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
@@ -868,6 +887,9 @@ int main(void) {
 			printf(
 				"=== Keyboard options ===\n"
 				"7  load/reload server connection\n"
+				"\n"
+				"i  toggle scoreboard\n"
+				"\n"
 				"?  print help\n"
 				"t  set timer\n"
 				"=  pause/resume timer\n"
