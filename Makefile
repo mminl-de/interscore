@@ -14,7 +14,7 @@ debug:
 
 fast:
 	$(CC) -o $(OUT) $(SRC) \
-	-ljson-c \
+	-ljson-c
 
 run: frontend debug
 	./interscore
