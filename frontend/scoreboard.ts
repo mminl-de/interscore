@@ -6,6 +6,7 @@ let scoreboard_t1 = scoreboard.querySelector(".t1")!
 let scoreboard_t2 = scoreboard.querySelector(".t2")!
 let scoreboard_score_1 = scoreboard.querySelector(".score-1")!
 let scoreboard_score_2 = scoreboard.querySelector(".score-2")!
+let scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
 let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
@@ -98,8 +99,16 @@ function scoreboard_set_timer(view: DataView) {
 
 // TODO FINAL MOVE TOP
 let countdown: number
+let duration: number = 0
 let remaining_time = 0
 function start_timer(time_in_s: number) {
+	if (duration === 0) duration = time_in_s
+	if (time_in_s === 0) {
+		scoreboard_time_bar.style.width = "100%"
+		duration = 0
+		return;
+	}
+
 	clearInterval(countdown)
 	remaining_time = time_in_s
 	update_display()
@@ -107,6 +116,8 @@ function start_timer(time_in_s: number) {
 	countdown = setInterval(() => {
 		if (remaining_time > 0)  {
 			--remaining_time
+			const bar_width = Math.max(0, (remaining_time / duration) * 100)
+			scoreboard_time_bar.style.width = bar_width + "%"
 			update_display()
 		} else clearInterval(countdown)
 	}, 1000)

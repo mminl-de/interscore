@@ -1,8 +1,7 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta charset="utf-8"/> <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <link rel="stylesheet" href="main.css">
         <link rel="stylesheet" href="scoreboard.css">
         <title>Scoreboard</title>
@@ -16,12 +15,27 @@
                 <div class="score score-2">0</div>
                 <div class="team t2">LUDWIGSFELDE</div>
             </div>
-	    <div class="time-slider"></div>
+
+			<div class="time-container">
+				<div class="bar"></div>
+				<div class="time">
+					<div class="minutes">MM</div>
+					:
+					<div class="seconds">SS</div>
+				</div>
+			</div>
+
+			<!-- TODO REMOVE
+			<div class="time-slider"></div>
+			<div class="time-bar-container">
+				<div class="time-bar"></div>
+			</div>
 			<div class="time">
 				<div class="minutes">12</div>
 				:
 				<div class="seconds">32</div>
 			</div>
+			-->
         </div>
 
 		<script src="scoreboard.js"></script>

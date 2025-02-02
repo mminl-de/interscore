@@ -125,6 +125,6 @@ struct Team {
 - black borders
 
 # NOW
-- `n` and `p` keys
 - gameplan widget
 - pass colors in json
+- `n` and `p` keys
