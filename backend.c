@@ -38,7 +38,6 @@ typedef struct {
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
-
 	char team1_color_left[HEX_COLOR_LEN];
 	char team1_color_right[HEX_COLOR_LEN];
 	char team2_color_left[HEX_COLOR_LEN];
@@ -51,7 +50,6 @@ typedef struct {
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
-
 	char team1_color_left[HEX_COLOR_LEN];
 	char team1_color_right[HEX_COLOR_LEN];
 	char team2_color_left[HEX_COLOR_LEN];
@@ -78,7 +76,6 @@ typedef struct {
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-
 	char team1_color_left[HEX_COLOR_LEN];
 	char team1_color_right[HEX_COLOR_LEN];
 	char team2_color_left[HEX_COLOR_LEN];
@@ -580,9 +577,11 @@ void load_json(const char *path) {
 
 		json_object_object_get_ex(teamdata, "color_light", &color);
 		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		strcpy(md.teams[i].color_light, json_object_get_string(color));
 
 		json_object_object_get_ex(teamdata, "color_dark", &color);
-		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		md.teams[i].color_dark = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		strcpy(md.teams[i].color_dark, json_object_get_string(color));
 
 		i++;
 	}

@@ -7,8 +7,8 @@
             },
             "field": {
                 "name": "Christian Kramer"
-            }
-	    "color_light": "#234521"
+            },
+	    "color_light": "#234521",
 	    "color_dark": "#544521"
         },
         "NAUROD 1": {
@@ -18,8 +18,8 @@
             },
             "field": {
                 "name": "Till Wehner"
-            }
-	    "color_light": "#234521"
+            },
+	    "color_light": "#234521",
 	    "color_dark": "#544521"
         },
         "NAUROD 2": {
@@ -29,8 +29,8 @@
             },
             "field": {
                 "name": "Pascal van Klev"
-            }
-	    "color_light": "#234521"
+            },
+	    "color_light": "#234521",
 	    "color_dark": "#544521"
         },
         "LUDWIGSFELDE": {
@@ -40,8 +40,8 @@
             },
             "field": {
                 "name": "Felix Stege"
-            }
-	    "color_light": "#234521"
+            },
+	    "color_light": "#234521",
 	    "color_dark": "#544521"
         }
     },
