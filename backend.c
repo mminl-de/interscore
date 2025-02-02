@@ -106,8 +106,8 @@ typedef struct {
 	u8 field_index;
 	char *name;
 	char *logo_filename;
-	char *color_left;
-	char *color_right;
+	char *color_light;
+	char *color_dark;
 } Team;
 
 typedef struct {
@@ -286,23 +286,21 @@ widget_scoreboard widget_scoreboard_create() {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t2 = md.games[md.cur.gameindex].score.t1;
 		w.score_t1 = md.games[md.cur.gameindex].score.t2;
-		strcpy(w.color_left, md.color_light);
-		strcpy(w.color_right, md.color_right);
 
-		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 	} else {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t1 = md.games[md.cur.gameindex].score.t1;
 		w.score_t2 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
@@ -554,7 +552,7 @@ void load_json(const char *path) {
 	u32 i = 0;
 	json_object_object_foreach(teams, teamname, teamdata) {
 		md.teams[i].name = teamname;
-		json_object *logo, *keeper, *field, *name, *logo;
+		json_object *logo, *keeper, *field, *name, *color;
 
 		json_object_object_get_ex(teamdata, "logo", &logo);
 		md.teams[i].logo_filename = malloc(strlen(json_object_get_string(logo)) * sizeof(char));
