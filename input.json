@@ -8,6 +8,8 @@
             "field": {
                 "name": "Christian Kramer"
             }
+	    "color_light": "#234521"
+	    "color_dark": "#544521"
         },
         "NAUROD 1": {
             "logo": "assets/naurod.jpg",
@@ -17,6 +19,8 @@
             "field": {
                 "name": "Till Wehner"
             }
+	    "color_light": "#234521"
+	    "color_dark": "#544521"
         },
         "NAUROD 2": {
             "logo": "assets/naurod.jpg",
@@ -26,6 +30,8 @@
             "field": {
                 "name": "Pascal van Klev"
             }
+	    "color_light": "#234521"
+	    "color_dark": "#544521"
         },
         "LUDWIGSFELDE": {
             "logo": "assets/ludwigsfelde.svg",
@@ -35,6 +41,8 @@
             "field": {
                 "name": "Felix Stege"
             }
+	    "color_light": "#234521"
+	    "color_dark": "#544521"
         }
     },
     "games": {

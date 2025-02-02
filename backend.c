@@ -109,6 +109,8 @@ typedef struct {
 	u8 field_index;
 	char *name;
 	char *logo_filename;
+	char *color_left;
+	char *color_right;
 } Team;
 
 typedef struct {
@@ -287,11 +289,23 @@ widget_scoreboard widget_scoreboard_create() {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t2 = md.games[md.cur.gameindex].score.t1;
 		w.score_t1 = md.games[md.cur.gameindex].score.t2;
+		strcpy(w.color_left, md.color_light);
+		strcpy(w.color_right, md.color_right);
+
+		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 	} else {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t1 = md.games[md.cur.gameindex].score.t1;
 		w.score_t2 = md.games[md.cur.gameindex].score.t2;
+
+		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		strcpy(w.color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
@@ -543,7 +557,7 @@ void load_json(const char *path) {
 	u32 i = 0;
 	json_object_object_foreach(teams, teamname, teamdata) {
 		md.teams[i].name = teamname;
-		json_object *logo, *keeper, *field, *name;
+		json_object *logo, *keeper, *field, *name, *logo;
 
 		json_object_object_get_ex(teamdata, "logo", &logo);
 		md.teams[i].logo_filename = malloc(strlen(json_object_get_string(logo)) * sizeof(char));
@@ -565,6 +579,12 @@ void load_json(const char *path) {
 		md.players[i*2+1].team_index = i;
 		md.players[i*2+1].role = 1;
 		md.teams[i].field_index = i*2+1;
+
+		json_object_object_get_ex(teamdata, "color_light", &color);
+		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+
+		json_object_object_get_ex(teamdata, "color_dark", &color);
+		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
 
 		i++;
 	}
@@ -815,9 +835,7 @@ int main(void) {
 		}
 		case GAME_HALFTIME:
 			// TODO WIP
-			printf("TODO toggling halftime\n");
 			md.cur.halftime = !md.cur.halftime;
-			send_widget_scoreboard(widget_scoreboard_create());
 			break;
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;
