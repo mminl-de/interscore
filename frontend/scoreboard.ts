@@ -40,6 +40,7 @@ function write_scoreboard(view: DataView) {
 	scoreboard_t1.innerHTML = t1.toString()
 	scoreboard_t2.innerHTML = t2.toString()
 
+	offset = 1 + BUFFER_LEN * 2;
 	scoreboard_score_1.innerHTML = view.getUint8(offset).toString()
 	++offset
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
