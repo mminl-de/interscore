@@ -28,7 +28,7 @@ enum widgets {
 #define TEAMS_COUNT_MAX 32
 #define GAMES_COUNT_MAX 64
 
-#define HEX_COLOR_LEN 7
+#define HEX_COLOR_LEN 8
 
 #pragma pack(push, 1)
 typedef struct {
@@ -253,7 +253,7 @@ bool send_widget_spielstart(widget_spielstart w) {
 		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) &w , sizeof(w), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -287,7 +287,9 @@ widget_scoreboard widget_scoreboard_create() {
 		w.score_t2 = md.games[md.cur.gameindex].score.t1;
 		w.score_t1 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		 strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
 		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
