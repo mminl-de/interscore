@@ -27,15 +27,6 @@
                 "name": "Pascal van Klev"
             }
         },
-        "GROSSKOSCHEN 2": {
-            "logo": "assets/grosskoschen.jpg",
-            "keeper": {
-                "name": "Franz Kieschnick"
-            },
-            "field": {
-                "name": "Leon Mambk"
-            }
-        },
         "LUDWIGSFELDE": {
             "logo": "assets/ludwigsfelde.svg",
             "keeper": {
@@ -52,40 +43,24 @@
             "team2": "NAUROD 2"
         },
         "2": {
-            "team1": "GROSSKOSCHEN 2",
-            "team2": "LUDWIGSFELDE"
-        },
-        "3": {
             "team1": "GIFHORN",
             "team2": "NAUROD 2"
         },
-        "4": {
+        "3": {
             "team1": "NAUROD 1",
             "team2": "LUDWIGSFELDE"
         },
+        "4": {
+            "team1": "LUDWIGSFELDE",
+            "team2": "NAUROD 2"
+        },
         "5": {
-            "team1": "GROSSKOSCHEN 2",
+            "team1": "NAUROD 1",
             "team2": "GIFHORN"
         },
         "6": {
             "team1": "LUDWIGSFELDE",
-            "team2": "NAUROD 2"
-        },
-        "7": {
-            "team1": "NAUROD 1",
             "team2": "GIFHORN"
-        },
-        "8": {
-            "team1": "GROSSKOSCHEN 2",
-            "team2": "NAUROD 2"
-        },
-        "9": {
-            "team1": "LUDWIGSFELDE",
-            "team2": "GIFHORN"
-        },
-        "10": {
-            "team1": "NAUROD 1",
-            "team2": "GROSSKOSCHEN 2"
         },
         "experimental": {
             "team1": "NAUROD 1",

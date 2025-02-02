@@ -28,6 +28,8 @@ enum widgets {
 #define TEAMS_COUNT_MAX 32
 #define GAMES_COUNT_MAX 64
 
+#define HEX_COLOR_LEN 7
+
 #pragma pack(push, 1)
 typedef struct {
 	u8 widget_num;
@@ -36,6 +38,10 @@ typedef struct {
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
+	char team1_color_left[HEX_COLOR_LEN];
+	char team1_color_right[HEX_COLOR_LEN];
+	char team2_color_left[HEX_COLOR_LEN];
+	char team2_color_right[HEX_COLOR_LEN];
 } widget_scoreboard;
 
 typedef struct {
@@ -44,6 +50,10 @@ typedef struct {
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
+	char team1_color_left[HEX_COLOR_LEN];
+	char team1_color_right[HEX_COLOR_LEN];
+	char team2_color_left[HEX_COLOR_LEN];
+	char team2_color_right[HEX_COLOR_LEN];
 } widget_spielstart;
 
 typedef struct {
@@ -66,6 +76,10 @@ typedef struct {
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
+	char team1_color_left[HEX_COLOR_LEN];
+	char team1_color_right[HEX_COLOR_LEN];
+	char team2_color_left[HEX_COLOR_LEN];
+	char team2_color_right[HEX_COLOR_LEN];
 } widget_gameplan;
 #pragma pack(pop)
 
@@ -162,8 +176,8 @@ Possible User Actions:
 
 // Define the input characters:
 // Changing game time
-#define ADD_SECOND '+'
-#define REMOVE_SECOND '-'
+//#define ADD_SECOND '+'
+//#define REMOVE_SECOND '-'
 #define PAUSE_TIME '='
 #define SET_TIME 't'
 
@@ -720,7 +734,7 @@ int main(void) {
 		case SET_TIME: {
 			u16 min; u8 sec;
 			printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
-			scanf("%hu:%hhu", &min, &sec); // TODO fix this, %ud breaks sec input
+			scanf("%hu:%hhu", &min, &sec);
 			md.cur.time = min*60 + sec;
 			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 
@@ -732,19 +746,23 @@ int main(void) {
 			break;
 		}
 		case PAUSE_TIME: {
-				// TODO NOW
+			// TODO NOW
 			const u8 data = SCOREBOARD_PAUSE_TIMER;
 			mg_ws_send(client_con, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case ADD_SECOND:
+		/*
+		case ADD_SECOND: {
 			md.cur.time++;
 			printf("Added 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
 			break;
-		case REMOVE_SECOND:
+		}
+		case REMOVE_SECOND: {
 			md.cur.time--;
 			printf("Removed 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
 			break;
+		}
+		*/
 		case GAME_FORWARD:
 			if (md.cur.gameindex == md.games_count - 1) {
 				printf("Already at last game! Doing nothing ...\n");
