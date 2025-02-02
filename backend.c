@@ -291,6 +291,8 @@ widget_scoreboard widget_scoreboard_create() {
 		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
 		 strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
 		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
 	} else {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -837,7 +839,9 @@ int main(void) {
 		}
 		case GAME_HALFTIME:
 			// TODO WIP
+			printf("Now in halftime %d!\n", md.cur.halftime + 1);
 			md.cur.halftime = !md.cur.halftime;
+			send_widget_scoreboard(widget_scoreboard_create());
 			break;
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;

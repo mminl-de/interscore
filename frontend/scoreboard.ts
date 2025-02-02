@@ -24,7 +24,7 @@ let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
 const BUFFER_LEN = 100
-const HEX_COLOR_LEN = 7
+const HEX_COLOR_LEN = 8
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -63,6 +63,9 @@ function write_scoreboard(view: DataView) {
 		team2_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
 		++offset
 	}
+
+	console.log(`team 1 color 1: ${team1_color_left}`)
+	console.log(`team 2 color 1: ${team2_color_left}`)
 
 	scoreboard_t1.style.background = `linear-gradient(90deg, rgba(${team1_color_left}) 50%, rgba(${team1_color_right}) 100%)`
 	scoreboard_t2.style.background = `linear-gradient(90deg, rgba(${team2_color_left}) 50%, rgba(${team2_color_right}) 100%)`
