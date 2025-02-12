@@ -79,8 +79,21 @@ function write_scoreboard(view: DataView) {
 	console.log(`team 1 color 1: ${team1_color_left}`)
 	console.log(`team 2 color 1: ${team2_color_left}`)
 
-	scoreboard_t1.style.background = `linear-gradient(90deg, rgba(${team1_color_left}) 50%, rgba(${team1_color_right}) 100%)`
-	scoreboard_t2.style.background = `linear-gradient(90deg, rgba(${team2_color_left}) 50%, rgba(${team2_color_right}) 100%)`
+	console.log("before setting style")
+	scoreboard_t1.style.background = `linear-gradient(90deg, ${team1_color_left}ff, ${team1_color_right}ff)`
+	scoreboard_t2.style.background = `linear-gradient(90deg, ${team2_color_left}ff, ${team2_color_right}ff)`
+	console.log("after setting style")
+}
+
+function write_gameplan(view: DataView) {
+	let offset = 1
+
+	const games = view.getUint8(offset)
+	++offset
+
+	for (let i = 0; i < games; ++i) {
+
+	}
 }
 
 function write_gameplan(view: DataView) {
@@ -205,6 +218,7 @@ socket.onmessage = (event: MessageEvent) => {
 			break
 		case 6:
 			gameplan.style.display = "inline-flex"
+			write_gameplan(view)
 			break
 		case 7:
 			playing_teams.style.display = "none"

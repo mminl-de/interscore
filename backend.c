@@ -2,7 +2,7 @@
 #include <time.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
-#include "lib/mongoose.h"
+#include "mongoose/mongoose.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -850,6 +850,7 @@ int main(void) {
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
+			send_widget_gameplan(widget_gameplan_create());
 			break;
 		case GOAL_TEAM_2:
 			md.games[md.cur.gameindex].score.t2++;
@@ -858,6 +859,7 @@ int main(void) {
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
+			send_widget_gameplan(widget_gameplan_create());
 			break;
 		case REMOVE_GOAL_TEAM_1:
 			if (md.games[md.cur.gameindex].score.t1 > 0)
