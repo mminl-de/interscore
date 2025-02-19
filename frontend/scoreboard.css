@@ -75,8 +75,9 @@
      * border-top-left-radius: 64px;
      */
 
-    background: rgb(255,70,0);
-    background: linear-gradient(94deg, rgba(255,70,0,1) 2%, rgba(250,3,1,1) 50%, rgba(145,0,0,1) 100%);
+	background-color: rgba(255,70,0,1);
+    /*background: rgb(255,70,0);
+    background: linear-gradient(94deg, rgba(255,70,0,1) 2%, rgba(250,3,1,1) 50%, rgba(145,0,0,1) 100%);*/
 
     text-align: right;
 }
@@ -88,8 +89,9 @@
     border-top-right-radius: 64px;
     */
 
-    background: rgb(200,255,0);
-    background: linear-gradient(94deg, rgba(255,199,0,1) 2%, rgba(240,230,0,1) 50%, rgba(200,255,0,1) 100%);
+	background-color: rgba(255,199,0,1);
+    /*background: rgb(200,255,0);
+    background: linear-gradient(94deg, rgba(255,199,0,1) 2%, rgba(240,230,0,1) 50%, rgba(200,255,0,1) 100%);*/
 
     color: black;
 }
