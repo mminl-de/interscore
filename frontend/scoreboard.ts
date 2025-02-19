@@ -23,6 +23,8 @@ let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
+let livetable_container = document.querySelector(".livetable .container")
+
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
 const HEX_COLOR_LEN = 8
@@ -124,6 +126,29 @@ function write_card(view: DataView) {
 	}
 }
 
+function write_livetable(view: DataView) {
+	// TODO NOTE
+	// typedef struct {
+	// 	u8 widget_num;
+	// 	u8 len; // amount of teams total
+	// 	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
+	// 	u8 points[TEAMS_COUNT_MAX];
+	// 	u8 games_played[TEAMS_COUNT_MAX];
+	// 	u8 games_won[TEAMS_COUNT_MAX];
+	// 	u8 games_tied[TEAMS_COUNT_MAX];
+	// 	u8 games_lost[TEAMS_COUNT_MAX];
+	// 	u16 goals[TEAMS_COUNT_MAX];
+	// 	u16 goals_taken[TEAMS_COUNT_MAX];
+	// } widget_livetable;
+
+	let offset = 1
+
+	const team_n = view.getUint8(offset)
+	++offset
+
+	// TODO NOW read `teams` etc.
+}
+
 function scoreboard_set_timer(view: DataView) {
 	let offset = 1
 	const time_in_s = view.getUint16(offset)
@@ -194,14 +219,14 @@ socket.onmessage = (event: MessageEvent) => {
 			scoreboard.style.display = "inline-flex"
 			write_scoreboard(view)
 			break
-		//case 3:
-		//	// TODO WIP
-		//	livetable.style.display = "none"
-		//	break
-		//case 4:
-		//	// TODO WIP
-		//	livetable.style.display = "inline-flex"
-		//	break
+		case 3:
+			livetable.style.display = "none"
+			break
+		case 4:
+			// TODO WIP
+			livetable.style.display = "inline-flex"
+			write_livetable(view)
+			break
 		case 5:
 			gameplan.style.display = "none"
 			break
