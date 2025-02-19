@@ -24,6 +24,7 @@ let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
 const BUFFER_LEN = 100
+const GAMES_COUNT_MAX = 64
 const HEX_COLOR_LEN = 8
 
 function write_scoreboard(view: DataView) {
@@ -92,9 +93,9 @@ function write_gameplan(view: DataView) {
 	for (let game = 0; game < games_n; ++game) {
 		let t1: String = ""
 		let t2: String = ""
-		for (let name_char = 0; name_char < BUFFER_LEN; ++name_char) {
+		for (let name_char = 0; name_char < BUFFER_LEN && !(view.getUint8(offset) == 0); ++name_char) {
 			t1 += String.fromCharCode(view.getUint8(offset))
-			t2 += String.fromCharCode(view.getUint8(offset + games_n * BUFFER_LEN))
+			t2 += String.fromCharCode(view.getUint8(offset + GAMES_COUNT_MAX * BUFFER_LEN))
 			++offset
 		}
 		gameplan_t1.innerHTML = t1.toString()
