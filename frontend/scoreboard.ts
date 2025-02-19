@@ -1,4 +1,4 @@
-let socket = new WebSocket("ws://localhost:8080", "interscore")
+let socket = new WebSocket("ws://localhost:8081", "interscore")
 socket.binaryType = "arraybuffer"
 
 let scoreboard = document.querySelector(".scoreboard")! as HTMLElement
@@ -83,17 +83,6 @@ function write_scoreboard(view: DataView) {
 	scoreboard_t1.style.background = `linear-gradient(90deg, ${team1_color_left}ff, ${team1_color_right}ff)`
 	scoreboard_t2.style.background = `linear-gradient(90deg, ${team2_color_left}ff, ${team2_color_right}ff)`
 	console.log("after setting style")
-}
-
-function write_gameplan(view: DataView) {
-	let offset = 1
-
-	const games = view.getUint8(offset)
-	++offset
-
-	for (let i = 0; i < games; ++i) {
-
-	}
 }
 
 function write_gameplan(view: DataView) {

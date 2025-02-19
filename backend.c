@@ -173,7 +173,7 @@ Possible User Actions:
 
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
-#define URL "http://0.0.0.0:8080"
+#define URL "http://0.0.0.0:8081"
 #define JSON_PATH "input.json"
 
 // Define the input characters:
@@ -752,6 +752,8 @@ int main(void) {
 	// User data stuff
 	load_json(JSON_PATH);
 	init_matchday();
+
+	printf("Hello, world!\n");
 
 	bool close = false;
 	while (!close) {
