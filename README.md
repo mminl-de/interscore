@@ -10,6 +10,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 		- properly reset time
 		- proper time input
 		- when setting time, it's paused by default
+	- widgets ofc
 	- colors
 	- connecting
 

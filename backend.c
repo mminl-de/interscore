@@ -290,7 +290,7 @@ widget_scoreboard widget_scoreboard_create() {
 
 		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		 strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
 		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);

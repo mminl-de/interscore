@@ -11,10 +11,10 @@ let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 let gameplan = document.querySelector(".gameplan")! as HTMLElement
-let gameplan_t1 = document.querySelector(".gameplan .t1")!
-let gameplan_t2 = document.querySelector(".gameplan .t2")!
-let gameplan_score_1 = document.querySelector(".gameplan .score-1")!
-let gameplan_score_2 = document.querySelector(".gameplan .score-2")!
+let gameplan_t1 = gameplan.querySelector(".t1")!
+let gameplan_t2 = gameplan.querySelector(".t2")!
+let gameplan_score_1 = gameplan.querySelector(".score-1")!
+let gameplan_score_2 = gameplan.querySelector(".score-2")!
 
 let playing_teams = document.querySelector(".playing-teams")! as HTMLElement
 
@@ -76,13 +76,12 @@ function write_scoreboard(view: DataView) {
 		}
 	}
 
-	console.log(`team 1 color 1: ${team1_color_left}`)
-	console.log(`team 2 color 1: ${team2_color_left}`)
+	scoreboard_t1.style.backgroundColor = team1_color_left.slice(0, 7);
+	scoreboard_t2.style.backgroundColor = team2_color_left.slice(0, 7);
 
-	console.log("before setting style")
-	scoreboard_t1.style.background = `linear-gradient(90deg, ${team1_color_left}ff, ${team1_color_right}ff)`
-	scoreboard_t2.style.background = `linear-gradient(90deg, ${team2_color_left}ff, ${team2_color_right}ff)`
-	console.log("after setting style")
+	// TODO DEBUG
+	console.log(`color team 1: '${scoreboard_t1.style.backgroundColor}'`)
+	console.log(`color team 2: '${scoreboard_t2.style.backgroundColor}'`)
 }
 
 function write_gameplan(view: DataView) {
@@ -149,7 +148,7 @@ function start_timer(time_in_s: number) {
 	update_display()
 
 	countdown = setInterval(() => {
-		if (remaining_time > 0)  {
+		if (remaining_time > 0) {
 			--remaining_time
 			const bar_width = Math.max(0, (remaining_time / duration) * 100)
 			scoreboard_time_bar.style.width = bar_width + "%"
