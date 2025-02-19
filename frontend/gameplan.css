@@ -1,4 +1,4 @@
-.game-plan {
+.gameplan {
 	font-size: 50px;
 
 	margin: auto;
@@ -12,7 +12,7 @@
 	height: 90vh;
 }
 
-.game-plan-heading {
+.gameplan-heading {
 	font-size: 60px;
 }
 
@@ -22,7 +22,7 @@
 	gap: 10px;
 }
 
-.score-left, .score-right {
+.score-1, .score-2 {
 	background-color: gray;
 	width: 60px;
 	padding: 0 10px;

@@ -129,3 +129,8 @@ struct Team {
 - light shadows
 - subtle gradients
 - black borders
+
+# NOW
+- pass colors in json
+- `n` and `p` keys
+- `+` and `-` sending
