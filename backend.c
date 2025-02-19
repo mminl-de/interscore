@@ -258,6 +258,7 @@ bool send_widget_spielstart(widget_spielstart w) {
 }
 
 bool send_widget_livetable(widget_livetable w) {
+	printf("begin send_livetable\n");
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
@@ -320,6 +321,7 @@ widget_spielstart widget_spielstart_create() {
 }
 
 widget_livetable widget_livetable_create() {
+	printf("begin livetable\n");
 	widget_livetable w;
 	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
 	w.len = md.teams_count;
@@ -333,10 +335,11 @@ widget_livetable widget_livetable_create() {
 				break;
 			}
 		}
+		printf("INDEX DEF: %d\n", best_index);
 		//search for better team without entry
 		for(int j=0; j < md.teams_count; j++){
 			int skip = false;
-			if(best_index < team_calc_points(i)){
+			if(team_calc_points(best_index) < team_calc_points(i)){
 				for(int k=0; k < i; k++){
 					if(k == teams_done[k])
 						skip = true;
@@ -345,16 +348,25 @@ widget_livetable widget_livetable_create() {
 					best_index = team_calc_points(i);
 			}
 		}
+		printf("INDEX END: %d\n", best_index);
 
+		printf("begin entry name: %d, %d\n", i, best_index);
 		strcpy(w.teams[i], md.teams[best_index].name);
+		printf("begin entry point: %d\n", i);
 		w.points[i] = team_calc_points(best_index);
+		printf("begin entry games played: %d\n", i);
 		w.games_played[i] = team_calc_games_played(best_index);
+		printf("begin entry games won: %d\n", i);
 		w.games_won[i] = team_calc_games_won(best_index);
+		printf("begin entry games tied: %d\n", i);
 		w.games_tied[i] = team_calc_games_tied(best_index);
+		printf("begin entry games lost: %d\n", i);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
+		printf("begin entry goals: %d\n", i);
 		w.goals[i] = team_calc_goals(best_index);
 
 		teams_done[i] = best_index;
+		printf("livetable iteration: %d\n", i);
 	}
 	return w;
 }
@@ -368,6 +380,7 @@ widget_gameplan widget_gameplan_create() {
 		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
 		w.goals_t1[i] = md.games[i].score.t1;
 		w.goals_t2[i] = md.games[i].score.t2;
+		printf("%d.) %s, %d : %d ,%s\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i]);
 	}
 
 	strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
