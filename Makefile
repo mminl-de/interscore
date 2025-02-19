@@ -1,4 +1,4 @@
-SRC ?= backend.c lib/mongoose.c
+SRC ?= backend.c mongoose/mongoose.c
 OUT ?= interscore
 CC ?= cc
 
