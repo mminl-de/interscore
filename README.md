@@ -3,17 +3,23 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 
 
 ## TODO
+- improve UX:
+	- not having to spam ii to update stuff
+	- swapping key binding after teamswitches
+	- time is a number for itself:
+		- properly reset time
+		- proper time input
+		- when setting time, it's paused by default
+	- colors
+	- connecting
+
+### old
 - graceful Ctrl-C handling
 - `README.md`:
     - context about what (and why) this is
     - describe the backend
 - design decisions:
     - bar layout
-    - font:
-        - Kanit
-        - Space Grotesk
-        - Lexend
-        - Funnel Sans
 - user API:
     - data:
         - team names and playing teams
