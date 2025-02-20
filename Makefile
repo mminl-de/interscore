@@ -17,13 +17,7 @@ fast:
 	-ljson-c
 
 run:
-
-	./interscore
-
-rentner:
-	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c \
-	-O3 -Wall -Wextra -Wpedantic \
-	`pkg-config gtk4 --cflags --libs`
+	./$(OUT)
 
 js:
 	tsc --target es2017 frontend/scoreboard.ts
