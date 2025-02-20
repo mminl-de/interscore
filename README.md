@@ -13,6 +13,17 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- connecting
 	- not having to spam ii to update stuff
 
+### rentnerend layout
+- public window:
+	- playing teams
+	- score
+	- time
+	- colors :D
+- private window:
+	- same as public window
+	- deal yellow and red cards
+	- pause time
+
 ### old
 - graceful Ctrl-C handling
 - `README.md`:
