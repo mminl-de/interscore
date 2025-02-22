@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+#define TEXT_SIZE 600
+
 static GtkWidget *get_public_window(const GtkApplication *app) {
     GtkWidget *win = gtk_application_window_new(GTK_APPLICATION(app));
     gtk_window_set_title(GTK_WINDOW(win), "Interscore – public window");
@@ -13,6 +15,12 @@ static GtkWidget *get_public_window(const GtkApplication *app) {
 	GtkWidget *s2 = gtk_label_new("0");
 
 	GtkWidget *time = gtk_label_new("6:59 left");
+
+	PangoAttrList *attrlist = pango_attr_list_new();
+	PangoAttribute *attr = pango_attr_size_new_absolute(TEXT_SIZE * PANGO_SCALE);
+	pango_attr_list_insert(attrlist, attr);
+	gtk_label_set_attributes(GTK_LABEL(s1), attrlist);
+	pango_attr_list_unref(attrlist);
 
 	gtk_grid_attach(GTK_GRID(grid), t1, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), t2, 2, 0, 1, 1);
