@@ -12,6 +12,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- widgets ofc
 	- connecting
 	- not having to spam ii to update stuff
+	- Ludwigsf bug
 
 ### old
 - graceful Ctrl-C handling

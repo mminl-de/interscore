@@ -4,6 +4,8 @@
 #include <json-c/json_object.h>
 #include "mongoose/mongoose.h"
 
+#include "config.h"
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -22,13 +24,6 @@ enum widgets {
 	// TODO WIP
 	SCOREBOARD_PAUSE_TIMER = 12
 };
-
-#define PLAYER_NAME_MAX_LEN 100
-#define TEAMS_NAME_MAX_LEN 100
-#define TEAMS_COUNT_MAX 32
-#define GAMES_COUNT_MAX 64
-
-#define HEX_COLOR_LEN 8
 
 #pragma pack(push, 1)
 typedef struct {
@@ -165,16 +160,6 @@ Possible User Actions:
 - Print all possible commands
 - Print current Gamestate
 */
-
-/* TODO MrMine
-- write input.json
-- calculate table
-*/
-
-// Default length of every halftime in sec
-#define GAME_LENGTH 420
-#define URL "http://0.0.0.0:8081"
-#define JSON_PATH "input.json"
 
 // Define the input characters:
 // Changing game time
