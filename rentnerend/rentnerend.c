@@ -279,10 +279,10 @@ void toggle_timer(GtkButton *button, gpointer user_data) {
 */
 
 //Gets the biggest font size possible for a markuped text of a label
-int biggest_fontsize_possible(char *text, int max_fontsize, int x, bool bold){
+int biggest_fontsize_possible(char *text, int max_fontsize, int x, bool bold) {
 	int width, fontsize = max_fontsize+1;
 	char b[] = "weight='bold'";
-	if(!bold)
+	if (!bold)
 		b[0] = '\0';
 
 	GtkWidget *l_decoy = gtk_label_new(NULL);
@@ -308,23 +308,23 @@ GtkWidget* create_input_window() {
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
-void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y, char *text, int fontsize, bool variable_fontsize, bool bold, u8 alignment){
+void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y, char *text, int fontsize, bool variable_fontsize, bool bold, u8 alignment) {
 	*l = gtk_label_new(NULL);
 	char s[strlen(text)+100];
-	if(variable_fontsize)
+	if (variable_fontsize)
 		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, bold);
 	char bold_str[] = "weight='bold'";
-	if(!bold)
+	if (!bold)
 		bold_str[0] = '\0';
 	sprintf(s, "<span %s font='%d'>%s</span>", bold_str, fontsize, text);
 	gtk_label_set_markup(GTK_LABEL(*l), s);
 
-	if(alignment == 1 && x_end != -1){
+	if (alignment == 1 && x_end != -1) {
 		int width, trash;
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
 		printf("alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
 		x_start += ((x_end-x_start)-width)/2;
-	} else if(alignment == 2 && x_end != -1){
+	} else if (alignment == 2 && x_end != -1) {
 		int width, trash;
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
 		printf("alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
@@ -350,7 +350,7 @@ w_display create_display_window() {
 	int fontsize = biggest_fontsize_possible(teamname, 300, 860, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	int fontsize2 = biggest_fontsize_possible(teamname, 300, 860, true);
-	if(fontsize2 < fontsize)
+	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
 	create_label(&w.l_t1, w.fixed, 50, 50+860, 20, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 2);
