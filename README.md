@@ -4,14 +4,14 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 ## TODO new
 
 ### lessons from last use
-	- dont swap keybinding for teams after teamswitches
-	- time as a nummer für sich:
-		- proper time reset
-		- time is paused after setting by default
-		- proper time input
-	- finish other widgets
-	- (easier WS connection)
-	- dont spam ii to update scoreboard
+- dont swap keybinding for teams after teamswitches
+- time as a nummer für sich:
+	- proper time reset
+	- time is paused after setting by default
+	- proper time input
+- finish other widgets
+- (easier WS connection)
+- dont spam ii to update scoreboard
 
 ### frontend
 - animations:
