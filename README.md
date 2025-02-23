@@ -1,55 +1,56 @@
 # Interscore
 An overlay for OBS Studio that displays scores and other info about streamed sports games.
 
+## TODO new
 
-## TODO
-- improve UX:
-	- swapping key binding after teamswitches
-	- time is a number for itself:
-		- properly reset time
+### lessons from last use
+	- dont swap keybinding for teams after teamswitches
+	- time as a nummer für sich:
+		- proper time reset
+		- time is paused after setting by default
 		- proper time input
-		- when setting time, it's paused by default
-	- widgets ofc
-	- connecting
-	- not having to spam ii to update stuff
+	- finish other widgets
+	- (easier WS connection)
+	- dont spam ii to update scoreboard
 
-### rentnerend layout
+### frontend
+- animations:
+    - ingame bar opening and closing
+    - players list spawning
+    - table spawning
+
+### rentnerend
+- play sound when timer runs out
+- 7-min-button reading the seven from json (no hardcoding)
 - public window:
 	- playing teams
 	- score
 	- time
-	- colors :D
+	- colors
+	- (other widgets between games)
 - private window:
-	- same as public window
+	- same as public (except other widgets)
 	- deal yellow and red cards
-	- pause time
-
-### old
-- graceful Ctrl-C handling
-- `README.md`:
-    - context about what (and why) this is
-    - describe the backend
-- design decisions:
-    - bar layout
-- user API:
-    - data:
-        - team names and playing teams
-        - timer
-        - keeping results
-    - FINAL dealing red and yellow cards
-    - colors and other style elements
-- real time bar countdown
-- FINAL animations:
-    - ingame bar opening and closing
-    - players list spawning
-    - table spawning
-- How does the tiebreak work?
-- Farben für die Vereine raussuchen
-- Backend: Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
+	- pause time button
 - Feedback/Suggestions Site + Widget FINAL
+
+### backend
+- (graceful Ctrl-C handling)
+- save to json
+- Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
+- FINAL abstract program so it's applicable for other games
+- ENSURE `n` and `p` work
+- `+` and `-` functionality (add/remove seconds)
+
+### readme
+- context about what (and why) this is
+- describe the backend
+- describe the rentnerend (both windows)
+
+### meta
 - Rauskriegen wer Feld und Außenspieler ist
-- FINAL abstract program to be applicable for other games:
-	- i.e. not harcoding player roles
+- How does the tiebreak work?
+- find colors for teams
 
 ## Included info on different scenes/moments in stream
 ### FINAL Start of game/halftime
@@ -134,14 +135,3 @@ struct Team {
     Player Außenspieler;
 }
 ```
-
-## Design ideas
-- rectangles
-- light shadows
-- subtle gradients
-- black borders
-
-# NOW
-- pass colors in json
-- `n` and `p` keys
-- `+` and `-` sending
