@@ -308,7 +308,7 @@ GtkWidget* create_input_window() {
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
-void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y, char *text, int fontsize, bool variable_fontsize, bool bold, u8 alignment) {
+void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool variable_fontsize, bool bold, u8 x_alignment, u8 y_alignment) {
 	*l = gtk_label_new(NULL);
 	char s[strlen(text)+100];
 	if (variable_fontsize)
@@ -319,19 +319,27 @@ void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 	sprintf(s, "<span %s font='%d'>%s</span>", bold_str, fontsize, text);
 	gtk_label_set_markup(GTK_LABEL(*l), s);
 
-	if (alignment == 1 && x_end != -1) {
-		int width, trash;
+	int width, height, trash;
+	if (x_alignment == 1 && x_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
+		printf("x_alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
 		x_start += ((x_end-x_start)-width)/2;
-	} else if (alignment == 2 && x_end != -1) {
-		int width, trash;
+	} else if (x_alignment == 2 && x_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
+		printf("x_alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
 		x_start += (x_end-x_start)-width;
 	}
+	if (y_alignment == 1 && y_end != -1) {
+		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+		printf("y_alignment = 1, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", y_start, (y_end-y_start)-height, y_end, height);
+		y_start += ((y_end-y_start)-height)/2;
+	} else if (y_alignment == 2 && y_end != -1) {
+		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+		printf("y_alignment = 2, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", y_start, (y_end-y_start)-height, y_end, height);
+		y_start += (y_end-y_start)-height;
+	}
 
-	gtk_fixed_put(GTK_FIXED(fixed), *l, x_start, y);
+	gtk_fixed_put(GTK_FIXED(fixed), *l, x_start, y_start);
 }
 
 // Function to create the display window
@@ -353,21 +361,21 @@ w_display create_display_window() {
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
-	create_label(&w.l_t1, w.fixed, 50, 50+860, 20, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 2);
+	create_label(&w.l_t1, w.fixed, 50, 50+860, 20, -1, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 2, 1);
 
 	GtkWidget *l;
-	create_label(&l, w.fixed, 940, -1, 20, ":", fontsize, false, true, 1);
+	create_label(&l, w.fixed, 940, -1, 20, -1, ":", fontsize, false, true, 1, 1);
 
-	create_label(&w.l_t2, w.fixed, 1010, 1010+860, 20, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 0);
+	create_label(&w.l_t2, w.fixed, 1010, 1010+860, 20, -1, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 0, 1);
 
 	//Display the Scores
 	//TODO properly get the X position from the length of the score for t1 and t2
 	char s[4];
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	create_label(&w.l_t1_score, w.fixed, 200, -1, 200, s, 260, false, true, 1);
+	create_label(&w.l_t1_score, w.fixed, 200, -1, 200, -1, s, 260, false, true, 1, 1);
 
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	create_label(&w.l_t2_score, w.fixed, 1200, -1, 200, s, 260, false, true, 1);
+	create_label(&w.l_t2_score, w.fixed, 1200, -1, 200, -1, s, 260, false, true, 1, 1);
 
     return w;
 }
