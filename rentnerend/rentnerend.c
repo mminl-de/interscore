@@ -307,6 +307,19 @@ GtkWidget* create_input_window() {
     return window;
 }
 
+void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y, char *text, int fontsize, bool variable_fontsize, bool bold){
+	*l = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(fixed), *l, x_start, y);
+	char s[strlen(text)+100];
+	if(variable_fontsize)
+		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, bold);
+	char bold_str[] = "weight='bold'";
+	if(!bold)
+		bold_str[0] = '\0';
+	sprintf(s, "<span %s font='%d'>%s</span>", bold_str, fontsize, text);
+	gtk_label_set_markup(GTK_LABEL(*l), s);
+}
+
 // Function to create the display window
 w_display create_display_window() {
 	w_display w;
@@ -318,8 +331,6 @@ w_display create_display_window() {
 	gtk_window_set_child(GTK_WINDOW(w.w), w.fixed);
 
 	//Display the Teamnames
-	w.l_t1 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(w.fixed), w.l_t1, 50, 20);
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	int fontsize = biggest_fontsize_possible(teamname, 300, 860, true);
@@ -327,37 +338,22 @@ w_display create_display_window() {
 	int fontsize2 = biggest_fontsize_possible(teamname, 300, 860, true);
 	if(fontsize2 < fontsize)
 		fontsize = fontsize2;
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	char s[500];
-	sprintf(s, "<span weight='bold' font='%d'>%s</span>", fontsize, teamname);
-	gtk_label_set_markup(GTK_LABEL(w.l_t1), s);
 
-	GtkWidget *l = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(w.fixed), l, 940, 10);
-	sprintf(s, "<span weight='bold' font='%d'>:</span>", fontsize);
-	gtk_label_set_markup(GTK_LABEL(l), s);
+	create_label(&w.l_t1, w.fixed, 50, 50+860, 20, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true);
 
+	GtkWidget *l;
+	create_label(&l, w.fixed, 940, -1, 20, ":", fontsize, false, true);
 
-	w.l_t2 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(w.fixed), w.l_t2, 1010, 20);
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	sprintf(s, "<span weight='bold' font='%d'>%s</span>", fontsize, teamname);
-	gtk_label_set_markup(GTK_LABEL(w.l_t2), s);
-
+	create_label(&w.l_t2, w.fixed, 1010, 1010+860, 20, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true);
 
 	//Display the Scores
 	//TODO properly get the X position from the length of the score for t1 and t2
-	w.l_t1_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(w.fixed), w.l_t1_score, 200, 200);
-	u8 score = md.games[md.cur.gameindex].score.t1;
-	sprintf(s, "<span weight='bold' font='260'>%d</span>", score);
-	gtk_label_set_markup(GTK_LABEL(w.l_t1_score), s);
+	char s[4];
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	create_label(&w.l_t1_score, w.fixed, 200, -1, 200, s, 260, false, true);
 
-	w.l_t2_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(w.fixed), w.l_t2_score, 1200, 200);
-	score = md.games[md.cur.gameindex].score.t2;
-	sprintf(s, "<span weight='bold' font='260'>%d</span>", score);
-	gtk_label_set_markup(GTK_LABEL(w.l_t2_score), s);
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	create_label(&w.l_t2_score, w.fixed, 1200, -1, 200, s, 260, false, true);
 
     return w;
 }

@@ -32,5 +32,10 @@ rentner-debug:
 	`pkg-config gtk4 --cflags --libs` \
 	-ljson-c
 
+rentner-test:
+	c++ -o rentnerend/test rentnerend/test.cpp \
+	-Wall -Wextra -Wpedantic -g \
+	`pkg-config Qt6Widgets Qt6Core Qt6Gui --cflags --libs` \
+
 js:
 	tsc --target es2017 frontend/scoreboard.ts
