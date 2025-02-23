@@ -343,9 +343,9 @@ void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 }
 
 // Function to create the display window
-w_display create_display_window() {
+w_display create_display_window(const GtkApplication *app) {
 	w_display w;
-    w.w = gtk_window_new();
+    w.w = gtk_application_window_new(GTK_APPLICATION(app));
     gtk_window_set_title(GTK_WINDOW(w.w), "Scoreboard Display");
     //gtk_window_set_default_size(GTK_WINDOW(w.w), 300, 100);
 
@@ -380,18 +380,21 @@ w_display create_display_window() {
     return w;
 }
 
-int main() {
-    gtk_init();
+static void on_activate(const GtkApplication *app) {
 	load_json(JSON_PATH);
-
 	md.cur.gameindex = 5;
 
-    w_display display = create_display_window();
+    w_display display = create_display_window(app);
     //GtkWidget *input_window = create_input_window();
 
     //gtk_window_present(GTK_WINDOW(input_window));
     gtk_window_present(GTK_WINDOW(display.w));
+}
 
-    g_main_loop_run(g_main_loop_new(NULL, FALSE));
-    return 0;
+int main(int argc, char **argv) {
+	GtkApplication *app = gtk_application_new("de.mminl.interscore", G_APPLICATION_DEFAULT_FLAGS);
+	g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
+	const int stat = g_application_run(G_APPLICATION(app), argc, argv);
+	g_object_unref(app);
+    return stat;
 }
