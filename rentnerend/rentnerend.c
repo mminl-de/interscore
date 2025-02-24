@@ -10,6 +10,8 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 typedef struct {
+	int width;
+	int height;
 	GtkWidget *w;
 	GtkWidget *fixed;
 	GtkWidget *l_t1;
@@ -72,6 +74,7 @@ typedef struct {
 } Matchday;
 
 Matchday md;
+w_display wd, wi;
 
 //Set current_match to first match and 0-initialize every game
 void init_matchday() {
@@ -295,21 +298,14 @@ int biggest_fontsize_possible(char *text, int max_fontsize, int x, bool bold) {
 
 		int trash;
 		gtk_widget_measure(l_decoy, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("width: %d, fontsize: %d\n", width, fontsize);
 	} while (width > x);
 	gtk_widget_set_visible(l_decoy, FALSE);
 	return fontsize;
 }
 
-// Function to create the input window
-GtkWidget* create_input_window() {
-    GtkWidget *window = gtk_window_new();
-    return window;
-}
-
 //alignment: 0:= left, 1:= center, 2:=right
-void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool variable_fontsize, bool bold, u8 x_alignment, u8 y_alignment) {
-	*l = gtk_label_new(NULL);
+void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool variable_fontsize, bool bold, u8 x_alignment, u8 y_alignment) {
+	printf("text: %s\n", text);
 	char s[strlen(text)+100];
 	if (variable_fontsize)
 		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, bold);
@@ -339,56 +335,152 @@ void create_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 		y_start += (y_end-y_start)-height;
 	}
 
-	gtk_fixed_put(GTK_FIXED(fixed), *l, x_start, y_start);
+	gtk_fixed_move(GTK_FIXED(fixed), *l, x_start, y_start);
+}
+
+void update_display_window(){
+	int width = gtk_widget_get_width(wd.w);
+	int height = gtk_widget_get_height(wd.w);
+	printf("width: %d; height: %d\n", width, height);
+	//Display the Teamnames
+	char teamname[TEAMS_NAME_MAX_LEN];
+	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	if (fontsize2 < fontsize)
+		fontsize = fontsize2;
+
+	update_label(&wd.l_t1, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+
+	GtkWidget *l = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), l, 0, 0);
+	update_label(&l, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
+
+	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+
+	//Display the Scores
+	char s[4];
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
+
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	update_label(&wd.l_t2_score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
+
+	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
+	update_label(&wd.l_time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+}
+
+void update_input_window(){
+	//TODO STARTHERE
+	int width = gtk_widget_get_width(wd.w);
+	int height = gtk_widget_get_height(wd.w);
+	printf("width: %d; height: %d\n", width, height);
+	//Display the Teamnames
+	char teamname[TEAMS_NAME_MAX_LEN];
+	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	if (fontsize2 < fontsize)
+		fontsize = fontsize2;
+
+	update_label(&wd.l_t1, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+
+	GtkWidget *l = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), l, 0, 0);
+	update_label(&l, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
+
+	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+
+	//Display the Scores
+	char s[4];
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
+
+	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	update_label(&wd.l_t2_score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
+
+	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
+	update_label(&wd.l_time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+}
+
+// Function to create the display window
+w_display create_input_window(const GtkApplication *app) {
+    wi.w = gtk_application_window_new(GTK_APPLICATION(app));
+	wi.width = 1920;
+	wi.height = 1080;
+    gtk_window_set_title(GTK_WINDOW(wi.w), "Scoreboard Input");
+    gtk_window_set_default_size(GTK_WINDOW(wi.w), wi.width, wi.height);
+
+	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
+	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "notify::height", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
+
+
+	wi.fixed = gtk_fixed_new();
+	gtk_window_set_child(GTK_WINDOW(wi.w), wi.fixed);
+
+	wi.l_t1 = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t1, 0, 0);
+	wi.l_t2 = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t2, 0, 0);
+	wi.l_t1_score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t1_score, 0, 0);
+	wi.l_t2_score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t2_score, 0, 0);
+	wi.l_time = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_time, 0, 0);
+
+	update_input_window();
+    return wi;
 }
 
 // Function to create the display window
 w_display create_display_window(const GtkApplication *app) {
-	w_display w;
-    w.w = gtk_application_window_new(GTK_APPLICATION(app));
-    gtk_window_set_title(GTK_WINDOW(w.w), "Scoreboard Display");
-    //gtk_window_set_default_size(GTK_WINDOW(w.w), 300, 100);
+    wd.w = gtk_application_window_new(GTK_APPLICATION(app));
+	wd.width = 1920;
+	wd.height = 1080;
+    gtk_window_set_title(GTK_WINDOW(wd.w), "Scoreboard Display");
+    gtk_window_set_default_size(GTK_WINDOW(wd.w), wd.width, wd.height);
 
-	w.fixed = gtk_fixed_new();
-	gtk_window_set_child(GTK_WINDOW(w.w), w.fixed);
+	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
+	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "notify::height", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
+	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
 
-	//Display the Teamnames
-	char teamname[TEAMS_NAME_MAX_LEN];
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, 860, true);
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, 860, true);
-	if (fontsize2 < fontsize)
-		fontsize = fontsize2;
 
-	create_label(&w.l_t1, w.fixed, 50, 50+860, 20, -1, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 2, 1);
+	wd.fixed = gtk_fixed_new();
+	gtk_window_set_child(GTK_WINDOW(wd.w), wd.fixed);
 
-	GtkWidget *l;
-	create_label(&l, w.fixed, 940, -1, 20, -1, ":", fontsize, false, true, 1, 1);
+	wd.l_t1 = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t1, 0, 0);
+	wd.l_t2 = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t2, 0, 0);
+	wd.l_t1_score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t1_score, 0, 0);
+	wd.l_t2_score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t2_score, 0, 0);
+	wd.l_time = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_time, 0, 0);
 
-	create_label(&w.l_t2, w.fixed, 1010, 1010+860, 20, -1, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 0, 1);
-
-	//Display the Scores
-	//TODO properly get the X position from the length of the score for t1 and t2
-	char s[4];
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	create_label(&w.l_t1_score, w.fixed, 200, -1, 200, -1, s, 260, false, true, 1, 1);
-
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	create_label(&w.l_t2_score, w.fixed, 1200, -1, 200, -1, s, 260, false, true, 1, 1);
-
-    return w;
+	update_display_window();
+    return wd;
 }
 
 static void on_activate(const GtkApplication *app) {
 	load_json(JSON_PATH);
-	md.cur.gameindex = 5;
+	md.cur.gameindex = 0;
 
-    w_display display = create_display_window(app);
+    create_display_window(app);
+    create_input_window(app);
     //GtkWidget *input_window = create_input_window();
 
     //gtk_window_present(GTK_WINDOW(input_window));
-    gtk_window_present(GTK_WINDOW(display.w));
+    gtk_window_present(GTK_WINDOW(wd.w));
 }
 
 int main(int argc, char **argv) {
