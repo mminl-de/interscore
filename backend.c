@@ -350,23 +350,23 @@ widget_livetable widget_livetable_create() {
 		}
 		printf("INDEX END: %d\n", best_index);
 
-		printf("begin entry name: %d, %d\n", i, best_index);
+		printf("livetable iteration: %d\n", i);
 		strcpy(w.teams[i], md.teams[best_index].name);
-		printf("begin entry point: %d\n", i);
+		printf("begin entry name: %s\n", w.teams[i]);
 		w.points[i] = team_calc_points(best_index);
-		printf("begin entry games played: %d\n", i);
+		printf("begin entry point: %d\n", w.points[i]);
 		w.games_played[i] = team_calc_games_played(best_index);
-		printf("begin entry games won: %d\n", i);
+		printf("begin entry games played: %d\n", w.games_played[i]);
 		w.games_won[i] = team_calc_games_won(best_index);
-		printf("begin entry games tied: %d\n", i);
+		printf("begin entry games won: %d\n", w.games_won[i]);
 		w.games_tied[i] = team_calc_games_tied(best_index);
-		printf("begin entry games lost: %d\n", i);
+		printf("begin entry games tied: %d\n", w.games_tied[i]);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
-		printf("begin entry goals: %d\n", i);
+		printf("begin entry games lost: %d\n", w.games_lost[i]);
 		w.goals[i] = team_calc_goals(best_index);
+		printf("begin entry goals: %d\n", w.goals[i]);
 
 		teams_done[i] = best_index;
-		printf("livetable iteration: %d\n", i);
 	}
 	return w;
 }
