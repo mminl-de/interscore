@@ -23,7 +23,8 @@ let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
-let livetable_container = document.querySelector(".livetable .container")! as HTMLElement
+let livetable = document.querySelector(".livetable")! as HTMLElement
+let livetable_container = livetable.querySelector(".container")! as HTMLElement
 
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
@@ -204,6 +205,8 @@ function write_livetable(view: DataView) {
 	}
 
 	for (const team of teams) {
+		console.log(`TODO: ${team.name}`)
+
 		const line = document.createElement("div")
 		line.classList.add("line")
 

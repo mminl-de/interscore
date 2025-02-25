@@ -953,7 +953,7 @@ int main(void) {
 			break;
 		case PRINT_HELP:
 			printf(
-				"=== Keyboard options ===\n"
+				"======= Keyboard options =======\n"
 				"n  Game Forward\n"
 				"p  Game Back\n"
 				"h  Game Halftime\n\n"
@@ -974,7 +974,7 @@ int main(void) {
 				"(j  Reload JSON)\n"
 				"?  print help\n"
 				"q  quit\n"
-				"========================\n"
+				"================================\n"
 			);
 			break;
 		// #### ORIESNTIOERASNTEOI
