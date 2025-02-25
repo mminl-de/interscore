@@ -18,6 +18,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
     - ingame bar opening and closing
     - players list spawning
     - table spawning
+    - Smooth time
 
 ### rentnerend
 - play sound when timer runs out
