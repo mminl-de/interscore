@@ -236,6 +236,14 @@ bool widget_gameplan_enabled = false;
 //
 // }
 
+int qsort_helper_u8(const void *p1, const void *p2) {
+	if(*(int*)p1 < *(int*)p2)
+		return -1;
+	if(*(int*)p1 > *(int*)p2)
+		return 1;
+	return 0;
+}
+
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
 		fprintf(stderr, "Client not connected, couldn't send widget!\n");
@@ -326,6 +334,24 @@ widget_livetable widget_livetable_create() {
 	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
 	w.len = md.teams_count;
 	int teams_done[md.teams_count];
+	int points[md.teams_count], goalratio[md.teams_count], goals[md.teams_count];
+	for (u8 i = 0; i < md.teams_count; i++) {
+		//punkte
+		points[i] = team_calc_points(i);
+		//torverhältnis
+		goalratio[i] = team_calc_goals(i) - team_calc_goals_taken(i);
+		//Mehr Tore
+		goals[i] = team_calc_goals(i);
+	}
+	qsort(points, md.teams_count, sizeof(u8), qsort_helper_u8);
+	qsort(goalratio, md.teams_count, sizeof(u8), qsort_helper_u8);
+	qsort(goals, md.teams_count, sizeof(u8), qsort_helper_u8);
+	for (u8 i = 0; i < md.teams_count; i++) {
+		u8 j;
+		for(j=i; j < md.teams_count-1 && points[j] != points[j+1]; j++);
+		if(j<i);
+			//TODO STARTHERE
+	}
 	for (u8 i = 0; i < md.teams_count; i++) {
 		//init best_index with first, not yet done team
 		u8 best_index = 0;
