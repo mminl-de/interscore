@@ -1,3 +1,4 @@
+// TODO FINAL OPTIMIZE our shame
 let socket = new WebSocket("ws://localhost:8081", "interscore")
 socket.binaryType = "arraybuffer"
 
@@ -29,6 +30,7 @@ let livetable_container = livetable.querySelector(".container")! as HTMLElement
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
 const HEX_COLOR_LEN = 8
+const TEAMS_COUNT_MAX = 32
 const TEAMS_NAME_MAX_LEN = 100
 
 function write_scoreboard(view: DataView) {
@@ -37,12 +39,12 @@ function write_scoreboard(view: DataView) {
 	let offset = 1
 	let t1: String = ""
 	let t2: String = ""
-	for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+	for (let i = 0; i < BUFFER_LEN && view.getUint8(offset) != 0; ++i) {
 		t1 += String.fromCharCode(view.getUint8(offset))
 		++offset
 	}
 	offset = 1
-	for (let i = 0; i < BUFFER_LEN && !(view.getUint8(offset) == 0); ++i) {
+	for (let i = 0; i < BUFFER_LEN && view.getUint8(offset) != 0; ++i) {
 		t2 += String.fromCharCode(view.getUint8(BUFFER_LEN + offset))
 		++offset
 	}
@@ -97,7 +99,7 @@ function write_gameplan(view: DataView) {
 	for (let game = 0; game < games_n; ++game) {
 		let t1: String = ""
 		let t2: String = ""
-		for (let name_char = 0; name_char < BUFFER_LEN && !(view.getUint8(offset) == 0); ++name_char) {
+		for (let name_char = 0; name_char < BUFFER_LEN && view.getUint8(offset) != 0; ++name_char) {
 			t1 += String.fromCharCode(view.getUint8(offset))
 			t2 += String.fromCharCode(view.getUint8(offset + GAMES_COUNT_MAX * BUFFER_LEN))
 			++offset
@@ -146,49 +148,64 @@ function write_livetable(view: DataView) {
 	const team_n = view.getUint8(offset)
 	++offset
 
-	let teams: LivetableLine[] = Array.from({ length: team_n }, () => ({}))
+	let teams: LivetableLine[] = []
 
 	for (let i = 0; i < team_n; ++i) {
-		for (let ch = 0; ch < TEAMS_NAME_MAX_LEN; ++ch) {
-			teams[i].name += String.fromCharCode(view.getUint8(offset))
+		teams[i] = { name: "" }
+		for (let chi = 0; chi < BUFFER_LEN; ++chi) {
+			const c = view.getUint8(offset)
+			teams[i].name += String.fromCharCode(c)
 			++offset
+			if (c === 0) {
+				offset += BUFFER_LEN - chi - 1
+				break
+			}
 		}
 	}
+	offset += (TEAMS_COUNT_MAX - team_n) * TEAMS_NAME_MAX_LEN
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].points = view.getUint8(offset)
 		++offset
 	}
+	offset += TEAMS_COUNT_MAX - team_n
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].played = view.getUint8(offset)
 		++offset
 	}
+	offset += TEAMS_COUNT_MAX - team_n
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].won = view.getUint8(offset)
 		++offset
 	}
+	offset += TEAMS_COUNT_MAX - team_n
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].tied = view.getUint8(offset)
 		++offset
 	}
+	offset += TEAMS_COUNT_MAX - team_n
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].lost = view.getUint8(offset)
 		++offset
 	}
+	offset += TEAMS_COUNT_MAX - team_n
 
 	for (let i = 0; i < team_n; ++i) {
-		teams[i].goals = view.getUint16(offset)
+		teams[i].goals = view.getUint16(offset, true)
+		if (view.getUint16(offset) === 6) console.log("amogus")
 		offset += 2
 	}
+	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
 	for (let i = 0; i < team_n; ++i) {
-		teams[i].goals_taken = view.getUint16(offset)
+		teams[i].goals_taken = view.getUint16(offset, true)
 		offset += 2
 	}
+	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
 	for (const team of teams) {
 		console.log("TODO adding: ", team.name!)
@@ -197,42 +214,42 @@ function write_livetable(view: DataView) {
 		line.classList.add("line")
 
 		const name = document.createElement("div")
-		name.innerHTML = team.name!
+		name.innerHTML = `name: ${team.name!}`
 		name.style.backgroundColor = "magenta" // TODO TEST
 		line.appendChild(name)
 
 		const points = document.createElement("div")
-		points.innerHTML = team.points!.toString()
+		points.innerHTML = `points: ${team.points!.toString()}`
 		name.style.backgroundColor = "red" // TODO TEST
 		line.appendChild(points)
 
 		const played = document.createElement("div")
-		played.innerHTML = team.played!.toString()
+		played.innerHTML = `team: ${team.played!.toString()}`
 		name.style.backgroundColor = "orange" // TODO TEST
 		line.appendChild(played)
 
 		const won = document.createElement("div")
-		won.innerHTML = team.won!.toString()
+		won.innerHTML = `won: ${team.won!.toString()}`
 		name.style.backgroundColor = "yellow" // TODO TEST
 		line.appendChild(won)
 
 		const tied = document.createElement("div")
-		tied.innerHTML = team.tied!.toString()
+		tied.innerHTML = `tied: ${team.tied!.toString()}`
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(tied)
 
 		const lost = document.createElement("div")
-		lost.innerHTML = team.lost!.toString()
+		lost.innerHTML = `lost: ${team.lost!.toString()}`
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(lost)
 
 		const goals = document.createElement("div")
-		goals.innerHTML = team.goals!.toString()
+		goals.innerHTML = `goals: ${team.goals!.toString()}`
 		name.style.backgroundColor = "blue" // TODO TEST
 		line.appendChild(goals)
 
 		const goals_taken = document.createElement("div")
-		goals_taken.innerHTML = team.goals_taken!.toString()
+		goals_taken.innerHTML = `goals taken: ${team.goals_taken!.toString()}`
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(goals_taken)
 
