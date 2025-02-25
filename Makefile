@@ -26,4 +26,4 @@ rentner:
 	`pkg-config gtk4 --cflags --libs`
 
 js:
-	tsc --target es2017 frontend/scoreboard.ts
+	tsc --target es2017 frontend/script.ts

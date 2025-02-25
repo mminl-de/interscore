@@ -129,38 +129,24 @@ function write_card(view: DataView) {
 }
 
 interface LivetableLine {
-	name: string,
-	points: number,
-	played: number,
-	won: number,
-	tied: number,
-	lost: number,
-	goals: number,
-	goals_taken: number
+	name?: string,
+	points?: number,
+	played?: number,
+	won?: number,
+	tied?: number,
+	lost?: number,
+	goals?: number,
+	goals_taken?: number
 }
 
 // TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
-	// TODO NOTE
-	// typedef struct {
-	// 	u8 widget_num;
-	// 	u8 len; // amount of teams total
-	// 	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
-	// 	u8 points[TEAMS_COUNT_MAX];
-	// 	u8 games_played[TEAMS_COUNT_MAX];
-	// 	u8 games_won[TEAMS_COUNT_MAX];
-	// 	u8 games_tied[TEAMS_COUNT_MAX];
-	// 	u8 games_lost[TEAMS_COUNT_MAX];
-	// 	u16 goals[TEAMS_COUNT_MAX];
-	// 	u16 goals_taken[TEAMS_COUNT_MAX];
-	// } widget_livetable;
-
 	let offset = 1
 
 	const team_n = view.getUint8(offset)
 	++offset
 
-	let teams: LivetableLine[] = []
+	let teams: LivetableLine[] = Array.from({ length: team_n }, () => ({}))
 
 	for (let i = 0; i < team_n; ++i) {
 		for (let ch = 0; ch < TEAMS_NAME_MAX_LEN; ++ch) {
@@ -205,46 +191,48 @@ function write_livetable(view: DataView) {
 	}
 
 	for (const team of teams) {
+		console.log("TODO adding: ", team.name!)
+
 		const line = document.createElement("div")
 		line.classList.add("line")
 
 		const name = document.createElement("div")
-		name.innerHTML = team.name
+		name.innerHTML = team.name!
 		name.style.backgroundColor = "magenta" // TODO TEST
 		line.appendChild(name)
 
 		const points = document.createElement("div")
-		points.innerHTML = team.points.toString()
+		points.innerHTML = team.points!.toString()
 		name.style.backgroundColor = "red" // TODO TEST
 		line.appendChild(points)
 
 		const played = document.createElement("div")
-		played.innerHTML = team.played.toString()
+		played.innerHTML = team.played!.toString()
 		name.style.backgroundColor = "orange" // TODO TEST
 		line.appendChild(played)
 
 		const won = document.createElement("div")
-		won.innerHTML = team.won.toString()
+		won.innerHTML = team.won!.toString()
 		name.style.backgroundColor = "yellow" // TODO TEST
 		line.appendChild(won)
 
 		const tied = document.createElement("div")
-		tied.innerHTML = team.tied.toString()
+		tied.innerHTML = team.tied!.toString()
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(tied)
 
 		const lost = document.createElement("div")
-		lost.innerHTML = team.lost.toString()
+		lost.innerHTML = team.lost!.toString()
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(lost)
 
 		const goals = document.createElement("div")
-		goals.innerHTML = team.goals.toString()
+		goals.innerHTML = team.goals!.toString()
 		name.style.backgroundColor = "blue" // TODO TEST
 		line.appendChild(goals)
 
 		const goals_taken = document.createElement("div")
-		goals_taken.innerHTML = team.goals_taken.toString()
+		goals_taken.innerHTML = team.goals_taken!.toString()
 		name.style.backgroundColor = "green" // TODO TEST
 		line.appendChild(goals_taken)
 
