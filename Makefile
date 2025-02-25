@@ -38,4 +38,4 @@ rentner-test:
 	`pkg-config Qt6Widgets Qt6Core Qt6Gui --cflags --libs` \
 
 js:
-	tsc --target es2017 frontend/scoreboard.ts
+	tsc --target es2017 frontend/script.ts

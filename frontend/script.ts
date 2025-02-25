@@ -23,11 +23,13 @@ let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
-let livetable_container = document.querySelector(".livetable .container")
+let livetable = document.querySelector(".livetable")! as HTMLElement
+let livetable_container = livetable.querySelector(".container")! as HTMLElement
 
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
 const HEX_COLOR_LEN = 8
+const TEAMS_NAME_MAX_LEN = 100
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -126,6 +128,18 @@ function write_card(view: DataView) {
 	}
 }
 
+interface LivetableLine {
+	name: string,
+	points: number,
+	played: number,
+	won: number,
+	tied: number,
+	lost: number,
+	goals: number,
+	goals_taken: number
+}
+
+// TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
 	// TODO NOTE
 	// typedef struct {
@@ -146,7 +160,98 @@ function write_livetable(view: DataView) {
 	const team_n = view.getUint8(offset)
 	++offset
 
-	// TODO NOW read `teams` etc.
+	let teams: LivetableLine[] = []
+
+	for (let i = 0; i < team_n; ++i) {
+		for (let ch = 0; ch < TEAMS_NAME_MAX_LEN; ++ch) {
+			teams[i].name += String.fromCharCode(view.getUint8(offset))
+			++offset
+		}
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].points = view.getUint8(offset)
+		++offset
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].played = view.getUint8(offset)
+		++offset
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].won = view.getUint8(offset)
+		++offset
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].tied = view.getUint8(offset)
+		++offset
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].lost = view.getUint8(offset)
+		++offset
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].goals = view.getUint16(offset)
+		offset += 2
+	}
+
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].goals_taken = view.getUint16(offset)
+		offset += 2
+	}
+
+	for (const team of teams) {
+		console.log(`TODO: ${team.name}`)
+
+		const line = document.createElement("div")
+		line.classList.add("line")
+
+		const name = document.createElement("div")
+		name.innerHTML = team.name
+		name.style.backgroundColor = "magenta" // TODO TEST
+		line.appendChild(name)
+
+		const points = document.createElement("div")
+		points.innerHTML = team.points.toString()
+		name.style.backgroundColor = "red" // TODO TEST
+		line.appendChild(points)
+
+		const played = document.createElement("div")
+		played.innerHTML = team.played.toString()
+		name.style.backgroundColor = "orange" // TODO TEST
+		line.appendChild(played)
+
+		const won = document.createElement("div")
+		won.innerHTML = team.won.toString()
+		name.style.backgroundColor = "yellow" // TODO TEST
+		line.appendChild(won)
+
+		const tied = document.createElement("div")
+		tied.innerHTML = team.tied.toString()
+		name.style.backgroundColor = "green" // TODO TEST
+		line.appendChild(tied)
+
+		const lost = document.createElement("div")
+		lost.innerHTML = team.lost.toString()
+		name.style.backgroundColor = "green" // TODO TEST
+		line.appendChild(lost)
+
+		const goals = document.createElement("div")
+		goals.innerHTML = team.goals.toString()
+		name.style.backgroundColor = "blue" // TODO TEST
+		line.appendChild(goals)
+
+		const goals_taken = document.createElement("div")
+		goals_taken.innerHTML = team.goals_taken.toString()
+		name.style.backgroundColor = "green" // TODO TEST
+		line.appendChild(goals_taken)
+
+		livetable_container.appendChild(line)
+	}
 }
 
 function scoreboard_set_timer(view: DataView) {
