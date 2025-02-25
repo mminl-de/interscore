@@ -14,15 +14,51 @@ typedef struct {
 	int height;
 	GtkWidget *w;
 	GtkWidget *fixed;
-	GtkWidget *l_t1;
-	GtkWidget *l_t2;
-	GtkWidget *l_t1_score;
-	GtkWidget *l_t2_score;
-	GtkWidget *l_time;
+	struct {
+		struct {
+			GtkWidget* name;
+			GtkWidget* score;
+		} t1;
+		struct {
+			GtkWidget* name;
+			GtkWidget* score;
+		} t2;
+		GtkWidget* time;
+	} l;
 } w_display;
 
 typedef struct {
-	w_display *d;
+	int width;
+	int height;
+	GtkWidget *w;
+	GtkWidget *fixed;
+	struct {
+		struct {
+			GtkWidget* name;
+			GtkWidget* score;
+		} t1;
+		struct {
+			GtkWidget* name;
+			GtkWidget* score;
+		} t2;
+		GtkWidget* time;
+	} l;
+	struct {
+		struct {
+			GtkWidget *score_plus;
+			GtkWidget *score_minus;
+		} t1;
+		struct {
+			GtkWidget *score_plus;
+			GtkWidget *score_minus;
+		} t2;
+		GtkWidget *next_game;
+		GtkWidget *prev_game;
+		GtkWidget *switch_sides;
+		GtkWidget *yellow_card;
+		GtkWidget *red_card;
+	} b;
+	GtkWidget *dd_card_players;
 } w_input;
 
 typedef struct {
@@ -339,9 +375,6 @@ void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 }
 
 void update_display_window(){
-	int width = gtk_widget_get_width(wd.w);
-	int height = gtk_widget_get_height(wd.w);
-	printf("width: %d; height: %d\n", width, height);
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
@@ -360,7 +393,7 @@ void update_display_window(){
 	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
 
 	//Display the Scores
-	char s[4];
+	char s[10];
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
 
@@ -372,10 +405,6 @@ void update_display_window(){
 }
 
 void update_input_window(){
-	//TODO STARTHERE
-	int width = gtk_widget_get_width(wd.w);
-	int height = gtk_widget_get_height(wd.w);
-	printf("width: %d; height: %d\n", width, height);
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
@@ -394,7 +423,7 @@ void update_input_window(){
 	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
 
 	//Display the Scores
-	char s[4];
+	char s[10];
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
 
@@ -403,6 +432,11 @@ void update_input_window(){
 
 	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
 	update_label(&wd.l_time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+
+	//Display the Buttons
+	//Display Goal +
+
+
 }
 
 // Function to create the display window
