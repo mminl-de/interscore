@@ -408,15 +408,15 @@ widget_gameplan widget_gameplan_create() {
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
 		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
-		w.goals_t1[i] = md.games[i].score.t1;
-		w.goals_t2[i] = md.games[i].score.t2;
+		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
+		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
 
 		strcpy(w.team1_color_left[i], md.teams[md.games[i].t1_index].color_light);
 		strcpy(w.team1_color_right[i], md.teams[md.games[i].t1_index].color_dark);
 		strcpy(w.team2_color_left[i], md.teams[md.games[i].t2_index].color_dark);
 		strcpy(w.team2_color_right[i], md.teams[md.games[i].t2_index].color_light);
 
-		printf("%d.) %s, %d : %d ,%s\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i]);
+		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.team1_color_left[i], w.team2_color_right[i]);
 	}
 
 	return w;

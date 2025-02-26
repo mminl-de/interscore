@@ -89,35 +89,6 @@ function write_scoreboard(view: DataView) {
 }
 
 function write_gameplan(view: DataView) {
-	//        TODO NOTE
-	//        <div class="gameplan">
-	//			<div class="gameplan-heading">Spielplan</div>
-	//			<div class="game">
-	//				<div class="t1">Gifhorn</div>
-	//				<div class="score-1">1</div>
-	//				<div class="score-2">0</div>
-	//				<div class="t2">Ludwigsfelde </div>
-	//			</div>
-	//			<div class="game">
-	//				<div class="t1">Gifhorn</div>
-	//				<div class="score-1">1</div>
-	//				<div class="score-2">0</div>
-	//				<div class="t2">Ludwigsfelde</div>
-	//			</div>
-	//			<div class="game anticipated">
-	//				<div class="t1">Gifhorn</div>
-	//				<div class="score-1">?</div>
-	//				<div class="score-2">?</div>
-	//				<div class="t2">Ludwigsfelde</div>
-	//			</div>
-	//			<div class="game anticipated">
-	//				<div class="t1">Gifhorn</div>
-	//				<div class="score-1">?</div>
-	//				<div class="score-2">?</div>
-	//				<div class="t2">Ludwigsfelde</div>
-	//			</div>
-	//		</div>
-
 	let offset = 1
 	const game_n = view.getUint8(offset)
 	++offset
@@ -142,7 +113,6 @@ function write_gameplan(view: DataView) {
 		let t2: String = ""
 		for (let name_ch = 0; name_ch < BUFFER_LEN; ++name_ch) {
 			const c = view.getUint8(offset)
-			console.log("TODO mystery char: ", String.fromCharCode(c))
 			t2 += String.fromCharCode(c)
 			++offset
 			if (c === 0) {
@@ -152,12 +122,14 @@ function write_gameplan(view: DataView) {
 		}
 		teams_2.push(t2)
 	}
+	offset += (GAMES_COUNT_MAX - game_n) * BUFFER_LEN
 
 	let goals_1: number[] = []
 	for (let goal_i = 0; goal_i < game_n; ++goal_i) {
 		goals_1.push(view.getUint8(offset))
 		++offset
 	}
+	console.log(`TODO greatest byte: '${view.getUint8(offset)}'`)
 	offset += GAMES_COUNT_MAX - game_n
 
 	let goals_2: number[] = []
@@ -167,20 +139,21 @@ function write_gameplan(view: DataView) {
 	}
 	offset += GAMES_COUNT_MAX - game_n
 
-	let colors_1: string[] = []
-	let colors_2: string[] = []
+	let colors_1: String[] = []
+	let colors_2: String[] = []
 	for (let game_i = 0; game_i < game_n; ++game_i) {
-		let c1: string = ""
-		let c2: string = ""
+		let c1: String = ""
+		let c2: String = ""
 		for (let hex_ch = 0; hex_ch < HEX_COLOR_LEN; ++hex_ch) {
-			c1 += view.getUint8(offset)
-			c2 += view.getUint8(offset + HEX_COLOR_LEN)
+			c1 += String.fromCharCode(view.getUint8(offset))
+			c2 += String.fromCharCode(view.getUint8(offset + GAMES_COUNT_MAX * HEX_COLOR_LEN))
 			++offset
 		}
 		colors_1.push(c1)
 		colors_2.push(c2)
 	}
 	offset += (GAMES_COUNT_MAX - game_n) * HEX_COLOR_LEN
+	console.log(`TODO colorz: (${colors_1[0]}) (${colors_1[1]})`)
 
 	// TODO NOTE discarding the dark colors
 	offset += 2 * GAMES_COUNT_MAX * HEX_COLOR_LEN
@@ -192,6 +165,8 @@ function write_gameplan(view: DataView) {
 		let t1 = document.createElement("div")
 		t1.classList.add("t1")
 		t1.innerHTML = teams_1[game_i].toString()
+		t1.style.backgroundColor = colors_1[game_i].slice(0, 7)
+		console.log("TODO first color: ", t1.style.backgroundColor)
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
@@ -202,11 +177,12 @@ function write_gameplan(view: DataView) {
 		let s2 = document.createElement("div")
 		s2.classList.add("s2")
 		s2.innerHTML = goals_2[game_i].toString()
-		console.log(`TODO: invisible string hehe: '${goals_2[game_i]}'`)
 		line.appendChild(s2)
 
 		let t2 = document.createElement("div")
 		t2.classList.add("t2")
+		t2.style.backgroundColor = colors_2[game_i].slice(0, 7)
+		console.log("TODO second color: ", t2.style.backgroundColor)
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
 
