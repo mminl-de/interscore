@@ -116,6 +116,8 @@ function write_card(view) {
 }
 // TODO FINAL OPTIMIZE
 function write_livetable(view) {
+    while (livetable_container.children.length > 1)
+        livetable_container.removeChild(livetable_container.lastChild);
     let offset = 1;
     const team_n = view.getUint8(offset);
     ++offset;
@@ -207,8 +209,7 @@ function write_livetable(view) {
         const diff = document.createElement("div");
         diff.innerHTML = (teams[teami].goals - teams[teami].goals).toString();
         line.appendChild(diff);
-        const target = livetable_container.childNodes[teami + 1];
-        livetable_container.replaceChild(line, target);
+        livetable_container.appendChild(line);
     }
 }
 function scoreboard_set_timer(view) {

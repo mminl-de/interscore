@@ -145,6 +145,9 @@ interface LivetableLine {
 
 // TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
+	while (livetable_container.children.length > 1)
+		livetable_container.removeChild(livetable_container.lastChild!)
+
 	let offset = 1
 
 	const team_n = view.getUint8(offset)
@@ -256,8 +259,7 @@ function write_livetable(view: DataView) {
 		diff.innerHTML = (teams[teami].goals! - teams[teami].goals!).toString()
 		line.appendChild(diff)
 
-		const target: Node = livetable_container.childNodes[teami + 1]
-		livetable_container.replaceChild(line, target)
+		livetable_container.appendChild(line)
 	}
 }
 
@@ -388,13 +390,13 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-  function hotReloadCSS() {
-    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-      const newLink = document.createElement('link')
-      newLink.rel = 'stylesheet'
-      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
-      link.replaceWith(newLink)
-    })
-  }
-
-  setInterval(hotReloadCSS, 5000)
+//  function hotReloadCSS() {
+//    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+//      const newLink = document.createElement('link')
+//      newLink.rel = 'stylesheet'
+//      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+//      link.replaceWith(newLink)
+//    })
+//  }
+//
+//  setInterval(hotReloadCSS, 5000)
