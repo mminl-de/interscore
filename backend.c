@@ -387,11 +387,11 @@ widget_livetable widget_livetable_create() {
 		printf("begin entry games won: %d\n", w.games_won[i]);
 		w.games_tied[i] = team_calc_games_tied(best_index);
 		printf("begin entry games tied: %d\n", w.games_tied[i]);
-		w.games_lost[i] = 5; // w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
+		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
 		printf("begin entry games lost: %d\n", w.games_lost[i]);
-		w.goals[i] = 6; // team_calc_goals(best_index);
+		w.goals[i] = team_calc_goals(best_index);
 		printf("begin entry goals: %d\n", w.goals[i]);
-		w.goals_taken[i] = 7; // team_calc_goals_taken(best_index);
+		w.goals_taken[i] = team_calc_goals_taken(best_index);
 		printf("begin entry goals taken: %d\n", w.goals[i]);
 
 		teams_done[i] = best_index;

@@ -1,0 +1,20 @@
+.line {
+	display: flex;
+	margin: 20px;
+}
+
+.line > * {
+	background-color: cyan;
+
+	text-align: center;
+
+	padding: 10px;
+	margin: 0 5px;
+	width: 150px;
+}
+
+.name {
+	background-color: crimson;
+
+	width: 200px;
+}

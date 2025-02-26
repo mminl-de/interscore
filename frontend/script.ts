@@ -208,50 +208,37 @@ function write_livetable(view: DataView) {
 	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
 	for (const team of teams) {
-		console.log("TODO adding: ", team.name!)
-
 		const line = document.createElement("div")
 		line.classList.add("line")
 
 		const name = document.createElement("div")
-		name.innerHTML = `name: ${team.name!}`
-		name.style.backgroundColor = "magenta" // TODO TEST
+		name.innerHTML = team.name!.toString()
+		name.classList.add("name")
 		line.appendChild(name)
 
 		const points = document.createElement("div")
-		points.innerHTML = `points: ${team.points!.toString()}`
-		name.style.backgroundColor = "red" // TODO TEST
+		points.innerHTML = team.points!.toString()
 		line.appendChild(points)
 
 		const played = document.createElement("div")
-		played.innerHTML = `team: ${team.played!.toString()}`
-		name.style.backgroundColor = "orange" // TODO TEST
+		played.innerHTML = team.played!.toString()
 		line.appendChild(played)
 
 		const won = document.createElement("div")
-		won.innerHTML = `won: ${team.won!.toString()}`
-		name.style.backgroundColor = "yellow" // TODO TEST
+		won.innerHTML = team.won!.toString()
 		line.appendChild(won)
 
 		const tied = document.createElement("div")
-		tied.innerHTML = `tied: ${team.tied!.toString()}`
-		name.style.backgroundColor = "green" // TODO TEST
+		tied.innerHTML = team.tied!.toString()
 		line.appendChild(tied)
 
 		const lost = document.createElement("div")
-		lost.innerHTML = `lost: ${team.lost!.toString()}`
-		name.style.backgroundColor = "green" // TODO TEST
+		lost.innerHTML = team.lost!.toString()
 		line.appendChild(lost)
 
 		const goals = document.createElement("div")
-		goals.innerHTML = `goals: ${team.goals!.toString()}`
-		name.style.backgroundColor = "blue" // TODO TEST
+		goals.innerHTML = `${team.goals!.toString()}:${team.goals_taken!.toString()}`
 		line.appendChild(goals)
-
-		const goals_taken = document.createElement("div")
-		goals_taken.innerHTML = `goals taken: ${team.goals_taken!.toString()}`
-		name.style.backgroundColor = "green" // TODO TEST
-		line.appendChild(goals_taken)
 
 		livetable_container.appendChild(line)
 	}
@@ -383,3 +370,14 @@ socket.onclose = () => {
 }
 
 console.log("Client loaded!")
+
+  function hotReloadCSS() {
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+      const newLink = document.createElement('link');
+      newLink.rel = 'stylesheet';
+      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime();
+      link.replaceWith(newLink);
+    });
+  }
+
+  setInterval(hotReloadCSS, 5000);

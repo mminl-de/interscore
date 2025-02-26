@@ -11,14 +11,6 @@
     gap: 10px;
 }
 
-/* TODO REMOVE
-.time-slider {
-    height: 8px;
-    background-color: lime;
-	border: solid 3px black;
-}
-*/
-
 /* TODO WIP */
 .time-container {
 	border: solid 3px black;
@@ -26,6 +18,7 @@
 	position: relative;
 	height: 30px;
 }
+
 .bar {
 	background-color: #10c960;
 	position: absolute;
@@ -37,6 +30,7 @@
 
 	transition: width linear;
 }
+
 .time {
 	font-size: 24px;
 	position: absolute;
