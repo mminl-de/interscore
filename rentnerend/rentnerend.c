@@ -4,6 +4,7 @@
 //#include "../mongoose/mongoose.h"
 
 #include "../config.h"
+#include "gtk/gtkshortcut.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -24,6 +25,7 @@ typedef struct {
 			GtkWidget* score;
 		} t2;
 		GtkWidget* time;
+		GtkWidget* colon;
 	} l;
 } w_display;
 
@@ -61,6 +63,12 @@ typedef struct {
 			GtkWidget *yellow;
 			GtkWidget *red;
 		} card;
+		struct {
+			GtkWidget *plus;
+			GtkWidget *minus;
+			GtkWidget *toggle_pause;
+			GtkWidget *reset;
+		} time;
 	} b;
 	GtkWidget *dd_card_players;
 } w_input;
@@ -104,6 +112,7 @@ typedef struct {
 		u8 gameindex; // index of the current game played in the games array
 		bool halftime; // 0: first half, 1: second half
 		u16 time;
+		bool pause;
 	} cur;
 	Game *games;
 	u8 games_count;
@@ -116,6 +125,71 @@ typedef struct {
 Matchday md;
 w_display wd;
 w_input wi;
+
+void update_input_window();
+void update_display_window();
+
+void btn_cb_t1_score_plus(){
+	md.games[md.cur.gameindex].score.t1++;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_t1_score_minus(){
+	if(md.games[md.cur.gameindex].score.t1 > 0)
+		md.games[md.cur.gameindex].score.t1--;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_t2_score_plus(){
+	md.games[md.cur.gameindex].score.t2++;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_t2_score_minus(){
+	if(md.games[md.cur.gameindex].score.t2 > 0)
+		md.games[md.cur.gameindex].score.t2--;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_game_next(){
+	if(md.cur.gameindex < md.games_count-1)
+		md.cur.gameindex++;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_game_prev(){
+	if(md.cur.gameindex > 0)
+		md.cur.gameindex--;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_game_switch_sides(){
+	md.cur.halftime = !md.cur.halftime;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_time_plus(){
+	md.cur.time++;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_time_minus(){
+	md.cur.time--;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_time_toggle_pause(){
+	md.cur.pause = !md.cur.pause;
+	update_input_window();
+	update_display_window();
+}
+void btn_cb_time_reset(){
+	md.cur.time = GAME_LENGTH;
+	update_input_window();
+	update_display_window();
+}
+
+
 
 //Set current_match to first match and 0-initialize every game
 void init_matchday() {
@@ -323,8 +397,8 @@ void toggle_timer(GtkButton *button, gpointer user_data) {
 */
 
 //Gets the biggest font size possible for a markuped text of a label
-int biggest_fontsize_possible(char *text, int max_fontsize, int x, bool bold) {
-	int width, fontsize = max_fontsize+1;
+int biggest_fontsize_possible(char *text, int max_fontsize, int x, int y, bool bold) {
+	int width, height, fontsize = max_fontsize+1;
 	char b[] = "weight='bold'";
 	if (!bold)
 		b[0] = '\0';
@@ -339,17 +413,23 @@ int biggest_fontsize_possible(char *text, int max_fontsize, int x, bool bold) {
 
 		int trash;
 		gtk_widget_measure(l_decoy, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-	} while (width > x);
+		gtk_widget_measure(l_decoy, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+		if(y == -1)
+			y = height;
+		if(x == -1)
+			x = width;
+	} while (width > x || height > y);
+	printf("text: %s, width: %d, height: %d, x: %d, y: %d\n", text, width, height, x, y);
 	gtk_widget_set_visible(l_decoy, FALSE);
 	return fontsize;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
 void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool variable_fontsize, bool bold, u8 x_alignment, u8 y_alignment) {
-	printf("text: %s\n", text);
+	printf("Update Label Begin: text: %s\n", text);
 	char s[strlen(text)+100];
 	if (variable_fontsize)
-		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, bold);
+		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, y_end-y_start, bold);
 	char bold_str[] = "weight='bold'";
 	if (!bold)
 		bold_str[0] = '\0';
@@ -359,24 +439,28 @@ void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 	int width, height, trash;
 	if (x_alignment == 1 && x_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("x_alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
+		printf("text: %s, x_alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
 		x_start += ((x_end-x_start)-width)/2;
 	} else if (x_alignment == 2 && x_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("x_alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", x_start, (x_end-x_start)-width, x_end, width);
+		printf("text: %s, x_alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
 		x_start += (x_end-x_start)-width;
-	}
+	} else if (x_alignment == 0)
+		printf("text: %s, x_alignment = 0, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
 	if (y_alignment == 1 && y_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
-		printf("y_alignment = 1, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", y_start, (y_end-y_start)-height, y_end, height);
+		printf("text: %s, y_alignment = 1, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", text, y_start, (y_end-y_start)-height, y_end, height);
 		y_start += ((y_end-y_start)-height)/2;
 	} else if (y_alignment == 2 && y_end != -1) {
 		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
-		printf("y_alignment = 2, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", y_start, (y_end-y_start)-height, y_end, height);
+		printf("text: %s, y_alignment = 2, y_start: %d, new y_start: %d,y_end: %d, y_end-y_start: %d, height: %d\n", text, y_start, y_start + (y_end-y_start)-height, y_end, (y_end-y_start), height);
 		y_start += (y_end-y_start)-height;
-	}
+	} else if (y_alignment == 0)
+		printf("text: %s, y_alignment = 0, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", text, y_start, (y_end-y_start)-height, y_end, height);
 
 	gtk_fixed_move(GTK_FIXED(fixed), *l, x_start, y_start);
+	gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	printf("x_start: %d, y_start: %d, height: %d\n", x_start, y_start, height);
 }
 
 void update_button(GtkWidget **b, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end){
@@ -388,29 +472,41 @@ void update_display_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
-	update_label(&wd.l.t1.name, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+	char s[TEAMS_NAME_MAX_LEN];
+	if(md.cur.halftime)
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	else
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	update_label(&wd.l.t1.name, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, s, fontsize, false, true, 1, 2);
 
-	GtkWidget *l = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), l, 0, 0);
-	update_label(&l, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
+	update_label(&wd.l.colon, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
 
-	update_label(&wd.l.t2.name, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+	if(md.cur.halftime)
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	else
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	update_label(&wd.l.t2.name, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, s, fontsize, false, true, 1, 2);
 
 	//Display the Scores
-	char s[10];
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	if(md.cur.halftime)
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	else
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	update_label(&wd.l.t1.score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
 
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	if(md.cur.halftime)
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	else
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	update_label(&wd.l.t2.score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
 
-	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
+	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
 	update_label(&wd.l.time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
 }
 
@@ -418,41 +514,104 @@ void update_input_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30), true);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30), true);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6 - 10, true);
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
+	printf("fontsize: %d, %d\n", fontsize, fontsize2);
+	char s[TEAMS_NAME_MAX_LEN];
 
 	//Display prev game;
 	update_button(&wi.b.game.prev, wi.fixed, wi.width/80, wi.width/20, 20, 20+fontsize);
 
-	update_label(&wi.l.t1.name, wi.fixed, wi.width/20 + wi.width/40, wi.width/2 - (wi.width/30 + wi.width/40), 10, wi.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+	//Display Team 1 Name
+	if(md.cur.halftime)
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	else
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	update_label(&wi.l.t1.name, wi.fixed, wi.width/20 + wi.width/40, wi.width/2 - (wi.width/30 + wi.width/40), 10, wi.height/6, s, fontsize, false, true, 1, 0);
 
 	//Display switch sides;
 	update_button(&wi.b.game.switch_sides, wi.fixed, wi.width/2 - wi.width/30, wi.width/2 + wi.width/30, 20, 20+fontsize);
 
-	update_label(&wi.l.t2.name, wi.fixed, wi.width/2 + wi.width/30 + wi.width/40, wi.width - (wi.width/20 + wi.width/40), 10, wi.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+	//Display Team 2 Name
+	if(md.cur.halftime)
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	else
+		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	update_label(&wi.l.t2.name, wi.fixed, wi.width/2 + wi.width/30 + wi.width/40, wi.width - (wi.width/20 + wi.width/40), 10, wi.height/6, s, fontsize, false, true, 1, 0);
 
-	//TODO STARTHERE GTK hat eine minimalbreite wegen Text. Maybe bei Icons oder SVG's nicht?
 	//Display next game;
 	update_button(&wi.b.game.next, wi.fixed, wi.width - wi.width/20, wi.width - wi.width/80, 20, 20+fontsize);
 
 	//Display the Scores
-	char s[10];
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(&wi.l.t1.score, wi.fixed, 0, wi.width/2, wi.height/5, wi.height/2, s, 350, false, true, 1, 1);
+	//Display Score Team 1
+	if(md.cur.halftime)
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	else
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	update_label(&wi.l.t1.score, wi.fixed, 0, wi.width/2, wi.height/5, wi.height/2+wi.height/8, s, 350, true, true, 1, 2);
 
-	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(&wi.l.t2.score, wi.fixed, wi.width/2, wi.width-1, wi.height/6, wi.height/2, s, 350, false, true, 1, 1);
+	//Display +- Score Team 1
+	int width, height, trash;
+	gtk_widget_measure(wi.l.t1.score, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
+	gtk_widget_measure(wi.l.t1.score, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	//update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
+	update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
+	update_button(&wi.b.t1.score_minus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
 
-	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
-	update_label(&wi.l.time, wi.fixed, 0, wi.width-1, wi.height/2, wi.height-1, s, 350, false, true, 1, 1);
+	//Display Score Team 2
+	if(md.cur.halftime)
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	else
+		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	update_label(&wi.l.t2.score, wi.fixed, wi.width/2, wi.width-1, wi.height/5, wi.height/2+wi.height/8, s, 350, true, true, 1, 2);
+
+	//Display +- Score Team 2
+	gtk_widget_measure(wi.l.t2.score, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
+	gtk_widget_measure(wi.l.t2.score, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
+	update_button(&wi.b.t2.score_plus, wi.fixed, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
+	update_button(&wi.b.t2.score_minus, wi.fixed, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
+
+	//Display Time
+	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
+	update_label(&wi.l.time, wi.fixed, 0, wi.width-1, wi.height/2+wi.height/5, wi.height-1, s, 350, true, true, 1, 2);
+
+	//Display +- Time
+	gtk_widget_measure(wi.l.time, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
+	gtk_widget_measure(wi.l.time, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
+	update_button(&wi.b.time.minus, wi.fixed, wi.width/2 - width/2 - 160, wi.width/2 - width/2, wi.height/2+wi.height/5, wi.height-1);
+	update_button(&wi.b.time.plus, wi.fixed, wi.width/2 + width/2, wi.width/2 + width/2 + 160, wi.height/2+wi.height/5, wi.height-1);
+
+	update_button(&wi.b.time.toggle_pause, wi.fixed, wi.width/2 - width/2 + 10, wi.width/2-5, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
+	update_button(&wi.b.time.reset, wi.fixed, wi.width/2 + 5, wi.width/2 + width/2 - 10, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
 
 	//Display the Buttons
 	//Display prev game;
 	//Display next game;
 	//Display Goal +
+}
+
+//fontsize is only used for icons atm, cry about it
+void button_new(GtkWidget **b, GtkWidget *fixed, void (*callback_func)(), char *text, bool text_is_icon, int fontsize){
+	if(text_is_icon){
+		GtkWidget *i = gtk_image_new_from_icon_name(text);
+		gtk_image_set_pixel_size(GTK_IMAGE(i), fontsize);
+		*b = gtk_button_new();
+		gtk_button_set_child(GTK_BUTTON(*b), i);
+	} else {
+		*b = gtk_button_new_with_label(text);
+	}
+	gtk_fixed_put(GTK_FIXED(fixed), *b, 0, 0);
+	g_signal_connect(*b, "clicked", G_CALLBACK(callback_func), NULL);
+}
+
+void label_new(GtkWidget **l, GtkWidget *fixed){
+	*l = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(fixed), *l, 0, 0);
 }
 
 // Function to create the display window
@@ -473,34 +632,30 @@ w_input create_input_window(const GtkApplication *app) {
 	wi.fixed = gtk_fixed_new();
 	gtk_window_set_child(GTK_WINDOW(wi.w), wi.fixed);
 
-	wi.l.t1.name = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t1.name, 0, 0);
-	wi.l.t2.name = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t2.name, 0, 0);
-	wi.l.t1.score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t1.score, 0, 0);
-	wi.l.t2.score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t2.score, 0, 0);
-	wi.l.time = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.time, 0, 0);
-	//Create Buttons
-	/*
-	wi.b.t1.score_minus = gtk_button_new_with_label("-");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t1.score_minus, 0, 0);
-	wi.b.t1.score_plus = gtk_button_new_with_label("+");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t1.score_plus, 0, 0);
-	wi.b.t2.score_minus = gtk_button_new_with_label("-");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t2.score_minus, 0, 0);
-	wi.b.t2.score_plus = gtk_button_new_with_label("+");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t2.score_plus, 0, 0);
-	*/
-	wi.b.game.next = gtk_button_new_with_label("NÄCHSTES");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.next, 0, 0);
+	GtkCssProvider *provider = gtk_css_provider_new();
+	gtk_css_provider_load_from_path(provider, "rentnerend/style.css");
+	gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-	wi.b.game.prev = gtk_button_new_with_label("ZURÜCK");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.prev, 0, 0);
-	wi.b.game.switch_sides = gtk_button_new_with_label("SEITENWECHSEL");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.switch_sides, 0, 0);
+
+	label_new(&wi.l.t1.name, wi.fixed);
+	label_new(&wi.l.t2.name, wi.fixed);
+	label_new(&wi.l.t1.score, wi.fixed);
+	label_new(&wi.l.t2.score, wi.fixed);
+	label_new(&wi.l.time, wi.fixed);
+	//Create Buttons
+	button_new(&wi.b.t1.score_minus, wi.fixed, btn_cb_t1_score_minus, "list-remove", true, 32);
+	button_new(&wi.b.t1.score_plus, wi.fixed, btn_cb_t1_score_plus, "list-add", true, 32);
+	button_new(&wi.b.t2.score_minus, wi.fixed, btn_cb_t2_score_minus, "list-remove", true, 32);
+	button_new(&wi.b.t2.score_plus, wi.fixed, btn_cb_t2_score_plus, "list-add", true, 32);
+
+	button_new(&wi.b.game.next, wi.fixed, btn_cb_game_next, "go-next", true, 32);
+
+	button_new(&wi.b.game.prev, wi.fixed, btn_cb_game_prev, "go-previous", true, 32);
+	button_new(&wi.b.game.switch_sides, wi.fixed, btn_cb_game_switch_sides, "object-flip-horizontal", true, 32);
+	button_new(&wi.b.time.plus, wi.fixed, btn_cb_time_plus, "list-add", true, 32);
+	button_new(&wi.b.time.minus, wi.fixed, btn_cb_time_minus, "list-remove", true, 32);
+	button_new(&wi.b.time.toggle_pause, wi.fixed, btn_cb_time_toggle_pause, "media-playback-pause", true, 32);
+	button_new(&wi.b.time.reset, wi.fixed, btn_cb_time_reset, "view-refresh", true, 32);
 	/*
 	wi.b.card.yellow = gtk_button_new_with_label("GELBE KARTE");
 	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.yellow, 0, 0);
@@ -530,16 +685,12 @@ w_display create_display_window(const GtkApplication *app) {
 	wd.fixed = gtk_fixed_new();
 	gtk_window_set_child(GTK_WINDOW(wd.w), wd.fixed);
 
-	wd.l.t1.name = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t1.name, 0, 0);
-	wd.l.t2.name = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t2.name, 0, 0);
-	wd.l.t1.score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t1.score, 0, 0);
-	wd.l.t2.score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t2.score, 0, 0);
-	wd.l.time = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.time, 0, 0);
+	label_new(&wd.l.t1.name, wd.fixed);
+	label_new(&wd.l.t2.name, wd.fixed);
+	label_new(&wd.l.t1.score, wd.fixed);
+	label_new(&wd.l.t2.score, wd.fixed);
+	label_new(&wd.l.time, wd.fixed);
+	label_new(&wd.l.colon, wd.fixed);
 
 	update_display_window();
     return wd;
