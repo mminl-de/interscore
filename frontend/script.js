@@ -56,6 +56,7 @@ function write_scoreboard(view) {
     // TODO WIP
     if (is_halftime) {
         for (let i = 0; i < HEX_COLOR_LEN; ++i) {
+            // TODO CONSIDER making it threee u8s
             team1_color_left += String.fromCharCode(view.getUint8(offset));
             team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset));
             team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset));
@@ -169,12 +170,21 @@ function write_livetable(view) {
         offset += 2;
     }
     offset += (TEAMS_COUNT_MAX - team_n) * 2;
+    for (let i = 0; i < team_n; ++i) {
+        teams[i].color = "";
+        for (let hexi = 0; hexi < HEX_COLOR_LEN; ++hexi) {
+            teams[i].color += String.fromCharCode(view.getUint8(offset));
+            ++offset;
+        }
+    }
     for (const team of teams) {
         const line = document.createElement("div");
         line.classList.add("line");
         const name = document.createElement("div");
         name.innerHTML = team.name.toString();
         name.classList.add("name");
+        name.style.backgroundColor = team.color.toString().slice(0, 7);
+        console.log(`TODO color for livetable: ${team.color.toString()}`);
         line.appendChild(name);
         const points = document.createElement("div");
         points.innerHTML = team.points.toString();
@@ -194,6 +204,9 @@ function write_livetable(view) {
         const goals = document.createElement("div");
         goals.innerHTML = `${team.goals.toString()}:${team.goals_taken.toString()}`;
         line.appendChild(goals);
+        const diff = document.createElement("div");
+        diff.innerHTML = (team.goals - team.goals).toString();
+        line.appendChild(diff);
         livetable_container.appendChild(line);
     }
 }

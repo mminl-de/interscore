@@ -51,7 +51,7 @@ function write_scoreboard(view: DataView) {
 	scoreboard_t1.innerHTML = t1.toString()
 	scoreboard_t2.innerHTML = t2.toString()
 
-	offset = 1 + BUFFER_LEN * 2;
+	offset = 1 + BUFFER_LEN * 2
 	scoreboard_score_1.innerHTML = view.getUint8(offset).toString()
 	++offset
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
@@ -67,6 +67,7 @@ function write_scoreboard(view: DataView) {
 	// TODO WIP
 	if (is_halftime) {
 		for (let i = 0; i < HEX_COLOR_LEN; ++i) {
+			// TODO CONSIDER making it threee u8s
 			team1_color_left += String.fromCharCode(view.getUint8(offset))
 			team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
 			team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
@@ -83,8 +84,8 @@ function write_scoreboard(view: DataView) {
 		}
 	}
 
-	scoreboard_t1.style.backgroundColor = team1_color_left.slice(0, 7);
-	scoreboard_t2.style.backgroundColor = team2_color_left.slice(0, 7);
+	scoreboard_t1.style.backgroundColor = team1_color_left.slice(0, 7)
+	scoreboard_t2.style.backgroundColor = team2_color_left.slice(0, 7)
 
 	// TODO DEBUG
 	console.log(`color team 1: '${scoreboard_t1.style.backgroundColor}'`)
@@ -138,7 +139,8 @@ interface LivetableLine {
 	tied?: number,
 	lost?: number,
 	goals?: number,
-	goals_taken?: number
+	goals_taken?: number,
+	color?: string
 }
 
 // TODO FINAL OPTIMIZE
@@ -207,6 +209,14 @@ function write_livetable(view: DataView) {
 	}
 	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
+	for (let i = 0; i < team_n; ++i) {
+		teams[i].color = ""
+		for (let hexi = 0; hexi < HEX_COLOR_LEN; ++hexi) {
+			teams[i].color += String.fromCharCode(view.getUint8(offset))
+			++offset
+		}
+	}
+
 	for (const team of teams) {
 		const line = document.createElement("div")
 		line.classList.add("line")
@@ -214,6 +224,8 @@ function write_livetable(view: DataView) {
 		const name = document.createElement("div")
 		name.innerHTML = team.name!.toString()
 		name.classList.add("name")
+		name.style.backgroundColor = team.color!.toString().slice(0, 7)
+		console.log(`TODO color for livetable: ${team.color!.toString()}`)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
@@ -240,6 +252,10 @@ function write_livetable(view: DataView) {
 		goals.innerHTML = `${team.goals!.toString()}:${team.goals_taken!.toString()}`
 		line.appendChild(goals)
 
+		const diff = document.createElement("div")
+		diff.innerHTML = (team.goals! - team.goals!).toString()
+		line.appendChild(diff)
+
 		livetable_container.appendChild(line)
 	}
 }
@@ -261,7 +277,7 @@ function start_timer(time_in_s: number) {
 	if (time_in_s === 0) {
 		scoreboard_time_bar.style.width = "100%"
 		duration = 0
-		return;
+		return
 	}
 
 	clearInterval(countdown)
@@ -373,11 +389,11 @@ console.log("Client loaded!")
 
   function hotReloadCSS() {
     document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-      const newLink = document.createElement('link');
-      newLink.rel = 'stylesheet';
-      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime();
-      link.replaceWith(newLink);
-    });
+      const newLink = document.createElement('link')
+      newLink.rel = 'stylesheet'
+      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+      link.replaceWith(newLink)
+    })
   }
 
-  setInterval(hotReloadCSS, 5000);
+  setInterval(hotReloadCSS, 5000)

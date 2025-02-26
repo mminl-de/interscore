@@ -67,6 +67,7 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
+	char color[TEAMS_COUNT_MAX][HEX_COLOR_LEN];
 } widget_livetable;
 
 typedef struct {
@@ -393,6 +394,7 @@ widget_livetable widget_livetable_create() {
 		printf("begin entry goals: %d\n", w.goals[i]);
 		w.goals_taken[i] = team_calc_goals_taken(best_index);
 		printf("begin entry goals taken: %d\n", w.goals[i]);
+		strcpy(w.color[i], md.teams[i].color_light);
 
 		teams_done[i] = best_index;
 	}
@@ -794,7 +796,7 @@ int main(void) {
 	load_json(JSON_PATH);
 	init_matchday();
 
-	printf("Hello, world!\n");
+	printf("Server loaded!\n");
 
 	bool close = false;
 	while (!close) {
