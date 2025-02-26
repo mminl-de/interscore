@@ -52,11 +52,15 @@ typedef struct {
 			GtkWidget *score_plus;
 			GtkWidget *score_minus;
 		} t2;
-		GtkWidget *next_game;
-		GtkWidget *prev_game;
-		GtkWidget *switch_sides;
-		GtkWidget *yellow_card;
-		GtkWidget *red_card;
+		struct {
+			GtkWidget *next;
+			GtkWidget *prev;
+			GtkWidget *switch_sides;
+		} game;
+		struct {
+			GtkWidget *yellow;
+			GtkWidget *red;
+		} card;
 	} b;
 	GtkWidget *dd_card_players;
 } w_input;
@@ -110,7 +114,8 @@ typedef struct {
 } Matchday;
 
 Matchday md;
-w_display wd, wi;
+w_display wd;
+w_input wi;
 
 //Set current_match to first match and 0-initialize every game
 void init_matchday() {
@@ -374,6 +379,11 @@ void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y
 	gtk_fixed_move(GTK_FIXED(fixed), *l, x_start, y_start);
 }
 
+void update_button(GtkWidget **b, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end){
+	gtk_fixed_move(GTK_FIXED(fixed), *b, x_start, y_start);
+	gtk_widget_set_size_request(*b, x_end-x_start, y_end-y_start);
+}
+
 void update_display_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
@@ -384,63 +394,69 @@ void update_display_window(){
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
-	update_label(&wd.l_t1, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+	update_label(&wd.l.t1.name, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
 
 	GtkWidget *l = gtk_label_new(NULL);
 	gtk_fixed_put(GTK_FIXED(wd.fixed), l, 0, 0);
 	update_label(&l, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
 
-	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+	update_label(&wd.l.t2.name, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
 
 	//Display the Scores
 	char s[10];
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(&wd.l.t1.score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
 
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(&wd.l_t2_score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(&wd.l.t2.score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
 
 	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
-	update_label(&wd.l_time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+	update_label(&wd.l.time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
 }
 
 void update_input_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30), true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, true);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30), true);
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
-	update_label(&wd.l_t1, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
+	//Display prev game;
+	update_button(&wi.b.game.prev, wi.fixed, wi.width/80, wi.width/20, 20, 20+fontsize);
 
-	GtkWidget *l = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), l, 0, 0);
-	update_label(&l, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
+	update_label(&wi.l.t1.name, wi.fixed, wi.width/20 + wi.width/40, wi.width/2 - (wi.width/30 + wi.width/40), 10, wi.height/6, md.teams[md.games[md.cur.gameindex].t1_index].name, fontsize, false, true, 1, 2);
 
-	update_label(&wd.l_t2, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+	//Display switch sides;
+	update_button(&wi.b.game.switch_sides, wi.fixed, wi.width/2 - wi.width/30, wi.width/2 + wi.width/30, 20, 20+fontsize);
+
+	update_label(&wi.l.t2.name, wi.fixed, wi.width/2 + wi.width/30 + wi.width/40, wi.width - (wi.width/20 + wi.width/40), 10, wi.height/6, md.teams[md.games[md.cur.gameindex].t2_index].name, fontsize, false, true, 1, 2);
+
+	//TODO STARTHERE GTK hat eine minimalbreite wegen Text. Maybe bei Icons oder SVG's nicht?
+	//Display next game;
+	update_button(&wi.b.game.next, wi.fixed, wi.width - wi.width/20, wi.width - wi.width/80, 20, 20+fontsize);
 
 	//Display the Scores
 	char s[10];
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(&wd.l_t1_score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(&wi.l.t1.score, wi.fixed, 0, wi.width/2, wi.height/5, wi.height/2, s, 350, false, true, 1, 1);
 
 	sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(&wd.l_t2_score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(&wi.l.t2.score, wi.fixed, wi.width/2, wi.width-1, wi.height/6, wi.height/2, s, 350, false, true, 1, 1);
 
 	sprintf(s, "%d:%d", md.cur.time/60, md.cur.time%60);
-	update_label(&wd.l_time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+	update_label(&wi.l.time, wi.fixed, 0, wi.width-1, wi.height/2, wi.height-1, s, 350, false, true, 1, 1);
 
 	//Display the Buttons
+	//Display prev game;
+	//Display next game;
 	//Display Goal +
-
-
 }
 
 // Function to create the display window
-w_display create_input_window(const GtkApplication *app) {
+w_input create_input_window(const GtkApplication *app) {
     wi.w = gtk_application_window_new(GTK_APPLICATION(app));
 	wi.width = 1920;
 	wi.height = 1080;
@@ -457,16 +473,40 @@ w_display create_input_window(const GtkApplication *app) {
 	wi.fixed = gtk_fixed_new();
 	gtk_window_set_child(GTK_WINDOW(wi.w), wi.fixed);
 
-	wi.l_t1 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t1, 0, 0);
-	wi.l_t2 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t2, 0, 0);
-	wi.l_t1_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t1_score, 0, 0);
-	wi.l_t2_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_t2_score, 0, 0);
-	wi.l_time = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l_time, 0, 0);
+	wi.l.t1.name = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t1.name, 0, 0);
+	wi.l.t2.name = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t2.name, 0, 0);
+	wi.l.t1.score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t1.score, 0, 0);
+	wi.l.t2.score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.t2.score, 0, 0);
+	wi.l.time = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.l.time, 0, 0);
+	//Create Buttons
+	/*
+	wi.b.t1.score_minus = gtk_button_new_with_label("-");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t1.score_minus, 0, 0);
+	wi.b.t1.score_plus = gtk_button_new_with_label("+");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t1.score_plus, 0, 0);
+	wi.b.t2.score_minus = gtk_button_new_with_label("-");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t2.score_minus, 0, 0);
+	wi.b.t2.score_plus = gtk_button_new_with_label("+");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.t2.score_plus, 0, 0);
+	*/
+	wi.b.game.next = gtk_button_new_with_label("NÄCHSTES");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.next, 0, 0);
+
+	wi.b.game.prev = gtk_button_new_with_label("ZURÜCK");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.prev, 0, 0);
+	wi.b.game.switch_sides = gtk_button_new_with_label("SEITENWECHSEL");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.game.switch_sides, 0, 0);
+	/*
+	wi.b.card.yellow = gtk_button_new_with_label("GELBE KARTE");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.yellow, 0, 0);
+	wi.b.card.red = gtk_button_new_with_label("ROTE KARTE");
+	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.red, 0, 0);
+	*/
 
 	update_input_window();
     return wi;
@@ -490,16 +530,16 @@ w_display create_display_window(const GtkApplication *app) {
 	wd.fixed = gtk_fixed_new();
 	gtk_window_set_child(GTK_WINDOW(wd.w), wd.fixed);
 
-	wd.l_t1 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t1, 0, 0);
-	wd.l_t2 = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t2, 0, 0);
-	wd.l_t1_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t1_score, 0, 0);
-	wd.l_t2_score = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_t2_score, 0, 0);
-	wd.l_time = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l_time, 0, 0);
+	wd.l.t1.name = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t1.name, 0, 0);
+	wd.l.t2.name = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t2.name, 0, 0);
+	wd.l.t1.score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t1.score, 0, 0);
+	wd.l.t2.score = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.t2.score, 0, 0);
+	wd.l.time = gtk_label_new(NULL);
+	gtk_fixed_put(GTK_FIXED(wd.fixed), wd.l.time, 0, 0);
 
 	update_display_window();
     return wd;
@@ -515,6 +555,7 @@ static void on_activate(const GtkApplication *app) {
 
     //gtk_window_present(GTK_WINDOW(input_window));
     gtk_window_present(GTK_WINDOW(wd.w));
+    gtk_window_present(GTK_WINDOW(wi.w));
 }
 
 int main(int argc, char **argv) {
