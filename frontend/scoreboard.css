@@ -63,7 +63,7 @@
     padding: 0 16px;
 }
 
-.t1 {
+.scoreboard .t1 {
     /*
      * background: linear-gradient(90deg, red 0%, white 100%);
      * border-top-left-radius: 64px;
@@ -76,7 +76,7 @@
     text-align: right;
 }
 
-.t2 {
+.scoreboard .t2 {
     /*
     color: white;
     background: linear-gradient(90deg, orange 0%, blue 100%);
@@ -86,8 +86,6 @@
 	background-color: rgba(255,199,0,1);
     /*background: rgb(200,255,0);
     background: linear-gradient(94deg, rgba(255,199,0,1) 2%, rgba(240,230,0,1) 50%, rgba(200,255,0,1) 100%);*/
-
-    color: black;
 }
 
 .score {

@@ -12,10 +12,6 @@ let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 let gameplan = document.querySelector(".gameplan")! as HTMLElement
-let gameplan_t1 = gameplan.querySelector(".t1")!
-let gameplan_t2 = gameplan.querySelector(".t2")!
-let gameplan_score_1 = gameplan.querySelector(".score-1")!
-let gameplan_score_2 = gameplan.querySelector(".score-2")!
 
 let playing_teams = document.querySelector(".playing-teams")! as HTMLElement
 
@@ -93,21 +89,128 @@ function write_scoreboard(view: DataView) {
 }
 
 function write_gameplan(view: DataView) {
+	//        TODO NOTE
+	//        <div class="gameplan">
+	//			<div class="gameplan-heading">Spielplan</div>
+	//			<div class="game">
+	//				<div class="t1">Gifhorn</div>
+	//				<div class="score-1">1</div>
+	//				<div class="score-2">0</div>
+	//				<div class="t2">Ludwigsfelde </div>
+	//			</div>
+	//			<div class="game">
+	//				<div class="t1">Gifhorn</div>
+	//				<div class="score-1">1</div>
+	//				<div class="score-2">0</div>
+	//				<div class="t2">Ludwigsfelde</div>
+	//			</div>
+	//			<div class="game anticipated">
+	//				<div class="t1">Gifhorn</div>
+	//				<div class="score-1">?</div>
+	//				<div class="score-2">?</div>
+	//				<div class="t2">Ludwigsfelde</div>
+	//			</div>
+	//			<div class="game anticipated">
+	//				<div class="t1">Gifhorn</div>
+	//				<div class="score-1">?</div>
+	//				<div class="score-2">?</div>
+	//				<div class="t2">Ludwigsfelde</div>
+	//			</div>
+	//		</div>
+
 	let offset = 1
-	const games_n = view.getUint8(offset)
+	const game_n = view.getUint8(offset)
 	++offset
 
-	for (let game = 0; game < games_n; ++game) {
+	let teams_1: String[] = []
+	let teams_2: String[] = []
+	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let t1: String = ""
+		for (let name_ch = 0; name_ch < BUFFER_LEN; ++name_ch) {
+			const c = view.getUint8(offset)
+			t1 += String.fromCharCode(c)
+			++offset
+			if (c === 0) {
+				offset += BUFFER_LEN - name_ch - 1
+				break
+			}
+		}
+		teams_1.push(t1)
+	}
+	offset += (GAMES_COUNT_MAX - game_n) * BUFFER_LEN
+	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let t2: String = ""
-		for (let name_char = 0; name_char < BUFFER_LEN && view.getUint8(offset) != 0; ++name_char) {
-			t1 += String.fromCharCode(view.getUint8(offset))
-			t2 += String.fromCharCode(view.getUint8(offset + GAMES_COUNT_MAX * BUFFER_LEN))
+		for (let name_ch = 0; name_ch < BUFFER_LEN; ++name_ch) {
+			const c = view.getUint8(offset)
+			console.log("TODO mystery char: ", String.fromCharCode(c))
+			t2 += String.fromCharCode(c)
+			++offset
+			if (c === 0) {
+				offset += BUFFER_LEN - name_ch - 1
+				break
+			}
+		}
+		teams_2.push(t2)
+	}
+
+	let goals_1: number[] = []
+	for (let goal_i = 0; goal_i < game_n; ++goal_i) {
+		goals_1.push(view.getUint8(offset))
+		++offset
+	}
+	offset += GAMES_COUNT_MAX - game_n
+
+	let goals_2: number[] = []
+	for (let goal_i = 0; goal_i < game_n; ++goal_i) {
+		goals_2.push(view.getUint8(offset))
+		++offset
+	}
+	offset += GAMES_COUNT_MAX - game_n
+
+	let colors_1: string[] = []
+	let colors_2: string[] = []
+	for (let game_i = 0; game_i < game_n; ++game_i) {
+		let c1: string = ""
+		let c2: string = ""
+		for (let hex_ch = 0; hex_ch < HEX_COLOR_LEN; ++hex_ch) {
+			c1 += view.getUint8(offset)
+			c2 += view.getUint8(offset + HEX_COLOR_LEN)
 			++offset
 		}
-		gameplan_t1.innerHTML = t1.toString()
-		gameplan_t2.innerHTML = t2.toString()
-		++offset
+		colors_1.push(c1)
+		colors_2.push(c2)
+	}
+	offset += (GAMES_COUNT_MAX - game_n) * HEX_COLOR_LEN
+
+	// TODO NOTE discarding the dark colors
+	offset += 2 * GAMES_COUNT_MAX * HEX_COLOR_LEN
+
+	for (let game_i = 0; game_i < game_n; ++game_i) {
+		let line = document.createElement("div")
+		line.classList.add("line")
+
+		let t1 = document.createElement("div")
+		t1.classList.add("t1")
+		t1.innerHTML = teams_1[game_i].toString()
+		line.appendChild(t1)
+
+		let s1 = document.createElement("div")
+		s1.classList.add("s1")
+		s1.innerHTML = goals_1[game_i].toString()
+		line.appendChild(s1)
+
+		let s2 = document.createElement("div")
+		s2.classList.add("s2")
+		s2.innerHTML = goals_2[game_i].toString()
+		console.log(`TODO: invisible string hehe: '${goals_2[game_i]}'`)
+		line.appendChild(s2)
+
+		let t2 = document.createElement("div")
+		t2.classList.add("t2")
+		t2.innerHTML = teams_2[game_i].toString()
+		line.appendChild(t2)
+
+		gameplan.appendChild(line)
 	}
 }
 
@@ -390,13 +493,13 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-//  function hotReloadCSS() {
-//    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-//      const newLink = document.createElement('link')
-//      newLink.rel = 'stylesheet'
-//      newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
-//      link.replaceWith(newLink)
-//    })
-//  }
-//
-//  setInterval(hotReloadCSS, 5000)
+function hotReloadCSS() {
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const newLink = document.createElement('link')
+    newLink.rel = 'stylesheet'
+    newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+    link.replaceWith(newLink)
+  })
+}
+
+setInterval(hotReloadCSS, 5000)

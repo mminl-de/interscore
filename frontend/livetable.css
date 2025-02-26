@@ -6,6 +6,8 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+
+	gap: 20px;
 }
 
 .livetable > * {
@@ -18,7 +20,7 @@
 
 .line {
 	display: flex;
-	margin: 20px;
+	gap: 10px;
 }
 
 .line > * {
@@ -28,7 +30,6 @@
 	text-align: center;
 
 	padding: 10px;
-	margin: 0 5px;
 	width: 150px;
 }
 

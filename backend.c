@@ -77,10 +77,10 @@ typedef struct {
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	char team1_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team1_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 } widget_gameplan;
 #pragma pack(pop)
 
@@ -410,13 +410,15 @@ widget_gameplan widget_gameplan_create() {
 		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
 		w.goals_t1[i] = md.games[i].score.t1;
 		w.goals_t2[i] = md.games[i].score.t2;
+
+		strcpy(w.team1_color_left[i], md.teams[md.games[i].t1_index].color_light);
+		strcpy(w.team1_color_right[i], md.teams[md.games[i].t1_index].color_dark);
+		strcpy(w.team2_color_left[i], md.teams[md.games[i].t2_index].color_dark);
+		strcpy(w.team2_color_right[i], md.teams[md.games[i].t2_index].color_light);
+
 		printf("%d.) %s, %d : %d ,%s\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i]);
 	}
 
-	strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-	strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-	strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-	strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	return w;
 }
 
