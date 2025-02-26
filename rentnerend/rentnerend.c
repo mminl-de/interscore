@@ -696,6 +696,17 @@ w_display create_display_window(const GtkApplication *app) {
     return wd;
 }
 
+gboolean update_timer(){
+	if(!md.cur.pause && md.cur.time > 0){
+		md.cur.time--;
+		update_display_window();
+		update_input_window();
+	}
+	if(md.cur.time == 0)
+		md.cur.pause = true;
+	return G_SOURCE_CONTINUE;
+}
+
 static void on_activate(const GtkApplication *app) {
 	load_json(JSON_PATH);
 	md.cur.gameindex = 0;
@@ -707,6 +718,8 @@ static void on_activate(const GtkApplication *app) {
     //gtk_window_present(GTK_WINDOW(input_window));
     gtk_window_present(GTK_WINDOW(wd.w));
     gtk_window_present(GTK_WINDOW(wi.w));
+
+	g_timeout_add_seconds(1, update_timer, NULL);
 }
 
 int main(int argc, char **argv) {
