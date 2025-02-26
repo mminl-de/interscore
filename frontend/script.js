@@ -177,37 +177,38 @@ function write_livetable(view) {
             ++offset;
         }
     }
-    for (const team of teams) {
+    for (let teami = 0; teami < team_n; ++teami) {
         const line = document.createElement("div");
         line.classList.add("line");
         const name = document.createElement("div");
-        name.innerHTML = team.name.toString();
+        name.innerHTML = teams[teami].name.toString();
         name.classList.add("name");
-        name.style.backgroundColor = team.color.toString().slice(0, 7);
-        console.log(`TODO color for livetable: ${team.color.toString()}`);
+        name.style.backgroundColor = teams[teami].color.toString().slice(0, 7);
+        console.log(`TODO color for livetable: ${teams[teami].color.toString()}`);
         line.appendChild(name);
         const points = document.createElement("div");
-        points.innerHTML = team.points.toString();
+        points.innerHTML = teams[teami].points.toString();
         line.appendChild(points);
         const played = document.createElement("div");
-        played.innerHTML = team.played.toString();
+        played.innerHTML = teams[teami].played.toString();
         line.appendChild(played);
         const won = document.createElement("div");
-        won.innerHTML = team.won.toString();
+        won.innerHTML = teams[teami].won.toString();
         line.appendChild(won);
         const tied = document.createElement("div");
-        tied.innerHTML = team.tied.toString();
+        tied.innerHTML = teams[teami].tied.toString();
         line.appendChild(tied);
         const lost = document.createElement("div");
-        lost.innerHTML = team.lost.toString();
+        lost.innerHTML = teams[teami].lost.toString();
         line.appendChild(lost);
         const goals = document.createElement("div");
-        goals.innerHTML = `${team.goals.toString()}:${team.goals_taken.toString()}`;
+        goals.innerHTML = `${teams[teami].goals.toString()}:${teams[teami].goals_taken.toString()}`;
         line.appendChild(goals);
         const diff = document.createElement("div");
-        diff.innerHTML = (team.goals - team.goals).toString();
+        diff.innerHTML = (teams[teami].goals - teams[teami].goals).toString();
         line.appendChild(diff);
-        livetable_container.appendChild(line);
+        const target = livetable_container.childNodes[teami + 1];
+        livetable_container.replaceChild(line, target);
     }
 }
 function scoreboard_set_timer(view) {

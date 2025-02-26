@@ -34,6 +34,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- deal yellow and red cards
 	- pause time button
 - Feedback/Suggestions Site + Widget FINAL
+- FINAL align button and team name heights
 
 ### backend
 - (graceful Ctrl-C handling)
