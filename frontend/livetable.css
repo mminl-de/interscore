@@ -1,0 +1,43 @@
+.livetable {
+	display: flex;
+	flex-direction: column;
+
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	gap: 20px;
+}
+
+.livetable > * {
+	margin: auto;
+}
+
+.livetable .heading {
+	font-size: 60px;
+}
+
+.line {
+	display: flex;
+	gap: 10px;
+}
+
+.line > * {
+	background-color: #bebebe;
+	border: solid 3px black;
+
+	text-align: center;
+
+	padding: 10px;
+	width: 150px;
+}
+
+.header {
+	background-color: #7f7f7f;
+	color: white;
+}
+
+.name {
+	width: 200px;
+}

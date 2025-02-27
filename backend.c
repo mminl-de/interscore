@@ -62,6 +62,7 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
+	char color[TEAMS_COUNT_MAX][HEX_COLOR_LEN];
 } widget_livetable;
 
 typedef struct {
@@ -71,11 +72,16 @@ typedef struct {
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	char team1_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team1_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 } widget_gameplan;
+
+typedef struct {
+	bool is_red; // false – no, probably yellow instead
+	char name[PLAYER_NAME_MAX_LEN];
+} widget_card;
 #pragma pack(pop)
 
 // #### In Game Structs
@@ -221,15 +227,21 @@ bool widget_gameplan_enabled = false;
 //
 // }
 
+int qsort_helper_u8(const void *p1, const void *p2) {
+	if(*(int*)p1 < *(int*)p2)
+		return -1;
+	if(*(int*)p1 > *(int*)p2)
+		return 1;
+	return 0;
+}
+
 bool send_widget_scoreboard(widget_scoreboard w) {
 	if (client_con == NULL) {
 		fprintf(stderr, "Client not connected, couldn't send widget!\n");
 		return false;
 	}
 	printf("%d:%d, %d\n", w.score_t1, w.score_t2, w.is_halftime);
-	const char *data = (char *) &w;
-	mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
-	printf("Sent '%s' to client!\n", data);
+	mg_ws_send(client_con, (char *) &w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -248,15 +260,22 @@ bool send_widget_livetable(widget_livetable w) {
 		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
-	const char *data = (char *) &w;
-	mg_ws_send(client_con, data, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
-	printf("Send '%s' to client!\n", data);
+	mg_ws_send(client_con, (char *) &w, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
 bool send_widget_gameplan(widget_gameplan w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_card(widget_card w) {
+	if (client_con == NULL) {
+		printf("WARNING: client if not connected, couldnt send widget_card\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
@@ -311,6 +330,24 @@ widget_livetable widget_livetable_create() {
 	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
 	w.len = md.teams_count;
 	int teams_done[md.teams_count];
+	int points[md.teams_count], goalratio[md.teams_count], goals[md.teams_count];
+	for (u8 i = 0; i < md.teams_count; i++) {
+		//punkte
+		points[i] = team_calc_points(i);
+		//torverhältnis
+		goalratio[i] = team_calc_goals(i) - team_calc_goals_taken(i);
+		//Mehr Tore
+		goals[i] = team_calc_goals(i);
+	}
+	qsort(points, md.teams_count, sizeof(u8), qsort_helper_u8);
+	qsort(goalratio, md.teams_count, sizeof(u8), qsort_helper_u8);
+	qsort(goals, md.teams_count, sizeof(u8), qsort_helper_u8);
+	for (u8 i = 0; i < md.teams_count; i++) {
+		u8 j;
+		for(j=i; j < md.teams_count-1 && points[j] != points[j+1]; j++);
+		if(j<i);
+			//TODO STARTHERE
+	}
 	for (u8 i = 0; i < md.teams_count; i++) {
 		//init best_index with first, not yet done team
 		u8 best_index = 0;
@@ -335,23 +372,26 @@ widget_livetable widget_livetable_create() {
 		}
 		printf("INDEX END: %d\n", best_index);
 
-		printf("begin entry name: %d, %d\n", i, best_index);
+		printf("livetable iteration: %d\n", i);
 		strcpy(w.teams[i], md.teams[best_index].name);
-		printf("begin entry point: %d\n", i);
+		printf("begin entry name: %s\n", w.teams[i]);
 		w.points[i] = team_calc_points(best_index);
-		printf("begin entry games played: %d\n", i);
+		printf("begin entry point: %d\n", w.points[i]);
 		w.games_played[i] = team_calc_games_played(best_index);
-		printf("begin entry games won: %d\n", i);
+		printf("begin entry games played: %d\n", w.games_played[i]);
 		w.games_won[i] = team_calc_games_won(best_index);
-		printf("begin entry games tied: %d\n", i);
+		printf("begin entry games won: %d\n", w.games_won[i]);
 		w.games_tied[i] = team_calc_games_tied(best_index);
-		printf("begin entry games lost: %d\n", i);
+		printf("begin entry games tied: %d\n", w.games_tied[i]);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
-		printf("begin entry goals: %d\n", i);
+		printf("begin entry games lost: %d\n", w.games_lost[i]);
 		w.goals[i] = team_calc_goals(best_index);
+		printf("begin entry goals: %d\n", w.goals[i]);
+		w.goals_taken[i] = team_calc_goals_taken(best_index);
+		printf("begin entry goals taken: %d\n", w.goals[i]);
+		strcpy(w.color[i], md.teams[i].color_light);
 
 		teams_done[i] = best_index;
-		printf("livetable iteration: %d\n", i);
 	}
 	return w;
 }
@@ -363,15 +403,17 @@ widget_gameplan widget_gameplan_create() {
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
 		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
-		w.goals_t1[i] = md.games[i].score.t1;
-		w.goals_t2[i] = md.games[i].score.t2;
-		printf("%d.) %s, %d : %d ,%s\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i]);
+		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
+		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
+
+		strcpy(w.team1_color_left[i], md.teams[md.games[i].t1_index].color_light);
+		strcpy(w.team1_color_right[i], md.teams[md.games[i].t1_index].color_dark);
+		strcpy(w.team2_color_left[i], md.teams[md.games[i].t2_index].color_dark);
+		strcpy(w.team2_color_right[i], md.teams[md.games[i].t2_index].color_light);
+
+		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.team1_color_left[i], w.team2_color_right[i]);
 	}
 
-	strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-	strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-	strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-	strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	return w;
 }
 
@@ -708,7 +750,7 @@ void init_matchday() {
 void add_card(bool card_type) {
 	u8 ind = md.cur.gameindex;
 	if (md.games[ind].cards_count == 0)
-		md.games[ind].cards = malloc(1 * sizeof(Card));
+		md.games[ind].cards = malloc(0 + 1 * sizeof(Card));
 	else
 		md.games[ind].cards = realloc(md.games[ind].cards, (md.games[ind].cards_count+1) * sizeof(Card));
 	printf("Select Player:\n1. %s (Keeper %s)\n2. %s (Field %s)\n3. %s (Keeper %s)\n4. %s (Field %s)\n",
@@ -751,7 +793,7 @@ int main(void) {
 	load_json(JSON_PATH);
 	init_matchday();
 
-	printf("Hello, world!\n");
+	printf("Server loaded!\n");
 
 	bool close = false;
 	while (!close) {
@@ -881,9 +923,17 @@ int main(void) {
 			break;
 		case YELLOW_CARD:
 			add_card(0);
+			send_widget_card((widget_card) {
+				.is_red = false,
+				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
+			});
 			break;
 		case RED_CARD:
 			add_card(1);
+			send_widget_card((widget_card) {
+				.is_red = true,
+				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
+			});
 			break;
 		case DELETE_CARD: {
 			u32 cur_i = md.cur.gameindex;
