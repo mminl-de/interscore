@@ -1,8 +1,13 @@
 .card {
-	display: none;
+	display: flex;
 	/* display: flex; */
 	justify-content: right;
 	gap: 10px;
+
+	position: fixed;
+	top: 0;
+	right: 0;
+	margin: 2rem;
 }
 
 .card-graphic {
