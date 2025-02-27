@@ -28,6 +28,7 @@ const GAMES_COUNT_MAX = 64
 const HEX_COLOR_LEN = 8
 const TEAMS_COUNT_MAX = 32
 const TEAMS_NAME_MAX_LEN = 100
+const PLAYER_NAME_MAX_LEN = 100
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -201,6 +202,18 @@ function write_card(view: DataView) {
 
 	const is_red = view.getUint8(offset)
 
+	let name: String = ""
+	for (let name_ch = 0; name_ch < PLAYER_NAME_MAX_LEN; ++name_ch) {
+		const c = view.getUint8(offset)
+		name += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += PLAYER_NAME_MAX_LEN - name_ch - 1
+			break
+		}
+	}
+
+	card_receiver.innerHTML = name.toString()
 	if (is_red === 1) {
 		card_graphic.style.backgroundColor = "#ff0000"
 		card_message.innerHTML = "bekommt eine rote Karte"

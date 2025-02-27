@@ -82,6 +82,11 @@ typedef struct {
 	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 } widget_gameplan;
+
+typedef struct {
+	bool is_red; // false – no, probably yellow instead
+	char name[PLAYER_NAME_MAX_LEN];
+} widget_card;
 #pragma pack(pop)
 
 // #### In Game Structs
@@ -251,9 +256,7 @@ bool send_widget_scoreboard(widget_scoreboard w) {
 		return false;
 	}
 	printf("%d:%d, %d\n", w.score_t1, w.score_t2, w.is_halftime);
-	const char *data = (char *) &w;
-	mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
-	printf("Sent '%s' to client!\n", data);
+	mg_ws_send(client_con, (char *) &w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -272,15 +275,22 @@ bool send_widget_livetable(widget_livetable w) {
 		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
 		return false;
 	}
-	const char *data = (char *) &w;
-	mg_ws_send(client_con, data, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
-	printf("Send '%s' to client!\n", data);
+	mg_ws_send(client_con, (char *) &w, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
 bool send_widget_gameplan(widget_gameplan w) {
 	if (client_con == NULL) {
 		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
+		return false;
+	}
+	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
+	return true;
+}
+
+bool send_widget_card(widget_card w) {
+	if (client_con == NULL) {
+		printf("WARNING: client if not connected, couldnt send widget_card\n");
 		return false;
 	}
 	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
@@ -755,7 +765,7 @@ void init_matchday() {
 void add_card(bool card_type) {
 	u8 ind = md.cur.gameindex;
 	if (md.games[ind].cards_count == 0)
-		md.games[ind].cards = malloc(1 * sizeof(Card));
+		md.games[ind].cards = malloc(0 + 1 * sizeof(Card));
 	else
 		md.games[ind].cards = realloc(md.games[ind].cards, (md.games[ind].cards_count+1) * sizeof(Card));
 	printf("Select Player:\n1. %s (Keeper %s)\n2. %s (Field %s)\n3. %s (Keeper %s)\n4. %s (Field %s)\n",
@@ -928,9 +938,17 @@ int main(void) {
 			break;
 		case YELLOW_CARD:
 			add_card(0);
+			send_widget_card((widget_card) {
+				.is_red = false,
+				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
+			});
 			break;
 		case RED_CARD:
 			add_card(1);
+			send_widget_card((widget_card) {
+				.is_red = true,
+				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
+			});
 			break;
 		case DELETE_CARD: {
 			u32 cur_i = md.cur.gameindex;
