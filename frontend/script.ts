@@ -12,7 +12,6 @@ let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 let gameplan = document.querySelector(".gameplan")! as HTMLElement
-
 let playing_teams = document.querySelector(".playing-teams")! as HTMLElement
 
 let card = document.querySelector(".card")! as HTMLElement

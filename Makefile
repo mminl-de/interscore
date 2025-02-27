@@ -21,9 +21,16 @@ run:
 	./interscore
 
 rentner:
-	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c \
+	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c mongoose/mongoose.c \
 	-O3 -Wall -Wextra -Wpedantic \
-	`pkg-config gtk4 --cflags --libs`
+	`pkg-config gtk4 --cflags --libs` \
+	-ljson-c
+
+rentner-debug:
+	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c mongoose/mongoose.c \
+	-Wall -Wextra -Wpedantic -g \
+	`pkg-config gtk4 --cflags --libs` \
+	-ljson-c
 
 js:
 	tsc --target es2017 frontend/script.ts
