@@ -1,7 +1,7 @@
 #include <gtk/gtk.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
-//#include "../mongoose/mongoose.h"
+#include "../mongoose/mongoose.h"
 
 #include "../config.h"
 #include "gtk/gtkshortcut.h"
@@ -122,74 +122,116 @@ typedef struct {
 	u8 players_count;
 } Matchday;
 
+enum {T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS, GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES, TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET};
+
 Matchday md;
 w_display wd;
 w_input wi;
+struct mg_connection *server_con = NULL;
+bool server_connected = false;
+struct mg_mgr mgr;
 
 void update_input_window();
 void update_display_window();
+void websocket_send_button_signal(int);
 
 void btn_cb_t1_score_plus(){
 	md.games[md.cur.gameindex].score.t1++;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(T1_SCORE_PLUS);
 }
 void btn_cb_t1_score_minus(){
 	if(md.games[md.cur.gameindex].score.t1 > 0)
 		md.games[md.cur.gameindex].score.t1--;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(T1_SCORE_MINUS);
 }
 void btn_cb_t2_score_plus(){
 	md.games[md.cur.gameindex].score.t2++;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(T2_SCORE_PLUS);
 }
 void btn_cb_t2_score_minus(){
 	if(md.games[md.cur.gameindex].score.t2 > 0)
 		md.games[md.cur.gameindex].score.t2--;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(T2_SCORE_MINUS);
 }
 void btn_cb_game_next(){
 	if(md.cur.gameindex < md.games_count-1)
 		md.cur.gameindex++;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(GAME_NEXT);
 }
 void btn_cb_game_prev(){
 	if(md.cur.gameindex > 0)
 		md.cur.gameindex--;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(GAME_PREV);
 }
 void btn_cb_game_switch_sides(){
 	md.cur.halftime = !md.cur.halftime;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
 void btn_cb_time_plus(){
 	md.cur.time++;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(TIME_PLUS);
 }
 void btn_cb_time_minus(){
 	md.cur.time--;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(TIME_MINUS);
 }
 void btn_cb_time_toggle_pause(){
 	md.cur.pause = !md.cur.pause;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(TIME_TOGGLE_PAUSE);
 }
 void btn_cb_time_reset(){
 	md.cur.time = GAME_LENGTH;
 	update_input_window();
 	update_display_window();
+	websocket_send_button_signal(TIME_RESET);
 }
 
+void websocket_send_button_signal(int signal){
+	if(!server_connected)
+		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+	else
+		mg_ws_send(server_con, &signal, sizeof(int), WEBSOCKET_OP_BINARY);
+}
 
+void ev_handler(struct mg_connection *c, int ev, void *p){
+	switch(ev) {
+		case MG_EV_OPEN:
+			printf("Connected to server!\n");
+			break;
+		case MG_EV_WS_OPEN:
+			printf("WebSocket conenction established!\n");
+			server_con = c;
+			server_connected = true;
+			//TODO FINAL hash von der JSON senden um sicher zu gehen, dass es die gleiche ist
+			break;
+		case MG_EV_CLOSE:
+			printf("WebSocket closed!\n");
+			server_con = NULL;
+			server_connected = false;
+			break;
+
+	}
+}
 
 //Set current_match to first match and 0-initialize every game
 void init_matchday() {
@@ -632,11 +674,6 @@ w_input create_input_window(const GtkApplication *app) {
 	wi.fixed = gtk_fixed_new();
 	gtk_window_set_child(GTK_WINDOW(wi.w), wi.fixed);
 
-	GtkCssProvider *provider = gtk_css_provider_new();
-	gtk_css_provider_load_from_path(provider, "rentnerend/style.css");
-	gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-
 	label_new(&wi.l.t1.name, wi.fixed);
 	label_new(&wi.l.t2.name, wi.fixed);
 	label_new(&wi.l.t1.score, wi.fixed);
@@ -707,19 +744,27 @@ gboolean update_timer(){
 	return G_SOURCE_CONTINUE;
 }
 
+gboolean websocket_poll(){
+	mg_mgr_poll(&mgr, 0);
+	return G_SOURCE_CONTINUE;
+}
+
 static void on_activate(const GtkApplication *app) {
 	load_json(JSON_PATH);
 	md.cur.gameindex = 0;
 
+	mg_mgr_init(&mgr);
+	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
+	g_timeout_add(100, websocket_poll, NULL);
+
     create_display_window(app);
     create_input_window(app);
-    //GtkWidget *input_window = create_input_window();
 
-    //gtk_window_present(GTK_WINDOW(input_window));
     gtk_window_present(GTK_WINDOW(wd.w));
     gtk_window_present(GTK_WINDOW(wi.w));
 
 	g_timeout_add_seconds(1, update_timer, NULL);
+
 }
 
 int main(int argc, char **argv) {
@@ -727,5 +772,6 @@ int main(int argc, char **argv) {
 	g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
 	const int stat = g_application_run(G_APPLICATION(app), argc, argv);
 	g_object_unref(app);
+	mg_mgr_free(&mgr);
     return stat;
 }
