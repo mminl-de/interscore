@@ -134,6 +134,8 @@ typedef struct {
 	u8 players_count;
 } Matchday;
 
+//TODO STARTHERE Implement the backend site of receiving scoreboard data
+
 /*
 Possible User Actions:
 ####### Ingame Stuff
