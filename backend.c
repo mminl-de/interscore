@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include "mongoose/mongoose.h"
@@ -124,6 +125,7 @@ typedef struct {
 	struct {
 		u8 gameindex; // index of the current game played in the games array
 		bool halftime; // 0: first half, 1: second half
+		bool pause;
 		u16 time;
 	} cur;
 	Game *games;
@@ -134,7 +136,7 @@ typedef struct {
 	u8 players_count;
 } Matchday;
 
-//TODO STARTHERE Implement the backend site of receiving scoreboard data
+enum {T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS, GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES, TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET};
 
 /*
 Possible User Actions:
@@ -219,6 +221,7 @@ u16 team_calc_goals_taken(u8 index);
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
+struct mg_mgr mgr;
 
 bool widget_scoreboard_enabled = false;
 bool widget_spielstart_enabled = false;
@@ -237,50 +240,13 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 	return 0;
 }
 
-bool send_widget_scoreboard(widget_scoreboard w) {
+//To send a widget with this function, convert it to a string with (char*)&w
+bool send_widget(void *w) {
 	if (client_con == NULL) {
 		fprintf(stderr, "Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	printf("%d:%d, %d\n", w.score_t1, w.score_t2, w.is_halftime);
-	mg_ws_send(client_con, (char *) &w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
-	return true;
-}
-
-bool send_widget_spielstart(widget_spielstart w) {
-	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_spielstart\n");
-		return false;
-	}
-	mg_ws_send(client_con, (char *) &w , sizeof(w), WEBSOCKET_OP_BINARY);
-	return true;
-}
-
-bool send_widget_livetable(widget_livetable w) {
-	printf("begin send_livetable\n");
-	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_livetable\n");
-		return false;
-	}
-	mg_ws_send(client_con, (char *) &w, sizeof(widget_livetable), WEBSOCKET_OP_BINARY);
-	return true;
-}
-
-bool send_widget_gameplan(widget_gameplan w) {
-	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_gameplan\n");
-		return false;
-	}
-	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
-	return true;
-}
-
-bool send_widget_card(widget_card w) {
-	if (client_con == NULL) {
-		printf("WARNING: client if not connected, couldnt send widget_card\n");
-		return false;
-	}
-	mg_ws_send(client_con, (char *) &w, sizeof(w), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *)w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -419,6 +385,13 @@ widget_gameplan widget_gameplan_create() {
 	return w;
 }
 
+widget_card widget_card_create(bool is_red) {
+	widget_card w;
+	strcpy(w.name, md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name);
+	w.is_red = is_red;
+	return w;
+}
+
 // Calculate the points of all games played so far of the team with index index.
 u16 team_calc_points(u8 index) {
 	u16 p = 0;
@@ -499,6 +472,67 @@ bool send_message_to_site(char *message) {
 	return true;
 }
 
+void handle_rentnerend_btn_press(u8 *signal){
+	printf("received a signal: %d", *signal);
+	switch (*signal) {
+	case T1_SCORE_PLUS:{
+		md.games[md.cur.gameindex].score.t1++;
+		printf("New T1 score: %d\n", md.games[md.cur.gameindex].score.t1);
+		break;
+	}
+	case T1_SCORE_MINUS:{
+		if(md.games[md.cur.gameindex].score.t1 > 0)
+			md.games[md.cur.gameindex].score.t1--;
+		break;
+	}
+	case T2_SCORE_PLUS:{
+		md.games[md.cur.gameindex].score.t2++;
+		break;
+	}
+	case T2_SCORE_MINUS:{
+		if(md.games[md.cur.gameindex].score.t2 > 0)
+			md.games[md.cur.gameindex].score.t2--;
+		break;
+	}
+	case GAME_NEXT:{
+		if(md.cur.gameindex < md.games_count-1)
+			md.cur.gameindex++;
+		break;
+	}
+	case GAME_PREV:{
+		if(md.cur.gameindex > 0)
+			md.cur.gameindex--;
+		break;
+	}
+	case GAME_SWITCH_SIDES:{
+		md.cur.halftime = !md.cur.halftime;
+		break;
+	}
+	case TIME_PLUS:{
+		md.cur.time++;
+		break;
+	}
+	case TIME_MINUS:{
+		if(md.cur.time > 0)
+			md.cur.time--;
+		break;
+	}
+	case TIME_TOGGLE_PAUSE:{
+		md.cur.pause = !md.cur.pause;
+		break;
+	}
+	case TIME_RESET:{
+		md.cur.time = GAME_LENGTH;
+		break;
+	}
+	default:{
+		printf("WARNING: Received unknown button press from rentnerend\n");
+		break;
+	}
+
+	}
+}
+
 void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	switch (ev) {
 	case MG_EV_CONNECT:
@@ -521,9 +555,11 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 		printf("Connection opened!\n");
 		client_con = nc;
 		break;
-	case MG_EV_WS_MSG:
-		printf("This server is send only! Ignoring incoming messages ...\n");
+	case MG_EV_WS_MSG:{
+		struct mg_ws_message *m = (struct mg_ws_message *) p;
+		handle_rentnerend_btn_press((u8 *)m->data.buf);
 		break;
+	}
 	// Signals not worth logging
 	case MG_EV_OPEN:
 	case MG_EV_POLL:
@@ -736,6 +772,7 @@ void init_matchday() {
 	}
 	md.cur.gameindex = 0;
 	md.cur.halftime = 0;
+	md.cur.pause = true;
 	md.cur.time = GAME_LENGTH;
 	for (u8 i = 0; i < md.games_count; i++) {
 		md.games[i].halftimescore.t1 = 0;
@@ -785,11 +822,21 @@ void add_card(bool card_type) {
 	return;
 }
 
+void *mongoose_update(){
+	int interval = 100; //alle 100 ms mongoose updaten
+	while(true){
+		usleep(interval * 1000);
+		mg_mgr_poll(&mgr, 0);
+	}
+	return NULL;
+}
+
 int main(void) {
 	// WebSocket stuff
-	struct mg_mgr mgr;
 	mg_mgr_init(&mgr);
 	mg_http_listen(&mgr, URL, ev_handler, NULL);
+	pthread_t t;
+	pthread_create(&t, NULL, mongoose_update, NULL);
 
 	// User data stuff
 	load_json(JSON_PATH);
@@ -799,7 +846,6 @@ int main(void) {
 
 	bool close = false;
 	while (!close) {
-		mg_mgr_poll(&mgr, 1000);
 		char c = getchar();
 		switch (c) {
 		case SET_TIME: {
@@ -885,7 +931,8 @@ int main(void) {
 			// TODO WIP
 			printf("Now in halftime %d!\n", md.cur.halftime + 1);
 			md.cur.halftime = !md.cur.halftime;
-			send_widget_scoreboard(widget_scoreboard_create());
+			widget_scoreboard ws = widget_scoreboard_create();
+			send_widget(&ws);
 			break;
 		case GOAL_TEAM_1:
 			md.games[md.cur.gameindex].score.t1++;
@@ -894,7 +941,8 @@ int main(void) {
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
-			send_widget_gameplan(widget_gameplan_create());
+			widget_gameplan wg1 = widget_gameplan_create();
+			send_widget(&wg1);
 			break;
 		case GOAL_TEAM_2:
 			md.games[md.cur.gameindex].score.t2++;
@@ -903,7 +951,8 @@ int main(void) {
 				md.games[md.cur.gameindex].score.t1,
 				md.games[md.cur.gameindex].score.t2
 			);
-			send_widget_gameplan(widget_gameplan_create());
+			widget_gameplan wg2 = widget_gameplan_create();
+			send_widget(&wg2);
 			break;
 		case REMOVE_GOAL_TEAM_1:
 			if (md.games[md.cur.gameindex].score.t1 > 0)
@@ -925,17 +974,13 @@ int main(void) {
 			break;
 		case YELLOW_CARD:
 			add_card(0);
-			send_widget_card((widget_card) {
-				.is_red = false,
-				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
-			});
+			widget_card wc1 = widget_card_create(false);
+			send_widget(&wc1);
 			break;
 		case RED_CARD:
 			add_card(1);
-			send_widget_card((widget_card) {
-				.is_red = true,
-				.name = md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name
-			});
+			widget_card wc2 = widget_card_create(true);
+			send_widget(&wc2);
 			break;
 		case DELETE_CARD: {
 			u32 cur_i = md.cur.gameindex;
@@ -976,7 +1021,8 @@ int main(void) {
 		// #### UI STUFF
 		case TOGGLE_WIDGET_SCOREBOARD:
 			widget_scoreboard_enabled = !widget_scoreboard_enabled;
-			send_widget_scoreboard(widget_scoreboard_create());
+			widget_scoreboard wscore = widget_scoreboard_create();
+			send_widget(&wscore);
 			break;
 		/*
 		case TOGGLE_WIDGET_HALFTIME:
@@ -986,15 +1032,18 @@ int main(void) {
 		*/
 		case TOGGLE_WIDGET_LIVETABLE:
 			widget_livetable_enabled = !widget_livetable_enabled;
-			send_widget_livetable(widget_livetable_create());
+			widget_livetable wlive = widget_livetable_create();
+			send_widget(&wlive);
 			break;
 		case TOGGLE_WIDGET_GAMEPLAN:
 			widget_gameplan_enabled = !widget_gameplan_enabled;
-			send_widget_gameplan(widget_gameplan_create());
+			widget_gameplan wgame = widget_gameplan_create();
+			send_widget(&wgame);
 			break;
 		case TOGGLE_WIDGET_SPIELSTART:
 			widget_spielstart_enabled = !widget_spielstart_enabled;
-			send_widget_spielstart(widget_spielstart_create());
+			widget_spielstart wspiel = widget_spielstart_create();
+			send_widget(&wspiel);
 			break;
 		// #### Debug Stuff
 		case EXIT:
@@ -1037,7 +1086,7 @@ int main(void) {
 			break;
 		}
 		case WEBSOCKET_STATUS:
-			mg_mgr_poll(&mgr, 1000);
+			printf("DEPRECATED: this is done automatically now!\n");
 			break;
 		}
 	}

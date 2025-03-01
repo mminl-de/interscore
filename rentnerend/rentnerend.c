@@ -188,7 +188,8 @@ void btn_cb_time_plus(){
 	websocket_send_button_signal(TIME_PLUS);
 }
 void btn_cb_time_minus(){
-	md.cur.time--;
+	if(md.cur.time > 0)
+		md.cur.time--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS);
@@ -215,9 +216,6 @@ void websocket_send_button_signal(int signal){
 
 void ev_handler(struct mg_connection *c, int ev, void *p){
 	switch(ev) {
-		case MG_EV_OPEN:
-			printf("Connected to server!\n");
-			break;
 		case MG_EV_WS_OPEN:
 			printf("WebSocket conenction established!\n");
 			server_con = c;
@@ -229,7 +227,9 @@ void ev_handler(struct mg_connection *c, int ev, void *p){
 			server_con = NULL;
 			server_connected = false;
 			break;
-
+		// signals that are not important
+		case MG_EV_OPEN:
+		break;
 	}
 }
 
@@ -241,6 +241,7 @@ void init_matchday() {
 	}
 	md.cur.gameindex = 0;
 	md.cur.halftime = 0;
+	md.cur.pause = true;
 	md.cur.time = GAME_LENGTH;
 	for (u8 i = 0; i < md.games_count; i++) {
 		md.games[i].halftimescore.t1 = 0;
@@ -440,6 +441,7 @@ void toggle_timer(GtkButton *button, gpointer user_data) {
 
 //Gets the biggest font size possible for a markuped text of a label
 int biggest_fontsize_possible(char *text, int max_fontsize, int x, int y, bool bold) {
+	printf("big boys: text: %s, max_fontsize: %d, x: %d, y: %d\n", text, max_fontsize, x, y);
 	int width, height, fontsize = max_fontsize+1;
 	char b[] = "weight='bold'";
 	if (!bold)
@@ -556,9 +558,9 @@ void update_input_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6 - 10, true);
+	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6 - 10, true);
+	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6, true);
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 	printf("fontsize: %d, %d\n", fontsize, fontsize2);
@@ -659,8 +661,10 @@ void label_new(GtkWidget **l, GtkWidget *fixed){
 // Function to create the display window
 w_input create_input_window(const GtkApplication *app) {
     wi.w = gtk_application_window_new(GTK_APPLICATION(app));
-	wi.width = 1920;
-	wi.height = 1080;
+	//wi.width = 1920;
+	//wi.height = 1080;
+	wd.width = 1280;
+	wd.height = 720;
     gtk_window_set_title(GTK_WINDOW(wi.w), "Scoreboard Input");
     gtk_window_set_default_size(GTK_WINDOW(wi.w), wi.width, wi.height);
 
@@ -700,6 +704,8 @@ w_input create_input_window(const GtkApplication *app) {
 	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.red, 0, 0);
 	*/
 
+	printf("oiranset 2.\n");
+
 	update_input_window();
     return wi;
 }
@@ -707,8 +713,10 @@ w_input create_input_window(const GtkApplication *app) {
 // Function to create the display window
 w_display create_display_window(const GtkApplication *app) {
     wd.w = gtk_application_window_new(GTK_APPLICATION(app));
-	wd.width = 1920;
-	wd.height = 1080;
+	//wd.width = 1920;
+	//wd.height = 1080;
+	wd.width = 1280;
+	wd.height = 720;
     gtk_window_set_title(GTK_WINDOW(wd.w), "Scoreboard Display");
     gtk_window_set_default_size(GTK_WINDOW(wd.w), wd.width, wd.height);
 
@@ -745,22 +753,25 @@ gboolean update_timer(){
 }
 
 gboolean websocket_poll(){
-	mg_mgr_poll(&mgr, 0);
+	if(!server_con)
+		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
+	else
+		mg_mgr_poll(&mgr, 0);
 	return G_SOURCE_CONTINUE;
 }
 
 static void on_activate(const GtkApplication *app) {
 	load_json(JSON_PATH);
-	md.cur.gameindex = 0;
+	init_matchday();
 
 	mg_mgr_init(&mgr);
-	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	g_timeout_add(100, websocket_poll, NULL);
 
-    create_display_window(app);
+    //create_display_window(app);
     create_input_window(app);
 
-    gtk_window_present(GTK_WINDOW(wd.w));
+	printf("aroistn\n");
+    //gtk_window_present(GTK_WINDOW(wd.w));
     gtk_window_present(GTK_WINDOW(wi.w));
 
 	g_timeout_add_seconds(1, update_timer, NULL);
