@@ -440,18 +440,18 @@ QFont biggest_font_possible(const char *text, float x, float y, bool bold) {
 //alignment: 0:= left, 1:= center, 2:=right
 //if fontsize is -1 use biggest fontsize possible
 void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
-	printf("Update Label Begin: text: %s\n", text);
+	printf("called update_label\n");
 	if (fontsize == -1) {
-		printf("TODO calling bfp in update_label\n");
+		printf("getting biggest font possible\n");
 		l->setFont(biggest_font_possible(text, x_end-x_start, y_end-y_start, bold));
 	} else {
+		printf("making font with size %d\n", fontsize);
 		QFont f = QApplication::font();
 		f.setBold(bold);
 		f.setPointSize(fontsize);
 	}
 
 	QRect box(x_start, y_start, x_end-x_start, y_end-y_start);
-	printf("box: %f-%f/%f-%f\n", x_start, x_end, y_start, y_end);
 	//l->setGeometry(box);
 	int w = l->parentWidget()->width();
 	int h = l->parentWidget()->height();
@@ -476,10 +476,10 @@ void update_display_window() {
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	printf("calling bfp in update_display_window\n");
+
 	QFont f1 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	printf("calling bfp in update_display_window again\n");
+
 	QFont f2 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
@@ -504,6 +504,7 @@ void update_display_window() {
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+
 	//update_label(wd.l.t1.score, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
 	if (md.cur.halftime)
@@ -524,10 +525,8 @@ void update_input_window() {
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	printf("calling bfp in update_input_window\n");
 	QFont f1 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	printf("calling bfp in update_input_window again\n");
 	QFont f2 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	printf("fontsize: %d, %d\n", f1.pointSize(), f2.pointSize());
 	if (f2.pointSize() < f1.pointSize())
@@ -675,19 +674,22 @@ void create_display_window() {
 	wd.l.t1.score = new QLabel("", wd.w);
 	wd.l.t2.score = new QLabel("", wd.w);
 	wd.l.time = new QLabel("", wd.w);
-	// TODO CONSIDER TEST
-	wd.l.colon = new QLabel(":", wd.w);
+	wd.l.colon = new QLabel("", wd.w);
 
 	update_display_window();
 }
 
-bool eventFilter(QObject *obj, QEvent *event) {
-	if (event->type() == QEvent::Resize) {
-		update_display_window();
-		update_input_window();
+class EventFilter : public QObject {
+public:
+	bool eventFilter(QObject *obj, QEvent *event) override {
+		if (event->type() == QEvent::Resize) {
+			printf("resized window\n");
+			update_display_window();
+			update_input_window();
+		}
+		return QObject::eventFilter(obj, event);
 	}
-	return false;
-}
+};
 
 void update_timer() {
 	if (!md.cur.pause && md.cur.time > 0) {
@@ -729,5 +731,8 @@ int main(int argc, char *argv[]) {
 	//t2->start(1000);
 
 	mg_mgr_free(&mgr);
+
+	EventFilter *event_filter = new EventFilter;
+	app.installEventFilter(event_filter);
 	return app.exec();
 }
