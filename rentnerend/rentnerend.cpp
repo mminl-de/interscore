@@ -19,8 +19,6 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 typedef struct {
-	int width;
-	int height;
 	QWidget *w;
 
 	struct {
@@ -38,8 +36,6 @@ typedef struct {
 } w_display;
 
 typedef struct {
-	int width;
-	int height;
 	QWidget *w;
 	struct {
 		struct {
@@ -418,8 +414,8 @@ void load_json(const char *path) {
 
 //Gets the biggest font size possible for a markuped text of a label
 //QFont biggest_font_possible(const char *text, int max_fontsize, int x, int y, bool bold) {
-QFont biggest_font_possible(const char *text, int x, int y, bool bold) {
-	printf("big boys: text: %s, x: %d, y: %d\n", text, x, y);
+QFont biggest_font_possible(const char *text, float x, float y, bool bold) {
+	printf("big boys: text: %s, x: %f, y: %f\n", text, x, y);
 	//int width, height, fontsize = max_fontsize+1;
 	int width, height, fontsize = y + 1;
 	QFont font = QApplication::font();
@@ -437,13 +433,13 @@ QFont biggest_font_possible(const char *text, int x, int y, bool bold) {
 		if (x == -1)
 			x = width;
 	} while (fontsize > 1 && (width > x || height > y));
-	printf("text: %s, width: %d, height: %d, x: %d, y: %d\n", text, width, height, x, y);
+	printf("text: %s, width: %d, height: %d, x: %f, y: %f\n", text, width, height, x, y);
 	return font;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
 //if fontsize is -1 use biggest fontsize possible
-void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
+void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
 	printf("Update Label Begin: text: %s\n", text);
 	if (fontsize == -1) {
 		printf("TODO calling bfp in update_label\n");
@@ -455,10 +451,12 @@ void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, con
 	}
 
 	QRect box(x_start, y_start, x_end-x_start, y_end-y_start);
-	printf("box: %d-%d/%d-%d\n", x_start, x_end, y_start, y_end);
+	printf("box: %f-%f/%f-%f\n", x_start, x_end, y_start, y_end);
 	//l->setGeometry(box);
-	l->move(x_start, y_start);
-	l->resize(x_end - x_start, y_end - y_start);
+	int w = l->parentWidget()->width();
+	int h = l->parentWidget()->height();
+	l->move(w*x_start, h*y_start);
+	l->resize(w*(x_end - x_start), h*(y_end - y_start));
 	//l->setAlignment(x_alignment | y_alignment);
 
 	// TODO TEST
@@ -466,9 +464,12 @@ void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, con
 }
 
 //TODO REMOVE FUNCTION FOR b->setGeometry
-void update_button(QPushButton *b, int x_start, int x_end, int y_start, int y_end) {
-	b->move(x_start, y_start);
-	b->resize(x_end-x_start, y_end-y_start);
+void update_button(QPushButton *b, float x_start, float x_end, float y_start, float y_end) {
+	int w = b->parentWidget()->width();
+	int h = b->parentWidget()->height();
+
+	b->move(w*x_start, h*y_start);
+	b->resize(w*(x_end-x_start), h*(y_end-y_start));
 }
 
 void update_display_window() {
@@ -476,10 +477,10 @@ void update_display_window() {
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	printf("calling bfp in update_display_window\n");
-	QFont f1 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	QFont f1 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	printf("calling bfp in update_display_window again\n");
-	QFont f2 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	QFont f2 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
 
@@ -488,33 +489,37 @@ void update_display_window() {
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	update_label(wd.l.t1.name, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wd.l.t1.name, 0.05, 0.5 - 0.05, 0.01, 0.15, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
-	update_label(wd.l.colon, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wd.l.colon, 0.45, 0.55, 0.01, 0.15, ":", f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
 	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	update_label(wd.l.t2.name, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wd.l.t2.name, 0.55, 0.95, 0.01, 0.15, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display the Scores
 	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(wd.l.t1.score, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
+	//update_label(wd.l.t1.score, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
 	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(wd.l.t2.score, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
+	//update_label(wd.l.t2.score, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
-	update_label(wd.l.time, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
+	//update_label(wd.l.time, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 }
 
+void update_input_window() {
+	return;
+}
+/*
 void update_input_window() {
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
@@ -597,6 +602,7 @@ void update_input_window() {
 	update_button(wi.b.time.toggle_pause, wi.width/2 - width/2 + 10, wi.width/2-5, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
 	update_button(wi.b.time.reset, wi.width/2 + 5, wi.width/2 + width/2 - 10, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
 }
+*/
 
 //fontsize is only used for icons atm, cry about it
 void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize) {
@@ -609,10 +615,6 @@ void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap
 
 // Function to create the display window
 w_input create_input_window() {
-	//wi.width = 1920;
-	//wi.height = 1080;
-	wi.width = 1280;
-	wi.height = 720;
 	wi.w = new QWidget;
 	wi.w->setWindowTitle("Scoreboard Input");
 
@@ -659,10 +661,6 @@ w_input create_input_window() {
 
 // Function to create the display window
 void create_display_window() {
-	wd.width = 1920;
-	wd.height = 1200;
-	//wd.width = 1280;
-	//wd.height = 720;
 	wd.w = new QWidget;
 	wd.w->setWindowTitle("Scoreboard Display");
 
@@ -681,6 +679,14 @@ void create_display_window() {
 	wd.l.colon = new QLabel(":", wd.w);
 
 	update_display_window();
+}
+
+bool eventFilter(QObject *obj, QEvent *event) {
+	if (event->type() == QEvent::Resize) {
+		update_display_window();
+		update_input_window();
+	}
+	return false;
 }
 
 void update_timer() {
