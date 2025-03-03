@@ -21,21 +21,26 @@ b-run:
 	./interscore
 
 r-install:
-	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c mongoose/mongoose.c \
-	-O3 -Wall -Wextra -Wpedantic \
-	`pkg-config gtk4 --cflags --libs` \
+	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
+	-O3 -Wall -Wextra -Wpedantic -fpermissive \
+	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
 	-ljson-c
 
 r-debug:
-	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c mongoose/mongoose.c \
-	-Wall -Wextra -Wpedantic -g \
-	`pkg-config gtk4 --cflags --libs` \
+	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
+	-Wall -Wextra -Wpedantic -g -fpermissive \
+	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
 	-ljson-c
 
 r-fast:
-	$(CC) -o rentnerend/rentnerend rentnerend/rentnerend.c mongoose/mongoose.c \
-	`pkg-config gtk4 --cflags --libs` \
+	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
+	-fpermissive \
+	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
 	-ljson-c
+
+r-fasttester:
+	g++ -o rentnerend/rentnerend rentnerend/rentnerend0.1.cpp \
+	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
 
 r-run:
 	./rentnerend/rentnerend

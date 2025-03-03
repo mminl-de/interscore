@@ -1,10 +1,19 @@
-#include <gtk/gtk.h>
+#include <QApplication>
+#include <QWidget>
+#include <QPushButton>
+#include <QComboBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QIcon>
+//#include <QTimer>
+
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include "../mongoose/mongoose.h"
 
 #include "../config.h"
-#include "gtk/gtkshortcut.h"
+#include "qnamespace.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -13,64 +22,63 @@ typedef unsigned int u32;
 typedef struct {
 	int width;
 	int height;
-	GtkWidget *w;
-	GtkWidget *fixed;
+	QWidget w;
+
 	struct {
 		struct {
-			GtkWidget* name;
-			GtkWidget* score;
+			QLabel* name;
+			QLabel* score;
 		} t1;
 		struct {
-			GtkWidget* name;
-			GtkWidget* score;
+			QLabel* name;
+			QLabel* score;
 		} t2;
-		GtkWidget* time;
-		GtkWidget* colon;
+		QLabel* time;
+		QLabel* colon;
 	} l;
 } w_display;
 
 typedef struct {
 	int width;
 	int height;
-	GtkWidget *w;
-	GtkWidget *fixed;
+	QWidget w;
 	struct {
 		struct {
-			GtkWidget* name;
-			GtkWidget* score;
+			QLabel* name;
+			QLabel* score;
 		} t1;
 		struct {
-			GtkWidget* name;
-			GtkWidget* score;
+			QLabel* name;
+			QLabel* score;
 		} t2;
-		GtkWidget* time;
+		QLabel* time;
 	} l;
 	struct {
 		struct {
-			GtkWidget *score_plus;
-			GtkWidget *score_minus;
+			QPushButton *score_plus;
+			QPushButton *score_minus;
 		} t1;
 		struct {
-			GtkWidget *score_plus;
-			GtkWidget *score_minus;
+			QPushButton *score_plus;
+			QPushButton *score_minus;
 		} t2;
 		struct {
-			GtkWidget *next;
-			GtkWidget *prev;
-			GtkWidget *switch_sides;
+			QPushButton *next;
+			QPushButton *prev;
+			QPushButton *switch_sides;
 		} game;
 		struct {
-			GtkWidget *yellow;
-			GtkWidget *red;
+			QPushButton *yellow;
+			QPushButton *red;
 		} card;
 		struct {
-			GtkWidget *plus;
-			GtkWidget *minus;
-			GtkWidget *toggle_pause;
-			GtkWidget *reset;
+			QPushButton *plus;
+			QPushButton *minus;
+			QPushButton *toggle_pause;
+			QPushButton *reset;
 		} time;
 	} b;
-	GtkWidget *dd_card_players;
+	QComboBox *dd_card_players;
 } w_input;
 
 typedef struct {
@@ -409,185 +417,129 @@ void load_json(const char *path) {
 	return;
 }
 
-
-// Update display window
-void update_display(GtkWidget *label, const gchar *text) {
-    gtk_label_set_text(GTK_LABEL(label), text);
-}
-
-// Timer callback function
-/*
-gboolean update_timer(gpointer user_data) {
-    ScoreboardData *data = (ScoreboardData *)user_data;
-    if (data->running && data->time_remaining > 0) {
-        data->time_remaining--;
-        gchar time_str[16];
-        g_snprintf(time_str, sizeof(time_str), "Time: %d sec", data->time_remaining);
-        update_display(data->time_label, time_str);
-        return G_SOURCE_CONTINUE;
-    }
-    return G_SOURCE_REMOVE;
-}
-
-// Start/Pause button callback
-void toggle_timer(GtkButton *button, gpointer user_data) {
-    ScoreboardData *data = (ScoreboardData *)user_data;
-    data->running = !data->running;
-    if (data->running) {
-        g_timeout_add_seconds(1, update_timer, data);
-    }
-}
-*/
-
 //Gets the biggest font size possible for a markuped text of a label
-int biggest_fontsize_possible(char *text, int max_fontsize, int x, int y, bool bold) {
+QFont biggest_font_possible(char *text, int max_fontsize, int x, int y, bool bold) {
 	printf("big boys: text: %s, max_fontsize: %d, x: %d, y: %d\n", text, max_fontsize, x, y);
 	int width, height, fontsize = max_fontsize+1;
-	char b[] = "weight='bold'";
-	if (!bold)
-		b[0] = '\0';
+	QFont font = QApplication::font();
+	font.setBold(bold);
 
-	GtkWidget *l_decoy = gtk_label_new(NULL);
 	do {
-		fontsize--;
+		font.setPointSize(fontsize--);
 
-		char s[500];
-		sprintf(s, "<span %s font='%d'>%s</span>", b, fontsize, text);
-		gtk_label_set_markup(GTK_LABEL(l_decoy), s);
+		QFontMetrics fm(font);
+		width = fm.horizontalAdvance(text);
+		height = fm.height();
 
-		int trash;
-		gtk_widget_measure(l_decoy, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		gtk_widget_measure(l_decoy, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
 		if(y == -1)
 			y = height;
 		if(x == -1)
 			x = width;
 	} while (width > x || height > y);
 	printf("text: %s, width: %d, height: %d, x: %d, y: %d\n", text, width, height, x, y);
-	gtk_widget_set_visible(l_decoy, FALSE);
-	return fontsize;
+	return font;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
-void update_label(GtkWidget **l, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool variable_fontsize, bool bold, u8 x_alignment, u8 y_alignment) {
+//if fontsize is -1 use biggest fontsize possible
+void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
 	printf("Update Label Begin: text: %s\n", text);
-	char s[strlen(text)+100];
-	if (variable_fontsize)
-		fontsize = biggest_fontsize_possible(text, fontsize, x_end-x_start, y_end-y_start, bold);
-	char bold_str[] = "weight='bold'";
-	if (!bold)
-		bold_str[0] = '\0';
-	sprintf(s, "<span %s font='%d'>%s</span>", bold_str, fontsize, text);
-	gtk_label_set_markup(GTK_LABEL(*l), s);
+	if(fontsize == -1)
+		l->setFont(biggest_font_possible(text, fontsize, x_end-x_start, y_end-y_start, bold));
+	else{
+		QFont f = QApplication::font();
+		f.setBold(bold);
+		f.setPointSize(fontsize);
+	}
 
-	int width, height, trash;
-	if (x_alignment == 1 && x_end != -1) {
-		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("text: %s, x_alignment = 1, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
-		x_start += ((x_end-x_start)-width)/2;
-	} else if (x_alignment == 2 && x_end != -1) {
-		gtk_widget_measure(*l, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-		printf("text: %s, x_alignment = 2, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
-		x_start += (x_end-x_start)-width;
-	} else if (x_alignment == 0)
-		printf("text: %s, x_alignment = 0, x_start: %d, new x_start: %d,x_end: %d, width: %d\n", text, x_start, (x_end-x_start)-width, x_end, width);
-	if (y_alignment == 1 && y_end != -1) {
-		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
-		printf("text: %s, y_alignment = 1, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", text, y_start, (y_end-y_start)-height, y_end, height);
-		y_start += ((y_end-y_start)-height)/2;
-	} else if (y_alignment == 2 && y_end != -1) {
-		gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
-		printf("text: %s, y_alignment = 2, y_start: %d, new y_start: %d,y_end: %d, y_end-y_start: %d, height: %d\n", text, y_start, y_start + (y_end-y_start)-height, y_end, (y_end-y_start), height);
-		y_start += (y_end-y_start)-height;
-	} else if (y_alignment == 0)
-		printf("text: %s, y_alignment = 0, y_start: %d, new y_start: %d,y_end: %d, height: %d\n", text, y_start, (y_end-y_start)-height, y_end, height);
-
-	gtk_fixed_move(GTK_FIXED(fixed), *l, x_start, y_start);
-	gtk_widget_measure(*l, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
-	printf("x_start: %d, y_start: %d, height: %d\n", x_start, y_start, height);
+	QRect box(x_start, y_start, x_end-x_start, y_end-y_start);
+	l->setGeometry(box);
+	l->setAlignment(x_alignment | y_alignment);
 }
 
-void update_button(GtkWidget **b, GtkWidget *fixed, int x_start, int x_end, int y_start, int y_end){
-	gtk_fixed_move(GTK_FIXED(fixed), *b, x_start, y_start);
-	gtk_widget_set_size_request(*b, x_end-x_start, y_end-y_start);
+//TODO REMOVE FUNCTION FOR b->setGeometry
+void update_button(QPushButton *b, int x_start, int x_end, int y_start, int y_end){
+	b->move(x_start, y_start);
+	b->resize(x_end-x_start, y_end-y_start);
 }
 
 void update_display_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	QFont f1 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
-	if (fontsize2 < fontsize)
-		fontsize = fontsize2;
+	QFont f2 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	if (f2.pointSize() < f1.pointSize())
+		f1 = f2;
 
 	char s[TEAMS_NAME_MAX_LEN];
 	if(md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	update_label(&wd.l.t1.name, wd.fixed, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, s, fontsize, false, true, 1, 2);
+	update_label(wd.l.t1.name, wd.width/40, wd.width/40+(wd.width/2 - wd.width/20), 10, wd.height/6, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
-	update_label(&wd.l.colon, wd.fixed, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", fontsize, false, true, 1, 2);
+	update_label(wd.l.colon, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
 	if(md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	update_label(&wd.l.t2.name, wd.fixed, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, s, fontsize, false, true, 1, 2);
+	update_label(wd.l.t2.name, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display the Scores
 	if(md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(&wd.l.t1.score, wd.fixed, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(wd.l.t1.score, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
 	if(md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(&wd.l.t2.score, wd.fixed, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, false, true, 1, 1);
+	update_label(wd.l.t2.score, wd.width/2, wd.width-1, wd.height/6, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
-	update_label(&wd.l.time, wd.fixed, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, false, true, 1, 1);
+	update_label(wd.l.time, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 }
 
 void update_input_window(){
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6, true);
+	QFont f1 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	int fontsize2 = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6, true);
-	if (fontsize2 < fontsize)
-		fontsize = fontsize2;
-	printf("fontsize: %d, %d\n", fontsize, fontsize2);
+	QFont f2 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	printf("fontsize: %d, %d\n", f1.pointSize(), f2.pointSize());
+	if (f2.pointSize() < f1.pointSize())
+		f1 = f2;
+	int fontsize = f1.pointSize();
 	char s[TEAMS_NAME_MAX_LEN];
 
 	//Display prev game;
-	update_button(&wi.b.game.prev, wi.fixed, wi.width/80, wi.width/20, 20, 20+fontsize);
+	update_button(wi.b.game.prev, wi.width/80, wi.width/20, 20, 20+f1.pointSize());
 
 	//Display Team 1 Name
 	if(md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	update_label(&wi.l.t1.name, wi.fixed, wi.width/20 + wi.width/40, wi.width/2 - (wi.width/30 + wi.width/40), 10, wi.height/6, s, fontsize, false, true, 1, 0);
+	update_label(wi.l.t1.name, wi.width/20 + wi.width/40, wi.width/2 - (wi.width/30 + wi.width/40), 10, wi.height/6, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
 	//Display switch sides;
-	update_button(&wi.b.game.switch_sides, wi.fixed, wi.width/2 - wi.width/30, wi.width/2 + wi.width/30, 20, 20+fontsize);
+	update_button(wi.b.game.switch_sides, wi.width/2 - wi.width/30, wi.width/2 + wi.width/30, 20, 20+fontsize);
 
 	//Display Team 2 Name
 	if(md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	update_label(&wi.l.t2.name, wi.fixed, wi.width/2 + wi.width/30 + wi.width/40, wi.width - (wi.width/20 + wi.width/40), 10, wi.height/6, s, fontsize, false, true, 1, 0);
+	update_label(wi.l.t2.name, wi.width/2 + wi.width/30 + wi.width/40, wi.width - (wi.width/20 + wi.width/40), 10, wi.height/6, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
 	//Display next game;
-	update_button(&wi.b.game.next, wi.fixed, wi.width - wi.width/20, wi.width - wi.width/80, 20, 20+fontsize);
+	update_button(wi.b.game.next, wi.width - wi.width/20, wi.width - wi.width/80, 20, 20+fontsize);
 
 	//Display the Scores
 	//Display Score Team 1
@@ -595,108 +547,83 @@ void update_input_window(){
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(&wi.l.t1.score, wi.fixed, 0, wi.width/2, wi.height/5, wi.height/2+wi.height/8, s, 350, true, true, 1, 2);
+	update_label(wi.l.t1.score, 0, wi.width/2, wi.height/5, wi.height/2+wi.height/8, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 1
-	int width, height, trash;
-	gtk_widget_measure(wi.l.t1.score, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-	gtk_widget_measure(wi.l.t1.score, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	int width, height;
+	width = wi.l.t1.score->width();
+	height = wi.l.t1.score->height();
 	//update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
-	update_button(&wi.b.t1.score_minus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
+	update_button(wi.b.t1.score_plus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
+	update_button(wi.b.t1.score_minus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
 
 	//Display Score Team 2
 	if(md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(&wi.l.t2.score, wi.fixed, wi.width/2, wi.width-1, wi.height/5, wi.height/2+wi.height/8, s, 350, true, true, 1, 2);
+	update_label(wi.l.t2.score, wi.width/2, wi.width-1, wi.height/5, wi.height/2+wi.height/8, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 2
-	gtk_widget_measure(wi.l.t2.score, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-	gtk_widget_measure(wi.l.t2.score, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	width = wi.l.t2.score->width();
+	height = wi.l.t2.score->height();
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(&wi.b.t2.score_plus, wi.fixed, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
-	update_button(&wi.b.t2.score_minus, wi.fixed, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
+	update_button(wi.b.t2.score_plus, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
+	update_button(wi.b.t2.score_minus, wi.width/2+(wi.width/2 - width)/2, wi.width - (wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
 
 	//Display Time
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
-	update_label(&wi.l.time, wi.fixed, 0, wi.width-1, wi.height/2+wi.height/5, wi.height-1, s, 350, true, true, 1, 2);
+	update_label(wi.l.time, 0, wi.width-1, wi.height/2+wi.height/5, wi.height-1, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Time
-	gtk_widget_measure(wi.l.time, GTK_ORIENTATION_HORIZONTAL, -1, &width, &trash, NULL, NULL);
-	gtk_widget_measure(wi.l.time, GTK_ORIENTATION_VERTICAL, -1, &height, &trash, NULL, NULL);
+	width = wi.l.time->width();
+	height = wi.l.time->height();
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(&wi.b.time.minus, wi.fixed, wi.width/2 - width/2 - 160, wi.width/2 - width/2, wi.height/2+wi.height/5, wi.height-1);
-	update_button(&wi.b.time.plus, wi.fixed, wi.width/2 + width/2, wi.width/2 + width/2 + 160, wi.height/2+wi.height/5, wi.height-1);
+	update_button(wi.b.time.minus, wi.width/2 - width/2 - 160, wi.width/2 - width/2, wi.height/2+wi.height/5, wi.height-1);
+	update_button(wi.b.time.plus, wi.width/2 + width/2, wi.width/2 + width/2 + 160, wi.height/2+wi.height/5, wi.height-1);
 
-	update_button(&wi.b.time.toggle_pause, wi.fixed, wi.width/2 - width/2 + 10, wi.width/2-5, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
-	update_button(&wi.b.time.reset, wi.fixed, wi.width/2 + 5, wi.width/2 + width/2 - 10, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
-
-	//Display the Buttons
-	//Display prev game;
-	//Display next game;
-	//Display Goal +
+	update_button(wi.b.time.toggle_pause, wi.width/2 - width/2 + 10, wi.width/2-5, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
+	update_button(wi.b.time.reset, wi.width/2 + 5, wi.width/2 + width/2 - 10, wi.height/2+wi.height/5, wi.height/2+wi.height/5+60);
 }
 
 //fontsize is only used for icons atm, cry about it
-void button_new(GtkWidget **b, GtkWidget *fixed, void (*callback_func)(), char *text, bool text_is_icon, int fontsize){
-	if(text_is_icon){
-		GtkWidget *i = gtk_image_new_from_icon_name(text);
-		gtk_image_set_pixel_size(GTK_IMAGE(i), fontsize);
-		*b = gtk_button_new();
-		gtk_button_set_child(GTK_BUTTON(*b), i);
-	} else {
-		*b = gtk_button_new_with_label(text);
-	}
-	gtk_fixed_put(GTK_FIXED(fixed), *b, 0, 0);
-	g_signal_connect(*b, "clicked", G_CALLBACK(callback_func), NULL);
-}
-
-void label_new(GtkWidget **l, GtkWidget *fixed){
-	*l = gtk_label_new(NULL);
-	gtk_fixed_put(GTK_FIXED(fixed), *l, 0, 0);
+void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize){
+	*b = new QPushButton();
+	QIcon i = QApplication::style()->standardIcon(icon);
+	(*b)->setIcon(i);
+	(*b)->setIconSize(QSize(fontsize, fontsize));
+	QObject::connect(*b, &QPushButton::clicked, callback_func);
 }
 
 // Function to create the display window
-w_input create_input_window(const GtkApplication *app) {
-    wi.w = gtk_application_window_new(GTK_APPLICATION(app));
+void create_input_window() {
 	//wi.width = 1920;
 	//wi.height = 1080;
-	wd.width = 1280;
-	wd.height = 720;
-    gtk_window_set_title(GTK_WINDOW(wi.w), "Scoreboard Input");
-    gtk_window_set_default_size(GTK_WINDOW(wi.w), wi.width, wi.height);
+	wi.width = 1280;
+	wi.height = 720;
+	wi.w.setWindowTitle("Scoreboard Input");
 
 	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
-	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "notify::height", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
 
-
-	wi.fixed = gtk_fixed_new();
-	gtk_window_set_child(GTK_WINDOW(wi.w), wi.fixed);
-
-	label_new(&wi.l.t1.name, wi.fixed);
-	label_new(&wi.l.t2.name, wi.fixed);
-	label_new(&wi.l.t1.score, wi.fixed);
-	label_new(&wi.l.t2.score, wi.fixed);
-	label_new(&wi.l.time, wi.fixed);
+	wi.l.t1.name = new QLabel();
+	wi.l.t2.name = new QLabel();
+	wi.l.t1.score = new QLabel();
+	wi.l.t2.score = new QLabel();
+	wi.l.time = new QLabel();
 	//Create Buttons
-	button_new(&wi.b.t1.score_minus, wi.fixed, btn_cb_t1_score_minus, "list-remove", true, 32);
-	button_new(&wi.b.t1.score_plus, wi.fixed, btn_cb_t1_score_plus, "list-add", true, 32);
-	button_new(&wi.b.t2.score_minus, wi.fixed, btn_cb_t2_score_minus, "list-remove", true, 32);
-	button_new(&wi.b.t2.score_plus, wi.fixed, btn_cb_t2_score_plus, "list-add", true, 32);
+	button_new(&wi.b.t1.score_minus, btn_cb_t1_score_minus, QStyle::SP_ArrowDown, 32);
+	button_new(&wi.b.t1.score_plus, btn_cb_t1_score_plus, QStyle::SP_ArrowUp, 32);
+	button_new(&wi.b.t2.score_minus, btn_cb_t2_score_minus, QStyle::SP_ArrowDown, 32);
+	button_new(&wi.b.t2.score_plus, btn_cb_t2_score_plus, QStyle::SP_ArrowUp, 32);
 
-	button_new(&wi.b.game.next, wi.fixed, btn_cb_game_next, "go-next", true, 32);
+	button_new(&wi.b.game.next, btn_cb_game_next, QStyle::SP_ArrowForward, 32);
 
-	button_new(&wi.b.game.prev, wi.fixed, btn_cb_game_prev, "go-previous", true, 32);
-	button_new(&wi.b.game.switch_sides, wi.fixed, btn_cb_game_switch_sides, "object-flip-horizontal", true, 32);
-	button_new(&wi.b.time.plus, wi.fixed, btn_cb_time_plus, "list-add", true, 32);
-	button_new(&wi.b.time.minus, wi.fixed, btn_cb_time_minus, "list-remove", true, 32);
-	button_new(&wi.b.time.toggle_pause, wi.fixed, btn_cb_time_toggle_pause, "media-playback-pause", true, 32);
-	button_new(&wi.b.time.reset, wi.fixed, btn_cb_time_reset, "view-refresh", true, 32);
+	button_new(&wi.b.game.prev, btn_cb_game_prev, QStyle::SP_ArrowBack, 32);
+	button_new(&wi.b.game.switch_sides, btn_cb_game_switch_sides, QStyle::SP_DesktopIcon, 32);
+	button_new(&wi.b.time.plus, btn_cb_time_plus, QStyle::SP_ArrowUp, 32);
+	button_new(&wi.b.time.minus, btn_cb_time_minus, QStyle::SP_ArrowDown, 32);
+	button_new(&wi.b.time.toggle_pause, btn_cb_time_toggle_pause, QStyle::SP_MediaPlay, 32);
+	button_new(&wi.b.time.reset, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
 	/*
 	wi.b.card.yellow = gtk_button_new_with_label("GELBE KARTE");
 	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.yellow, 0, 0);
@@ -707,18 +634,16 @@ w_input create_input_window(const GtkApplication *app) {
 	printf("oiranset 2.\n");
 
 	update_input_window();
-    return wi;
+    //return wi;
 }
 
 // Function to create the display window
-w_display create_display_window(const GtkApplication *app) {
-    wd.w = gtk_application_window_new(GTK_APPLICATION(app));
+void create_display_window() {
 	//wd.width = 1920;
 	//wd.height = 1080;
 	wd.width = 1280;
 	wd.height = 720;
-    gtk_window_set_title(GTK_WINDOW(wd.w), "Scoreboard Display");
-    gtk_window_set_default_size(GTK_WINDOW(wd.w), wd.width, wd.height);
+	wd.w.setWindowTitle("Scoreboard Display");
 
 	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
 	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
@@ -726,22 +651,18 @@ w_display create_display_window(const GtkApplication *app) {
 	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
 	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
 
-
-	wd.fixed = gtk_fixed_new();
-	gtk_window_set_child(GTK_WINDOW(wd.w), wd.fixed);
-
-	label_new(&wd.l.t1.name, wd.fixed);
-	label_new(&wd.l.t2.name, wd.fixed);
-	label_new(&wd.l.t1.score, wd.fixed);
-	label_new(&wd.l.t2.score, wd.fixed);
-	label_new(&wd.l.time, wd.fixed);
-	label_new(&wd.l.colon, wd.fixed);
+	wd.l.t1.name = new QLabel();
+	wd.l.t2.name = new QLabel();
+	wd.l.t1.score = new QLabel();
+	wd.l.t2.score = new QLabel();
+	wd.l.time = new QLabel();
+	wd.l.colon = new QLabel();
 
 	update_display_window();
-    return wd;
+    //return wd;
 }
 
-gboolean update_timer(){
+void update_timer(){
 	if(!md.cur.pause && md.cur.time > 0){
 		md.cur.time--;
 		update_display_window();
@@ -749,40 +670,38 @@ gboolean update_timer(){
 	}
 	if(md.cur.time == 0)
 		md.cur.pause = true;
-	return G_SOURCE_CONTINUE;
 }
 
-gboolean websocket_poll(){
+void websocket_poll(){
 	if(!server_con)
 		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	else
 		mg_mgr_poll(&mgr, 0);
-	return G_SOURCE_CONTINUE;
 }
 
-static void on_activate(const GtkApplication *app) {
+int main(int argc, char *argv[]) {
+	QApplication app(argc, argv);
+
 	load_json(JSON_PATH);
 	init_matchday();
 
-	mg_mgr_init(&mgr);
-	g_timeout_add(100, websocket_poll, NULL);
-
     //create_display_window(app);
-    create_input_window(app);
+    create_input_window();
+
+	mg_mgr_init(&mgr);
+	//QTimer *t1 = new QTimer(&wi.w);
+	//QObject::connect(t1, &QTimer::timeout, &websocket_poll);
+	//t1->start(100);
+
 
 	printf("aroistn\n");
-    //gtk_window_present(GTK_WINDOW(wd.w));
-    gtk_window_present(GTK_WINDOW(wi.w));
+	//wd.w->show();
+    wi.w.show();
 
-	g_timeout_add_seconds(1, update_timer, NULL);
+	//QTimer *t2 = new QTimer(&wi.w);
+	//QObject::connect(t2, &QTimer::timeout, &update_timer);
+	//t2->start(1000);
 
-}
-
-int main(int argc, char **argv) {
-	GtkApplication *app = gtk_application_new("de.mminl.interscore", G_APPLICATION_DEFAULT_FLAGS);
-	g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
-	const int stat = g_application_run(G_APPLICATION(app), argc, argv);
-	g_object_unref(app);
 	mg_mgr_free(&mgr);
-    return stat;
+	return app.exec();
 }
