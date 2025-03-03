@@ -13,7 +13,6 @@
 #include "../mongoose/mongoose.h"
 
 #include "../config.h"
-#include "qnamespace.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -22,7 +21,7 @@ typedef unsigned int u32;
 typedef struct {
 	int width;
 	int height;
-	QWidget w;
+	QWidget *w;
 
 	struct {
 		struct {
@@ -41,7 +40,7 @@ typedef struct {
 typedef struct {
 	int width;
 	int height;
-	QWidget w;
+	QWidget *w;
 	struct {
 		struct {
 			QLabel* name;
@@ -133,8 +132,8 @@ typedef struct {
 enum {T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS, GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES, TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET};
 
 Matchday md;
-w_display wd;
 w_input wi;
+w_display wd;
 struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
@@ -143,86 +142,86 @@ void update_input_window();
 void update_display_window();
 void websocket_send_button_signal(int);
 
-void btn_cb_t1_score_plus(){
+void btn_cb_t1_score_plus() {
 	md.games[md.cur.gameindex].score.t1++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(T1_SCORE_PLUS);
 }
-void btn_cb_t1_score_minus(){
-	if(md.games[md.cur.gameindex].score.t1 > 0)
+void btn_cb_t1_score_minus() {
+	if (md.games[md.cur.gameindex].score.t1 > 0)
 		md.games[md.cur.gameindex].score.t1--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(T1_SCORE_MINUS);
 }
-void btn_cb_t2_score_plus(){
+void btn_cb_t2_score_plus() {
 	md.games[md.cur.gameindex].score.t2++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(T2_SCORE_PLUS);
 }
-void btn_cb_t2_score_minus(){
-	if(md.games[md.cur.gameindex].score.t2 > 0)
+void btn_cb_t2_score_minus() {
+	if (md.games[md.cur.gameindex].score.t2 > 0)
 		md.games[md.cur.gameindex].score.t2--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(T2_SCORE_MINUS);
 }
-void btn_cb_game_next(){
-	if(md.cur.gameindex < md.games_count-1)
+void btn_cb_game_next() {
+	if (md.cur.gameindex < md.games_count-1)
 		md.cur.gameindex++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_NEXT);
 }
-void btn_cb_game_prev(){
-	if(md.cur.gameindex > 0)
+void btn_cb_game_prev() {
+	if (md.cur.gameindex > 0)
 		md.cur.gameindex--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_PREV);
 }
-void btn_cb_game_switch_sides(){
+void btn_cb_game_switch_sides() {
 	md.cur.halftime = !md.cur.halftime;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
-void btn_cb_time_plus(){
+void btn_cb_time_plus() {
 	md.cur.time++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_PLUS);
 }
-void btn_cb_time_minus(){
-	if(md.cur.time > 0)
+void btn_cb_time_minus() {
+	if (md.cur.time > 0)
 		md.cur.time--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS);
 }
-void btn_cb_time_toggle_pause(){
+void btn_cb_time_toggle_pause() {
 	md.cur.pause = !md.cur.pause;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_TOGGLE_PAUSE);
 }
-void btn_cb_time_reset(){
+void btn_cb_time_reset() {
 	md.cur.time = GAME_LENGTH;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_RESET);
 }
 
-void websocket_send_button_signal(int signal){
-	if(!server_connected)
+void websocket_send_button_signal(int signal) {
+	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, &signal, sizeof(int), WEBSOCKET_OP_BINARY);
 }
 
-void ev_handler(struct mg_connection *c, int ev, void *p){
+void ev_handler(struct mg_connection *c, int ev, void *p) {
 	switch(ev) {
 		case MG_EV_WS_OPEN:
 			printf("WebSocket conenction established!\n");
@@ -292,7 +291,7 @@ void load_json(const char *path) {
 	u32 file_size = ftell(f);
 	rewind(f);
 
-	char *filestring = malloc((file_size + 1) * sizeof(char));
+	char *filestring = (char *) malloc((file_size + 1) * sizeof(char));
 	if (filestring == NULL) {
 		printf("Not enough memory for loading json! Exiting...\n");
 		fclose(f);
@@ -317,10 +316,10 @@ void load_json(const char *path) {
 	json_object_object_get_ex(root, "games", &games);
 
 	md.teams_count = json_object_object_length(teams);
-	md.teams = malloc(md.teams_count * sizeof(Team));
+	md.teams = (Team *) malloc(md.teams_count * sizeof(Team));
 
 	md.players_count = md.teams_count*2;
-	md.players = malloc(md.players_count * sizeof(Player));
+	md.players = (Player *) malloc(md.players_count * sizeof(Player));
 
 	// Read all the teams
 	u32 i = 0;
@@ -329,12 +328,12 @@ void load_json(const char *path) {
 		json_object *logo, *keeper, *field, *name, *color;
 
 		json_object_object_get_ex(teamdata, "logo", &logo);
-		md.teams[i].logo_filename = malloc(strlen(json_object_get_string(logo)) * sizeof(char));
+		md.teams[i].logo_filename = (char *) malloc(strlen(json_object_get_string(logo)) * sizeof(char));
 		strcpy(md.teams[i].logo_filename, json_object_get_string(logo));
 
 		json_object_object_get_ex(teamdata, "keeper", &keeper);
 		json_object_object_get_ex(keeper, "name", &name);
-		md.players[i*2].name = malloc(strlen(json_object_get_string(name)) * sizeof(char));
+		md.players[i*2].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
 		strcpy(md.players[i*2].name, json_object_get_string(name));
 		md.players[i*2].team_index = i;
 		md.players[i*2].role = 0;
@@ -343,25 +342,25 @@ void load_json(const char *path) {
 
 		json_object_object_get_ex(teamdata, "field", &field);
 		json_object_object_get_ex(field, "name", &name);
-		md.players[i*2+1].name = malloc(strlen(json_object_get_string(name)) * sizeof(char));
+		md.players[i*2+1].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
 		strcpy(md.players[i*2+1].name, json_object_get_string(name));
 		md.players[i*2+1].team_index = i;
 		md.players[i*2+1].role = 1;
 		md.teams[i].field_index = i*2+1;
 
 		json_object_object_get_ex(teamdata, "color_light", &color);
-		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		md.teams[i].color_light = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_light, json_object_get_string(color));
 
 		json_object_object_get_ex(teamdata, "color_dark", &color);
-		md.teams[i].color_dark = malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		md.teams[i].color_dark = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
 
 		i++;
 	}
 
 	md.games_count = json_object_object_length(games);
-	md.games = malloc(md.games_count * sizeof(Game));
+	md.games = (Game *) malloc(md.games_count * sizeof(Game));
 
 	i = 0;
 	json_object_object_foreach(games, gamenumber, gamedata) {
@@ -395,7 +394,7 @@ void load_json(const char *path) {
 		if (json_object_object_get_ex(gamedata, "cards", &cards)) {
 
 			md.games[i].cards_count = json_object_object_length(cards);
-			md.games[i].cards = malloc(md.games[i].cards_count * sizeof(Card));
+			md.games[i].cards = (Card *) malloc(md.games[i].cards_count * sizeof(Card));
 
 			u32 j = 0;
 			json_object_object_foreach(cards, cardname, carddata) {
@@ -418,9 +417,11 @@ void load_json(const char *path) {
 }
 
 //Gets the biggest font size possible for a markuped text of a label
-QFont biggest_font_possible(char *text, int max_fontsize, int x, int y, bool bold) {
-	printf("big boys: text: %s, max_fontsize: %d, x: %d, y: %d\n", text, max_fontsize, x, y);
-	int width, height, fontsize = max_fontsize+1;
+//QFont biggest_font_possible(const char *text, int max_fontsize, int x, int y, bool bold) {
+QFont biggest_font_possible(const char *text, int x, int y, bool bold) {
+	printf("big boys: text: %s, x: %d, y: %d\n", text, x, y);
+	//int width, height, fontsize = max_fontsize+1;
+	int width, height, fontsize = y + 1;
 	QFont font = QApplication::font();
 	font.setBold(bold);
 
@@ -431,50 +432,59 @@ QFont biggest_font_possible(char *text, int max_fontsize, int x, int y, bool bol
 		width = fm.horizontalAdvance(text);
 		height = fm.height();
 
-		if(y == -1)
+		if (y == -1)
 			y = height;
-		if(x == -1)
+		if (x == -1)
 			x = width;
-	} while (width > x || height > y);
+	} while (fontsize > 1 && (width > x || height > y));
 	printf("text: %s, width: %d, height: %d, x: %d, y: %d\n", text, width, height, x, y);
 	return font;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
 //if fontsize is -1 use biggest fontsize possible
-void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
+void update_label(QLabel *l, int x_start, int x_end, int y_start, int y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
 	printf("Update Label Begin: text: %s\n", text);
-	if(fontsize == -1)
-		l->setFont(biggest_font_possible(text, fontsize, x_end-x_start, y_end-y_start, bold));
-	else{
+	if (fontsize == -1) {
+		printf("TODO calling bfp in update_label\n");
+		l->setFont(biggest_font_possible(text, x_end-x_start, y_end-y_start, bold));
+	} else {
 		QFont f = QApplication::font();
 		f.setBold(bold);
 		f.setPointSize(fontsize);
 	}
 
 	QRect box(x_start, y_start, x_end-x_start, y_end-y_start);
-	l->setGeometry(box);
-	l->setAlignment(x_alignment | y_alignment);
+	printf("box: %d-%d/%d-%d\n", x_start, x_end, y_start, y_end);
+	//l->setGeometry(box);
+	l->move(x_start, y_start);
+	l->resize(x_end - x_start, y_end - y_start);
+	//l->setAlignment(x_alignment | y_alignment);
+
+	// TODO TEST
+	l->setText(QString::fromUtf8(text));
 }
 
 //TODO REMOVE FUNCTION FOR b->setGeometry
-void update_button(QPushButton *b, int x_start, int x_end, int y_start, int y_end){
+void update_button(QPushButton *b, int x_start, int x_end, int y_start, int y_end) {
 	b->move(x_start, y_start);
 	b->resize(x_end-x_start, y_end-y_start);
 }
 
-void update_display_window(){
+void update_display_window() {
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	QFont f1 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	printf("calling bfp in update_display_window\n");
+	QFont f1 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	QFont f2 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	printf("calling bfp in update_display_window again\n");
+	QFont f2 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
 
 	char s[TEAMS_NAME_MAX_LEN];
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -482,20 +492,20 @@ void update_display_window(){
 
 	update_label(wd.l.colon, wd.width/40+(wd.width/2 - wd.width/20), wd.width/2 + wd.width/40, 0, wd.height/6, ":", f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	update_label(wd.l.t2.name, wd.width/2 + wd.width/40, wd.width - wd.width/40, 10, wd.height/6, s, f1.pointSize(), true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display the Scores
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	update_label(wd.l.t1.score, 0, wd.width/2, wd.height/5, wd.height/2, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
@@ -505,13 +515,15 @@ void update_display_window(){
 	update_label(wd.l.time, 0, wd.width-1, wd.height/2, wd.height-1, s, 350, true, Qt::AlignCenter, Qt::AlignVCenter);
 }
 
-void update_input_window(){
+void update_input_window() {
 	//Display the Teamnames
 	char teamname[TEAMS_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	QFont f1 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	printf("calling bfp in update_input_window\n");
+	QFont f1 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	QFont f2 = biggest_font_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
+	printf("calling bfp in update_input_window again\n");
+	QFont f2 = biggest_font_possible(teamname, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	printf("fontsize: %d, %d\n", f1.pointSize(), f2.pointSize());
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
@@ -522,7 +534,7 @@ void update_input_window(){
 	update_button(wi.b.game.prev, wi.width/80, wi.width/20, 20, 20+f1.pointSize());
 
 	//Display Team 1 Name
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
@@ -532,7 +544,7 @@ void update_input_window(){
 	update_button(wi.b.game.switch_sides, wi.width/2 - wi.width/30, wi.width/2 + wi.width/30, 20, 20+fontsize);
 
 	//Display Team 2 Name
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -543,7 +555,7 @@ void update_input_window(){
 
 	//Display the Scores
 	//Display Score Team 1
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
@@ -558,7 +570,7 @@ void update_input_window(){
 	update_button(wi.b.t1.score_minus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
 
 	//Display Score Team 2
-	if(md.cur.halftime)
+	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
@@ -587,7 +599,7 @@ void update_input_window(){
 }
 
 //fontsize is only used for icons atm, cry about it
-void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize){
+void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize) {
 	*b = new QPushButton();
 	QIcon i = QApplication::style()->standardIcon(icon);
 	(*b)->setIcon(i);
@@ -596,20 +608,21 @@ void button_new(QPushButton **b, void (*callback_func)(), QStyle::StandardPixmap
 }
 
 // Function to create the display window
-void create_input_window() {
+w_input create_input_window() {
 	//wi.width = 1920;
 	//wi.height = 1080;
 	wi.width = 1280;
 	wi.height = 720;
-	wi.w.setWindowTitle("Scoreboard Input");
+	wi.w = new QWidget;
+	wi.w->setWindowTitle("Scoreboard Input");
 
 	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
 
-	wi.l.t1.name = new QLabel();
-	wi.l.t2.name = new QLabel();
-	wi.l.t1.score = new QLabel();
-	wi.l.t2.score = new QLabel();
-	wi.l.time = new QLabel();
+	wi.l.t1.name = new QLabel("", wi.w);
+	wi.l.t2.name = new QLabel("", wi.w);
+	wi.l.t1.score = new QLabel("", wi.w);
+	wi.l.t2.score = new QLabel("", wi.w);
+	wi.l.time = new QLabel("", wi.w);
 	//Create Buttons
 	button_new(&wi.b.t1.score_minus, btn_cb_t1_score_minus, QStyle::SP_ArrowDown, 32);
 	button_new(&wi.b.t1.score_plus, btn_cb_t1_score_plus, QStyle::SP_ArrowUp, 32);
@@ -634,16 +647,24 @@ void create_input_window() {
 	printf("oiranset 2.\n");
 
 	update_input_window();
-    //return wi;
+
+	// TODO BEGIN TEST
+	QHBoxLayout *layout = new QHBoxLayout();
+	layout->addWidget(wi.l.t1.name);
+	wi.w->setLayout(layout);
+	// TODO END TEST
+
+    return wi;
 }
 
 // Function to create the display window
 void create_display_window() {
-	//wd.width = 1920;
-	//wd.height = 1080;
-	wd.width = 1280;
-	wd.height = 720;
-	wd.w.setWindowTitle("Scoreboard Display");
+	wd.width = 1920;
+	wd.height = 1200;
+	//wd.width = 1280;
+	//wd.height = 720;
+	wd.w = new QWidget;
+	wd.w->setWindowTitle("Scoreboard Display");
 
 	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
 	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
@@ -651,29 +672,29 @@ void create_display_window() {
 	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
 	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
 
-	wd.l.t1.name = new QLabel();
-	wd.l.t2.name = new QLabel();
-	wd.l.t1.score = new QLabel();
-	wd.l.t2.score = new QLabel();
-	wd.l.time = new QLabel();
-	wd.l.colon = new QLabel();
+	wd.l.t1.name = new QLabel("", wd.w);
+	wd.l.t2.name = new QLabel("", wd.w);
+	wd.l.t1.score = new QLabel("", wd.w);
+	wd.l.t2.score = new QLabel("", wd.w);
+	wd.l.time = new QLabel("", wd.w);
+	// TODO CONSIDER TEST
+	wd.l.colon = new QLabel(":", wd.w);
 
 	update_display_window();
-    //return wd;
 }
 
-void update_timer(){
-	if(!md.cur.pause && md.cur.time > 0){
+void update_timer() {
+	if (!md.cur.pause && md.cur.time > 0) {
 		md.cur.time--;
 		update_display_window();
 		update_input_window();
 	}
-	if(md.cur.time == 0)
+	if (md.cur.time == 0)
 		md.cur.pause = true;
 }
 
-void websocket_poll(){
-	if(!server_con)
+void websocket_poll() {
+	if (!server_con)
 		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	else
 		mg_mgr_poll(&mgr, 0);
@@ -685,18 +706,17 @@ int main(int argc, char *argv[]) {
 	load_json(JSON_PATH);
 	init_matchday();
 
-    //create_display_window(app);
-    create_input_window();
+    create_display_window();
+    //wi = create_input_window();
 
 	mg_mgr_init(&mgr);
 	//QTimer *t1 = new QTimer(&wi.w);
 	//QObject::connect(t1, &QTimer::timeout, &websocket_poll);
 	//t1->start(100);
 
-
 	printf("aroistn\n");
-	//wd.w->show();
-    wi.w.show();
+	wd.w->show();
+    //wi.w->show();
 
 	//QTimer *t2 = new QTimer(&wi.w);
 	//QObject::connect(t2, &QTimer::timeout, &update_timer);

@@ -17,30 +17,31 @@ b-fast:
 	-ljson-c
 
 b-run:
-
 	./interscore
+
+QT_FLAGS ?= `pkg-config Qt6Widgets --cflags --libs`
 
 r-install:
 	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
-	-O3 -Wall -Wextra -Wpedantic -fpermissive \
-	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
+	-O3 -Wall -Wextra -Wpedantic -fpermissive -fPIC \
+	$(QT_FLAGS) \
 	-ljson-c
 
 r-debug:
 	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
 	-Wall -Wextra -Wpedantic -g -fpermissive \
-	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
+	$(QT_FLAGS) \
 	-ljson-c
 
 r-fast:
 	g++ -o rentnerend/rentnerend rentnerend/rentnerend.cpp mongoose/mongoose.c \
-	-fpermissive \
-	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
+	-fpermissive -fPIC \
+	$(QT_FLAGS) \
 	-ljson-c
 
 r-fasttester:
 	g++ -o rentnerend/rentnerend rentnerend/rentnerend0.1.cpp \
-	`pkg-config Qt6Core Qt6Widgets --cflags --libs` \
+	$(QT_FLAGS)
 
 r-run:
 	./rentnerend/rentnerend
