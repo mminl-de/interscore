@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QFont>
+#include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QResizeEvent>
@@ -7,7 +8,6 @@
 #include <QWidget>
 
 class DynamicQWidget : public QWidget {
-    QVBoxLayout *layout;
     QLabel *time;
     QLabel *t1;
     QLabel *s1;
@@ -18,9 +18,9 @@ public:
     DynamicQWidget() {
         this->setWindowTitle("InterScore – Display window");
 
-        layout = new QVBoxLayout;
-        layout->setAlignment(Qt::AlignCenter);
-        layout->setSpacing(200);
+        QVBoxLayout *layout = new QVBoxLayout;
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(0);
 
         QWidget *teams = new QWidget;
         teams->setStyleSheet("background-color: purple;");
@@ -32,8 +32,13 @@ public:
         QVBoxLayout *team_1_layout = new QVBoxLayout;
         team_1->setLayout(team_1_layout);
 
-        QFont font("JetBrains Mono", 100);
+        const int font_id = QFontDatabase::addApplicationFont("./Kanit-Regular.ttf");
+        QString font_family = QFontDatabase::applicationFontFamilies(font_id).at(0);
+        QFont font(font_family, 50);
+
         t1 = new QLabel("GIFHORN", this);
+        t1->setStyleSheet("background-color: gold;");
+        t1->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         t1->setAlignment(Qt::AlignCenter);
         t1->setFont(font);
         t1->setFixedWidth(800);
@@ -50,6 +55,8 @@ public:
         team_2->setLayout(team_2_layout);
 
         t2 = new QLabel("LUDWIGSFELDE", this);
+        t2->setStyleSheet("background-color: gold;");
+        t2->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         t2->setAlignment(Qt::AlignCenter);
         t2->setFont(font);
         t2->setFixedWidth(800);
@@ -63,13 +70,14 @@ public:
         teams_layout->addWidget(team_1);
         teams_layout->addWidget(team_2);
 
-        layout->addWidget(teams);
+        layout->addWidget(teams, 7);
 
         time = new QLabel("07:00", this);
         time->setStyleSheet("background-color: green;");
+        time->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         time->setFont(font);
         time->setAlignment(Qt::AlignCenter);
-        layout->addWidget(time);
+        layout->addWidget(time, 3);
 
         this->setLayout(layout);
     }
@@ -81,21 +89,26 @@ protected:
         int height = event->size().height();
 
         // Calculate the font size as a percentage of window height
-        int newFontSize = height / 10;  // Adjust this factor based on your preference
+        int team_font_size = height / 15;  // Adjust this factor based on your preference
 
         // Set the new font size to labels
         QFont font = time->font();
-        font.setPointSize(newFontSize);
-        s1->setFont(font);
-        s2->setFont(font);
-        time->setFont(font);
+        font.setPointSize(team_font_size);
 
-        font.setPointSize(newFontSize >> 1);
         t1->setFont(font);
         t2->setFont(font);
-        layout->setSpacing(newFontSize * 3);
-        t1->setFixedWidth(newFontSize * 7);
-        t2->setFixedWidth(newFontSize * 7);
+        t1->setFixedWidth(width / 2.5);
+        t2->setFixedWidth(width / 2.5);
+
+        int max_font_size = height / 4.8;
+        font.setPointSize(max_font_size);
+        s1->setFont(font);
+        s1->setStyleSheet("border: none; margin: 0px; padding: 0px; background-color: yellow;");
+        s1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        s2->setFont(font);
+        s2->setStyleSheet("border: none; margin: 0px; padding: 0px; background-color: yellow;");
+        s2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        time->setFont(font);
 
         QWidget::resizeEvent(event);  // Call the base class handler
     }
@@ -119,5 +132,3 @@ int main(int argc, char *argv[]) {
     dw.wid->show();
     return app.exec();
 }
-
-
