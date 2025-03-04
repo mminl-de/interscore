@@ -18,7 +18,7 @@ enum Widget {
 	WIDGET_SCOREBOARD = 1,
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
-	WIDGET_SPIELSTART = 7,
+	WIDGET_GAMESTART = 7,
 	WIDGET_CARD = 9,
 	// TODO
 	SCOREBOARD_SET_TIMER = 11,
@@ -45,7 +45,7 @@ typedef struct {
 	char team1_color_right[HEX_COLOR_LEN];
 	char team2_color_left[HEX_COLOR_LEN];
 	char team2_color_right[HEX_COLOR_LEN];
-} widget_scoreboard;
+} WidgetScoreboard;
 
 typedef struct {
 	u8 widget_num;
@@ -57,7 +57,7 @@ typedef struct {
 	char team1_color_right[HEX_COLOR_LEN];
 	char team2_color_left[HEX_COLOR_LEN];
 	char team2_color_right[HEX_COLOR_LEN];
-} widget_spielstart;
+} WidgetGamestart;
 
 typedef struct {
 	u8 widget_num;
@@ -71,7 +71,7 @@ typedef struct {
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
 	char color[TEAMS_COUNT_MAX][HEX_COLOR_LEN];
-} widget_livetable;
+} WidgetLivetable;
 
 typedef struct {
 	u8 widget_num;
@@ -84,12 +84,12 @@ typedef struct {
 	char team1_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
 	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-} widget_gameplan;
+} WidgetGameplan;
 
 typedef struct {
 	enum CardType type;
 	char name[PLAYER_NAME_MAX_LEN];
-} widget_card;
+} WidgetCard;
 #pragma pack(pop)
 
 // #### In Game Structs
@@ -203,7 +203,7 @@ Possible User Actions:
 #define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
 #define TOGGLE_WIDGET_GAMEPLAN 'v'
-#define TOGGLE_WIDGET_SPIELSTART 's'
+#define TOGGLE_WIDGET_GAMESTART 's'
 
 // Meta
 #define EXIT 'q'
@@ -227,12 +227,12 @@ Matchday md;
 struct mg_connection *client_con = NULL;
 struct mg_mgr mgr;
 
-bool widget_scoreboard_enabled = false;
+bool WidgetScoreboard_enabled = false;
 bool widget_spielstart_enabled = false;
-bool widget_livetable_enabled = false;
+bool WidgetLivetable_enabled = false;
 bool widget_gameplan_enabled = false;
 
-// TODO send_widget_card(widget_card w) {
+// TODO send_WidgetCard(WidgetCard w) {
 //
 // }
 
@@ -250,13 +250,13 @@ bool send_widget(void *w) {
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *) w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) w, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
-widget_scoreboard widget_scoreboard_create() {
-	widget_scoreboard w;
-	w.widget_num = WIDGET_SCOREBOARD + widget_scoreboard_enabled;
+WidgetScoreboard WidgetScoreboard_create() {
+	WidgetScoreboard w;
+	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
 
 	if (md.cur.halftime) {
 		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t1_index].name);
@@ -286,9 +286,9 @@ widget_scoreboard widget_scoreboard_create() {
 	return w;
 }
 
-widget_spielstart widget_spielstart_create() {
-	widget_spielstart w;
-	w.widget_num = WIDGET_SPIELSTART + widget_spielstart_enabled;
+WidgetGamestart WidgetGamestart_create() {
+	WidgetGamestart w;
+	w.widget_num = WIDGET_GAMESTART + widget_spielstart_enabled;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
 	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
@@ -296,10 +296,10 @@ widget_spielstart widget_spielstart_create() {
 	return w;
 }
 
-widget_livetable widget_livetable_create() {
+WidgetLivetable WidgetLivetable_create() {
 	printf("begin livetable\n");
-	widget_livetable w;
-	w.widget_num = WIDGET_LIVETABLE + widget_livetable_enabled;
+	WidgetLivetable w;
+	w.widget_num = WIDGET_LIVETABLE + WidgetLivetable_enabled;
 	w.len = md.teams_count;
 	int teams_done[md.teams_count];
 	int points[md.teams_count], goalratio[md.teams_count], goals[md.teams_count];
@@ -317,7 +317,7 @@ widget_livetable widget_livetable_create() {
 	for (u8 i = 0; i < md.teams_count; i++) {
 		u8 j;
 		for(j=i; j < md.teams_count-1 && points[j] != points[j+1]; j++);
-		if(j<i);
+		if(j<i); // wtf
 		//TODO STARTHERE
 	}
 	for (u8 i = 0; i < md.teams_count; i++) {
@@ -368,8 +368,8 @@ widget_livetable widget_livetable_create() {
 	return w;
 }
 
-widget_gameplan widget_gameplan_create() {
-	widget_gameplan w;
+WidgetGameplan WidgetGameplan_create() {
+	WidgetGameplan w;
 	w.widget_num = WIDGET_GAMEPLAN + widget_gameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
@@ -389,9 +389,9 @@ widget_gameplan widget_gameplan_create() {
 	return w;
 }
 
-widget_card widget_card_create(enum CardType type) {
+WidgetCard WidgetCard_create(enum CardType type) {
 	const u8 cur = md.cur.gameindex;
-	widget_card w;
+	WidgetCard w;
 	printf(".. TODO survived making widget\n");
 	printf("1. curindex: %d\n", md.cur.gameindex);
 	printf("2. cardscount: %d\n", md.games[cur].cards_count);
@@ -907,11 +907,11 @@ int main(void) {
 					md.teams[md.games[md.cur.gameindex].t2_index].name
 				);
 
-				widget_scoreboard data = widget_scoreboard_create();
+				WidgetScoreboard data = WidgetScoreboard_create();
 				data.widget_num = WIDGET_SCOREBOARD + 1;
 				memcpy(data.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
 				memcpy(data.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
-				mg_ws_send(client_con, &data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+				mg_ws_send(client_con, &data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
 				break;
 			case GAME_BACK: {
@@ -929,13 +929,13 @@ int main(void) {
 					md.teams[md.games[md.cur.gameindex].t2_index].name
 				);
 
-				widget_scoreboard w = widget_scoreboard_create();
+				WidgetScoreboard w = WidgetScoreboard_create();
 				w.widget_num = WIDGET_SCOREBOARD + 1;
 				memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
 				memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
 				printf("Currently playing: '%s' vs. '%s'\n", w.team1, w.team2);
 				const char *data = (char *) &w;
-				mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+				mg_ws_send(client_con, data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
 				break;
 			}
@@ -943,7 +943,7 @@ int main(void) {
 				// TODO WIP
 				printf("Now in halftime %d!\n", md.cur.halftime + 1);
 				md.cur.halftime = !md.cur.halftime;
-				widget_scoreboard ws = widget_scoreboard_create();
+				WidgetScoreboard ws = WidgetScoreboard_create();
 				send_widget(&ws);
 				break;
 			case GOAL_TEAM_1:
@@ -953,7 +953,7 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t1,
 					md.games[md.cur.gameindex].score.t2
 				);
-				widget_gameplan wg1 = widget_gameplan_create();
+				WidgetGameplan wg1 = WidgetGameplan_create();
 				send_widget(&wg1);
 				break;
 			case GOAL_TEAM_2:
@@ -963,7 +963,7 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t1,
 					md.games[md.cur.gameindex].score.t2
 				);
-				widget_gameplan wg2 = widget_gameplan_create();
+				WidgetGameplan wg2 = WidgetGameplan_create();
 				send_widget(&wg2);
 				break;
 			case REMOVE_GOAL_TEAM_1:
@@ -987,14 +987,14 @@ int main(void) {
 			case DEAL_YELLOW_CARD:
 				add_card(YELLOW);
 				printf("TODO survided add_card\n");
-				widget_card wy = widget_card_create(YELLOW);
-				printf("TODO survided widget_card_create\n");
+				WidgetCard wy = WidgetCard_create(YELLOW);
+				printf("TODO survided WidgetCard_create\n");
 				send_widget(&wy);
 				printf("TODO survided send_widget\n");
 				break;
 			case DEAL_RED_CARD:
 				add_card(RED);
-				widget_card wr = widget_card_create(RED);
+				WidgetCard wr = WidgetCard_create(RED);
 				send_widget(&wr);
 				break;
 			case DELETE_CARD: {
@@ -1035,8 +1035,8 @@ int main(void) {
 			}
 			// #### UI STUFF
 			case TOGGLE_WIDGET_SCOREBOARD:
-				widget_scoreboard_enabled = !widget_scoreboard_enabled;
-				widget_scoreboard wscore = widget_scoreboard_create();
+				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
+				WidgetScoreboard wscore = WidgetScoreboard_create();
 				send_widget(&wscore);
 				break;
 			/*
@@ -1046,18 +1046,18 @@ int main(void) {
 			break;
 		*/
 			case TOGGLE_WIDGET_LIVETABLE:
-				widget_livetable_enabled = !widget_livetable_enabled;
-				widget_livetable wlive = widget_livetable_create();
+				WidgetLivetable_enabled = !WidgetLivetable_enabled;
+				WidgetLivetable wlive = WidgetLivetable_create();
 				send_widget(&wlive);
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				widget_gameplan_enabled = !widget_gameplan_enabled;
-				widget_gameplan wgame = widget_gameplan_create();
+				WidgetGameplan wgame = WidgetGameplan_create();
 				send_widget(&wgame);
 				break;
-			case TOGGLE_WIDGET_SPIELSTART:
+			case TOGGLE_WIDGET_GAMESTART:
 				widget_spielstart_enabled = !widget_spielstart_enabled;
-				widget_spielstart wspiel = widget_spielstart_create();
+				WidgetGamestart wspiel = WidgetGamestart_create();
 				send_widget(&wspiel);
 				break;
 			case RELOAD_JSON:
