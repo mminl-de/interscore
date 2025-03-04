@@ -191,6 +191,7 @@ function write_gameplan(view: DataView) {
 }
 
 function write_card(view: DataView) {
+	console.log("TODO writing card")
 	let offset = 1
 	let receiver: String = ""
 	for (let name = 0; name < BUFFER_LEN; ++name) {

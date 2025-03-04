@@ -1,6 +1,6 @@
+#include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
-#include <pthread.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include "mongoose/mongoose.h"
@@ -14,7 +14,7 @@ typedef unsigned int u32;
 // #### Javascript/ GUI Widgets Structs
 
 //The first element is disable, the second is enable/update
-enum widgets {
+enum Widget {
 	WIDGET_SCOREBOARD = 1,
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
@@ -24,6 +24,13 @@ enum widgets {
 	SCOREBOARD_SET_TIMER = 11,
 	// TODO WIP
 	SCOREBOARD_PAUSE_TIMER = 12
+};
+enum CardType { YELLOW, RED };
+enum PlayerRole { KEEPER, FIELD };
+enum InputType {
+	T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS,
+	GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES,
+	TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET
 };
 
 #pragma pack(push, 1)
@@ -80,7 +87,7 @@ typedef struct {
 } widget_gameplan;
 
 typedef struct {
-	bool is_red; // false – no, probably yellow instead
+	enum CardType type;
 	char name[PLAYER_NAME_MAX_LEN];
 } widget_card;
 #pragma pack(pop)
@@ -94,13 +101,13 @@ typedef struct {
 
 typedef struct {
 	u8 player_index;
-	bool card_type; // 0: yellow card, 1: red card
+	enum CardType card_type;
 } Card;
 
 typedef struct {
 	char *name;
 	u8 team_index;
-	bool role; // 0: keeper, 1: field
+	enum PlayerRole role;
 } Player;
 
 typedef struct {
@@ -135,8 +142,6 @@ typedef struct {
 	Player *players;
 	u8 players_count;
 } Matchday;
-
-enum {T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS, GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES, TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET};
 
 /*
 Possible User Actions:
@@ -190,8 +195,8 @@ Possible User Actions:
 #define REMOVE_GOAL_TEAM_2 '4'
 
 // Justice system
-#define YELLOW_CARD 'y'
-#define RED_CARD 'r'
+#define DEAL_YELLOW_CARD 'y'
+#define DEAL_RED_CARD 'r'
 #define DELETE_CARD 'd'
 
 // Widget toggling
@@ -207,8 +212,6 @@ Possible User Actions:
 
 // Other
 #define TEST '6'
-#define WEBSOCKET_STATUS '7'
-
 
 //TODO put all function definitions here
 u16 team_calc_points(u8 index);
@@ -218,6 +221,7 @@ u8 team_calc_games_tied(u8 index);
 u16 team_calc_goals(u8 index);
 u16 team_calc_goals_taken(u8 index);
 
+bool running = true;
 Matchday md;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
@@ -240,13 +244,13 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 	return 0;
 }
 
-//To send a widget with this function, convert it to a string with (char*)&w
+// To send a widget with this function, convert it to a string with a cast.
 bool send_widget(void *w) {
 	if (client_con == NULL) {
-		fprintf(stderr, "Client not connected, couldn't send widget!\n");
+		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *)w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+	mg_ws_send(client_con, (char *) w, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -314,7 +318,7 @@ widget_livetable widget_livetable_create() {
 		u8 j;
 		for(j=i; j < md.teams_count-1 && points[j] != points[j+1]; j++);
 		if(j<i);
-			//TODO STARTHERE
+		//TODO STARTHERE
 	}
 	for (u8 i = 0; i < md.teams_count; i++) {
 		//init best_index with first, not yet done team
@@ -385,10 +389,17 @@ widget_gameplan widget_gameplan_create() {
 	return w;
 }
 
-widget_card widget_card_create(bool is_red) {
+widget_card widget_card_create(enum CardType type) {
+	const u8 cur = md.cur.gameindex;
 	widget_card w;
-	strcpy(w.name, md.players[md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards_count - 1].player_index].name);
-	w.is_red = is_red;
+	printf(".. TODO survived making widget\n");
+	printf("1. curindex: %d\n", md.cur.gameindex);
+	printf("2. cardscount: %d\n", md.games[cur].cards_count);
+	printf("3: i: %d\n", md.games[cur].cards[md.games[cur].cards_count - 1].player_index);
+	strcpy(w.name, md.players[md.games[cur].cards[md.games[cur].cards_count - 1].player_index].name);
+	printf(".. TODO survived copy shit\n");
+	w.type = type;
+	printf(".. TODO survived making type\n");
 	return w;
 }
 
@@ -475,102 +486,102 @@ bool send_message_to_site(char *message) {
 void handle_rentnerend_btn_press(u8 *signal){
 	printf("received a signal: %d", *signal);
 	switch (*signal) {
-	case T1_SCORE_PLUS:{
-		md.games[md.cur.gameindex].score.t1++;
-		printf("New T1 score: %d\n", md.games[md.cur.gameindex].score.t1);
-		break;
-	}
-	case T1_SCORE_MINUS:{
-		if(md.games[md.cur.gameindex].score.t1 > 0)
-			md.games[md.cur.gameindex].score.t1--;
-		break;
-	}
-	case T2_SCORE_PLUS:{
-		md.games[md.cur.gameindex].score.t2++;
-		break;
-	}
-	case T2_SCORE_MINUS:{
-		if(md.games[md.cur.gameindex].score.t2 > 0)
-			md.games[md.cur.gameindex].score.t2--;
-		break;
-	}
-	case GAME_NEXT:{
-		if(md.cur.gameindex < md.games_count-1)
-			md.cur.gameindex++;
-		break;
-	}
-	case GAME_PREV:{
-		if(md.cur.gameindex > 0)
-			md.cur.gameindex--;
-		break;
-	}
-	case GAME_SWITCH_SIDES:{
-		md.cur.halftime = !md.cur.halftime;
-		break;
-	}
-	case TIME_PLUS:{
-		md.cur.time++;
-		break;
-	}
-	case TIME_MINUS:{
-		if(md.cur.time > 0)
-			md.cur.time--;
-		break;
-	}
-	case TIME_TOGGLE_PAUSE:{
-		md.cur.pause = !md.cur.pause;
-		break;
-	}
-	case TIME_RESET:{
-		md.cur.time = GAME_LENGTH;
-		break;
-	}
-	default:{
-		printf("WARNING: Received unknown button press from rentnerend\n");
-		break;
-	}
+		case T1_SCORE_PLUS: {
+			md.games[md.cur.gameindex].score.t1++;
+			printf("New T1 score: %d\n", md.games[md.cur.gameindex].score.t1);
+			break;
+		}
+		case T1_SCORE_MINUS: {
+			if(md.games[md.cur.gameindex].score.t1 > 0)
+				md.games[md.cur.gameindex].score.t1--;
+			break;
+		}
+		case T2_SCORE_PLUS: {
+			md.games[md.cur.gameindex].score.t2++;
+			break;
+		}
+		case T2_SCORE_MINUS: {
+			if(md.games[md.cur.gameindex].score.t2 > 0)
+				md.games[md.cur.gameindex].score.t2--;
+			break;
+		}
+		case GAME_NEXT: {
+			if(md.cur.gameindex < md.games_count-1)
+				md.cur.gameindex++;
+			break;
+		}
+		case GAME_PREV: {
+			if(md.cur.gameindex > 0)
+				md.cur.gameindex--;
+			break;
+		}
+		case GAME_SWITCH_SIDES: {
+			md.cur.halftime = !md.cur.halftime;
+			break;
+		}
+		case TIME_PLUS: {
+			md.cur.time++;
+			break;
+		}
+		case TIME_MINUS: {
+			if(md.cur.time > 0)
+				md.cur.time--;
+			break;
+		}
+		case TIME_TOGGLE_PAUSE: {
+			md.cur.pause = !md.cur.pause;
+			break;
+		}
+		case TIME_RESET: {
+			md.cur.time = GAME_LENGTH;
+			break;
+		}
+		default: {
+			printf("WARNING: Received unknown button press from rentnerend\n");
+			break;
+		}
 
 	}
 }
 
 void ev_handler(struct mg_connection *nc, int ev, void *p) {
+	// TODO FINAL CONSIDER keeping these cases
 	switch (ev) {
-	case MG_EV_CONNECT:
-		printf("New client connected!\n");
-		break;
-	case MG_EV_ACCEPT:
-		printf("Connection accepted!\n");
-		break;
-	case MG_EV_CLOSE:
-		printf("Client disconnected!\n");
-		client_con = NULL;
-		break;
-	case MG_EV_HTTP_MSG: {
-		struct mg_http_message *hm = p;
-		mg_ws_upgrade(nc, hm, NULL);
-		printf("Client upgraded to WebSocket connection!\n");
-		break;
+		case MG_EV_CONNECT:
+			printf("New client connected!\n");
+			break;
+		case MG_EV_ACCEPT:
+			printf("Connection accepted!\n");
+			break;
+		case MG_EV_CLOSE:
+			printf("Client disconnected!\n");
+			client_con = NULL;
+			break;
+		case MG_EV_HTTP_MSG: {
+			struct mg_http_message *hm = p;
+			mg_ws_upgrade(nc, hm, NULL);
+			printf("Client upgraded to WebSocket connection!\n");
+			break;
+		}
+		case MG_EV_WS_OPEN:
+			printf("Connection opened!\n");
+			client_con = nc;
+			break;
+		case MG_EV_WS_MSG: {
+			struct mg_ws_message *m = (struct mg_ws_message *) p;
+			handle_rentnerend_btn_press((u8 *)m->data.buf);
+			break;
+		}
+		// Signals not worth logging
+		case MG_EV_OPEN:
+		case MG_EV_POLL:
+		case MG_EV_READ:
+		case MG_EV_WRITE:
+		case MG_EV_HTTP_HDRS:
+			break;
+		default:
+			printf("Ignoring unknown signal %d ...\n", ev);
 	}
-	case MG_EV_WS_OPEN:
-		printf("Connection opened!\n");
-		client_con = nc;
-		break;
-	case MG_EV_WS_MSG:{
-		struct mg_ws_message *m = (struct mg_ws_message *) p;
-		handle_rentnerend_btn_press((u8 *)m->data.buf);
-		break;
-	}
-	// Signals not worth logging
-	case MG_EV_OPEN:
-	case MG_EV_POLL:
-	case MG_EV_READ:
-	case MG_EV_WRITE:
-	case MG_EV_HTTP_HDRS:
-		break;
-	default:
-		printf("Ignoring unknown signal %d ...\n", ev);
-	}
-	return;
 }
 
 // Return the index of a players name.
@@ -724,33 +735,31 @@ void load_json(const char *path) {
 		}
 		i++;
 	}
-
-	return;
 }
 
 //@ret 1 if everything worked, 0 if it couldnt open one of the files
 bool copy_file(const char *source, const char *destination) {
-    FILE *src = fopen(source, "rb");
-    if (!src) {
-        perror("Error opening source file");
-        return false;
-    }
+	FILE *src = fopen(source, "rb");
+	if (!src) {
+		perror("Error opening source file");
+		return false;
+	}
 
-    FILE *dest = fopen(destination, "wb");
-    if (!dest) {
-        perror("Error opening destination file");
-        fclose(src);
-        return false;
-    }
+	FILE *dest = fopen(destination, "wb");
+	if (!dest) {
+		perror("Error opening destination file");
+		fclose(src);
+		return false;
+	}
 
-    // Directly copy the content
-    char ch;
-    while ((ch = fgetc(src)) != EOF) {
-        fputc(ch, dest);
-    }
+	// Directly copy the content
+	char ch;
+	while ((ch = fgetc(src)) != EOF) {
+		fputc(ch, dest);
+	}
 
-    fclose(src);
-    fclose(dest);
+	fclose(src);
+	fclose(dest);
 	return true;
 }
 
@@ -782,52 +791,53 @@ void init_matchday() {
 		md.games[i].cards_count = 0;
 		md.games[i].cards = NULL;
 	}
-	return;
 }
 
 
-void add_card(bool card_type) {
-	u8 ind = md.cur.gameindex;
-	if (md.games[ind].cards_count == 0)
-		md.games[ind].cards = malloc(0 + 1 * sizeof(Card));
+void add_card(enum CardType type) {
+	const u8 cur = md.cur.gameindex;
+
+	if (md.games[cur].cards_count == 0)
+		md.games[cur].cards = malloc(0 + 1 * sizeof(Card));
 	else
-		md.games[ind].cards = realloc(md.games[ind].cards, (md.games[ind].cards_count+1) * sizeof(Card));
-	printf("Select Player:\n1. %s (Keeper %s)\n2. %s (Field %s)\n3. %s (Keeper %s)\n4. %s (Field %s)\n",
-			md.players[md.teams[md.games[ind].t1_index].keeper_index].name, md.teams[md.games[ind].t1_index].name,
-			md.players[md.teams[md.games[ind].t1_index].field_index].name, md.teams[md.games[ind].t1_index].name,
-			md.players[md.teams[md.games[ind].t2_index].keeper_index].name, md.teams[md.games[ind].t2_index].name,
-			md.players[md.teams[md.games[ind].t2_index].field_index].name, md.teams[md.games[ind].t2_index].name);
-	u8 player;
-	scanf("%hhu\n", &player);
-	switch(player) {
-	case 1:
-		player = md.teams[md.games[ind].t1_index].keeper_index;
-		break;
-	case 2:
-		player = md.teams[md.games[ind].t1_index].field_index;
-		break;
-	case 3:
-		player = md.teams[md.games[ind].t2_index].keeper_index;
-		break;
-	case 4:
-		player = md.teams[md.games[ind].t2_index].field_index;
-		break;
-	default:
-		printf("Illegal input! Doing nothing");
-		return;
-	}
+		md.games[cur].cards = realloc(md.games[cur].cards, (md.games[cur].cards_count+1) * sizeof(Card));
+	printf("Select player:\n1. %s (Keeper %s)\n2. %s (Field %s)\n3. %s (Keeper %s)\n4. %s (Field %s)\n",
+		md.players[md.teams[md.games[cur].t1_index].keeper_index].name, md.teams[md.games[cur].t1_index].name,
+		md.players[md.teams[md.games[cur].t1_index].field_index].name, md.teams[md.games[cur].t1_index].name,
+		md.players[md.teams[md.games[cur].t2_index].keeper_index].name, md.teams[md.games[cur].t2_index].name,
+		md.players[md.teams[md.games[cur].t2_index].field_index].name, md.teams[md.games[cur].t2_index].name);
 
-	md.games[ind].cards[md.games[ind].cards_count].player_index = player;
-	md.games[ind].cards[md.games[ind].cards_count++].card_type = card_type;
-	return;
+	int ch;
+	while ((ch = getchar()) != '\n' && ch != EOF);
+	while (true) {
+		char player = getchar();
+		if (player == '1') { printf("TODO yippie\n"); break; }
+		//switch(player) {
+		//	case '1':
+		//		player = md.teams[md.games[ind].t1_index].keeper_index;
+		//		break;
+		//	case '2':
+		//		player = md.teams[md.games[ind].t1_index].field_index;
+		//		break;
+		//	case '3':
+		//		player = md.teams[md.games[ind].t2_index].keeper_index;
+		//		break;
+		//	case '4':
+		//		player = md.teams[md.games[ind].t2_index].field_index;
+		//		break;
+		//	default:
+		//		printf("Illegal input! Doing nothing\n");
+		//		return;
+		//}
+		printf("TODO we're out!\n");
+
+		md.games[cur].cards[md.games[cur].cards_count].player_index = player;
+		md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+	}
 }
 
-void *mongoose_update(){
-	int interval = 100; //alle 100 ms mongoose updaten
-	while(true){
-		usleep(interval * 1000);
-		mg_mgr_poll(&mgr, 0);
-	}
+void *mongoose_update() {
+	while (running) mg_mgr_poll(&mgr, 100);
 	return NULL;
 }
 
@@ -835,8 +845,11 @@ int main(void) {
 	// WebSocket stuff
 	mg_mgr_init(&mgr);
 	mg_http_listen(&mgr, URL, ev_handler, NULL);
-	pthread_t t;
-	pthread_create(&t, NULL, mongoose_update, NULL);
+	pthread_t thread;
+	if (pthread_create(&thread, NULL, mongoose_update, NULL) != 0) {
+		fprintf(stderr, "ERROR: Failed to create thread for updating the connection!");
+		goto cleanup;
+	}
 
 	// User data stuff
 	load_json(JSON_PATH);
@@ -844,31 +857,30 @@ int main(void) {
 
 	printf("Server loaded!\n");
 
-	bool close = false;
-	while (!close) {
+	while (running) {
 		char c = getchar();
 		switch (c) {
-		case SET_TIME: {
-			u16 min; u8 sec;
-			printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
-			scanf("%hu:%hhu", &min, &sec);
-			md.cur.time = min*60 + sec;
-			printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			case SET_TIME: {
+				u16 min; u8 sec;
+				printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
+				scanf("%hu:%hhu", &min, &sec);
+				md.cur.time = min*60 + sec;
+				printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 
-			u8 buffer[3];
-			buffer[0] = SCOREBOARD_SET_TIMER;
-			u16 time = htons(md.cur.time);
-			memcpy(&buffer[1], &time, sizeof(time));
-			mg_ws_send(client_con, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
-			break;
-		}
-		case PAUSE_TIME: {
-			// TODO NOW
-			const u8 data = SCOREBOARD_PAUSE_TIMER;
-			mg_ws_send(client_con, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
-			break;
-		}
-		/*
+				u8 buffer[3];
+				buffer[0] = SCOREBOARD_SET_TIMER;
+				u16 time = htons(md.cur.time);
+				memcpy(&buffer[1], &time, sizeof(time));
+				mg_ws_send(client_con, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+				break;
+			}
+			case PAUSE_TIME: {
+				// TODO NOW
+				const u8 data = SCOREBOARD_PAUSE_TIMER;
+				mg_ws_send(client_con, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
+				break;
+			}
+			/*
 		case ADD_SECOND: {
 			md.cur.time++;
 			printf("Added 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
@@ -880,217 +892,227 @@ int main(void) {
 			break;
 		}
 		*/
-		case GAME_FORWARD:
-			if (md.cur.gameindex == md.games_count - 1) {
-				printf("Already at last game! Doing nothing ...\n");
+			case GAME_FORWARD:
+				if (md.cur.gameindex == md.games_count - 1) {
+					printf("Already at last game! Doing nothing ...\n");
+					break;
+				}
+				md.cur.gameindex++;
+				md.cur.halftime = 0;
+				md.cur.time = GAME_LENGTH;
+				printf(
+					"New same %d: %s vs. %s\n",
+					md.cur.gameindex + 1,
+					md.teams[md.games[md.cur.gameindex].t1_index].name,
+					md.teams[md.games[md.cur.gameindex].t2_index].name
+				);
+
+				widget_scoreboard data = widget_scoreboard_create();
+				data.widget_num = WIDGET_SCOREBOARD + 1;
+				memcpy(data.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
+				memcpy(data.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
+				mg_ws_send(client_con, &data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+
+				break;
+			case GAME_BACK: {
+				if (md.cur.gameindex == 0) {
+					printf("Already at first game! Doing nothing ...\n");
+					break;
+				}
+				md.cur.gameindex--;
+				md.cur.halftime = 0;
+				md.cur.time = GAME_LENGTH;
+				printf(
+					"New game (%d): '%s' vs. '%s'\n",
+					md.cur.gameindex+1,
+					md.teams[md.games[md.cur.gameindex].t1_index].name,
+					md.teams[md.games[md.cur.gameindex].t2_index].name
+				);
+
+				widget_scoreboard w = widget_scoreboard_create();
+				w.widget_num = WIDGET_SCOREBOARD + 1;
+				memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
+				memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
+				printf("Currently playing: '%s' vs. '%s'\n", w.team1, w.team2);
+				const char *data = (char *) &w;
+				mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
+
 				break;
 			}
-			md.cur.gameindex++;
-			md.cur.halftime = 0;
-			md.cur.time = GAME_LENGTH;
-			printf(
-				"New same %d: %s vs. %s\n",
-				md.cur.gameindex + 1,
-				md.teams[md.games[md.cur.gameindex].t1_index].name,
-				md.teams[md.games[md.cur.gameindex].t2_index].name
-			);
-
-			widget_scoreboard data = widget_scoreboard_create();
-			data.widget_num = WIDGET_SCOREBOARD + 1;
-			memcpy(data.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
-			memcpy(data.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
-			mg_ws_send(client_con, &data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
-
-			break;
-		case GAME_BACK: {
-			if (md.cur.gameindex == 0) {
-				printf("Already at first game! Doing nothing ...\n");
+			case GAME_HALFTIME:
+				// TODO WIP
+				printf("Now in halftime %d!\n", md.cur.halftime + 1);
+				md.cur.halftime = !md.cur.halftime;
+				widget_scoreboard ws = widget_scoreboard_create();
+				send_widget(&ws);
+				break;
+			case GOAL_TEAM_1:
+				md.games[md.cur.gameindex].score.t1++;
+				printf(
+					"New score: %d : %d\n",
+					md.games[md.cur.gameindex].score.t1,
+					md.games[md.cur.gameindex].score.t2
+				);
+				widget_gameplan wg1 = widget_gameplan_create();
+				send_widget(&wg1);
+				break;
+			case GOAL_TEAM_2:
+				md.games[md.cur.gameindex].score.t2++;
+				printf(
+					"New score: %d : %d\n",
+					md.games[md.cur.gameindex].score.t1,
+					md.games[md.cur.gameindex].score.t2
+				);
+				widget_gameplan wg2 = widget_gameplan_create();
+				send_widget(&wg2);
+				break;
+			case REMOVE_GOAL_TEAM_1:
+				if (md.games[md.cur.gameindex].score.t1 > 0)
+					--md.games[md.cur.gameindex].score.t1;
+				printf(
+					"New score: %d : %d\n",
+					md.games[md.cur.gameindex].score.t1,
+					md.games[md.cur.gameindex].score.t2
+				);
+				break;
+			case REMOVE_GOAL_TEAM_2:
+				if (md.games[md.cur.gameindex].score.t2 > 0)
+					--md.games[md.cur.gameindex].score.t2;
+				printf(
+					"New score: %d : %d\n",
+					md.games[md.cur.gameindex].score.t1,
+					md.games[md.cur.gameindex].score.t2
+				);
+				break;
+			case DEAL_YELLOW_CARD:
+				add_card(YELLOW);
+				printf("TODO survided add_card\n");
+				widget_card wy = widget_card_create(YELLOW);
+				printf("TODO survided widget_card_create\n");
+				send_widget(&wy);
+				printf("TODO survided send_widget\n");
+				break;
+			case DEAL_RED_CARD:
+				add_card(RED);
+				widget_card wr = widget_card_create(RED);
+				send_widget(&wr);
+				break;
+			case DELETE_CARD: {
+				u32 cur_i = md.cur.gameindex;
+				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
+					printf("%d. ", i + 1);
+					if (md.games[cur_i].cards[i].card_type == 0)
+						printf("Y ");
+					else
+						printf("R ");
+					printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
+			md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
+					if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
+						printf("(Keeper)\n");
+					else
+						printf("(field)\n");
+				}
+				printf("Select a card to delete: ");
+				u32 c = 0;
+				scanf("%ud", &c);
+				// Overwrite c with the last element
+				md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
+				printf("Cards remaining:\n");
+				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
+					printf("%d. ", i + 1);
+					if (md.games[cur_i].cards[i].card_type == 0)
+						printf("Y ");
+					else
+						printf("R ");
+					printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
+			md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
+					if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
+						printf("(Keeper)\n");
+					else
+						printf("(field)\n");
+				}
 				break;
 			}
-			md.cur.gameindex--;
-			md.cur.halftime = 0;
-			md.cur.time = GAME_LENGTH;
-			printf(
-				"New game (%d): '%s' vs. '%s'\n",
-				md.cur.gameindex+1,
-				md.teams[md.games[md.cur.gameindex].t1_index].name,
-				md.teams[md.games[md.cur.gameindex].t2_index].name
-			);
-
-			widget_scoreboard w = widget_scoreboard_create();
-			w.widget_num = WIDGET_SCOREBOARD + 1;
-			memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
-			memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
-			printf("Currently playing: '%s' vs. '%s'\n", w.team1, w.team2);
-			const char *data = (char *) &w;
-			mg_ws_send(client_con, data, sizeof(widget_scoreboard), WEBSOCKET_OP_BINARY);
-
-			break;
-		}
-		case GAME_HALFTIME:
-			// TODO WIP
-			printf("Now in halftime %d!\n", md.cur.halftime + 1);
-			md.cur.halftime = !md.cur.halftime;
-			widget_scoreboard ws = widget_scoreboard_create();
-			send_widget(&ws);
-			break;
-		case GOAL_TEAM_1:
-			md.games[md.cur.gameindex].score.t1++;
-			printf(
-				"New score: %d : %d\n",
-				md.games[md.cur.gameindex].score.t1,
-				md.games[md.cur.gameindex].score.t2
-			);
-			widget_gameplan wg1 = widget_gameplan_create();
-			send_widget(&wg1);
-			break;
-		case GOAL_TEAM_2:
-			md.games[md.cur.gameindex].score.t2++;
-			printf(
-				"New score: %d : %d\n",
-				md.games[md.cur.gameindex].score.t1,
-				md.games[md.cur.gameindex].score.t2
-			);
-			widget_gameplan wg2 = widget_gameplan_create();
-			send_widget(&wg2);
-			break;
-		case REMOVE_GOAL_TEAM_1:
-			if (md.games[md.cur.gameindex].score.t1 > 0)
-				--md.games[md.cur.gameindex].score.t1;
-			printf(
-				"New score: %d : %d\n",
-				md.games[md.cur.gameindex].score.t1,
-				md.games[md.cur.gameindex].score.t2
-			);
-			break;
-		case REMOVE_GOAL_TEAM_2:
-			if (md.games[md.cur.gameindex].score.t2 > 0)
-				--md.games[md.cur.gameindex].score.t2;
-			printf(
-				"New score: %d : %d\n",
-				md.games[md.cur.gameindex].score.t1,
-				md.games[md.cur.gameindex].score.t2
-			);
-			break;
-		case YELLOW_CARD:
-			add_card(0);
-			widget_card wc1 = widget_card_create(false);
-			send_widget(&wc1);
-			break;
-		case RED_CARD:
-			add_card(1);
-			widget_card wc2 = widget_card_create(true);
-			send_widget(&wc2);
-			break;
-		case DELETE_CARD: {
-			u32 cur_i = md.cur.gameindex;
-			for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
-				printf("%d. ", i + 1);
-				if (md.games[cur_i].cards[i].card_type == 0)
-					printf("Y ");
-				else
-					printf("R ");
-				printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
-										  md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
-				if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
-					printf("(Keeper)\n");
-				else
-					printf("(field)\n");
-			}
-			printf("Select a card to delete: ");
-			u32 c = 0;
-			scanf("%ud", &c);
-			// Overwrite c with the last element
-			md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
-			printf("Cards remaining:\n");
-			for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
-				printf("%d. ", i + 1);
-				if (md.games[cur_i].cards[i].card_type == 0)
-					printf("Y ");
-				else
-					printf("R ");
-				printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
-										  md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
-				if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
-					printf("(Keeper)\n");
-				else
-					printf("(field)\n");
-			}
-			break;
-		}
-		// #### UI STUFF
-		case TOGGLE_WIDGET_SCOREBOARD:
-			widget_scoreboard_enabled = !widget_scoreboard_enabled;
-			widget_scoreboard wscore = widget_scoreboard_create();
-			send_widget(&wscore);
-			break;
-		/*
+			// #### UI STUFF
+			case TOGGLE_WIDGET_SCOREBOARD:
+				widget_scoreboard_enabled = !widget_scoreboard_enabled;
+				widget_scoreboard wscore = widget_scoreboard_create();
+				send_widget(&wscore);
+				break;
+			/*
 		case TOGGLE_WIDGET_HALFTIME:
 			widget_halftime_enabled = !widget_halftime_enabled;
 			send_widget_halftime(widget_halftime_create());
 			break;
 		*/
-		case TOGGLE_WIDGET_LIVETABLE:
-			widget_livetable_enabled = !widget_livetable_enabled;
-			widget_livetable wlive = widget_livetable_create();
-			send_widget(&wlive);
-			break;
-		case TOGGLE_WIDGET_GAMEPLAN:
-			widget_gameplan_enabled = !widget_gameplan_enabled;
-			widget_gameplan wgame = widget_gameplan_create();
-			send_widget(&wgame);
-			break;
-		case TOGGLE_WIDGET_SPIELSTART:
-			widget_spielstart_enabled = !widget_spielstart_enabled;
-			widget_spielstart wspiel = widget_spielstart_create();
-			send_widget(&wspiel);
-			break;
-		// #### Debug Stuff
-		case EXIT:
-			close = true;
-			break;
-		case RELOAD_JSON:
-			printf("TODO: RELOAD_JSON\n");
-			break;
-		case PRINT_HELP:
-			printf(
-				"======= Keyboard options =======\n"
-				"n  Game Forward\n"
-				"p  Game Back\n"
-				"h  Game Halftime\n\n"
-				"1  Goal Team 1\n"
-				"2  Goal Team 2\n"
-				"3  Remove Goal Team 1\n"
-				"4  Remove Goal Team 2\n\n"
-				"y  Yellow Card\n"
-				"r  Red Card\n"
-				"d  Delete Card\n\n"
-				"i  Toggle Widget: Scoreboard\n"
-				"l  Toggle Widget: Livetable\n"
-				"v  Toggle Widget: Gameplan\n"
-				"s  Toggle Widget: Spielstart\n\n"
-				"t  set timer\n"
-				"=  pause/resume timer\n\n"
-				"7  load/reload server connection\n"
-				"(j  Reload JSON)\n"
-				"?  print help\n"
-				"q  quit\n"
-				"================================\n"
-			);
-			break;
-		// #### ORIESNTIOERASNTEOI
-		case TEST: {
-			char string[40];
-			sprintf(string, "Du bist eine");
-			send_message_to_site(string);
-			break;
-		}
-		case WEBSOCKET_STATUS:
-			printf("DEPRECATED: this is done automatically now!\n");
-			break;
+			case TOGGLE_WIDGET_LIVETABLE:
+				widget_livetable_enabled = !widget_livetable_enabled;
+				widget_livetable wlive = widget_livetable_create();
+				send_widget(&wlive);
+				break;
+			case TOGGLE_WIDGET_GAMEPLAN:
+				widget_gameplan_enabled = !widget_gameplan_enabled;
+				widget_gameplan wgame = widget_gameplan_create();
+				send_widget(&wgame);
+				break;
+			case TOGGLE_WIDGET_SPIELSTART:
+				widget_spielstart_enabled = !widget_spielstart_enabled;
+				widget_spielstart wspiel = widget_spielstart_create();
+				send_widget(&wspiel);
+				break;
+			case RELOAD_JSON:
+				printf("TODO: RELOAD_JSON\n");
+				break;
+			case PRINT_HELP:
+				printf(
+					"======= Keyboard options =======\n"
+					"n  Game Forward\n"
+					"p  Game Back\n"
+					"h  Game Halftime\n"
+					"\n"
+					"1  Goal Team 1\n"
+					"2  Goal Team 2\n"
+					"3  Remove Goal Team 1\n"
+					"4  Remove Goal Team 2\n"
+					"\n"
+					"y  Yellow Card\n"
+					"r  Red Card\n"
+					"d  Delete Card\n"
+					"\n"
+					"i  Toggle Widget: Scoreboard\n"
+					"l  Toggle Widget: Livetable\n"
+					"v  Toggle Widget: Gameplan\n"
+					"s  Toggle Widget: Spielstart\n"
+					"\n"
+					"t  set timer\n"
+					"=  pause/resume timer\n"
+					"\n"
+					"(j  Reload JSON)\n"
+					"?  print help\n"
+					"q  quit\n"
+					"================================\n"
+				);
+				break;
+			case EXIT:
+				printf("TODO: about to quit\n");
+				running = false;
+				break;
+			case TEST: {
+				// TODO FINAL REMOVE ig
+				char string[40];
+				sprintf(string, "Du bist eine");
+				send_message_to_site(string);
+				break;
+			}
 		}
 	}
 
+	// WebSocket stuff, again
+	if (pthread_join(thread, NULL) != 0)
+		fprintf(stderr, "ERROR: Failed to join thread!\n");
+	printf("TODO joined thread\n");
+
+cleanup:
 	mg_mgr_free(&mgr);
 	return 0;
 }

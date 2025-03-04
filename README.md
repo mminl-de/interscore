@@ -14,12 +14,15 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - dont spam ii to update scoreboard
 
 ### frontend
-- scoreboard: whatever happens with the score cells
+- scoreboard: whatever's happening with the score cells
 - animations:
     - ingame bar opening and closing
     - players list spawning
     - table spawning
     - Smooth time
+- widgets:
+	- cards
+	- playing teams
 
 ### rentnerend
 - play sound when timer runs out
