@@ -358,45 +358,33 @@ function write_livetable(view: DataView) {
 let countdown: number = 0
 let duration: number = 0
 let remaining_time = 0
+let timer_is_paused = true
 
 function scoreboard_set_timer(view: DataView) {
+	clearInterval(countdown)
+
 	let offset = 1
 	const time_in_s = view.getUint16(offset)
-	update_timer_html(time_in_s)
-	start_timer(time_in_s)
-}
-
-function start_timer(time_in_s: number) {
-	if (duration === 0) duration = time_in_s
-	if (time_in_s === 0) {
-		scoreboard_time_bar.style.width = "100%"
-		duration = 0
-		return
-	}
-
-	clearInterval(countdown)
 	remaining_time = time_in_s
-	update_timer_html(remaining_time)
+	duration = time_in_s
+	scoreboard_time_bar.style.width = "100%"
 
+	update_timer_html()
 	countdown = setInterval(() => {
-		if (remaining_time > 0) {
-			--remaining_time
-			const bar_width = Math.max(0, (remaining_time / duration) * 100)
-			scoreboard_time_bar.style.width = bar_width + "%"
-			update_timer_html(remaining_time)
-		} else clearInterval(countdown)
+		if (timer_is_paused) return
+		if (remaining_time <= 1) clearInterval(countdown)
+
+		--remaining_time
+
+		const bar_width = Math.max(0, (remaining_time / duration) * 100)
+		scoreboard_time_bar.style.width = bar_width + "%"
+		update_timer_html()
 	}, 1000)
 }
 
-let timer_is_paused = false
-function scoreboard_pause_timer() {
-	clearInterval(countdown)
-	timer_is_paused = true
-}
-
-function update_timer_html(time: number) {
-	const minutes = Math.floor(time / 60).toString().padStart(2, "0")
-	const seconds = (time % 60).toString().padStart(2, "0")
+function update_timer_html() {
+	const minutes = Math.floor(remaining_time / 60).toString().padStart(2, "0")
+	const seconds = (remaining_time % 60).toString().padStart(2, "0")
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
 }
@@ -455,8 +443,7 @@ socket.onmessage = (event: MessageEvent) => {
 			scoreboard_set_timer(view)
 			break
 		case 12:
-			if (timer_is_paused) start_timer(remaining_time)
-			else scoreboard_pause_timer()
+			timer_is_paused = !timer_is_paused
 			break
 		// TODO
 		default:
