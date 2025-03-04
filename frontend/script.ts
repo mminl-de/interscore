@@ -249,12 +249,12 @@ function write_livetable(view: DataView) {
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i] = { name: "" }
-		for (let chi = 0; chi < BUFFER_LEN; ++chi) {
+		for (let ch_i = 0; ch_i < BUFFER_LEN; ++ch_i) {
 			const c = view.getUint8(offset)
 			teams[i].name += String.fromCharCode(c)
 			++offset
 			if (c === 0) {
-				offset += BUFFER_LEN - chi - 1
+				offset += BUFFER_LEN - ch_i - 1
 				break
 			}
 		}
@@ -312,61 +312,60 @@ function write_livetable(view: DataView) {
 		}
 	}
 
-	for (let teami = 0; teami < team_n; ++teami) {
+	for (let team_i = 0; team_i < team_n; ++team_i) {
 		const line = document.createElement("div")
 		line.classList.add("line")
 
 		const name = document.createElement("div")
-		name.innerHTML = teams[teami].name!.toString()
+		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("name")
-		name.style.backgroundColor = teams[teami].color!.toString().slice(0, 7)
-		console.log(`TODO color for livetable: ${teams[teami].color!.toString()}`)
+		name.style.backgroundColor = teams[team_i].color!.toString().slice(0, 7)
+		console.log(`TODO color for livetable: ${teams[team_i].color!.toString()}`)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
-		points.innerHTML = teams[teami].points!.toString()
+		points.innerHTML = teams[team_i].points!.toString()
 		line.appendChild(points)
 
 		const played = document.createElement("div")
-		played.innerHTML = teams[teami].played!.toString()
+		played.innerHTML = teams[team_i].played!.toString()
 		line.appendChild(played)
 
 		const won = document.createElement("div")
-		won.innerHTML = teams[teami].won!.toString()
+		won.innerHTML = teams[team_i].won!.toString()
 		line.appendChild(won)
 
 		const tied = document.createElement("div")
-		tied.innerHTML = teams[teami].tied!.toString()
+		tied.innerHTML = teams[team_i].tied!.toString()
 		line.appendChild(tied)
 
 		const lost = document.createElement("div")
-		lost.innerHTML = teams[teami].lost!.toString()
+		lost.innerHTML = teams[team_i].lost!.toString()
 		line.appendChild(lost)
 
 		const goals = document.createElement("div")
-		goals.innerHTML = `${teams[teami].goals!.toString()}:${teams[teami].goals_taken!.toString()}`
+		goals.innerHTML = `${teams[team_i].goals!.toString()}:${teams[team_i].goals_taken!.toString()}`
 		line.appendChild(goals)
 
 		const diff = document.createElement("div")
-		diff.innerHTML = (teams[teami].goals! - teams[teami].goals!).toString()
+		diff.innerHTML = (teams[team_i].goals! - teams[team_i].goals!).toString()
 		line.appendChild(diff)
 
 		livetable_container.appendChild(line)
 	}
 }
 
+let countdown: number = 0
+let duration: number = 0
+let remaining_time = 0
+
 function scoreboard_set_timer(view: DataView) {
 	let offset = 1
 	const time_in_s = view.getUint16(offset)
-	scoreboard_time_minutes.innerHTML = Math.floor(time_in_s / 60).toString().padStart(2, "0")
-	scoreboard_time_seconds.innerHTML = (time_in_s % 60).toString().padStart(2, "0")
+	update_timer_html(time_in_s)
 	start_timer(time_in_s)
 }
 
-// TODO FINAL MOVE TOP
-let countdown: number
-let duration: number = 0
-let remaining_time = 0
 function start_timer(time_in_s: number) {
 	if (duration === 0) duration = time_in_s
 	if (time_in_s === 0) {
@@ -377,14 +376,14 @@ function start_timer(time_in_s: number) {
 
 	clearInterval(countdown)
 	remaining_time = time_in_s
-	update_display()
+	update_timer_html(remaining_time)
 
 	countdown = setInterval(() => {
 		if (remaining_time > 0) {
 			--remaining_time
 			const bar_width = Math.max(0, (remaining_time / duration) * 100)
 			scoreboard_time_bar.style.width = bar_width + "%"
-			update_display()
+			update_timer_html(remaining_time)
 		} else clearInterval(countdown)
 	}, 1000)
 }
@@ -395,9 +394,9 @@ function scoreboard_pause_timer() {
 	timer_is_paused = true
 }
 
-function update_display() {
-	const minutes = Math.floor(remaining_time / 60).toString().padStart(2, "0")
-	const seconds = (remaining_time % 60).toString().padStart(2, "0")
+function update_timer_html(time: number) {
+	const minutes = Math.floor(time / 60).toString().padStart(2, "0")
+	const seconds = (time % 60).toString().padStart(2, "0")
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
 }
@@ -453,17 +452,11 @@ socket.onmessage = (event: MessageEvent) => {
 			card.style.display = "flex"
 			break
 		case 11:
-			console.log("Updating timer")
 			scoreboard_set_timer(view)
 			break
 		case 12:
-			if (timer_is_paused) {
-				console.log("Resuming timer")
-				start_timer(remaining_time)
-			} else {
-				console.log("Pausing timer")
-				scoreboard_pause_timer()
-			}
+			if (timer_is_paused) start_timer(remaining_time)
+			else scoreboard_pause_timer()
 			break
 		// TODO
 		default:
