@@ -395,8 +395,8 @@ WidgetCard WidgetCard_create(enum CardType type) {
 	printf(".. TODO survived making widget\n");
 	printf("1. curindex: %d\n", md.cur.gameindex);
 	printf("2. cardscount: %d\n", md.games[cur].cards_count);
-	printf("3: i: %d\n", md.games[cur].cards[md.games[cur].cards_count - 1].player_index);
-	strcpy(w.name, md.players[md.games[cur].cards[md.games[cur].cards_count - 1].player_index].name);
+	printf("3: i: %d\n", md.games[cur].cards[md.games[cur].cards_count].player_index);
+	strcpy(w.name, md.players[md.games[cur].cards[md.games[cur].cards_count].player_index].name);
 	printf(".. TODO survived copy shit\n");
 	w.type = type;
 	printf(".. TODO survived making type\n");
@@ -807,33 +807,28 @@ void add_card(enum CardType type) {
 		md.players[md.teams[md.games[cur].t2_index].keeper_index].name, md.teams[md.games[cur].t2_index].name,
 		md.players[md.teams[md.games[cur].t2_index].field_index].name, md.teams[md.games[cur].t2_index].name);
 
-	int ch;
-	while ((ch = getchar()) != '\n' && ch != EOF);
-	while (true) {
-		char player = getchar();
-		if (player == '1') { printf("TODO yippie\n"); break; }
-		//switch(player) {
-		//	case '1':
-		//		player = md.teams[md.games[ind].t1_index].keeper_index;
-		//		break;
-		//	case '2':
-		//		player = md.teams[md.games[ind].t1_index].field_index;
-		//		break;
-		//	case '3':
-		//		player = md.teams[md.games[ind].t2_index].keeper_index;
-		//		break;
-		//	case '4':
-		//		player = md.teams[md.games[ind].t2_index].field_index;
-		//		break;
-		//	default:
-		//		printf("Illegal input! Doing nothing\n");
-		//		return;
-		//}
-		printf("TODO we're out!\n");
-
-		md.games[cur].cards[md.games[cur].cards_count].player_index = player;
-		md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+	char ch;
+	int player = -1;
+	while (player == -1) {
+		ch = getchar();
+		printf("%c\n", ch);
+		switch(ch) {
+			case '1':
+				player = md.teams[md.games[cur].t1_index].keeper_index;
+				break;
+			case '2':
+				player = md.teams[md.games[cur].t1_index].field_index;
+				break;
+			case '3':
+				player = md.teams[md.games[cur].t2_index].keeper_index;
+				break;
+			case '4':
+				player = md.teams[md.games[cur].t2_index].field_index;
+				break;
+		}
 	}
+	md.games[cur].cards[md.games[cur].cards_count].player_index = player;
+	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
 }
 
 void *mongoose_update() {
