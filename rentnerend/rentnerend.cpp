@@ -435,6 +435,16 @@ void load_json(const char *path) {
 	return;
 }
 
+int text_width(const char *text, QFont font){
+		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
+		return text_size.width();
+}
+
+int text_height(const char *text, QFont font){
+		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
+		return text_size.height()*0.6;
+}
+
 QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
     printf("big boys: text: %s, width: %d, height: %d\n", text, max_width, max_height);
 
@@ -468,66 +478,6 @@ QFont biggest_font_possible(const char *text, int max_width, int max_height, boo
     printf("Final size: %d\n", bestSize);
     return font;
 }
-
-/*
-QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
-	printf("big boys: text: %s, width: %d, height: %d\n", text, max_width, max_height);
-	int fontsize = 1;
-	QFont font = QApplication::font();
-	font.setBold(bold);
-
-    while (true) {
-        font.setPointSize(fontsize);
-		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
-		//the rectangle calculates height way to conservative
-		//textRect.setHeight(textRect.height() * 1.5);
-		//textRect.setWidth(textRect.width() * 1.1);
-		int width = text_size.width();
-		int height = text_size.height();
-
-        if (width > max_width || height > max_height) {
-			printf("w: %d/%d; h: %d/%d\n", width, max_width, height, max_height);
-            break;  // Stop if text is too large
-        }
-        fontsize++;
-    }
-	fontsize--;
-
-	printf("text: %s, width: %d, height: %d\n", text, max_width, max_height);
-	return font;
-}
-*/
-
-
-/*
-//Gets the biggest font size possible for a markuped text of a label
-//QFont biggest_font_possible(const char *text, int max_fontsize, int x, int y, bool bold) {
-QFont biggest_font_possible(const char *text, int width, int height, bool bold) {
-	printf("big boys: text: %s, width: %d, height: %d\n", text, width, height);
-	int fontsize = 1;
-	QFont font = QApplication::font();
-	font.setBold(bold);
-
-    while (true) {
-        font.setPointSize(fontsize);
-        QFontMetrics fm = QFontMetrics(font);
-        QRect textRect = fm.boundingRect(text);
-		//the rectangle calculates height way to conservative
-		textRect.setHeight(textRect.height() * 1.5);
-		textRect.setWidth(textRect.width() * 1.1);
-
-        if (textRect.width() > width || textRect.height() > height) {
-			printf("w: %d/%d; h: %d/%d\n", textRect.width(), width, textRect.height(), height);
-            break;  // Stop if text is too large
-        }
-        fontsize++;
-    }
-	fontsize--;
-
-	printf("text: %s, width: %d, height: %d\n", text, width, height);
-	return font;
-}
-*/
 
 //alignment: 0:= left, 1:= center, 2:=right
 //if fontsize is -1 use biggest fontsize possible
@@ -643,14 +593,16 @@ void update_input_window() {
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	update_label(wi.l.t1.name, 0.06, 0.46, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
+	float height = (float)text_height(wi.l.t1.name->text().toUtf8().constData(), wi.l.t1.name->font())/h;
+
 	//Display prev game;
-	update_button(wi.b.game.prev, w, h, 0.01, 0.05, 0.01, 0.25);
+	update_button(wi.b.game.prev, w, h, 0.01, 0.05, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display switch sides;
-	update_button(wi.b.game.switch_sides, w, h, 0.47, 0.53, 0.01, 0.25);
+	update_button(wi.b.game.switch_sides, w, h, 0.47, 0.53, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display next game;
-	update_button(wi.b.game.next, w, h, 0.95, 0.99, 0.01, 0.25);
+	update_button(wi.b.game.next, w, h, 0.95, 0.99, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display Team 2 Name
 	if (md.cur.halftime)
@@ -669,15 +621,15 @@ void update_input_window() {
 	update_label(wi.l.t1.score, 0, 0.5, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 1
-	float width, height;
-	width = (float)wi.l.t1.score->width()/w;
-	height = (float)wi.l.t1.score->height()/h;
+	float width;
+	width = (float)text_width(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/w;
+	height = (float)text_height(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/h;
 	printf("width: %f: height: %f\n", width, height);
 	//update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
 	//update_button(wi.b.t1.score_plus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
 	//update_button(wi.b.t1.score_minus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
-	update_button(wi.b.t1.score_plus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.22, 0.25);
-	update_button(wi.b.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.48);
+	update_button(wi.b.t1.score_plus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.21, 0.25);
+	update_button(wi.b.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Score Team 2
 	if (md.cur.halftime)
@@ -687,27 +639,27 @@ void update_input_window() {
 	update_label(wi.l.t2.score, 0.5, 1, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 2
-	width = (float)wi.l.t2.score->width()/w;
-	height = (float)wi.l.t2.score->height()/h;
+	width = (float)text_width(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/w;
+	height = (float)text_height(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/h;
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(wi.b.t2.score_plus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.22, 0.25);
-	update_button(wi.b.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.48);
+	update_button(wi.b.t2.score_plus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.21, 0.25);
+	update_button(wi.b.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Time
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
 	update_label(wi.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Time
-	width = wi.l.time->width();
-	height = wi.l.time->height();
-	width = 0.4;
-	height= 0.2;
+	width = (float)text_width(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/w;
+	height = (float)text_height(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/h;
+	printf("h: %f; w: %f\n", height, width);
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(wi.b.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+height/2, 1-height/2);
-	update_button(wi.b.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+height/2, 1-height/2);
+	update_button(wi.b.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.b.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 
-	update_button(wi.b.time.toggle_pause, w, h, 0.5-width/2, 0.49, 0.5+height/2, 1-(0.5-height)/2-height);
-	update_button(wi.b.time.reset, w, h, 0.5, 0.5+width/2, 0.5+height/2, 1-(0.5-height)/2-height);
+	update_button(wi.b.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
+	printf("wi.b.time.toggle_pause, w: %d, h: %d, 1: %f, 2: %f, 3: %f, 4: %f\n", w, h , 0.51-width/2, 0.49, 0.5+(0.5-height)/2, (1-(0.5-height)/2)-height);
+	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 }
 
 //fontsize is only used for icons atm, cry about it
@@ -724,8 +676,6 @@ QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::Standa
 void create_input_window() {
 	wi.w = new QWidget;
 	wi.w->setWindowTitle("Scoreboard Input");
-
-	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
 
 	wi.l.t1.name = new QLabel("", wi.w);
 	wi.l.t2.name = new QLabel("", wi.w);
@@ -763,12 +713,6 @@ void create_display_window() {
 	wd.w = new QWidget;
 	wd.w->setWindowTitle("Scoreboard Display");
 
-	//TODO FINAL This shit doesnt work, it still uses the old width and height when making the callback
-	//g_signal_connect(wd.w, "notify::width", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "notify::height", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "notify::fullscreened", G_CALLBACK(update_display_window), NULL);
-	//g_signal_connect(wd.w, "size-allocate", G_CALLBACK(update_display_window), NULL);
-
 	wd.l.t1.name = new QLabel("", wd.w);
 	wd.l.t2.name = new QLabel("", wd.w);
 	wd.l.t1.score = new QLabel("", wd.w);
@@ -802,8 +746,10 @@ void update_timer() {
 }
 
 void websocket_poll() {
-	if (!server_con)
+	if (!server_connected){
+		srand(time(nullptr));
 		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
+	}
 	else
 		mg_mgr_poll(&mgr, 0);
 }
@@ -818,9 +764,10 @@ int main(int argc, char *argv[]) {
     create_input_window();
 
 	mg_mgr_init(&mgr);
-	//QTimer *t1 = new QTimer(wi.w);
-	//QObject::connect(t1, &QTimer::timeout, &websocket_poll);
-	//t1->start(100);
+	srand(time(nullptr));
+	QTimer *t1 = new QTimer(wi.w);
+	QObject::connect(t1, &QTimer::timeout, &websocket_poll);
+	t1->start(1000);
 
 	printf("aroistn\n");
 	//wd.w->show();
