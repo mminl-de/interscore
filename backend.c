@@ -389,14 +389,14 @@ WidgetGameplan WidgetGameplan_create() {
 	return w;
 }
 
-WidgetCard WidgetCard_create(enum CardType type) {
+WidgetCard WidgetCard_create(enum CardType type, int cardindex) {
 	const u8 cur = md.cur.gameindex;
 	WidgetCard w;
 	printf(".. TODO survived making widget\n");
 	printf("1. curindex: %d\n", md.cur.gameindex);
 	printf("2. cardscount: %d\n", md.games[cur].cards_count);
-	printf("3: i: %d\n", md.games[cur].cards[md.games[cur].cards_count].player_index);
-	strcpy(w.name, md.players[md.games[cur].cards[md.games[cur].cards_count].player_index].name);
+	printf("3: i: %d\n", md.games[cur].cards[cardindex].player_index);
+	strcpy(w.name, md.players[md.games[cur].cards[cardindex].player_index].name);
 	printf(".. TODO survived copy shit\n");
 	w.type = type;
 	printf(".. TODO survived making type\n");
@@ -794,7 +794,7 @@ void init_matchday() {
 }
 
 
-void add_card(enum CardType type) {
+u8 add_card(enum CardType type) {
 	const u8 cur = md.cur.gameindex;
 
 	if (md.games[cur].cards_count == 0)
@@ -811,7 +811,6 @@ void add_card(enum CardType type) {
 	int player = -1;
 	while (player == -1) {
 		ch = getchar();
-		printf("%c\n", ch);
 		switch(ch) {
 			case '1':
 				player = md.teams[md.games[cur].t1_index].keeper_index;
@@ -829,6 +828,7 @@ void add_card(enum CardType type) {
 	}
 	md.games[cur].cards[md.games[cur].cards_count].player_index = player;
 	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+	return md.games[cur].cards_count-1;
 }
 
 void *mongoose_update() {
@@ -979,19 +979,21 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t2
 				);
 				break;
-			case DEAL_YELLOW_CARD:
-				add_card(YELLOW);
+			case DEAL_YELLOW_CARD:{
+				u8 cardindex = add_card(YELLOW);
 				printf("TODO survided add_card\n");
-				WidgetCard wy = WidgetCard_create(YELLOW);
+				WidgetCard wy = WidgetCard_create(YELLOW, cardindex);
 				printf("TODO survided WidgetCard_create\n");
 				send_widget(&wy);
 				printf("TODO survided send_widget\n");
 				break;
-			case DEAL_RED_CARD:
-				add_card(RED);
-				WidgetCard wr = WidgetCard_create(RED);
+			}
+			case DEAL_RED_CARD: {
+				u8 cardindex = add_card(RED);
+				WidgetCard wr = WidgetCard_create(RED, cardindex);
 				send_widget(&wr);
 				break;
+			}
 			case DELETE_CARD: {
 				u32 cur_i = md.cur.gameindex;
 				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
