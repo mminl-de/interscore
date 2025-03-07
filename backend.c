@@ -20,9 +20,7 @@ enum Widget {
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_GAMESTART = 7,
 	WIDGET_CARD = 9,
-	// TODO
 	SCOREBOARD_SET_TIMER = 11,
-	// TODO WIP
 	SCOREBOARD_PAUSE_TIMER = 12
 };
 enum CardType { YELLOW, RED };
@@ -87,6 +85,7 @@ typedef struct {
 } WidgetGameplan;
 
 typedef struct {
+	u8 widget_num;
 	enum CardType type;
 	char name[PLAYER_NAME_MAX_LEN];
 } WidgetCard;
@@ -228,9 +227,9 @@ struct mg_connection *client_con = NULL;
 struct mg_mgr mgr;
 
 bool WidgetScoreboard_enabled = false;
-bool widget_spielstart_enabled = false;
+bool WidgetGamestart_enabled = false;
 bool WidgetLivetable_enabled = false;
-bool widget_gameplan_enabled = false;
+bool WidgetGameplan_enabled = false;
 
 // TODO send_WidgetCard(WidgetCard w) {
 //
@@ -288,7 +287,7 @@ WidgetScoreboard WidgetScoreboard_create() {
 
 WidgetGamestart WidgetGamestart_create() {
 	WidgetGamestart w;
-	w.widget_num = WIDGET_GAMESTART + widget_spielstart_enabled;
+	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
 	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
 	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
@@ -370,7 +369,7 @@ WidgetLivetable WidgetLivetable_create() {
 
 WidgetGameplan WidgetGameplan_create() {
 	WidgetGameplan w;
-	w.widget_num = WIDGET_GAMEPLAN + widget_gameplan_enabled;
+	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
@@ -389,17 +388,19 @@ WidgetGameplan WidgetGameplan_create() {
 	return w;
 }
 
-WidgetCard WidgetCard_create(enum CardType type, int cardindex) {
+// TODO remove type bc it's redundant
+WidgetCard WidgetCard_create(const u8 card_i) {
 	const u8 cur = md.cur.gameindex;
+
 	WidgetCard w;
+	// TODO NOW when to despawn cards?
+	w.widget_num = WIDGET_CARD + 1;
 	printf(".. TODO survived making widget\n");
 	printf("1. curindex: %d\n", md.cur.gameindex);
 	printf("2. cardscount: %d\n", md.games[cur].cards_count);
-	printf("3: i: %d\n", md.games[cur].cards[cardindex].player_index);
-	strcpy(w.name, md.players[md.games[cur].cards[cardindex].player_index].name);
-	printf(".. TODO survived copy shit\n");
-	w.type = type;
-	printf(".. TODO survived making type\n");
+	printf("3: i: %d\n", md.games[cur].cards[card_i].player_index);
+	strcpy(w.name, md.players[md.games[cur].cards[card_i].player_index].name);
+	w.type = md.games[cur].cards[card_i].card_type;;
 	return w;
 }
 
@@ -828,7 +829,7 @@ u8 add_card(enum CardType type) {
 	}
 	md.games[cur].cards[md.games[cur].cards_count].player_index = player;
 	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
-	return md.games[cur].cards_count-1;
+	return md.games[cur].cards_count - 1;
 }
 
 void *mongoose_update() {
@@ -980,17 +981,17 @@ int main(void) {
 				);
 				break;
 			case DEAL_YELLOW_CARD:{
-				u8 cardindex = add_card(YELLOW);
+				u8 card_i = add_card(YELLOW);
 				printf("TODO survided add_card\n");
-				WidgetCard wy = WidgetCard_create(YELLOW, cardindex);
+				WidgetCard wy = WidgetCard_create(YELLOW, card_i);
 				printf("TODO survided WidgetCard_create\n");
 				send_widget(&wy);
 				printf("TODO survided send_widget\n");
 				break;
 			}
 			case DEAL_RED_CARD: {
-				u8 cardindex = add_card(RED);
-				WidgetCard wr = WidgetCard_create(RED, cardindex);
+				u8 card_i = add_card(RED);
+				WidgetCard wr = WidgetCard_create(RED, card_i);
 				send_widget(&wr);
 				break;
 			}
@@ -1048,12 +1049,12 @@ int main(void) {
 				send_widget(&wlive);
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
-				widget_gameplan_enabled = !widget_gameplan_enabled;
+				WidgetGameplan_enabled = !WidgetGameplan_enabled;
 				WidgetGameplan wgame = WidgetGameplan_create();
 				send_widget(&wgame);
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
-				widget_spielstart_enabled = !widget_spielstart_enabled;
+				WidgetGamestart_enabled = !WidgetGamestart_enabled;
 				WidgetGamestart wspiel = WidgetGamestart_create();
 				send_widget(&wspiel);
 				break;
