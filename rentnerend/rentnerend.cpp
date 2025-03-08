@@ -188,15 +188,17 @@ void btn_cb_t2_score_minus() {
 	update_display_window();
 }
 void btn_cb_game_next() {
-	if (md.cur.gameindex < md.games_count-1)
-		md.cur.gameindex++;
+	if (md.cur.gameindex >= md.games_count-1)
+		return;
+	md.cur.gameindex++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_NEXT);
 }
 void btn_cb_game_prev() {
-	if (md.cur.gameindex > 0)
-		md.cur.gameindex--;
+	if (md.cur.gameindex <= 0)
+		return;
+	md.cur.gameindex--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_PREV);
@@ -208,14 +210,17 @@ void btn_cb_game_switch_sides() {
 	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
 void btn_cb_time_plus() {
+	if(!md.cur.pause)
+		return;
 	md.cur.time++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_PLUS);
 }
 void btn_cb_time_minus() {
-	if (md.cur.time > 0)
-		md.cur.time--;
+	if(!md.cur.pause || md.cur.time <= 0)
+		return;
+	md.cur.time--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS);
@@ -770,7 +775,7 @@ int main(int argc, char *argv[]) {
 	t1->start(1000);
 
 	printf("aroistn\n");
-	//wd.w->show();
+	wd.w->show();
     wi.w->show();
 
 	QTimer *t2 = new QTimer(wi.w);
