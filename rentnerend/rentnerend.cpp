@@ -303,6 +303,39 @@ int team_index(const char *name) {
 	return -1;
 }
 
+void save_json(const char *path) {
+	struct json_object *teams = json_object_new_object();
+	struct json_object *games = json_object_new_object();
+	for(int i=0; i < md.teams_count; i++){
+		struct json_object *team = json_object_new_object();
+		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_filename));
+		json_object_object_add(team, "color_light", json_object_new_string(md.teams[i].color_light));
+		json_object_object_add(team, "color_dark", json_object_new_string(md.teams[i].color_dark));
+		struct json_object *keeper = json_object_new_object();
+		json_object_object_add(keeper, "name", json_object_new_string(md.players[md.teams[i].keeper_index].name));
+		json_object_object_add(team, "keeper", keeper);
+		struct json_object *field = json_object_new_object();
+		json_object_object_add(field, "name", json_object_new_string(md.players[md.teams[i].field_index].name));
+		json_object_object_add(team, "field", field);
+		json_object_object_add(teams, md.teams[i].name, team);
+	}
+	for(int i=0; i < md.games_count; i++){
+		struct json_object *game = json_object_new_object();
+		json_object_object_add(game, "team1", json_object_new_string(md.teams[md.games[i].t1_index].name));
+		json_object_object_add(game, "team2", json_object_new_string(md.teams[md.games[i].t2_index].name));
+		struct json_object *halftimescore = json_object_new_object();
+		json_object_object_add(halftimescore, "team1", json_object_new_int(md.games[i].halftimescore.t1));
+		json_object_object_add(halftimescore, "team2", json_object_new_int(md.games[i].halftimescore.t2));
+		json_object_object_add(game, "halftimescore", halftimescore);
+		struct json_object *score = json_object_new_object();
+		json_object_object_add(score, "team1", json_object_new_int(md.games[i].score.t1));
+		json_object_object_add(score, "team2", json_object_new_int(md.games[i].score.t2));
+		json_object_object_add(game, "score", score);
+
+		struct json_object *cards = json_object_new_object();
+	}
+}
+
 void load_json(const char *path) {
 	// First convert path to actual string containing whole file
 	FILE *f = fopen(path, "rb");
