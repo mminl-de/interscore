@@ -27,6 +27,8 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 ### rentnerend
 - sync backup via json file
 - play sound when timer runs out
+- fix mg_random bug
+- stop the crashing after long time
 - 7-min-button reading the seven from json (no hardcoding)
 - public window:
 	- colors ?
@@ -36,6 +38,8 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- deal yellow and red cards
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
+- FINAL FINAL JSON-Creator GUI for non-technical users
+- FINAL FINAL port to windows/mac
 
 ### backend
 - (graceful Ctrl-C handling)
