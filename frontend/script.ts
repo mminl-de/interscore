@@ -12,7 +12,7 @@ let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 let gameplan = document.querySelector(".gameplan")! as HTMLElement
-let playing_teams = document.querySelector(".playing-teams")! as HTMLElement
+let gamestart = document.querySelector(".gamestart")! as HTMLElement
 
 let card = document.querySelector(".card")! as HTMLElement
 let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
@@ -190,6 +190,10 @@ function write_gameplan(view: DataView) {
 	}
 }
 
+function write_gamestart(view: DataView) {
+	// TODO NOW
+}
+
 function write_card(view: DataView) {
 	let offset = 1
 
@@ -216,7 +220,7 @@ function write_card(view: DataView) {
 		card_message.innerHTML = "bekommt eine gelbe Karte"
 	}
 
-	setTimeout(() => { card.style.display = "none" }, 3000)
+	setTimeout(() => { card.style.display = "none" }, 10_000)
 }
 
 interface LivetableLine {
@@ -314,37 +318,44 @@ function write_livetable(view: DataView) {
 
 		const name = document.createElement("div")
 		name.innerHTML = teams[team_i].name!.toString()
-		name.classList.add("name")
+		name.classList.add("bordered name")
 		name.style.backgroundColor = teams[team_i].color!.toString().slice(0, 7)
 		console.log(`TODO color for livetable: ${teams[team_i].color!.toString()}`)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
 		points.innerHTML = teams[team_i].points!.toString()
+		points.classList.add("bordered")
 		line.appendChild(points)
 
 		const played = document.createElement("div")
 		played.innerHTML = teams[team_i].played!.toString()
+		played.classList.add("bordered")
 		line.appendChild(played)
 
 		const won = document.createElement("div")
 		won.innerHTML = teams[team_i].won!.toString()
+		won.classList.add("bordered")
 		line.appendChild(won)
 
 		const tied = document.createElement("div")
 		tied.innerHTML = teams[team_i].tied!.toString()
+		tied.classList.add("bordered")
 		line.appendChild(tied)
 
 		const lost = document.createElement("div")
 		lost.innerHTML = teams[team_i].lost!.toString()
+		lost.classList.add("bordered")
 		line.appendChild(lost)
 
 		const goals = document.createElement("div")
 		goals.innerHTML = `${teams[team_i].goals!.toString()}:${teams[team_i].goals_taken!.toString()}`
+		goals.classList.add("bordered")
 		line.appendChild(goals)
 
 		const diff = document.createElement("div")
 		diff.innerHTML = (teams[team_i].goals! - teams[team_i].goals!).toString()
+		diff.classList.add("bordered")
 		line.appendChild(diff)
 
 		livetable_container.appendChild(line)
@@ -434,10 +445,11 @@ socket.onmessage = (event: MessageEvent) => {
 			write_gameplan(view)
 			break
 		case WidgetMessage.WIDGET_GAMESTART:
-			playing_teams.style.display = "none"
+			gamestart.style.display = "none"
 			break
 		case WidgetMessage.WIDGET_GAMESTART + 1:
-			playing_teams.style.display = "flex"
+			gamestart.style.display = "flex"
+			write_gamestart(view)
 			break
 		case WidgetMessage.WIDGET_CARD_SHOW:
 			card.style.display = "flex"

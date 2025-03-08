@@ -14,10 +14,6 @@
 	margin: auto;
 }
 
-.gameplan .heading {
-	font-size: 60px;
-}
-
 .gameplan .t1, .gameplan .t2 {
 	width: 300px;
 	height: 40px;
@@ -30,7 +26,7 @@
 	height: 40px;
 }
 
-/*
+/* TODO NOTE
 .gameplan {
 	font-size: 50px;
 

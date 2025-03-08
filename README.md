@@ -21,8 +21,12 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
     - table spawning
     - Smooth time
 - widgets:
-	- cards
 	- playing teams
+- livetable: fade out upcoming games, add ?s for score
+- (total CSS redesign)
+- background for headings
+- comment all relevant CSS
+- gradient colors
 
 ### rentnerend
 - play sound when timer runs out
