@@ -38,6 +38,8 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- deal yellow and red cards
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
+- FINAL Add possibility of teams missing
+- FINAL Add referees
 - FINAL FINAL JSON-Creator GUI for non-technical users
 - FINAL FINAL port to windows/mac
 
