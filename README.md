@@ -25,20 +25,17 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 	- playing teams
 
 ### rentnerend
+- sync backup via json file
 - play sound when timer runs out
 - 7-min-button reading the seven from json (no hardcoding)
 - public window:
-	- playing teams
-	- score
-	- time
-	- colors
+	- colors ?
 	- (other widgets between games)
 - private window:
-	- same as public (except other widgets)
+	- colors ?
 	- deal yellow and red cards
-	- pause time button
-- Feedback/Suggestions Site + Widget FINAL
-- FINAL align button and team name heights
+- FINAL Feedback/Suggestions Site + Widget
+- FINAL Halbzeituhr
 
 ### backend
 - (graceful Ctrl-C handling)
@@ -46,7 +43,6 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
 - FINAL abstract program so it's applicable for other games
 - ENSURE `n` and `p` work
-- `+` and `-` functionality (add/remove seconds)
 
 ### readme
 - context about what (and why) this is
@@ -101,43 +97,4 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
     - halftimes per game
 - program checks if every required field is filled (including array items)
 - server generates a hotkey table for quick goals assignment and transitions
-
-## Structure of data :moyai:
-```c
-struct Root {
-    struct current_game {
-        Game gamestate;
-        bool halftime;
-        int time_left;
-    }
-    struct all_games {
-        Game[] games;
-    }
-    String[] teams;
-}
-
-struct Game {
-    String team_1;
-    String team_2;
-    Score halftimescore;
-    Score score;
-    Card[] cards_handed; //FINAL
-}
-
-struct Score {
-    int team_1;
-    int team_2;
-}
-
-//FINAL
-struct Card {
-    Player player;
-    enum {YELLOW_CARD, RED_CARD};
-}
-
-//FINAL
-struct Team {
-    Player Torwart;
-    Player Außenspieler;
-}
 ```
