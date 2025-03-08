@@ -332,7 +332,20 @@ void save_json(const char *path) {
 		json_object_object_add(score, "team2", json_object_new_int(md.games[i].score.t2));
 		json_object_object_add(game, "score", score);
 
-		struct json_object *cards = json_object_new_object();
+		if(md.games[i].cards_count > 0){
+			struct json_object *cards = json_object_new_object();
+			for(int j=0; j < md.games[j].cards_count; j++){
+				struct json_object *card = json_object_new_object();
+				json_object_object_add(card, "player", json_object_new_string(md.players[md.games[i].cards[j].player_index].name));
+				if(md.games[i].cards[j].card_type == 0)
+					json_object_object_add(card, "type", json_object_new_string("Y"));
+				else
+					json_object_object_add(card, "type", json_object_new_string("R"));
+				json_object_object_add(cards, "card", card);
+			}
+			json_object_object_add(game, "cards", cards);
+		}
+		json_object_object_add(games, "game", game);
 	}
 }
 
