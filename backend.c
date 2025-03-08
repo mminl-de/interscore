@@ -13,15 +13,17 @@ typedef unsigned int u32;
 
 // #### Javascript/ GUI Widgets Structs
 
-//The first element is disable, the second is enable/update
-enum Widget {
+// Each WIDGET_* elements except WIDGET_CARD_SHOW means disable,
+// the successor means enable/update.
+// This widget is mirrored in frontend/script.ts.
+enum WidgetMessage {
 	WIDGET_SCOREBOARD = 1,
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_GAMESTART = 7,
-	WIDGET_CARD = 9,
-	SCOREBOARD_SET_TIMER = 11,
-	SCOREBOARD_PAUSE_TIMER = 12
+	WIDGET_CARD_SHOW = 9,
+	SCOREBOARD_SET_TIMER = 10,
+	SCOREBOARD_PAUSE_TIMER = 11
 };
 enum CardType { YELLOW, RED };
 enum PlayerRole { KEEPER, FIELD };
@@ -394,13 +396,9 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 
 	WidgetCard w;
 	// TODO NOW when to despawn cards?
-	w.widget_num = WIDGET_CARD + 1;
-	printf(".. TODO survived making widget\n");
-	printf("1. curindex: %d\n", md.cur.gameindex);
-	printf("2. cardscount: %d\n", md.games[cur].cards_count);
-	printf("3: i: %d\n", md.games[cur].cards[card_i].player_index);
+	w.widget_num = WIDGET_CARD_SHOW;
 	strcpy(w.name, md.players[md.games[cur].cards[card_i].player_index].name);
-	w.type = md.games[cur].cards[card_i].card_type;;
+	w.type = md.games[cur].cards[card_i].card_type;
 	return w;
 }
 
@@ -809,25 +807,26 @@ u8 add_card(enum CardType type) {
 		md.players[md.teams[md.games[cur].t2_index].field_index].name, md.teams[md.games[cur].t2_index].name);
 
 	char ch;
-	int player = -1;
-	while (player == -1) {
+	u8 player_i = 0;
+	while (!player_i) {
 		ch = getchar();
 		switch(ch) {
 			case '1':
-				player = md.teams[md.games[cur].t1_index].keeper_index;
+				player_i = md.teams[md.games[cur].t1_index].keeper_index;
+				printf("TODO chose '%s'\n", md.players[player_i].name);
 				break;
 			case '2':
-				player = md.teams[md.games[cur].t1_index].field_index;
+				player_i = md.teams[md.games[cur].t1_index].field_index;
 				break;
 			case '3':
-				player = md.teams[md.games[cur].t2_index].keeper_index;
+				player_i = md.teams[md.games[cur].t2_index].keeper_index;
 				break;
 			case '4':
-				player = md.teams[md.games[cur].t2_index].field_index;
+				player_i = md.teams[md.games[cur].t2_index].field_index;
 				break;
 		}
 	}
-	md.games[cur].cards[md.games[cur].cards_count].player_index = player;
+	md.games[cur].cards[md.games[cur].cards_count].player_index = player_i;
 	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
 	return md.games[cur].cards_count - 1;
 }
@@ -981,17 +980,12 @@ int main(void) {
 				);
 				break;
 			case DEAL_YELLOW_CARD:{
-				u8 card_i = add_card(YELLOW);
-				printf("TODO survided add_card\n");
-				WidgetCard wy = WidgetCard_create(YELLOW, card_i);
-				printf("TODO survided WidgetCard_create\n");
+				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
 				send_widget(&wy);
-				printf("TODO survided send_widget\n");
 				break;
 			}
 			case DEAL_RED_CARD: {
-				u8 card_i = add_card(RED);
-				WidgetCard wr = WidgetCard_create(RED, card_i);
+				WidgetCard wr = WidgetCard_create(add_card(RED));
 				send_widget(&wr);
 				break;
 			}

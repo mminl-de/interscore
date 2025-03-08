@@ -191,16 +191,10 @@ function write_gameplan(view: DataView) {
 }
 
 function write_card(view: DataView) {
-	console.log("TODO writing card")
 	let offset = 1
-	let receiver: String = ""
-	for (let name = 0; name < BUFFER_LEN; ++name) {
-		receiver += String.fromCharCode(view.getUint8(offset))
-		++offset
-	}
-	card_receiver.innerHTML = receiver.toString()
 
 	const is_red = view.getUint8(offset)
+	++offset
 
 	let name: String = ""
 	for (let name_ch = 0; name_ch < PLAYER_NAME_MAX_LEN; ++name_ch) {
@@ -221,6 +215,8 @@ function write_card(view: DataView) {
 		card_graphic.style.backgroundColor = "#ffff00"
 		card_message.innerHTML = "bekommt eine gelbe Karte"
 	}
+
+	setTimeout(() => { card.style.display = "none" }, 3000)
 }
 
 interface LivetableLine {
@@ -393,6 +389,16 @@ socket.onopen = () => {
 	console.log("Connected to WebSocket server!")
 }
 
+enum WidgetMessage {
+	WIDGET_SCOREBOARD = 1,
+	WIDGET_LIVETABLE = 3,
+	WIDGET_GAMEPLAN = 5,
+	WIDGET_GAMESTART = 7,
+	WIDGET_CARD_SHOW = 9,
+	SCOREBOARD_SET_TIMER = 10,
+	SCOREBOARD_PAUSE_TIMER = 11
+}
+
 socket.onmessage = (event: MessageEvent) => {
 	// TODO
 	if (!(event.data instanceof ArrayBuffer))
@@ -405,44 +411,42 @@ socket.onmessage = (event: MessageEvent) => {
 	switch (mode) {
 		case 0:
 			return
-		case 1:
+		case WidgetMessage.WIDGET_SCOREBOARD:
 			scoreboard.style.display = "none"
 			break
-		case 2:
+		case WidgetMessage.WIDGET_SCOREBOARD + 1:
 			scoreboard.style.display = "inline-flex"
 			write_scoreboard(view)
 			break
-		case 3:
+		case WidgetMessage.WIDGET_LIVETABLE:
 			livetable.style.display = "none"
 			break
-		case 4:
+		case WidgetMessage.WIDGET_LIVETABLE + 1:
 			// TODO WIP
 			livetable.style.display = "inline-flex"
 			write_livetable(view)
 			break
-		case 5:
+		case WidgetMessage.WIDGET_GAMEPLAN:
 			gameplan.style.display = "none"
 			break
-		case 6:
+		case WidgetMessage.WIDGET_GAMEPLAN + 1:
 			gameplan.style.display = "inline-flex"
 			write_gameplan(view)
 			break
-		case 7:
+		case WidgetMessage.WIDGET_GAMESTART:
 			playing_teams.style.display = "none"
 			break
-		case 8:
+		case WidgetMessage.WIDGET_GAMESTART + 1:
 			playing_teams.style.display = "flex"
 			break
-		case 9:
-			card.style.display = "none"
-			break
-		case 10:
+		case WidgetMessage.WIDGET_CARD_SHOW:
 			card.style.display = "flex"
+			write_card(view)
 			break
-		case 11:
+		case WidgetMessage.SCOREBOARD_SET_TIMER:
 			scoreboard_set_timer(view)
 			break
-		case 12:
+		case WidgetMessage.SCOREBOARD_PAUSE_TIMER:
 			timer_is_paused = !timer_is_paused
 			break
 		// TODO
