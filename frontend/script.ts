@@ -24,10 +24,11 @@ let livetable_container = livetable.querySelector(".container")! as HTMLElement
 
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
-const HEX_COLOR_LEN = 8
 const TEAMS_COUNT_MAX = 32
 const TEAMS_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
+
+interface Color { r: number, g: number, b: number }
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -54,38 +55,56 @@ function write_scoreboard(view: DataView) {
 	++offset
 
 	const is_halftime = view.getUint8(offset)
-	++offset // skipping `is_halftime`
+	++offset
 
-	let team1_color_left = ""
-	let team1_color_right = ""
-	let team2_color_left = ""
-	let team2_color_right = ""
-	// TODO WIP
+	let t1_col_left: Color = { r: 0, g: 0, b: 0 }
+	let t1_col_right: Color = { r: 0, g: 0, b: 0 }
+	let t2_col_left: Color = { r: 0, g: 0, b: 0 }
+	let t2_col_right: Color = { r: 0, g: 0, b: 0 }
 	if (is_halftime) {
-		for (let i = 0; i < HEX_COLOR_LEN; ++i) {
-			// TODO CONSIDER making it threee u8s
-			team1_color_left += String.fromCharCode(view.getUint8(offset))
-			team1_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
-			team2_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
-			team2_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
-			++offset
-		}
+		t1_col_left.r = view.getUint8(offset)
+		t1_col_left.g = view.getUint8(offset + 1)
+		t1_col_left.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t1_col_right.r = view.getUint8(offset)
+		t1_col_right.g = view.getUint8(offset + 1)
+		t1_col_right.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t2_col_left.r = view.getUint8(offset)
+		t2_col_left.g = view.getUint8(offset + 1)
+		t2_col_left.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t2_col_right.r = view.getUint8(offset)
+		t2_col_right.g = view.getUint8(offset + 1)
+		t2_col_right.b = view.getUint8(offset + 2)
+		offset += 3
 	} else {
-		for (let i = 0; i < HEX_COLOR_LEN; ++i) {
-			team2_color_left += String.fromCharCode(view.getUint8(offset))
-			team2_color_right += String.fromCharCode(view.getUint8(HEX_COLOR_LEN + offset))
-			team1_color_left += String.fromCharCode(view.getUint8(2 * HEX_COLOR_LEN + offset))
-			team1_color_right += String.fromCharCode(view.getUint8(3 * HEX_COLOR_LEN + offset))
-			++offset
-		}
+		t2_col_left.r = view.getUint8(offset)
+		t2_col_left.g = view.getUint8(offset + 1)
+		t2_col_left.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t2_col_right.r = view.getUint8(offset)
+		t2_col_right.g = view.getUint8(offset + 1)
+		t2_col_right.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t1_col_left.r = view.getUint8(offset)
+		t1_col_left.g = view.getUint8(offset + 1)
+		t1_col_left.b = view.getUint8(offset + 2)
+		offset += 3
+
+		t1_col_right.r = view.getUint8(offset)
+		t1_col_right.g = view.getUint8(offset + 1)
+		t1_col_right.b = view.getUint8(offset + 2)
+		offset += 3
 	}
 
-	scoreboard_t1.style.backgroundColor = team1_color_left.slice(0, 7)
-	scoreboard_t2.style.backgroundColor = team2_color_left.slice(0, 7)
-
-	// TODO DEBUG
-	console.log(`color team 1: '${scoreboard_t1.style.backgroundColor}'`)
-	console.log(`color team 2: '${scoreboard_t2.style.backgroundColor}'`)
+	scoreboard_t1.style.backgroundColor = `rgb(${t1_col_left.r}, ${t1_col_left.g}, ${t1_col_left.b})`
+	scoreboard_t2.style.backgroundColor = `rgb(${t2_col_left.r}, ${t2_col_left.g}, ${t2_col_left.b})`
 }
 
 function write_gameplan(view: DataView) {
@@ -139,24 +158,30 @@ function write_gameplan(view: DataView) {
 	}
 	offset += GAMES_COUNT_MAX - game_n
 
-	let colors_1: String[] = []
-	let colors_2: String[] = []
+	let col_1: Color[] = []
+	let col_2: Color[] = []
 	for (let game_i = 0; game_i < game_n; ++game_i) {
-		let c1: String = ""
-		let c2: String = ""
-		for (let hex_ch = 0; hex_ch < HEX_COLOR_LEN; ++hex_ch) {
-			c1 += String.fromCharCode(view.getUint8(offset))
-			c2 += String.fromCharCode(view.getUint8(offset + GAMES_COUNT_MAX * HEX_COLOR_LEN))
-			++offset
-		}
-		colors_1.push(c1)
-		colors_2.push(c2)
+		let c1: Color = { r: 0, g: 0, b: 0 }
+		let c2: Color = { r: 0, g: 0, b: 0 }
+		c1.r = view.getUint8(offset)
+		c2.r = view.getUint8(offset + GAMES_COUNT_MAX * 3)
+
+		c1.g = view.getUint8(offset + 1)
+		c2.g = view.getUint8(offset + 1 + GAMES_COUNT_MAX * 3)
+
+		c1.b = view.getUint8(offset + 2)
+		c2.b = view.getUint8(offset + 2 + GAMES_COUNT_MAX * 3)
+
+		offset += 3
+
+		col_1.push(c1)
+		col_2.push(c2)
 	}
-	offset += (GAMES_COUNT_MAX - game_n) * HEX_COLOR_LEN
-	console.log(`TODO colorz: (${colors_1[0]}) (${colors_1[1]})`)
+	offset += (GAMES_COUNT_MAX - game_n) * 3
+	console.log(`TODO colorz: (${col_1[0]}) (${col_1[1]})`)
 
 	// TODO NOTE discarding the dark colors
-	offset += 2 * GAMES_COUNT_MAX * HEX_COLOR_LEN
+	offset += 2 * GAMES_COUNT_MAX * 3
 
 	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let line = document.createElement("div")
@@ -165,7 +190,7 @@ function write_gameplan(view: DataView) {
 		let t1 = document.createElement("div")
 		t1.classList.add("t1")
 		t1.innerHTML = teams_1[game_i].toString()
-		t1.style.backgroundColor = colors_1[game_i].slice(0, 7)
+		t1.style.backgroundColor = `rgb(${col_1[game_i].r}, ${col_1[game_i].g}, ${col_1[game_i].b})`
 		console.log("TODO first color: ", t1.style.backgroundColor)
 		line.appendChild(t1)
 
@@ -181,7 +206,7 @@ function write_gameplan(view: DataView) {
 
 		let t2 = document.createElement("div")
 		t2.classList.add("t2")
-		t2.style.backgroundColor = colors_2[game_i].slice(0, 7)
+		t2.style.backgroundColor = `rgb(${col_2[game_i].r}, ${col_2[game_i].g}, ${col_2[game_i].b})`
 		console.log("TODO second color: ", t2.style.backgroundColor)
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
@@ -232,7 +257,7 @@ interface LivetableLine {
 	lost?: number,
 	goals?: number,
 	goals_taken?: number,
-	color?: string
+	color?: Color
 }
 
 // TODO FINAL OPTIMIZE
@@ -305,11 +330,12 @@ function write_livetable(view: DataView) {
 	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
 	for (let i = 0; i < team_n; ++i) {
-		teams[i].color = ""
-		for (let hexi = 0; hexi < HEX_COLOR_LEN; ++hexi) {
-			teams[i].color += String.fromCharCode(view.getUint8(offset))
-			++offset
+		teams[i].color = {
+			r: view.getUint8(offset),
+			g: view.getUint8(offset + 1),
+			b: view.getUint8(offset + 2)
 		}
+		offset += 3
 	}
 
 	for (let team_i = 0; team_i < team_n; ++team_i) {

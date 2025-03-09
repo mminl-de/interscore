@@ -6,8 +6,6 @@
 #define TEAMS_COUNT_MAX 32
 #define GAMES_COUNT_MAX 64
 
-#define HEX_COLOR_LEN 8
-
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
 #define URL "http://0.0.0.0:8081"

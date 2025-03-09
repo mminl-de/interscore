@@ -11,8 +11,6 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-// #### Javascript/ GUI Widgets Structs
-
 // Each WIDGET_* elements except WIDGET_CARD_SHOW means disable,
 // the successor means enable/update.
 // This widget is mirrored in frontend/script.ts.
@@ -34,6 +32,8 @@ enum InputType {
 };
 
 #pragma pack(push, 1)
+typedef struct { u8 r, g, b; } Color;
+
 typedef struct {
 	u8 widget_num;
 	char team1[TEAMS_NAME_MAX_LEN];
@@ -41,10 +41,10 @@ typedef struct {
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	Color team1_color_left;
+	Color team1_color_right;
+	Color team2_color_left;
+	Color team2_color_right;
 } WidgetScoreboard;
 
 typedef struct {
@@ -53,10 +53,10 @@ typedef struct {
 	char team1_field[TEAMS_NAME_MAX_LEN];
 	char team2_keeper[TEAMS_NAME_MAX_LEN];
 	char team2_field[TEAMS_NAME_MAX_LEN];
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	Color team1_color_left;
+	Color team1_color_right;
+	Color team2_color_left;
+	Color team2_color_right;
 } WidgetGamestart;
 
 typedef struct {
@@ -70,7 +70,7 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
-	char color[TEAMS_COUNT_MAX][HEX_COLOR_LEN];
+	Color color[TEAMS_COUNT_MAX];
 } WidgetLivetable;
 
 typedef struct {
@@ -80,10 +80,10 @@ typedef struct {
 	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-	char team1_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team1_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	Color team1_color_left[GAMES_COUNT_MAX];
+	Color team1_color_right[GAMES_COUNT_MAX];
+	Color team2_color_left[GAMES_COUNT_MAX];
+	Color team2_color_right[GAMES_COUNT_MAX];
 } WidgetGameplan;
 
 typedef struct {
@@ -237,6 +237,20 @@ bool WidgetGameplan_enabled = false;
 //
 // }
 
+// Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
+u8 hex_char_to_int(char c) {
+    return (c & 0xF) + (c >> 6) * 9;
+}
+
+// Converts color as hexcode to rgb.
+Color Color_from_hex(const char *hex) {
+    return (Color) {
+        (hex_char_to_int(hex[0]) << 4) | hex_char_to_int(hex[1]),
+        (hex_char_to_int(hex[2]) << 4) | hex_char_to_int(hex[3]),
+        (hex_char_to_int(hex[4]) << 4) | hex_char_to_int(hex[5])
+    };
+}
+
 int qsort_helper_u8(const void *p1, const void *p2) {
 	if(*(int*)p1 < *(int*)p2)
 		return -1;
@@ -265,22 +279,20 @@ WidgetScoreboard WidgetScoreboard_create() {
 		w.score_t2 = md.games[md.cur.gameindex].score.t1;
 		w.score_t1 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.team1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		w.team1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.team2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		w.team2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 	} else {
 		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
 		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t1 = md.games[md.cur.gameindex].score.t1;
 		w.score_t2 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		w.team1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		w.team1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		w.team2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.team2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
@@ -288,6 +300,7 @@ WidgetScoreboard WidgetScoreboard_create() {
 }
 
 WidgetGamestart WidgetGamestart_create() {
+	// TODO ADD colors
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
 	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
@@ -362,7 +375,7 @@ WidgetLivetable WidgetLivetable_create() {
 		printf("begin entry goals: %d\n", w.goals[i]);
 		w.goals_taken[i] = team_calc_goals_taken(best_index);
 		printf("begin entry goals taken: %d\n", w.goals[i]);
-		strcpy(w.color[i], md.teams[i].color_light);
+		w.color[i] = Color_from_hex(md.teams[i].color_light);
 
 		teams_done[i] = best_index;
 	}
@@ -379,10 +392,10 @@ WidgetGameplan WidgetGameplan_create() {
 		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
 		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
 
-		strcpy(w.team1_color_left[i], md.teams[md.games[i].t1_index].color_light);
-		strcpy(w.team1_color_right[i], md.teams[md.games[i].t1_index].color_dark);
-		strcpy(w.team2_color_left[i], md.teams[md.games[i].t2_index].color_dark);
-		strcpy(w.team2_color_right[i], md.teams[md.games[i].t2_index].color_light);
+		w.team1_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
+		w.team1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
+		w.team2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
+		w.team2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
 
 		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.team1_color_left[i], w.team2_color_right[i]);
 	}
