@@ -1,5 +1,5 @@
 .gamestart {
-	display: flex;
+	display: none;
 
 	position: absolute;
 	top: 50%;

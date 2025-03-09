@@ -1,6 +1,6 @@
 /* TODO FINAL ALL make choice of absolute/relative sizes consistent */
 .scoreboard {
-    display: inline-flex;   /* children should not stretch to entire width */
+    display: none;		    /* children should not stretch to entire width */
     flex-direction: column; /* children should be packed horizontally */
     gap: 10px;              /* children should have 10 pixels between each other */
 }

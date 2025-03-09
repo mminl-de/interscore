@@ -225,9 +225,9 @@ function write_gamestart(view: DataView) {
 	let offset = 1
 
 	let t1: String = ""
+	let t2: String = ""
 	let t1_keeper: String = ""
 	let t1_field: String = ""
-	let t2: String = ""
 	let t2_keeper: String = ""
 	let t2_field: String = ""
 
@@ -240,6 +240,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("tactical t1 print: ", t1)
 
 	for (let t2_ch = 0; t2_ch < TEAM_NAME_MAX_LEN; ++t2_ch) {
 		const c = view.getUint8(offset)
@@ -250,6 +251,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("tactical t2 print: ", t2)
 
 	for (let t1k_ch = 0; t1k_ch < PLAYER_NAME_MAX_LEN; ++t1k_ch) {
 		const c = view.getUint8(offset)
@@ -378,7 +380,7 @@ function write_card(view: DataView) {
 		card_message.innerHTML = "bekommt eine gelbe Karte"
 	}
 
-	setTimeout(() => { card.style.display = "none" }, 10_000)
+	setTimeout(() => { card.style.display = "none" }, 5_000)
 }
 
 interface LivetableLine {
