@@ -2,7 +2,7 @@
 #define CONFIG_H_
 
 #define PLAYER_NAME_MAX_LEN 100
-#define TEAMS_NAME_MAX_LEN 100
+#define TEAM_NAME_MAX_LEN 100
 #define TEAMS_COUNT_MAX 32
 #define GAMES_COUNT_MAX 64
 

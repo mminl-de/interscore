@@ -1,8 +1,9 @@
 // TODO FINAL OPTIMIZE our shame
+// TODO FINAL check if each handle is used
 let socket = new WebSocket("ws://localhost:8081", "interscore")
 socket.binaryType = "arraybuffer"
 
-let scoreboard = document.querySelector(".scoreboard")! as HTMLElement
+const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
 let scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
 let scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
 let scoreboard_score_1 = scoreboard.querySelector(".score-1")!
@@ -11,24 +12,29 @@ let scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as H
 let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
-let gameplan = document.querySelector(".gameplan")! as HTMLElement
-let gamestart = document.querySelector(".gamestart")! as HTMLElement
+const gameplan = document.querySelector(".gameplan")! as HTMLElement
 
-let card = document.querySelector(".card")! as HTMLElement
+const gamestart = document.querySelector(".gamestart")! as HTMLElement
+let gamestart_container = document.querySelector(".gamestart .container")! as HTMLElement
+
+const card = document.querySelector(".card")! as HTMLElement
 let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 let card_receiver = card.querySelector(".card-receiver")!
 let card_message = card.querySelector(".card-message")!
 
-let livetable = document.querySelector(".livetable")! as HTMLElement
-let livetable_container = livetable.querySelector(".container")! as HTMLElement
+const livetable = document.querySelector(".livetable")! as HTMLElement
 
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
 const TEAMS_COUNT_MAX = 32
-const TEAMS_NAME_MAX_LEN = 100
+const TEAM_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
 
 interface Color { r: number, g: number, b: number }
+
+function Color_to_string(input: Color): string {
+	return `rgb(${input.r}, ${input.g}, ${input.b})`
+}
 
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
@@ -103,8 +109,8 @@ function write_scoreboard(view: DataView) {
 		offset += 3
 	}
 
-	scoreboard_t1.style.backgroundColor = `rgb(${t1_col_left.r}, ${t1_col_left.g}, ${t1_col_left.b})`
-	scoreboard_t2.style.backgroundColor = `rgb(${t2_col_left.r}, ${t2_col_left.g}, ${t2_col_left.b})`
+	scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
+	scoreboard_t2.style.backgroundColor = Color_to_string(t2_col_left)
 }
 
 function write_gameplan(view: DataView) {
@@ -190,7 +196,7 @@ function write_gameplan(view: DataView) {
 		let t1 = document.createElement("div")
 		t1.classList.add("t1")
 		t1.innerHTML = teams_1[game_i].toString()
-		t1.style.backgroundColor = `rgb(${col_1[game_i].r}, ${col_1[game_i].g}, ${col_1[game_i].b})`
+		t1.style.backgroundColor = Color_to_string(col_1[game_i])
 		console.log("TODO first color: ", t1.style.backgroundColor)
 		line.appendChild(t1)
 
@@ -206,7 +212,7 @@ function write_gameplan(view: DataView) {
 
 		let t2 = document.createElement("div")
 		t2.classList.add("t2")
-		t2.style.backgroundColor = `rgb(${col_2[game_i].r}, ${col_2[game_i].g}, ${col_2[game_i].b})`
+		t2.style.backgroundColor = Color_to_string(col_2[game_i])
 		console.log("TODO second color: ", t2.style.backgroundColor)
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
@@ -216,7 +222,134 @@ function write_gameplan(view: DataView) {
 }
 
 function write_gamestart(view: DataView) {
-	// TODO NOW
+	let offset = 1
+
+	let t1: String = ""
+	let t1_keeper: String = ""
+	let t1_field: String = ""
+	let t2: String = ""
+	let t2_keeper: String = ""
+	let t2_field: String = ""
+
+	for (let t1_ch = 0; t1_ch < TEAM_NAME_MAX_LEN; ++t1_ch) {
+		const c = view.getUint8(offset)
+		t1 += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += TEAM_NAME_MAX_LEN - t1_ch - 1
+			break
+		}
+	}
+
+	for (let t2_ch = 0; t2_ch < TEAM_NAME_MAX_LEN; ++t2_ch) {
+		const c = view.getUint8(offset)
+		t2 += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += TEAM_NAME_MAX_LEN - t2_ch - 1
+			break
+		}
+	}
+
+	for (let t1k_ch = 0; t1k_ch < PLAYER_NAME_MAX_LEN; ++t1k_ch) {
+		const c = view.getUint8(offset)
+		t1_keeper += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += PLAYER_NAME_MAX_LEN - t1k_ch - 1
+			break
+		}
+	}
+
+	for (let t1f_ch = 0; t1f_ch < PLAYER_NAME_MAX_LEN; ++t1f_ch) {
+		const c = view.getUint8(offset)
+		t1_field += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += PLAYER_NAME_MAX_LEN - t1f_ch - 1
+			break
+		}
+	}
+
+	for (let t2k_ch = 0; t2k_ch < PLAYER_NAME_MAX_LEN; ++t2k_ch) {
+		const c = view.getUint8(offset)
+		t2_keeper += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += PLAYER_NAME_MAX_LEN - t2k_ch - 1
+			break
+		}
+	}
+
+	for (let t2f_ch = 0; t2f_ch < PLAYER_NAME_MAX_LEN; ++t2f_ch) {
+		const c = view.getUint8(offset)
+		t2_field += String.fromCharCode(c)
+		++offset
+		if (c === 0) {
+			offset += PLAYER_NAME_MAX_LEN - t2f_ch - 1
+			break
+		}
+	}
+
+	let t1_col_left: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2),
+	}
+	offset += 3
+
+	let t1_col_right: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2),
+	}
+	offset += 3
+
+	let t2_col_left: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2),
+	}
+	offset += 3
+
+	let t2_col_right: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2),
+	}
+	offset += 3
+
+	// TODO ADD gradients
+
+	const t1_el = document.createElement("div")
+
+	const t1_name_el = document.createElement("div")
+	t1_name_el.classList.add("heading")
+	t1_name_el.innerHTML = t1.toString()
+
+	const t1_keeper_el = document.createElement("div")
+	t1_keeper_el.classList.add("player")
+	t1_keeper_el.style.backgroundColor = Color_to_string(t1_col_left)
+
+	const t1_field_el = document.createElement("div")
+	t1_field_el.classList.add("player")
+	t1_field_el.style.backgroundColor = Color_to_string(t1_col_left)
+
+	t1_el.appendChild(t1_name_el)
+
+	gamestart_container.appendChild(t1_el)
+
+	const t2_el = document.createElement("div")
+
+	const t2_keeper_el = document.createElement("div")
+	t2_keeper_el.classList.add("player")
+	t2_keeper_el.style.backgroundColor = Color_to_string(t2_col_left)
+
+	const t2_field_el = document.createElement("div")
+	t2_field_el.classList.add("player")
+	t2_field_el.style.backgroundColor = Color_to_string(t2_col_left)
+
+	gamestart_container.appendChild(t2_el)
 }
 
 function write_card(view: DataView) {
@@ -262,8 +395,8 @@ interface LivetableLine {
 
 // TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
-	while (livetable_container.children.length > 1)
-		livetable_container.removeChild(livetable_container.lastChild!)
+	while (livetable.children.length > 1)
+		livetable.removeChild(livetable.lastChild!)
 
 	let offset = 1
 
@@ -284,7 +417,7 @@ function write_livetable(view: DataView) {
 			}
 		}
 	}
-	offset += (TEAMS_COUNT_MAX - team_n) * TEAMS_NAME_MAX_LEN
+	offset += (TEAMS_COUNT_MAX - team_n) * TEAM_NAME_MAX_LEN
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].points = view.getUint8(offset)
@@ -384,7 +517,7 @@ function write_livetable(view: DataView) {
 		diff.classList.add("bordered")
 		line.appendChild(diff)
 
-		livetable_container.appendChild(line)
+		livetable.appendChild(line)
 	}
 }
 
