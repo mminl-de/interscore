@@ -241,7 +241,7 @@ bool WidgetGameplan_enabled = false;
 // }
 
 // Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
-u8 hex_char_to_int(char c) {
+u8 hex_char_to_int(const char c) {
     return (c & 0xF) + (c >> 6) * 9;
 }
 
@@ -303,13 +303,17 @@ WidgetScoreboard WidgetScoreboard_create() {
 }
 
 WidgetGamestart WidgetGamestart_create() {
+	const u8 cur = md.cur.gameindex;
+
 	// TODO ADD colors
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
-	strcpy(w.t1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
-	strcpy(w.t1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
-	strcpy(w.t2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
-	strcpy(w.t2_field, md.players[md.teams[md.games[md.cur.gameindex].t2_index].field_index].name);
+	strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
+	strcpy(w.t2, md.teams[md.games[cur].t2_index].name);
+	strcpy(w.t1_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
+	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
+	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
+	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
 	return w;
 }
 
@@ -611,9 +615,10 @@ int player_index(const char *name) {
 // Return the index of a team name.
 // If the name does not exist return -1.
 int team_index(const char *name) {
-	for (u8 i = 0; i < md.teams_count; i++)
+	for (u8 i = 0; i < md.teams_count; i++) {
 		if (!strcmp(md.teams[i].name, name))
 			return i;
+	}
 	return -1;
 }
 
@@ -703,30 +708,30 @@ void load_json(const char *path) {
 	i = 0;
 	json_object_object_foreach(games, gamenumber, gamedata) {
 		json_object *team;
-		json_object_object_get_ex(gamedata, "t1", &team);
+		json_object_object_get_ex(gamedata, "team1", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Error parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t1_index = team_index(json_object_get_string(team));
 
-		json_object_object_get_ex(gamedata, "t2", &team);
+		json_object_object_get_ex(gamedata, "team2", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
+			printf("Error parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t2_index = team_index(json_object_get_string(team));
 		json_object *halftimescore, *score, *cards, *var;
 		if (json_object_object_get_ex(gamedata, "halftimescore", &halftimescore)) {
-			json_object_object_get_ex(halftimescore, "t1", &var);
+			json_object_object_get_ex(halftimescore, "team1", &var);
 			md.games[i].halftimescore.t1 = json_object_get_int(var);
-			json_object_object_get_ex(halftimescore, "t2", &var);
+			json_object_object_get_ex(halftimescore, "team2", &var);
 			md.games[i].halftimescore.t2 = json_object_get_int(var);
 		}
 		if (json_object_object_get_ex(gamedata, "score", &score)) {
-			json_object_object_get_ex(score, "t1", &var);
+			json_object_object_get_ex(score, "team1", &var);
 			md.games[i].score.t1 = json_object_get_int(var);
-			json_object_object_get_ex(score, "t2", &var);
+			json_object_object_get_ex(score, "team2", &var);
 			md.games[i].score.t2 = json_object_get_int(var);
 		}
 		if (json_object_object_get_ex(gamedata, "cards", &cards)) {
@@ -739,7 +744,7 @@ void load_json(const char *path) {
 				json_object *player, *type;
 				json_object_object_get_ex(carddata, "player", &player);
 				if (player_index(json_object_get_string(player)) == -1) {
-					printf("Erorr parsing JSON: '%s' does not exist (Playername of Card %d in Game %d). Exiting...\n", json_object_get_string(player), j+1, i + 1);
+					printf("Error parsing JSON: '%s' does not exist (Playername of Card %d in Game %d). Exiting...\n", json_object_get_string(player), j + 1, i + 1);
 				}
 				md.games[i].cards[j].player_index = player_index(json_object_get_string(player));
 
@@ -1048,11 +1053,11 @@ int main(void) {
 				send_widget(&wscore);
 				break;
 			/*
-		case TOGGLE_WIDGET_HALFTIME:
-			widget_halftime_enabled = !widget_halftime_enabled;
-			send_widget_halftime(widget_halftime_create());
-			break;
-		*/
+			case TOGGLE_WIDGET_HALFTIME:
+				widget_halftime_enabled = !widget_halftime_enabled;
+				send_widget_halftime(widget_halftime_create());
+				break;
+			*/
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
 				WidgetLivetable wlive = WidgetLivetable_create();
@@ -1060,13 +1065,13 @@ int main(void) {
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
-				WidgetGameplan wgame = WidgetGameplan_create();
-				send_widget(&wgame);
+				WidgetGameplan wgp = WidgetGameplan_create();
+				send_widget(&wgp);
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
-				WidgetGamestart wspiel = WidgetGamestart_create();
-				send_widget(&wspiel);
+				WidgetGamestart wgs = WidgetGamestart_create();
+				send_widget(&wgs);
 				break;
 			case RELOAD_JSON:
 				printf("TODO: RELOAD_JSON\n");
@@ -1090,7 +1095,7 @@ int main(void) {
 					"i  Toggle Widget: Scoreboard\n"
 					"l  Toggle Widget: Livetable\n"
 					"v  Toggle Widget: Gameplan\n"
-					"s  Toggle Widget: Spielstart\n"
+					"s  Toggle Widget: Gamestart\n"
 					"\n"
 					"t  set timer\n"
 					"=  pause/resume timer\n"

@@ -380,7 +380,7 @@ function write_card(view: DataView) {
 		card_message.innerHTML = "bekommt eine gelbe Karte"
 	}
 
-	setTimeout(() => { card.style.display = "none" }, 5_000)
+	setTimeout(() => card.style.display = "none", 5_000)
 }
 
 interface LivetableLine {
@@ -584,10 +584,14 @@ socket.onmessage = (event: MessageEvent) => {
 		case 0:
 			return
 		case WidgetMessage.WIDGET_SCOREBOARD:
-			scoreboard.style.display = "none"
+			// TODO WIP
+			scoreboard.style.opacity = "0"
+			setTimeout(() => scoreboard.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_SCOREBOARD + 1:
 			scoreboard.style.display = "inline-flex"
+			scoreboard.style.opacity = "0"
+			setTimeout(() => scoreboard.style.opacity = "1", 10)
 			write_scoreboard(view)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE:
@@ -639,13 +643,13 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-function hotReloadCSS() {
-  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-    const newLink = document.createElement('link')
-    newLink.rel = 'stylesheet'
-    newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
-    link.replaceWith(newLink)
-  })
-}
-
-setInterval(hotReloadCSS, 5000)
+// TODO function hotReloadCSS() {
+// TODO   document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+// TODO     const newLink = document.createElement('link')
+// TODO     newLink.rel = 'stylesheet'
+// TODO     newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+// TODO     link.replaceWith(newLink)
+// TODO   })
+// TODO }
+// TODO
+// TODO setInterval(hotReloadCSS, 5000)
