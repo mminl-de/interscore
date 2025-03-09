@@ -3,7 +3,7 @@
     <head> <meta charset="utf-8"/> <meta name="viewport" content="width=device-width, initial-scale=1"/> <link rel="stylesheet" href="main.css">
         <link rel="stylesheet" href="card.css">
         <link rel="stylesheet" href="gameplan.css">
-        <link rel="stylesheet" href="playing_teams.css">
+        <link rel="stylesheet" href="gamestart.css">
         <link rel="stylesheet" href="livetable.css">
         <link rel="stylesheet" href="scoreboard.css">
         <title>Scoreboard</title>
@@ -28,7 +28,6 @@
 			</div>
         </div>
 
-		<!-- CARD -->
 		<div class="card">
 			<div class="card-graphic"></div>
 			<div class="card-info">
@@ -37,87 +36,29 @@
 			</div>
 		</div>
 
-		<!-- GAMEPLAN -->
         <div class="gameplan">
 			<!-- TODO FINAL don't hardcode this label -->
 			<div class="heading">Spielplan</div>
 		</div>
 
-		<!-- PLAYING TEAMS -->
-        <div class="playing-teams">
+        <div class="gamestart">
 			<!-- TODO FINAL logos -->
-			<div class="left">
-				<div class="team-name">Gifhorn</div>
-				<div class="player">
-					Max Mustermann
-					<div class="player-role">
-						Spieler
-					</div>
-				</div>
-				<div class="player">
-					Johnny Depp
-					<div class="player-role">
-						Gespielte
-					</div>
-				</div>
-				<div class="player">
-					Mark Zuckerberg
-					<div class="player-role">
-						Gefreite
-					</div>
-				</div>
-				<div class="player">
-					Walter White
-					<div class="player-role">
-						Boss
-					</div>
-				</div>
-			</div>
-			<div class="right">
-				<div class="team-name">
-					Gifhorn
-				</div>
-				<div class="player">
-					Max Mustermann
-					<div class="player-role">
-						Spieler
-					</div>
-				</div>
-				<div class="player">
-					Johnny Depp
-					<div class="player-role">
-						Gespielte
-					</div>
-				</div>
-				<div class="player">
-					Mark Zuckerberg
-					<div class="player-role">
-						Gefreite
-					</div>
-				</div>
-				<div class="player">
-					Walter White
-					<div class="player-role">
-						Boss
-					</div>
-				</div>
-			</div>
+			<div class="heading">Gleich spielen:</div>
+			<div class="container"></div>
         </div>
 
 		<div class="livetable">
 			<!-- TODO FINAL don't hardcode this label -->
 			<div class="heading">Livetabelle</div>
-			<div class="container">
-				<div class="line">
-					<div class="header name">Team</div>
-					<div class="header">Punkte</div>
-					<div class="header">Gespielt</div>
-					<div class="header">Gewonnen</div>
-					<div class="header">Unentsch.</div>
-					<div class="header">Verloren</div>
-					<div class="header">Tore</div>
-					<div class="header">Differenz</div>
-				</div>
+			<div class="line">
+				<div class="header bordered name">Team</div>
+				<div class="header bordered">Punkte</div>
+				<div class="header bordered">Gespielt</div>
+				<div class="header bordered">Gewonnen</div>
+				<div class="header bordered">Unentsch.</div>
+				<div class="header bordered">Verloren</div>
+				<div class="header bordered">Tore</div>
+				<div class="header bordered">Differenz</div>
 			</div>
 		</div>
 

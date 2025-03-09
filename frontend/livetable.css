@@ -1,5 +1,5 @@
 .livetable {
-	display: flex;
+	display: none;
 	flex-direction: column;
 
 	position: absolute;
@@ -14,10 +14,6 @@
 	margin: auto;
 }
 
-.livetable .heading {
-	font-size: 60px;
-}
-
 .line {
 	display: flex;
 	gap: 10px;
@@ -25,7 +21,6 @@
 
 .line > * {
 	background-color: #bebebe;
-	border: solid 3px black;
 
 	text-align: center;
 

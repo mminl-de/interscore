@@ -11,17 +11,17 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-// #### Javascript/ GUI Widgets Structs
-
-//The first element is disable, the second is enable/update
-enum Widget {
+// Each WIDGET_* elements except WIDGET_CARD_SHOW means disable,
+// the successor means enable/update.
+// This widget is mirrored in frontend/script.ts.
+enum WidgetMessage {
 	WIDGET_SCOREBOARD = 1,
 	WIDGET_LIVETABLE = 3,
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_GAMESTART = 7,
-	WIDGET_CARD = 9,
-	SCOREBOARD_SET_TIMER = 11,
-	SCOREBOARD_PAUSE_TIMER = 12
+	WIDGET_CARD_SHOW = 9,
+	SCOREBOARD_SET_TIMER = 10,
+	SCOREBOARD_PAUSE_TIMER = 11
 };
 enum CardType { YELLOW, RED };
 enum PlayerRole { KEEPER, FIELD };
@@ -32,35 +32,40 @@ enum InputType {
 };
 
 #pragma pack(push, 1)
+typedef struct { u8 r, g, b; } Color;
+
 typedef struct {
 	u8 widget_num;
-	char team1[TEAMS_NAME_MAX_LEN];
-	char team2[TEAMS_NAME_MAX_LEN];
+	char t1[TEAM_NAME_MAX_LEN];
+	char t2[TEAM_NAME_MAX_LEN];
 	u8 score_t1;
 	u8 score_t2;
 	bool is_halftime;
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	Color t1_color_left;
+	Color t1_color_right;
+	Color t2_color_left;
+	Color t2_color_right;
 } WidgetScoreboard;
 
 typedef struct {
 	u8 widget_num;
-	char team1_keeper[TEAMS_NAME_MAX_LEN];
-	char team1_field[TEAMS_NAME_MAX_LEN];
-	char team2_keeper[TEAMS_NAME_MAX_LEN];
-	char team2_field[TEAMS_NAME_MAX_LEN];
-	char team1_color_left[HEX_COLOR_LEN];
-	char team1_color_right[HEX_COLOR_LEN];
-	char team2_color_left[HEX_COLOR_LEN];
-	char team2_color_right[HEX_COLOR_LEN];
+	// TODO NOW add t1 and t2 to the ._create function
+	char t1[TEAM_NAME_MAX_LEN];
+	char t2[TEAM_NAME_MAX_LEN];
+	char t1_keeper[PLAYER_NAME_MAX_LEN];
+	char t1_field[PLAYER_NAME_MAX_LEN];
+	char t2_keeper[PLAYER_NAME_MAX_LEN];
+	char t2_field[PLAYER_NAME_MAX_LEN];
+	Color t1_color_left;
+	Color t1_color_right;
+	Color t2_color_left;
+	Color t2_color_right;
 } WidgetGamestart;
 
 typedef struct {
 	u8 widget_num;
 	u8 len; // amount of teams total
-	char teams[TEAMS_COUNT_MAX][TEAMS_NAME_MAX_LEN]; // sorted
+	char teams[TEAMS_COUNT_MAX][TEAM_NAME_MAX_LEN]; // sorted
 	u8 points[TEAMS_COUNT_MAX];
 	u8 games_played[TEAMS_COUNT_MAX];
 	u8 games_won[TEAMS_COUNT_MAX];
@@ -68,20 +73,20 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
-	char color[TEAMS_COUNT_MAX][HEX_COLOR_LEN];
+	Color color[TEAMS_COUNT_MAX];
 } WidgetLivetable;
 
 typedef struct {
 	u8 widget_num;
 	u8 len; // amount of Games total
-	char teams1[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
-	char teams2[GAMES_COUNT_MAX][TEAMS_NAME_MAX_LEN];
+	char teams1[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
+	char teams2[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
-	char team1_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team1_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team2_color_left[GAMES_COUNT_MAX][HEX_COLOR_LEN];
-	char team2_color_right[GAMES_COUNT_MAX][HEX_COLOR_LEN];
+	Color t1_color_left[GAMES_COUNT_MAX];
+	Color t1_color_right[GAMES_COUNT_MAX];
+	Color t2_color_left[GAMES_COUNT_MAX];
+	Color t2_color_right[GAMES_COUNT_MAX];
 } WidgetGameplan;
 
 typedef struct {
@@ -235,6 +240,20 @@ bool WidgetGameplan_enabled = false;
 //
 // }
 
+// Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
+u8 hex_char_to_int(char c) {
+    return (c & 0xF) + (c >> 6) * 9;
+}
+
+// Converts color as hexcode to rgb.
+Color Color_from_hex(const char *hex) {
+    return (Color) {
+        (hex_char_to_int(hex[0]) << 4) | hex_char_to_int(hex[1]),
+        (hex_char_to_int(hex[2]) << 4) | hex_char_to_int(hex[3]),
+        (hex_char_to_int(hex[4]) << 4) | hex_char_to_int(hex[5])
+    };
+}
+
 int qsort_helper_u8(const void *p1, const void *p2) {
 	if(*(int*)p1 < *(int*)p2)
 		return -1;
@@ -258,27 +277,25 @@ WidgetScoreboard WidgetScoreboard_create() {
 	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
 
 	if (md.cur.halftime) {
-		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t1_index].name);
-		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		strcpy(w.t2, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(w.t1, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t2 = md.games[md.cur.gameindex].score.t1;
 		w.score_t1 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.t1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		w.t1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.t2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		w.t2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
 	} else {
-		strcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name);
-		strcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		strcpy(w.t1, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(w.t2, md.teams[md.games[md.cur.gameindex].t2_index].name);
 		w.score_t1 = md.games[md.cur.gameindex].score.t1;
 		w.score_t2 = md.games[md.cur.gameindex].score.t2;
 
-		strcpy(w.team1_color_left, md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		strcpy(w.team1_color_right, md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		strcpy(w.team2_color_left, md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		strcpy(w.team2_color_right, md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		w.t1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		w.t1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
+		w.t2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
+		w.t2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
@@ -286,12 +303,13 @@ WidgetScoreboard WidgetScoreboard_create() {
 }
 
 WidgetGamestart WidgetGamestart_create() {
+	// TODO ADD colors
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
-	strcpy(w.team1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
-	strcpy(w.team1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
-	strcpy(w.team2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
-	strcpy(w.team2_field, md.players[md.teams[md.games[md.cur.gameindex].t2_index].field_index].name);
+	strcpy(w.t1_keeper, md.players[md.teams[md.games[md.cur.gameindex].t1_index].keeper_index].name);
+	strcpy(w.t1_field, md.players[md.teams[md.games[md.cur.gameindex].t1_index].field_index].name);
+	strcpy(w.t2_keeper, md.players[md.teams[md.games[md.cur.gameindex].t2_index].keeper_index].name);
+	strcpy(w.t2_field, md.players[md.teams[md.games[md.cur.gameindex].t2_index].field_index].name);
 	return w;
 }
 
@@ -360,7 +378,7 @@ WidgetLivetable WidgetLivetable_create() {
 		printf("begin entry goals: %d\n", w.goals[i]);
 		w.goals_taken[i] = team_calc_goals_taken(best_index);
 		printf("begin entry goals taken: %d\n", w.goals[i]);
-		strcpy(w.color[i], md.teams[i].color_light);
+		w.color[i] = Color_from_hex(md.teams[i].color_light);
 
 		teams_done[i] = best_index;
 	}
@@ -377,12 +395,12 @@ WidgetGameplan WidgetGameplan_create() {
 		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
 		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
 
-		strcpy(w.team1_color_left[i], md.teams[md.games[i].t1_index].color_light);
-		strcpy(w.team1_color_right[i], md.teams[md.games[i].t1_index].color_dark);
-		strcpy(w.team2_color_left[i], md.teams[md.games[i].t2_index].color_dark);
-		strcpy(w.team2_color_right[i], md.teams[md.games[i].t2_index].color_light);
+		w.t1_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
+		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
+		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
+		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
 
-		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.team1_color_left[i], w.team2_color_right[i]);
+		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.t1_color_left[i], w.t2_color_right[i]);
 	}
 
 	return w;
@@ -394,13 +412,9 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 
 	WidgetCard w;
 	// TODO NOW when to despawn cards?
-	w.widget_num = WIDGET_CARD + 1;
-	printf(".. TODO survived making widget\n");
-	printf("1. curindex: %d\n", md.cur.gameindex);
-	printf("2. cardscount: %d\n", md.games[cur].cards_count);
-	printf("3: i: %d\n", md.games[cur].cards[card_i].player_index);
+	w.widget_num = WIDGET_CARD_SHOW;
 	strcpy(w.name, md.players[md.games[cur].cards[card_i].player_index].name);
-	w.type = md.games[cur].cards[card_i].card_type;;
+	w.type = md.games[cur].cards[card_i].card_type;
 	return w;
 }
 
@@ -598,7 +612,7 @@ int player_index(const char *name) {
 // If the name does not exist return -1.
 int team_index(const char *name) {
 	for (u8 i = 0; i < md.teams_count; i++)
-		if (strcmp(md.teams[i].name, name) == 0)
+		if (!strcmp(md.teams[i].name, name))
 			return i;
 	return -1;
 }
@@ -689,14 +703,14 @@ void load_json(const char *path) {
 	i = 0;
 	json_object_object_foreach(games, gamenumber, gamedata) {
 		json_object *team;
-		json_object_object_get_ex(gamedata, "team1", &team);
+		json_object_object_get_ex(gamedata, "t1", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
+			printf("Error parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t1_index = team_index(json_object_get_string(team));
 
-		json_object_object_get_ex(gamedata, "team2", &team);
+		json_object_object_get_ex(gamedata, "t2", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
@@ -704,15 +718,15 @@ void load_json(const char *path) {
 		md.games[i].t2_index = team_index(json_object_get_string(team));
 		json_object *halftimescore, *score, *cards, *var;
 		if (json_object_object_get_ex(gamedata, "halftimescore", &halftimescore)) {
-			json_object_object_get_ex(halftimescore, "team1", &var);
+			json_object_object_get_ex(halftimescore, "t1", &var);
 			md.games[i].halftimescore.t1 = json_object_get_int(var);
-			json_object_object_get_ex(halftimescore, "team2", &var);
+			json_object_object_get_ex(halftimescore, "t2", &var);
 			md.games[i].halftimescore.t2 = json_object_get_int(var);
 		}
 		if (json_object_object_get_ex(gamedata, "score", &score)) {
-			json_object_object_get_ex(score, "team1", &var);
+			json_object_object_get_ex(score, "t1", &var);
 			md.games[i].score.t1 = json_object_get_int(var);
-			json_object_object_get_ex(score, "team2", &var);
+			json_object_object_get_ex(score, "t2", &var);
 			md.games[i].score.t2 = json_object_get_int(var);
 		}
 		if (json_object_object_get_ex(gamedata, "cards", &cards)) {
@@ -809,25 +823,26 @@ u8 add_card(enum CardType type) {
 		md.players[md.teams[md.games[cur].t2_index].field_index].name, md.teams[md.games[cur].t2_index].name);
 
 	char ch;
-	int player = -1;
-	while (player == -1) {
+	u8 player_i = 0;
+	while (!player_i) {
 		ch = getchar();
 		switch(ch) {
 			case '1':
-				player = md.teams[md.games[cur].t1_index].keeper_index;
+				player_i = md.teams[md.games[cur].t1_index].keeper_index;
+				printf("TODO chose '%s'\n", md.players[player_i].name);
 				break;
 			case '2':
-				player = md.teams[md.games[cur].t1_index].field_index;
+				player_i = md.teams[md.games[cur].t1_index].field_index;
 				break;
 			case '3':
-				player = md.teams[md.games[cur].t2_index].keeper_index;
+				player_i = md.teams[md.games[cur].t2_index].keeper_index;
 				break;
 			case '4':
-				player = md.teams[md.games[cur].t2_index].field_index;
+				player_i = md.teams[md.games[cur].t2_index].field_index;
 				break;
 		}
 	}
-	md.games[cur].cards[md.games[cur].cards_count].player_index = player;
+	md.games[cur].cards[md.games[cur].cards_count].player_index = player_i;
 	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
 	return md.games[cur].cards_count - 1;
 }
@@ -905,8 +920,8 @@ int main(void) {
 
 				WidgetScoreboard data = WidgetScoreboard_create();
 				data.widget_num = WIDGET_SCOREBOARD + 1;
-				memcpy(data.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
-				memcpy(data.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
+				memcpy(data.t1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAM_NAME_MAX_LEN);
+				memcpy(data.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
 				mg_ws_send(client_con, &data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
 				break;
@@ -927,9 +942,9 @@ int main(void) {
 
 				WidgetScoreboard w = WidgetScoreboard_create();
 				w.widget_num = WIDGET_SCOREBOARD + 1;
-				memcpy(w.team1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAMS_NAME_MAX_LEN);
-				memcpy(w.team2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAMS_NAME_MAX_LEN);
-				printf("Currently playing: '%s' vs. '%s'\n", w.team1, w.team2);
+				memcpy(w.t1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAM_NAME_MAX_LEN);
+				memcpy(w.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
+				printf("Currently playing: '%s' vs. '%s'\n", w.t1, w.t2);
 				const char *data = (char *) &w;
 				mg_ws_send(client_con, data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
@@ -981,17 +996,12 @@ int main(void) {
 				);
 				break;
 			case DEAL_YELLOW_CARD:{
-				u8 card_i = add_card(YELLOW);
-				printf("TODO survided add_card\n");
-				WidgetCard wy = WidgetCard_create(YELLOW, card_i);
-				printf("TODO survided WidgetCard_create\n");
+				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
 				send_widget(&wy);
-				printf("TODO survided send_widget\n");
 				break;
 			}
 			case DEAL_RED_CARD: {
-				u8 card_i = add_card(RED);
-				WidgetCard wr = WidgetCard_create(RED, card_i);
+				WidgetCard wr = WidgetCard_create(add_card(RED));
 				send_widget(&wr);
 				break;
 			}

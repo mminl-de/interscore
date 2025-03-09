@@ -514,7 +514,7 @@ void update_button(GtkWidget **b, GtkWidget *fixed, int x_start, int x_end, int 
 
 void update_display_window(){
 	//Display the Teamnames
-	char teamname[TEAMS_NAME_MAX_LEN];
+	char teamname[TEAM_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	int fontsize = biggest_fontsize_possible(teamname, 300, wd.width/2 - wd.width/20, wd.height/6 - 10, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -522,7 +522,7 @@ void update_display_window(){
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 
-	char s[TEAMS_NAME_MAX_LEN];
+	char s[TEAM_NAME_MAX_LEN];
 	if(md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
@@ -556,7 +556,7 @@ void update_display_window(){
 
 void update_input_window(){
 	//Display the Teamnames
-	char teamname[TEAMS_NAME_MAX_LEN];
+	char teamname[TEAM_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	int fontsize = biggest_fontsize_possible(teamname, 300, wi.width/2 - (wi.width/20 + wi.width/40 + wi.width/30 + wi.width/40), wi.height/6, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
@@ -564,7 +564,7 @@ void update_input_window(){
 	if (fontsize2 < fontsize)
 		fontsize = fontsize2;
 	printf("fontsize: %d, %d\n", fontsize, fontsize2);
-	char s[TEAMS_NAME_MAX_LEN];
+	char s[TEAM_NAME_MAX_LEN];
 
 	//Display prev game;
 	update_button(&wi.b.game.prev, wi.fixed, wi.width/80, wi.width/20, 20, 20+fontsize);
