@@ -266,7 +266,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 }
 
 //Set current_match to first match and 0-initialize every game
-void init_matchday() {
+void matchday_init() {
 	if (md.games_count == 0) {
 		printf("There are no games, exiting\n");
 		exit(EXIT_FAILURE);
@@ -283,6 +283,26 @@ void init_matchday() {
 		md.games[i].cards_count = 0;
 		md.games[i].cards = NULL;
 	}
+}
+
+void matchday_free() {
+	for(int i=0; i < md.games_count; i++)
+		if(md.games[i].cards_count > 0)
+			free(md.games[i].cards);
+	for(int i=0; i < md.players_count; i++)
+		free(md.players[i].name);
+	if(md.players_count > 0)
+		free(md.players);
+	if(md.games_count > 0)
+		free(md.games);
+	for(int i=0; i < md.teams_count; i++){
+		free(md.teams[i].name);
+		free(md.teams[i].logo_filename);
+		free(md.teams[i].color_light);
+		free(md.teams[i].color_dark);
+	}
+	if(md.teams_count > 0)
+		free(md.teams);
 }
 
 // Return the index of a players name.
@@ -303,9 +323,10 @@ int team_index(const char *name) {
 	return -1;
 }
 
-void save_json(const char *path) {
-	struct json_object *teams = json_object_new_object();
-	struct json_object *games = json_object_new_object();
+const char* json_generate() {
+	struct json_object *root = json_object_new_object();
+	struct json_object *teams = json_object_new_array();
+	struct json_object *games = json_object_new_array();
 	for(int i=0; i < md.teams_count; i++){
 		struct json_object *team = json_object_new_object();
 		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_filename));
@@ -317,8 +338,9 @@ void save_json(const char *path) {
 		struct json_object *field = json_object_new_object();
 		json_object_object_add(field, "name", json_object_new_string(md.players[md.teams[i].field_index].name));
 		json_object_object_add(team, "field", field);
-		json_object_object_add(teams, md.teams[i].name, team);
+		json_object_array_add(teams, team);
 	}
+	printf("games: %d", md.games_count);
 	for(int i=0; i < md.games_count; i++){
 		struct json_object *game = json_object_new_object();
 		json_object_object_add(game, "team1", json_object_new_string(md.teams[md.games[i].t1_index].name));
@@ -345,11 +367,16 @@ void save_json(const char *path) {
 			}
 			json_object_object_add(game, "cards", cards);
 		}
-		json_object_object_add(games, "game", game);
+		json_object_array_add(games, game);
 	}
+	json_object_object_add(root, "teams", teams);
+	json_object_object_add(root, "games", games);
+	const char *str = json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
+	return str;
 }
 
-void load_json(const char *path) {
+void json_load(const char *path) {
+	printf("Start loading\n");
 	// First convert path to actual string containing whole file
 	FILE *f = fopen(path, "rb");
 	if (f == NULL) {
@@ -380,109 +407,117 @@ void load_json(const char *path) {
 
 	// Then split json into teams and games
 	struct json_object *root = json_tokener_parse(filestring);
-	struct json_object *teams = json_object_new_object();
-	struct json_object *games = json_object_new_object();
+	free(filestring);
+	struct json_object *teams = json_object_new_array();
+	struct json_object *games = json_object_new_array();
+	printf("Loading Teams:\n");
 	json_object_object_get_ex(root, "teams", &teams);
+	printf("Loading Games:\n");
 	json_object_object_get_ex(root, "games", &games);
 
-	md.teams_count = json_object_object_length(teams);
+	md.teams_count = json_object_array_length(teams);
 	md.teams = (Team *) malloc(md.teams_count * sizeof(Team));
 
 	md.players_count = md.teams_count*2;
 	md.players = (Player *) malloc(md.players_count * sizeof(Player));
 
 	// Read all the teams
-	u32 i = 0;
-	json_object_object_foreach(teams, teamname, teamdata) {
-		md.teams[i].name = teamname;
-		json_object *logo, *keeper, *field, *name, *color;
+	for(int i=0; i < md.teams_count; i++){
+		json_object *team, *logo, *players, *name, *color, *position;
+		team = json_object_array_get_idx(teams, i);
+		json_object_object_get_ex(team, "name", &name);
+		md.teams[i].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
+		strcpy(md.teams[i].name, json_object_get_string(name));
 
-		json_object_object_get_ex(teamdata, "logo", &logo);
+		json_object_object_get_ex(team, "logo", &logo);
 		md.teams[i].logo_filename = (char *) malloc(strlen(json_object_get_string(logo)) * sizeof(char));
 		strcpy(md.teams[i].logo_filename, json_object_get_string(logo));
 
-		json_object_object_get_ex(teamdata, "keeper", &keeper);
-		json_object_object_get_ex(keeper, "name", &name);
-		md.players[i*2].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-		strcpy(md.players[i*2].name, json_object_get_string(name));
-		md.players[i*2].team_index = i;
-		md.players[i*2].role = 0;
-		md.teams[i].keeper_index = i*2;
+		printf("Loading Players: %d\n", i+1);
+		json_object_object_get_ex(team, "players", &players);
+		for(int j=0; j < json_object_array_length(players); j++){
+			json_object *player = json_object_array_get_idx(players, j);
+			json_object_object_get_ex(player, "name", &name);
+			md.players[i*2+j].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
+			strcpy(md.players[i*2].name, json_object_get_string(name));
+			md.players[i*2+j].team_index = i;
+			json_object_object_get_ex(player, "position", &position);
+			if(strcmp(json_object_get_string(position), "keeper")){
+				md.players[i*2+j].role = 0;
+				md.teams[i].keeper_index = i*2+j;
 
+			} else if(strcmp(json_object_get_string(position), "field")){
+				md.players[i*2+j].role = 1;
+				md.teams[i].field_index = i*2+j;
+			}
+		}
 
-		json_object_object_get_ex(teamdata, "field", &field);
-		json_object_object_get_ex(field, "name", &name);
-		md.players[i*2+1].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-		strcpy(md.players[i*2+1].name, json_object_get_string(name));
-		md.players[i*2+1].team_index = i;
-		md.players[i*2+1].role = 1;
-		md.teams[i].field_index = i*2+1;
-
-		json_object_object_get_ex(teamdata, "color_light", &color);
+		json_object_object_get_ex(team, "color_light", &color);
 		md.teams[i].color_light = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_light, json_object_get_string(color));
 
-		json_object_object_get_ex(teamdata, "color_dark", &color);
+		json_object_object_get_ex(team, "color_dark", &color);
 		md.teams[i].color_dark = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
-
-		i++;
 	}
 
-	md.games_count = json_object_object_length(games);
+	md.games_count = json_object_array_length(games);
 	md.games = (Game *) malloc(md.games_count * sizeof(Game));
 
-	i = 0;
-	json_object_object_foreach(games, gamenumber, gamedata) {
-		json_object *team;
-		json_object_object_get_ex(gamedata, "team1", &team);
+	for(int i=0; i < md.games_count; i++){
+		json_object *team, *game;
+		game = json_object_array_get_idx(games, i);
+		json_object_object_get_ex(game, "team1", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t1_index = team_index(json_object_get_string(team));
 
-		json_object_object_get_ex(gamedata, "team2", &team);
+		json_object_object_get_ex(game, "team2", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t2_index = team_index(json_object_get_string(team));
+
 		json_object *halftimescore, *score, *cards, *var;
-		if (json_object_object_get_ex(gamedata, "halftimescore", &halftimescore)) {
+		if (json_object_object_get_ex(game, "halftimescore", &halftimescore)) {
 			json_object_object_get_ex(halftimescore, "team1", &var);
 			md.games[i].halftimescore.t1 = json_object_get_int(var);
 			json_object_object_get_ex(halftimescore, "team2", &var);
 			md.games[i].halftimescore.t2 = json_object_get_int(var);
 		}
-		if (json_object_object_get_ex(gamedata, "score", &score)) {
+		if (json_object_object_get_ex(game, "score", &score)) {
 			json_object_object_get_ex(score, "team1", &var);
 			md.games[i].score.t1 = json_object_get_int(var);
 			json_object_object_get_ex(score, "team2", &var);
 			md.games[i].score.t2 = json_object_get_int(var);
 		}
-		if (json_object_object_get_ex(gamedata, "cards", &cards)) {
+		printf("Loading Cards:\n");
+		if (json_object_object_get_ex(game, "cards", &cards)) {
 
-			md.games[i].cards_count = json_object_object_length(cards);
+			md.games[i].cards_count = json_object_array_length(cards);
 			md.games[i].cards = (Card *) malloc(md.games[i].cards_count * sizeof(Card));
 
-			u32 j = 0;
-			json_object_object_foreach(cards, cardname, carddata) {
-				json_object *player, *type;
-				json_object_object_get_ex(carddata, "player", &player);
+			for(int j=0; j < md.games[i].cards_count; j++){
+				json_object *player, *type, *card;
+				card = json_object_array_get_idx(cards, j);
+				json_object_object_get_ex(card, "player", &player);
 				if (player_index(json_object_get_string(player)) == -1) {
 					printf("Erorr parsing JSON: '%s' does not exist (Playername of Card %d in Game %d). Exiting...\n", json_object_get_string(player), j+1, i + 1);
+					exit(EXIT_FAILURE);
 				}
 				md.games[i].cards[j].player_index = player_index(json_object_get_string(player));
 
-				json_object_object_get_ex(carddata, "type", &type);
-				md.games[i].cards[j].card_type = json_object_get_boolean(type);
-				j++;
+				json_object_object_get_ex(card, "type", &type);
+				if(strcmp(json_object_get_string(type), "Y"))
+					md.games[i].cards[j].card_type = 0;
+				else if(strcmp(json_object_get_string(type), "R"))
+					md.games[i].cards[j].card_type = 1;
 			}
 		}
-		i++;
 	}
-
 	return;
 }
 
@@ -808,8 +843,11 @@ void websocket_poll() {
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
-	load_json(JSON_PATH);
-	init_matchday();
+	json_load(JSON_PATH);
+	matchday_init();
+	const char *json = json_generate();
+	printf("%s", json);
+	return 1;
 
     create_display_window();
     create_input_window();

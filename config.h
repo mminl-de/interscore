@@ -11,6 +11,6 @@
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
 #define URL "http://0.0.0.0:8081"
-#define JSON_PATH "input.json"
+#define JSON_PATH "input_neuve.json"
 
 #endif // CONFIG_H_
