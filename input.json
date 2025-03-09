@@ -1,29 +1,50 @@
 {
-    "teams": {
-        "GIFHORN": {
+    "teams": [
+        {
+			"name": "GIFHORN",
             "logo": "assets/gifhorn.jpg",
-            "keeper": {
-                "name": "Corvin Rowold"
-            },
-            "field": {
-                "name": "Christian Kramer"
-            },
+			"players": [
+				{
+                	"name": "Corvin Rowold",
+					"position": "keeper"
+				},
+				{
+                	"name": "Christian Kramer",
+					"position": "field"
+				}
+			],
 	    	"color_light": "#234521",
 	    	"color_dark": "#544521"
         },
-        "NAUROD 1": {
+        {
+			"name": "NAUROD 1",
             "logo": "assets/naurod.jpg",
-            "keeper": {
-                "name": "Marco Wagner"
-            },
-            "field": {
-                "name": "Till Wehner"
-            },
+			"players": [
+				{
+                	"name": "Marco Wagner",
+					"position": "keeper"
+				},
+				{
+                	"name": "Till Wehner",
+					"position": "field"
+				}
+			],
 	    	"color_light": "#234521",
 	    	"color_dark": "#544521"
         },
-        "NAUROD 2": {
+        {
+			"name": "NAUROD 2",
             "logo": "assets/naurod.jpg",
+			"players": [
+				{
+                	"name": "Timo Wagner",
+					"position": "keeper"
+				},
+				{
+                	"name": "Pascal van Klev",
+					"position": "field"
+				}
+			],
             "keeper": {
                 "name": "Timo Wagner"
             },
@@ -33,44 +54,49 @@
 			"color_light": "#234521",
 			"color_dark": "#544521"
         },
-        "LUDWIGSFELDE": {
+        {
+			"name": "LUDWIGSFELDE",
             "logo": "assets/ludwigsfelde.svg",
-            "keeper": {
-                "name": "Matthias Dunkel"
-            },
-            "field": {
-                "name": "Felix Stege"
-            },
+			"players": [
+				{
+                	"name": "Matthias Dunkel",
+					"position": "keeper"
+				},
+				{
+                	"name": "Felix Stege",
+					"position": "field"
+				}
+			],
 			"color_light": "#234521",
 			"color_dark": "#544521"
         }
-    },
-    "games": {
-        "1": {
+	],
+    "games": [
+        {
             "team1": "NAUROD 1",
             "team2": "NAUROD 2"
         },
-        "2": {
+        {
             "team1": "GIFHORN",
             "team2": "NAUROD 2"
         },
-        "3": {
+        {
             "team1": "NAUROD 1",
             "team2": "LUDWIGSFELDE"
         },
-        "4": {
+        {
             "team1": "LUDWIGSFELDE",
             "team2": "NAUROD 2"
         },
-        "5": {
+        {
             "team1": "NAUROD 1",
             "team2": "GIFHORN"
         },
-        "6": {
+        {
             "team1": "LUDWIGSFELDE",
             "team2": "GIFHORN"
         },
-        "experimental": {
+        {
             "team1": "NAUROD 1",
             "team2": "NAUROD 2",
             "halftimescore": {
@@ -81,16 +107,16 @@
                 "team1": "4",
                 "team2": "4"
             },
-            "cards": {
-                "card1": {
+            "cards": [
+                {
                     "player": "Christian Kramer",
                     "type": "Y"
                 },
-                "card2": {
+                {
                     "player": "Marco Wagner",
                     "type": "R"
                 }
-            }
+			]
         }
-    }
+	]
 }

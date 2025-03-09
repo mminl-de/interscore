@@ -439,16 +439,19 @@ void json_load(const char *path) {
 			json_object *player = json_object_array_get_idx(players, j);
 			json_object_object_get_ex(player, "name", &name);
 			md.players[i*2+j].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-			strcpy(md.players[i*2].name, json_object_get_string(name));
+			strcpy(md.players[i*2+j].name, json_object_get_string(name));
 			md.players[i*2+j].team_index = i;
 			json_object_object_get_ex(player, "position", &position);
-			if(strcmp(json_object_get_string(position), "keeper")){
+			if(!strcmp(json_object_get_string(position), "keeper")){
 				md.players[i*2+j].role = 0;
 				md.teams[i].keeper_index = i*2+j;
 
-			} else if(strcmp(json_object_get_string(position), "field")){
+			} else if(!strcmp(json_object_get_string(position), "field")){
 				md.players[i*2+j].role = 1;
 				md.teams[i].field_index = i*2+j;
+			} else {
+				printf("ERROR parsing JSON: Unknown Position: %s. Exiting...", json_object_get_string(position));
+				exit(EXIT_FAILURE);
 			}
 		}
 
@@ -459,6 +462,10 @@ void json_load(const char *path) {
 		json_object_object_get_ex(team, "color_dark", &color);
 		md.teams[i].color_dark = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
+	}
+	for(int i=0; i < md.teams_count; i++){
+		printf("Team %d: %s\n", i, md.teams[i].name);
+		printf("Players: %s, %s\n", md.players[md.teams[i].keeper_index].name, md.players[md.teams[i].field_index].name);
 	}
 
 	md.games_count = json_object_array_length(games);
