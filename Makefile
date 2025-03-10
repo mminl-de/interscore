@@ -1,7 +1,8 @@
-SRC ?= backend.c mongoose/mongoose.c
+SRC ?= backend.c mongoose/mongoose.c common.c
 OUT ?= interscore
 CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
 CC ?= cc
+CPPC ?= c++
 
 b-install:
 	$(CC) -o $(OUT) $(SRC) \
@@ -21,25 +22,23 @@ b-fast:
 b-run:
 	./$(OUT)
 
-RSRC ?= rentnerend/rentnerend.c mongoose/mongoose.c
+RSRC ?= rentnerend/rentnerend.cpp mongoose/mongoose.c common.c
 ROUT ?= rentnerend/rentnerend
+QT_FLAGS ?= `pkg-config Qt6Widgets --cflags --libs`
 
 r-install:
-	$(CC) -o $(ROUT) $(RSRC) \
-	-O3 $(CFLAGS) \
-	`pkg-config gtk4 --cflags --libs` \
+	$(CPPC) -o $(ROUT) $(RSRC) \
+	-O3 $(CFLAGS) -fpermissive -fPIC $(QT_FLAGS) \
 	-ljson-c
 
 r-debug:
-	$(CC) -o $(ROUT) $(RSRC) \
-	$(CFLAGS) -g \
-	`pkg-config gtk4 --cflags --libs` \
+	$(CPPC) -o $(ROUT) $(RSRC) \
+	$(CFLAGS) $(QT_FLAGS) -fpermissive -fPIC -g \
 	-ljson-c
 
 r-fast:
-	$(CC) -o $(ROUT) $(RSRC) \
-	`pkg-config gtk4 --cflags --libs` \
-	-ljson-c
+	$(CPPC) -o $(ROUT) $(RSRC) \
+	$(QT_FLAGS) -fpermissive -fPIC -ljson-c
 
 r-run:
 	./$(ROUT)

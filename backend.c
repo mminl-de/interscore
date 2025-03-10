@@ -6,10 +6,7 @@
 #include "mongoose/mongoose.h"
 
 #include "config.h"
-
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
+#include "common.h"
 
 // Each WIDGET_* elements except WIDGET_CARD_SHOW means disable,
 // the successor means enable/update.
@@ -22,13 +19,6 @@ enum WidgetMessage {
 	WIDGET_CARD_SHOW = 9,
 	SCOREBOARD_SET_TIMER = 10,
 	SCOREBOARD_PAUSE_TIMER = 11
-};
-enum CardType { YELLOW, RED };
-enum PlayerRole { KEEPER, FIELD };
-enum InputType {
-	T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS,
-	GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES,
-	TIME_PLUS, TIME_MINUS, TIME_TOGGLE_PAUSE, TIME_RESET
 };
 
 #pragma pack(push, 1)
@@ -95,57 +85,6 @@ typedef struct {
 	char name[PLAYER_NAME_MAX_LEN];
 } WidgetCard;
 #pragma pack(pop)
-
-// #### In Game Structs
-
-typedef struct {
-	u8 t1;
-	u8 t2;
-} Score;
-
-typedef struct {
-	u8 player_index;
-	enum CardType card_type;
-} Card;
-
-typedef struct {
-	char *name;
-	u8 team_index;
-	enum PlayerRole role;
-} Player;
-
-typedef struct {
-	u8 keeper_index;
-	u8 field_index;
-	char *name;
-	char *logo_filename;
-	char *color_light;
-	char *color_dark;
-} Team;
-
-typedef struct {
-	u8 t1_index;
-	u8 t2_index;
-	Score halftimescore;
-	Score score;
-	Card *cards;
-	u8 cards_count;
-} Game;
-
-typedef struct {
-	struct {
-		u8 gameindex; // index of the current game played in the games array
-		bool halftime; // 0: first half, 1: second half
-		bool pause;
-		u16 time;
-	} cur;
-	Game *games;
-	u8 games_count;
-	Team *teams;
-	u8 teams_count;
-	Player *players;
-	u8 players_count;
-} Matchday;
 
 /*
 Possible User Actions:
@@ -225,8 +164,8 @@ u8 team_calc_games_tied(u8 index);
 u16 team_calc_goals(u8 index);
 u16 team_calc_goals_taken(u8 index);
 
-bool running = true;
 Matchday md;
+bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *client_con = NULL;
 struct mg_mgr mgr;
@@ -235,10 +174,6 @@ bool WidgetScoreboard_enabled = false;
 bool WidgetGamestart_enabled = false;
 bool WidgetLivetable_enabled = false;
 bool WidgetGameplan_enabled = false;
-
-// TODO send_WidgetCard(WidgetCard w) {
-//
-// }
 
 // Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
 u8 hex_char_to_int(char c) {
@@ -599,159 +534,6 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	}
 }
 
-// Return the index of a players name.
-// If the name does not exist, return -1.
-int player_index(const char *name) {
-	for (u8 i = 0; i < md.players_count; i++)
-		if (!strcmp(md.players[i].name, name))
-			return i;
-	return -1;
-}
-
-// Return the index of a team name.
-// If the name does not exist return -1.
-int team_index(const char *name) {
-	for (u8 i = 0; i < md.teams_count; i++)
-		if (!strcmp(md.teams[i].name, name))
-			return i;
-	return -1;
-}
-
-void load_json(const char *path) {
-	// First convert path to actual string containing whole file
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		printf("Json Input file is not available! Exiting...\n");
-		exit(EXIT_FAILURE);
-	}
-	// seek to end to find length, then reset to the beginning
-	fseek(f, 0, SEEK_END);
-	u32 file_size = ftell(f);
-	rewind(f);
-
-	char *filestring = malloc((file_size + 1) * sizeof(char));
-	if (filestring == NULL) {
-		printf("Not enough memory for loading json! Exiting...\n");
-		fclose(f);
-		exit(EXIT_FAILURE);
-	}
-
-	u32 chars_read = fread(filestring, sizeof(char), file_size, f);
-	if (chars_read != file_size) {
-		printf("Could not read whole json file! Exiting...");
-		free(filestring);
-		fclose(f);
-		exit(EXIT_FAILURE);
-	}
-	filestring[file_size] = '\0';
-	fclose(f);
-
-	// Then split json into teams and games
-	struct json_object *root = json_tokener_parse(filestring);
-	struct json_object *teams = json_object_new_object();
-	struct json_object *games = json_object_new_object();
-	json_object_object_get_ex(root, "teams", &teams);
-	json_object_object_get_ex(root, "games", &games);
-
-	md.teams_count = json_object_object_length(teams);
-	md.teams = malloc(md.teams_count * sizeof(Team));
-
-	md.players_count = md.teams_count*2;
-	md.players = malloc(md.players_count * sizeof(Player));
-
-	// Read all the teams
-	u32 i = 0;
-	json_object_object_foreach(teams, teamname, teamdata) {
-		md.teams[i].name = teamname;
-		json_object *logo, *keeper, *field, *name, *color;
-
-		json_object_object_get_ex(teamdata, "logo", &logo);
-		md.teams[i].logo_filename = malloc(strlen(json_object_get_string(logo)) * sizeof(char));
-		strcpy(md.teams[i].logo_filename, json_object_get_string(logo));
-
-		json_object_object_get_ex(teamdata, "keeper", &keeper);
-		json_object_object_get_ex(keeper, "name", &name);
-		md.players[i*2].name = malloc(strlen(json_object_get_string(name)) * sizeof(char));
-		strcpy(md.players[i*2].name, json_object_get_string(name));
-		md.players[i*2].team_index = i;
-		md.players[i*2].role = 0;
-		md.teams[i].keeper_index = i*2;
-
-
-		json_object_object_get_ex(teamdata, "field", &field);
-		json_object_object_get_ex(field, "name", &name);
-		md.players[i*2+1].name = malloc(strlen(json_object_get_string(name)) * sizeof(char));
-		strcpy(md.players[i*2+1].name, json_object_get_string(name));
-		md.players[i*2+1].team_index = i;
-		md.players[i*2+1].role = 1;
-		md.teams[i].field_index = i*2+1;
-
-		json_object_object_get_ex(teamdata, "color_light", &color);
-		md.teams[i].color_light = malloc(strlen(json_object_get_string(color)) *sizeof(char));
-		strcpy(md.teams[i].color_light, json_object_get_string(color));
-
-		json_object_object_get_ex(teamdata, "color_dark", &color);
-		md.teams[i].color_dark = malloc(strlen(json_object_get_string(color)) *sizeof(char));
-		strcpy(md.teams[i].color_dark, json_object_get_string(color));
-
-		i++;
-	}
-
-	md.games_count = json_object_object_length(games);
-	md.games = malloc(md.games_count * sizeof(Game));
-
-	i = 0;
-	json_object_object_foreach(games, gamenumber, gamedata) {
-		json_object *team;
-		json_object_object_get_ex(gamedata, "t1", &team);
-		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Error parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
-			exit(EXIT_FAILURE);
-		}
-		md.games[i].t1_index = team_index(json_object_get_string(team));
-
-		json_object_object_get_ex(gamedata, "t2", &team);
-		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
-			exit(EXIT_FAILURE);
-		}
-		md.games[i].t2_index = team_index(json_object_get_string(team));
-		json_object *halftimescore, *score, *cards, *var;
-		if (json_object_object_get_ex(gamedata, "halftimescore", &halftimescore)) {
-			json_object_object_get_ex(halftimescore, "t1", &var);
-			md.games[i].halftimescore.t1 = json_object_get_int(var);
-			json_object_object_get_ex(halftimescore, "t2", &var);
-			md.games[i].halftimescore.t2 = json_object_get_int(var);
-		}
-		if (json_object_object_get_ex(gamedata, "score", &score)) {
-			json_object_object_get_ex(score, "t1", &var);
-			md.games[i].score.t1 = json_object_get_int(var);
-			json_object_object_get_ex(score, "t2", &var);
-			md.games[i].score.t2 = json_object_get_int(var);
-		}
-		if (json_object_object_get_ex(gamedata, "cards", &cards)) {
-
-			md.games[i].cards_count = json_object_object_length(cards);
-			md.games[i].cards = malloc(md.games[i].cards_count * sizeof(Card));
-
-			u32 j = 0;
-			json_object_object_foreach(cards, cardname, carddata) {
-				json_object *player, *type;
-				json_object_object_get_ex(carddata, "player", &player);
-				if (player_index(json_object_get_string(player)) == -1) {
-					printf("Erorr parsing JSON: '%s' does not exist (Playername of Card %d in Game %d). Exiting...\n", json_object_get_string(player), j+1, i + 1);
-				}
-				md.games[i].cards[j].player_index = player_index(json_object_get_string(player));
-
-				json_object_object_get_ex(carddata, "type", &type);
-				md.games[i].cards[j].card_type = json_object_get_boolean(type);
-				j++;
-			}
-		}
-		i++;
-	}
-}
-
 //@ret 1 if everything worked, 0 if it couldnt open one of the files
 bool copy_file(const char *source, const char *destination) {
 	FILE *src = fopen(source, "rb");
@@ -777,37 +559,6 @@ bool copy_file(const char *source, const char *destination) {
 	fclose(dest);
 	return true;
 }
-
-
-//@ret 1 if everything worked, 0 if there was any kind of error (e.g. cant write to file)
-bool save_json(char *path) {
-	// TODO FILE *f = fopen(path, "w+");
-	return true;
-}
-
-
-
-// Set current_match to first match
-// TODO
-void init_matchday() {
-	if (md.games_count == 0) {
-		printf("There are no games, exiting\n");
-		exit(EXIT_FAILURE);
-	}
-	md.cur.gameindex = 0;
-	md.cur.halftime = 0;
-	md.cur.pause = true;
-	md.cur.time = GAME_LENGTH;
-	for (u8 i = 0; i < md.games_count; i++) {
-		md.games[i].halftimescore.t1 = 0;
-		md.games[i].halftimescore.t2 = 0;
-		md.games[i].score.t1 = 0;
-		md.games[i].score.t2 = 0;
-		md.games[i].cards_count = 0;
-		md.games[i].cards = NULL;
-	}
-}
-
 
 u8 add_card(enum CardType type) {
 	const u8 cur = md.cur.gameindex;
@@ -863,8 +614,8 @@ int main(void) {
 	}
 
 	// User data stuff
-	load_json(JSON_PATH);
-	init_matchday();
+	json_load(JSON_PATH);
+	matchday_init();
 
 	printf("Server loaded!\n");
 
