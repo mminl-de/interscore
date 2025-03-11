@@ -16,7 +16,6 @@
 #include "qnamespace.h"
 #include "../common.h"
 
-Matchday md;
 
 typedef struct {
 	QWidget *w;
@@ -76,15 +75,18 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
+#define URL "ws://localhost:8081?client=rentner"
+
+void update_input_window();
+void update_display_window();
+void websocket_send_button_signal(u8);
+
+Matchday md;
 w_input wi;
 w_display wd;
 struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
-
-void update_input_window();
-void update_display_window();
-void websocket_send_button_signal(u8);
 
 void btn_cb_t1_score_plus() {
 	if(!md.cur.halftime){
@@ -518,6 +520,7 @@ void websocket_poll() {
 	else
 	*/
 		mg_mgr_poll(&mgr, 0);
+		printf("test\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -544,8 +547,6 @@ int main(int argc, char *argv[]) {
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
 	t2->start(1000);
-
-	mg_mgr_free(&mgr);
 
 	EventFilter *event_filter = new EventFilter;
 	app.installEventFilter(event_filter);

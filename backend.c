@@ -156,6 +156,8 @@ Possible User Actions:
 // Other
 #define TEST '6'
 
+#define URL "http://0.0.0.0:8081"
+
 //TODO put all function definitions here
 u16 team_calc_points(u8 index);
 u8 team_calc_games_played(u8 index);
@@ -167,7 +169,8 @@ u16 team_calc_goals_taken(u8 index);
 Matchday md;
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-struct mg_connection *client_con = NULL;
+struct mg_connection *c_front = NULL;
+struct mg_connection *c_rentner = NULL;
 struct mg_mgr mgr;
 
 bool WidgetScoreboard_enabled = false;
@@ -199,11 +202,11 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 
 // To send a widget with this function, convert it to a string with a cast.
 bool send_widget(void *w) {
-	if (client_con == NULL) {
+	if (c_front == NULL) {
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	mg_ws_send(client_con, (char *) w, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
+	mg_ws_send(c_front, (char *) w, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -425,11 +428,11 @@ u16 team_calc_goals_taken(u8 index){
 }
 
 bool send_message_to_site(char *message) {
-	if (client_con == NULL) {
+	if (c_front == NULL) {
 		printf("client is not connected, couldnt send Message: '%s'\n", message);
 		return false;
 	}
-	mg_ws_send(client_con, message, strlen(message), WEBSOCKET_OP_TEXT);
+	mg_ws_send(c_front, message, strlen(message), WEBSOCKET_OP_TEXT);
 	return true;
 }
 
@@ -505,17 +508,35 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 			break;
 		case MG_EV_CLOSE:
 			printf("Client disconnected!\n");
-			client_con = NULL;
+			c_front = NULL;
 			break;
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
+			//We have to know which client is connecting (frontend/rentnerend)
+			//Therefor we extract the query parameter as seen below.
+			//FRONTEND URL: http://0.0.0.0:8081?client=frontend
+			//RENTNEREND URL: http://0.0.0.0:8081
+			//TODO FINAL make this not suck
+			char client_type[20];
+    		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
+			printf("Clienttype: %s\n", client_type);
+			if(!strcmp(client_type, "frontend")){
+				c_front = nc;
+			} else if(client_type[0] == '\0'){
+				c_rentner = nc;
+			} else{
+				printf("ERROR: Unknown Client is trying to connect!");
+				nc->is_closing = true;
+				break;
+			}
+			//TODO check if upgrade is successfull
 			mg_ws_upgrade(nc, hm, NULL);
 			printf("Client upgraded to WebSocket connection!\n");
 			break;
 		}
 		case MG_EV_WS_OPEN:
 			printf("Connection opened!\n");
-			client_con = nc;
+			//c_front = nc;
 			break;
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
@@ -641,13 +662,13 @@ int main(void) {
 				buffer[0] = SCOREBOARD_SET_TIMER;
 				u16 time = htons(md.cur.time);
 				memcpy(&buffer[1], &time, sizeof(time));
-				mg_ws_send(client_con, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+				mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
 				break;
 			}
 			case PAUSE_TIME: {
 				// TODO NOW
 				const u8 data = SCOREBOARD_PAUSE_TIMER;
-				mg_ws_send(client_con, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
+				mg_ws_send(c_front, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
 				break;
 			}
 			/*
@@ -681,7 +702,7 @@ int main(void) {
 				data.widget_num = WIDGET_SCOREBOARD + 1;
 				memcpy(data.t1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAM_NAME_MAX_LEN);
 				memcpy(data.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
-				mg_ws_send(client_con, &data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
+				mg_ws_send(c_front, &data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
 				break;
 			case GAME_BACK: {
@@ -705,7 +726,7 @@ int main(void) {
 				memcpy(w.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
 				printf("Currently playing: '%s' vs. '%s'\n", w.t1, w.t2);
 				const char *data = (char *) &w;
-				mg_ws_send(client_con, data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
+				mg_ws_send(c_front, data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
 
 				break;
 			}

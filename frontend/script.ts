@@ -1,6 +1,6 @@
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
-let socket = new WebSocket("ws://localhost:8081", "interscore")
+let socket = new WebSocket("ws://localhost:8081?client=frontend", "interscore")
 socket.binaryType = "arraybuffer"
 
 const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
