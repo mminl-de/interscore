@@ -84,7 +84,7 @@ struct mg_mgr mgr;
 
 void update_input_window();
 void update_display_window();
-void websocket_send_button_signal(int);
+void websocket_send_button_signal(u8);
 
 void btn_cb_t1_score_plus() {
 	if(!md.cur.halftime){
@@ -186,11 +186,19 @@ void btn_cb_time_reset() {
 	websocket_send_button_signal(TIME_RESET);
 }
 
-void websocket_send_button_signal(int signal) {
+void websocket_send_button_signal(u8 signal) {
+	printf("sending signal\n");
 	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
-		mg_ws_send(server_con, &signal, sizeof(int), WEBSOCKET_OP_BINARY);
+		mg_ws_send(server_con, &signal, sizeof(u8), WEBSOCKET_OP_BINARY);
+}
+
+void websocket_send_json(char *s) {
+	if (!server_connected)
+		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+	else
+		mg_ws_send(server_con, &s, strlen(s)*sizeof(char), WEBSOCKET_OP_BINARY);
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
@@ -200,6 +208,14 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 			server_con = c;
 			server_connected = true;
 			//TODO FINAL hash von der JSON senden um sicher zu gehen, dass es die gleiche ist
+			break;
+		case MG_EV_WS_MSG: {
+			struct mg_ws_message *wm = (struct mg_ws_message *) p;
+			printf("Received WebSocket message: %.*s\n", (int)wm->data.len, wm->data.buf);
+			break;
+		}
+		case MG_EV_ERROR:
+			printf("WebSocket error: %s\n", (char *) p);
 			break;
 		case MG_EV_CLOSE:
 			printf("WebSocket closed!\n");
@@ -223,8 +239,6 @@ int text_height(const char *text, QFont font){
 }
 
 QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
-    printf("big boys: text: %s, width: %d, height: %d\n", text, max_width, max_height);
-
     QFont font = QApplication::font();
     font.setBold(bold);
 
@@ -247,27 +261,21 @@ QFont biggest_font_possible(const char *text, int max_width, int max_height, boo
         } else {
             high = mid - 1;  // Too big, try smaller
         }
-		if(low > high)
-			printf("w: %d/%d; h: %d/%d\n", width, max_width, height, max_height);
     }
 
     font.setPointSize(bestSize);
-    printf("Final size: %d\n", bestSize);
     return font;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
 //if fontsize is -1 use biggest fontsize possible
 void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
-	printf("called update_label\n");
 	int w = l->parentWidget()->width();
 	int h = l->parentWidget()->height();
 
 	if (fontsize == -1) {
-		printf("getting biggest font possible\n");
 		l->setFont(biggest_font_possible(text, w*(x_end-x_start), h*(y_end-y_start), bold));
 	} else {
-		printf("making font with size %d\n", fontsize);
 		QFont f = QApplication::font();
 		f.setBold(bold);
 		f.setPointSize(fontsize);
@@ -288,8 +296,6 @@ void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_
 
 //TODO REMOVE FUNCTION FOR b->setGeometry
 void update_button(QPushButton *b, int w, int h, float x_start, float x_end, float y_start, float y_end) {
-	printf("w: %d, h: %d\n", w, h);
-
 	b->move(w*x_start, h*y_start);
 	b->resize(w*(x_end-x_start), h*(y_end-y_start));
 }
@@ -304,12 +310,10 @@ void update_display_window() {
 
 	//QFont f1 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	QFont f1 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
-	printf("Got f1 font: %d\n", f1.pointSize());
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
 
 	//QFont f2 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	QFont f2 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
-	printf("Got f2 font: %d\n", f2.pointSize());
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
 
@@ -356,7 +360,6 @@ void update_input_window() {
 	QFont f1 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	QFont f2 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
-	printf("fontsize: %d, %d\n", f1.pointSize(), f2.pointSize());
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
 	int fontsize = f1.pointSize();
@@ -401,10 +404,6 @@ void update_input_window() {
 	float width;
 	width = (float)text_width(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/w;
 	height = (float)text_height(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/h;
-	printf("width: %f: height: %f\n", width, height);
-	//update_button(&wi.b.t1.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	//update_button(wi.b.t1.score_plus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + 80);
-	//update_button(wi.b.t1.score_minus, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/2 + wi.height/8 - 60, wi.height/2 + wi.height/8 + 20);
 	update_button(wi.b.t1.score_plus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.21, 0.25);
 	update_button(wi.b.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.49);
 
@@ -418,7 +417,6 @@ void update_input_window() {
 	//Display +- Score Team 2
 	width = (float)text_width(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/w;
 	height = (float)text_height(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/h;
-	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
 	update_button(wi.b.t2.score_plus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.21, 0.25);
 	update_button(wi.b.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.49);
 
@@ -429,13 +427,11 @@ void update_input_window() {
 	//Display +- Time
 	width = (float)text_width(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/w;
 	height = (float)text_height(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/h;
-	printf("h: %f; w: %f\n", height, width);
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
 	update_button(wi.b.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 	update_button(wi.b.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 
 	update_button(wi.b.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
-	printf("wi.b.time.toggle_pause, w: %d, h: %d, 1: %f, 2: %f, 3: %f, 4: %f\n", w, h , 0.51-width/2, 0.49, 0.5+(0.5-height)/2, (1-(0.5-height)/2)-height);
 	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 }
 
@@ -473,14 +469,6 @@ void create_input_window() {
 	wi.b.time.minus = button_new(wi.w, btn_cb_time_minus, QStyle::SP_ArrowDown, 32);
 	wi.b.time.toggle_pause = button_new(wi.w, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
 	wi.b.time.reset = button_new(wi.w, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
-	/*
-	wi.b.card.yellow = gtk_button_new_with_label("GELBE KARTE");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.yellow, 0, 0);
-	wi.b.card.red = gtk_button_new_with_label("ROTE KARTE");
-	gtk_fixed_put(GTK_FIXED(wi.fixed), wi.b.card.red, 0, 0);
-	*/
-
-	printf("oiranset 2.\n");
 
 	update_input_window();
 }
@@ -504,7 +492,6 @@ class EventFilter : public QObject {
 public:
 	bool eventFilter(QObject *obj, QEvent *event) override {
 		if (event->type() == QEvent::Resize) {
-			printf("resized window\n");
 			update_display_window();
 			update_input_window();
 		}
@@ -523,32 +510,34 @@ void update_timer() {
 }
 
 void websocket_poll() {
+	/*
 	if (!server_connected){
 		srand(time(nullptr));
 		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	}
 	else
+	*/
 		mg_mgr_poll(&mgr, 0);
 }
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
-	json_load(JSON_PATH);
+	char *json = file_read(JSON_PATH);
+	json_load(json);
+	free(json);
 	matchday_init();
-	const char *json = json_generate();
-	printf("%s", json);
 
     create_display_window();
     create_input_window();
 
+	mg_log_set(MG_LL_DEBUG);
 	mg_mgr_init(&mgr);
-	srand(time(nullptr));
+	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	QTimer *t1 = new QTimer(wi.w);
 	QObject::connect(t1, &QTimer::timeout, &websocket_poll);
 	t1->start(1000);
 
-	printf("aroistn\n");
 	wd.w->show();
     wi.w->show();
 

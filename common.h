@@ -72,5 +72,6 @@ int player_index(const char *name);
 int team_index(const char *name);
 const char* json_generate();
 void json_load(const char *path);
+char* file_read(const char *path);
 
 #endif

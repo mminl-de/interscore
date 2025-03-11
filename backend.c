@@ -335,7 +335,7 @@ WidgetGameplan WidgetGameplan_create() {
 		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
 		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
 
-		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.t1_color_left[i], w.t2_color_right[i]);
+		//printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.t1_color_left[i], w.t2_color_right[i]);
 	}
 
 	return w;
@@ -519,7 +519,13 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 			break;
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
-			handle_rentnerend_btn_press((u8 *)m->data.buf);
+			// Renterend either sends a button press as a u8 number or a json-string
+			// which always begins with '{'
+			printf("received message: %s\n", (char *)m->data.buf);
+			if(((char *)m->data.buf)[0] == '{')
+				json_load((char *)m->data.buf);
+			else
+				handle_rentnerend_btn_press((u8 *)m->data.buf);
 			break;
 		}
 		// Signals not worth logging
@@ -614,7 +620,9 @@ int main(void) {
 	}
 
 	// User data stuff
-	json_load(JSON_PATH);
+	char *json = file_read(JSON_PATH);
+	json_load(json);
+	free(json);
 	matchday_init();
 
 	printf("Server loaded!\n");
@@ -716,7 +724,9 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t2
 				);
 				WidgetGameplan wg1 = WidgetGameplan_create();
+				printf("st 1\n");
 				send_widget(&wg1);
+				printf("st 2\n");
 				break;
 			case GOAL_TEAM_2:
 				md.games[md.cur.gameindex].score.t2++;

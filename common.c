@@ -120,38 +120,9 @@ const char* json_generate() {
 	return str;
 }
 
-void json_load(const char *path) {
-	// First convert path to actual string containing whole file
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		printf("Json Input file is not available! Exiting...\n");
-		exit(EXIT_FAILURE);
-	}
-	// seek to end to find length, then reset to the beginning
-	fseek(f, 0, SEEK_END);
-	u32 file_size = ftell(f);
-	rewind(f);
-
-	char *filestring = (char *) malloc((file_size + 1) * sizeof(char));
-	if (filestring == NULL) {
-		printf("Not enough memory for loading json! Exiting...\n");
-		fclose(f);
-		exit(EXIT_FAILURE);
-	}
-
-	u32 chars_read = fread(filestring, sizeof(char), file_size, f);
-	if (chars_read != file_size) {
-		printf("Could not read whole json file! Exiting...");
-		free(filestring);
-		fclose(f);
-		exit(EXIT_FAILURE);
-	}
-	filestring[file_size] = '\0';
-	fclose(f);
-
+void json_load(const char *s) {
 	// Then split json into teams and games
-	struct json_object *root = json_tokener_parse(filestring);
-	free(filestring);
+	struct json_object *root = json_tokener_parse(s);
 	struct json_object *teams = json_object_new_array();
 	struct json_object *games = json_object_new_array();
 	json_object_object_get_ex(root, "teams", &teams);
@@ -262,4 +233,37 @@ void json_load(const char *path) {
 		}
 	}
 	return;
+}
+
+//@ret the string of the whole content of the file. In case of an error: NULL
+//The responsibility of the string, gets passed to the caller! It has to free!
+char* file_read(const char *path){
+	// First convert path to actual string containing whole file
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		printf("Json Input file is not available! Exiting...\n");
+		return NULL;
+	}
+	// seek to end to find length, then reset to the beginning
+	fseek(f, 0, SEEK_END);
+	u32 file_size = ftell(f);
+	rewind(f);
+
+	char *filestring = (char *) malloc((file_size + 1) * sizeof(char));
+	if (filestring == NULL) {
+		printf("Not enough memory for loading json! Exiting...\n");
+		fclose(f);
+		return NULL;
+	}
+
+	u32 chars_read = fread(filestring, sizeof(char), file_size, f);
+	if (chars_read != file_size) {
+		printf("Could not read whole json file! Exiting...");
+		free(filestring);
+		fclose(f);
+		return NULL;
+	}
+	filestring[file_size] = '\0';
+	fclose(f);
+	return filestring;
 }
