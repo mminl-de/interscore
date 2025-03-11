@@ -114,6 +114,9 @@ function write_scoreboard(view: DataView) {
 }
 
 function write_gameplan(view: DataView) {
+	while (gameplan.children.length > 1)
+		gameplan.removeChild(gameplan.lastChild!)
+
 	let offset = 1
 	const game_n = view.getUint8(offset)
 	++offset
@@ -134,6 +137,7 @@ function write_gameplan(view: DataView) {
 		teams_1.push(t1)
 	}
 	offset += (GAMES_COUNT_MAX - game_n) * BUFFER_LEN
+
 	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let t2: String = ""
 		for (let name_ch = 0; name_ch < BUFFER_LEN; ++name_ch) {
@@ -154,7 +158,6 @@ function write_gameplan(view: DataView) {
 		goals_1.push(view.getUint8(offset))
 		++offset
 	}
-	console.log(`TODO greatest byte: '${view.getUint8(offset)}'`)
 	offset += GAMES_COUNT_MAX - game_n
 
 	let goals_2: number[] = []
@@ -184,7 +187,6 @@ function write_gameplan(view: DataView) {
 		col_2.push(c2)
 	}
 	offset += (GAMES_COUNT_MAX - game_n) * 3
-	console.log(`TODO colorz: (${col_1[0]}) (${col_1[1]})`)
 
 	// TODO NOTE discarding the dark colors
 	offset += 2 * GAMES_COUNT_MAX * 3
@@ -197,7 +199,6 @@ function write_gameplan(view: DataView) {
 		t1.classList.add("t1")
 		t1.innerHTML = teams_1[game_i].toString()
 		t1.style.backgroundColor = Color_to_string(col_1[game_i])
-		console.log("TODO first color: ", t1.style.backgroundColor)
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
@@ -213,7 +214,6 @@ function write_gameplan(view: DataView) {
 		let t2 = document.createElement("div")
 		t2.classList.add("t2")
 		t2.style.backgroundColor = Color_to_string(col_2[game_i])
-		console.log("TODO second color: ", t2.style.backgroundColor)
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
 
@@ -240,7 +240,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
-	console.log("tactical t1 print: ", t1)
+	console.log("TODO tactical t1 print: ", t1)
 
 	for (let t2_ch = 0; t2_ch < TEAM_NAME_MAX_LEN; ++t2_ch) {
 		const c = view.getUint8(offset)
@@ -251,7 +251,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
-	console.log("tactical t2 print: ", t2)
+	console.log("TODO tactical t2 print: ", t2)
 
 	for (let t1k_ch = 0; t1k_ch < PLAYER_NAME_MAX_LEN; ++t1k_ch) {
 		const c = view.getUint8(offset)
@@ -262,8 +262,10 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("TODO 1 keeper: ", t1_keeper)
 
 	for (let t1f_ch = 0; t1f_ch < PLAYER_NAME_MAX_LEN; ++t1f_ch) {
+		console.log(offset)
 		const c = view.getUint8(offset)
 		t1_field += String.fromCharCode(c)
 		++offset
@@ -272,6 +274,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("TODO 1 field: ", t1_field)
 
 	for (let t2k_ch = 0; t2k_ch < PLAYER_NAME_MAX_LEN; ++t2k_ch) {
 		const c = view.getUint8(offset)
@@ -282,6 +285,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("TODO 2 keeper: ", t2_keeper)
 
 	for (let t2f_ch = 0; t2f_ch < PLAYER_NAME_MAX_LEN; ++t2f_ch) {
 		const c = view.getUint8(offset)
@@ -292,6 +296,7 @@ function write_gamestart(view: DataView) {
 			break
 		}
 	}
+	console.log("TODO 2 field: ", t2_field)
 
 	let t1_col_left: Color = {
 		r: view.getUint8(offset),
@@ -397,7 +402,7 @@ interface LivetableLine {
 
 // TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
-	while (livetable.children.length > 1)
+	while (livetable.children.length > 2)
 		livetable.removeChild(livetable.lastChild!)
 
 	let offset = 1
@@ -479,9 +484,8 @@ function write_livetable(view: DataView) {
 
 		const name = document.createElement("div")
 		name.innerHTML = teams[team_i].name!.toString()
-		name.classList.add("bordered name")
+		name.classList.add("bordered", "name")
 		name.style.backgroundColor = teams[team_i].color!.toString().slice(0, 7)
-		console.log(`TODO color for livetable: ${teams[team_i].color!.toString()}`)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
@@ -586,20 +590,24 @@ socket.onmessage = (event: MessageEvent) => {
 		case WidgetMessage.WIDGET_SCOREBOARD:
 			// TODO WIP
 			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.display = "none", 500)
+			setTimeout(() => scoreboard.style.display = "none", 10)
 			break
 		case WidgetMessage.WIDGET_SCOREBOARD + 1:
 			scoreboard.style.display = "inline-flex"
 			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.opacity = "1", 10)
+			setTimeout(() => scoreboard.style.opacity = "1", 500)
 			write_scoreboard(view)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE:
-			livetable.style.display = "none"
+			// TODO WIP
+			livetable.style.opacity = "0"
+			setTimeout(() => livetable.style.display = "none", 10)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE + 1:
 			// TODO WIP
 			livetable.style.display = "inline-flex"
+			livetable.style.opacity = "0"
+			setTimeout(() => livetable.style.opacity = "1", 500)
 			write_livetable(view)
 			break
 		case WidgetMessage.WIDGET_GAMEPLAN:
@@ -610,10 +618,16 @@ socket.onmessage = (event: MessageEvent) => {
 			write_gameplan(view)
 			break
 		case WidgetMessage.WIDGET_GAMESTART:
-			gamestart.style.display = "none"
+			// TODO WIP
+			gamestart.style.opacity = "0"
+			setTimeout(() => gamestart.style.display = "none", 10)
 			break
 		case WidgetMessage.WIDGET_GAMESTART + 1:
+			// TODO WIP
 			gamestart.style.display = "flex"
+			gamestart.style.opacity = "0"
+			setTimeout(() => gamestart.style.opacity = "1", 500)
+			console.log("total size of the story: ", view.byteLength)
 			write_gamestart(view)
 			break
 		case WidgetMessage.WIDGET_CARD_SHOW:

@@ -79,8 +79,8 @@ typedef struct {
 typedef struct {
 	u8 widget_num;
 	u8 len; // amount of Games total
-	char teams1[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
-	char teams2[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
+	char teams_1[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
+	char teams_2[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
 	u8 goals_t2[GAMES_COUNT_MAX];
 	Color t1_color_left[GAMES_COUNT_MAX];
@@ -263,13 +263,10 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 }
 
 // To send a widget with this function, convert it to a string with a cast.
-bool send_widget(void *w) {
-	if (client_con == NULL) {
+void send_widget(void *w, size_t size) {
+	if (client_con == NULL)
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
-		return false;
-	}
-	mg_ws_send(client_con, (char *) w, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
-	return true;
+	else mg_ws_send(client_con, (char *) w, size, WEBSOCKET_OP_BINARY);
 }
 
 WidgetScoreboard WidgetScoreboard_create() {
@@ -394,8 +391,9 @@ WidgetGameplan WidgetGameplan_create() {
 	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
-		strcpy(w.teams1[i], md.teams[md.games[i].t1_index].name);
-		strcpy(w.teams2[i], md.teams[md.games[i].t2_index].name);
+		printf("TODO tactical print\n");
+		strcpy(w.teams_1[i], md.teams[md.games[i].t1_index].name);
+		strcpy(w.teams_2[i], md.teams[md.games[i].t2_index].name);
 		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
 		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
 
@@ -403,8 +401,9 @@ WidgetGameplan WidgetGameplan_create() {
 		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
 		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
 		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
+		printf("TODO another tactical\n");
 
-		printf("%d.) %s, %d : %d ,%s\n(%s) (%s)\n", i, w.teams1[i], w.goals_t1[i], w.goals_t2[i], w.teams2[i], w.t1_color_left[i], w.t2_color_right[i]);
+		printf("%d.) %s, %d : %d ,%s\n", i, w.teams_1[i], w.goals_t1[i], w.goals_t2[i], w.teams_2[i]);
 	}
 
 	return w;
@@ -960,7 +959,7 @@ int main(void) {
 				printf("Now in halftime %d!\n", md.cur.halftime + 1);
 				md.cur.halftime = !md.cur.halftime;
 				WidgetScoreboard ws = WidgetScoreboard_create();
-				send_widget(&ws);
+				send_widget(&ws, sizeof(WidgetScoreboard));
 				break;
 			case GOAL_TEAM_1:
 				md.games[md.cur.gameindex].score.t1++;
@@ -970,7 +969,7 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t2
 				);
 				WidgetGameplan wg1 = WidgetGameplan_create();
-				send_widget(&wg1);
+				send_widget(&wg1, sizeof(WidgetGameplan));
 				break;
 			case GOAL_TEAM_2:
 				md.games[md.cur.gameindex].score.t2++;
@@ -980,7 +979,7 @@ int main(void) {
 					md.games[md.cur.gameindex].score.t2
 				);
 				WidgetGameplan wg2 = WidgetGameplan_create();
-				send_widget(&wg2);
+				send_widget(&wg2, sizeof(WidgetGameplan));
 				break;
 			case REMOVE_GOAL_TEAM_1:
 				if (md.games[md.cur.gameindex].score.t1 > 0)
@@ -1002,12 +1001,12 @@ int main(void) {
 				break;
 			case DEAL_YELLOW_CARD:{
 				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
-				send_widget(&wy);
+				send_widget(&wy, sizeof(WidgetCard));
 				break;
 			}
 			case DEAL_RED_CARD: {
 				WidgetCard wr = WidgetCard_create(add_card(RED));
-				send_widget(&wr);
+				send_widget(&wr, sizeof(WidgetCard));
 				break;
 			}
 			case DELETE_CARD: {
@@ -1050,7 +1049,7 @@ int main(void) {
 			case TOGGLE_WIDGET_SCOREBOARD:
 				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
 				WidgetScoreboard wscore = WidgetScoreboard_create();
-				send_widget(&wscore);
+				send_widget(&wscore, sizeof(WidgetScoreboard));
 				break;
 			/*
 			case TOGGLE_WIDGET_HALFTIME:
@@ -1061,17 +1060,17 @@ int main(void) {
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
 				WidgetLivetable wlive = WidgetLivetable_create();
-				send_widget(&wlive);
+				send_widget(&wlive, sizeof(WidgetLivetable));
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
 				WidgetGameplan wgp = WidgetGameplan_create();
-				send_widget(&wgp);
+				send_widget(&wgp, sizeof(WidgetGameplan));
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
 				WidgetGamestart wgs = WidgetGamestart_create();
-				send_widget(&wgs);
+				send_widget(&wgs, sizeof(WidgetGamestart));
 				break;
 			case RELOAD_JSON:
 				printf("TODO: RELOAD_JSON\n");
