@@ -196,23 +196,23 @@ function write_gameplan(view: DataView) {
 		line.classList.add("line")
 
 		let t1 = document.createElement("div")
-		t1.classList.add("t1")
+		t1.classList.add("bordered", "t1")
 		t1.innerHTML = teams_1[game_i].toString()
 		t1.style.backgroundColor = Color_to_string(col_1[game_i])
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
-		s1.classList.add("s1")
+		s1.classList.add("bordered", "s1")
 		s1.innerHTML = goals_1[game_i].toString()
 		line.appendChild(s1)
 
 		let s2 = document.createElement("div")
-		s2.classList.add("s2")
+		s2.classList.add("bordered", "s2")
 		s2.innerHTML = goals_2[game_i].toString()
 		line.appendChild(s2)
 
 		let t2 = document.createElement("div")
-		t2.classList.add("t2")
+		t2.classList.add("bordered", "t2")
 		t2.style.backgroundColor = Color_to_string(col_2[game_i])
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
