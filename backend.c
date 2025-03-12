@@ -89,19 +89,9 @@ typedef struct {
 /*
 Possible User Actions:
 ####### Ingame Stuff
-- Set Time (DONE)
-- Add Time (DONE)
-- go a game forward (DONE)
-- go a game back (DONE)
-- goal Team 1 (DONE)
-- goal Team 2 (DONE)
 - Yellow Card to Player 1, 2, 3 or 4 (DONE)
 - Red Card to Player 1, 2, 3 or 4 (DONE)
-- Switch Team Sides (without halftime)
-- Half Time
 ## Error Handling
-- minus goal team 1 (DONE)
-- minus goal team 2 (DONE)
 - delete card (DONE)
 ####### UI Stuff
 - Enable/Disable ==> Scoreboard Widget
@@ -120,23 +110,6 @@ Possible User Actions:
 */
 
 // Define the input characters:
-// Changing game time
-//#define ADD_SECOND '+'
-//#define REMOVE_SECOND '-'
-#define PAUSE_TIME '='
-#define SET_TIME 't'
-
-// Switching games
-#define GAME_FORWARD 'n'
-#define GAME_BACK 'p'
-#define GAME_HALFTIME 'h'
-
-// Goals
-#define GOAL_TEAM_1 '1'
-#define GOAL_TEAM_2 '2'
-#define REMOVE_GOAL_TEAM_1 '3'
-#define REMOVE_GOAL_TEAM_2 '4'
-
 // Justice system
 #define DEAL_YELLOW_CARD 'y'
 #define DEAL_RED_CARD 'r'
@@ -201,12 +174,12 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 }
 
 // To send a widget with this function, convert it to a string with a cast.
-bool send_widget(void *w) {
+bool send_widget(void *w, int size) {
 	if (c_front == NULL) {
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
 		return false;
 	}
-	mg_ws_send(c_front, (char *) w, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
+	mg_ws_send(c_front, (char *) w, size, WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -645,6 +618,18 @@ void *mongoose_update() {
 	while (running) mg_mgr_poll(&mgr, 100);
 	return NULL;
 }
+void send_time(u16 t){
+	u8 buffer[3];
+	buffer[0] = SCOREBOARD_SET_TIMER;
+	u16 time = htons(t);
+	memcpy(&buffer[1], &time, sizeof(time));
+	mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+}
+
+void send_time_pause_toggle() {
+	const u8 data = SCOREBOARD_PAUSE_TIMER;
+	mg_ws_send(c_front, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
+}
 
 int main(void) {
 	// WebSocket stuff
@@ -667,140 +652,14 @@ int main(void) {
 	while (running) {
 		char c = getchar();
 		switch (c) {
-			case SET_TIME: {
-				u16 min; u8 sec;
-				printf("Current time: %d:%2d\nNew time (in MM:SS): ", md.cur.time/60, md.cur.time%60);
-				scanf("%hu:%hhu", &min, &sec);
-				md.cur.time = min*60 + sec;
-				printf("New current time: %d:%2d\n", md.cur.time/60, md.cur.time%60);
-
-				u8 buffer[3];
-				buffer[0] = SCOREBOARD_SET_TIMER;
-				u16 time = htons(md.cur.time);
-				memcpy(&buffer[1], &time, sizeof(time));
-				mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
-				break;
-			}
-			case PAUSE_TIME: {
-				// TODO NOW
-				const u8 data = SCOREBOARD_PAUSE_TIMER;
-				mg_ws_send(c_front, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
-				break;
-			}
-			/*
-		case ADD_SECOND: {
-			md.cur.time++;
-			printf("Added 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case REMOVE_SECOND: {
-			md.cur.time--;
-			printf("Removed 1s, new time: %d:%d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		*/
-			case GAME_FORWARD:
-				if (md.cur.gameindex == md.games_count - 1) {
-					printf("Already at last game! Doing nothing ...\n");
-					break;
-				}
-				md.cur.gameindex++;
-				md.cur.halftime = 0;
-				md.cur.time = GAME_LENGTH;
-				printf(
-					"New same %d: %s vs. %s\n",
-					md.cur.gameindex + 1,
-					md.teams[md.games[md.cur.gameindex].t1_index].name,
-					md.teams[md.games[md.cur.gameindex].t2_index].name
-				);
-
-				WidgetScoreboard data = WidgetScoreboard_create();
-				data.widget_num = WIDGET_SCOREBOARD + 1;
-				memcpy(data.t1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAM_NAME_MAX_LEN);
-				memcpy(data.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
-				mg_ws_send(c_front, &data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
-
-				break;
-			case GAME_BACK: {
-				if (md.cur.gameindex == 0) {
-					printf("Already at first game! Doing nothing ...\n");
-					break;
-				}
-				md.cur.gameindex--;
-				md.cur.halftime = 0;
-				md.cur.time = GAME_LENGTH;
-				printf(
-					"New game (%d): '%s' vs. '%s'\n",
-					md.cur.gameindex+1,
-					md.teams[md.games[md.cur.gameindex].t1_index].name,
-					md.teams[md.games[md.cur.gameindex].t2_index].name
-				);
-
-				WidgetScoreboard w = WidgetScoreboard_create();
-				w.widget_num = WIDGET_SCOREBOARD + 1;
-				memcpy(w.t1, md.teams[md.games[md.cur.gameindex].t1_index].name, TEAM_NAME_MAX_LEN);
-				memcpy(w.t2, md.teams[md.games[md.cur.gameindex].t2_index].name, TEAM_NAME_MAX_LEN);
-				printf("Currently playing: '%s' vs. '%s'\n", w.t1, w.t2);
-				const char *data = (char *) &w;
-				mg_ws_send(c_front, data, sizeof(WidgetScoreboard), WEBSOCKET_OP_BINARY);
-
-				break;
-			}
-			case GAME_HALFTIME:
-				// TODO WIP
-				printf("Now in halftime %d!\n", md.cur.halftime + 1);
-				md.cur.halftime = !md.cur.halftime;
-				WidgetScoreboard ws = WidgetScoreboard_create();
-				send_widget(&ws);
-				break;
-			case GOAL_TEAM_1:
-				md.games[md.cur.gameindex].score.t1++;
-				printf(
-					"New score: %d : %d\n",
-					md.games[md.cur.gameindex].score.t1,
-					md.games[md.cur.gameindex].score.t2
-				);
-				WidgetGameplan wg1 = WidgetGameplan_create();
-				printf("st 1\n");
-				send_widget(&wg1);
-				printf("st 2\n");
-				break;
-			case GOAL_TEAM_2:
-				md.games[md.cur.gameindex].score.t2++;
-				printf(
-					"New score: %d : %d\n",
-					md.games[md.cur.gameindex].score.t1,
-					md.games[md.cur.gameindex].score.t2
-				);
-				WidgetGameplan wg2 = WidgetGameplan_create();
-				send_widget(&wg2);
-				break;
-			case REMOVE_GOAL_TEAM_1:
-				if (md.games[md.cur.gameindex].score.t1 > 0)
-					--md.games[md.cur.gameindex].score.t1;
-				printf(
-					"New score: %d : %d\n",
-					md.games[md.cur.gameindex].score.t1,
-					md.games[md.cur.gameindex].score.t2
-				);
-				break;
-			case REMOVE_GOAL_TEAM_2:
-				if (md.games[md.cur.gameindex].score.t2 > 0)
-					--md.games[md.cur.gameindex].score.t2;
-				printf(
-					"New score: %d : %d\n",
-					md.games[md.cur.gameindex].score.t1,
-					md.games[md.cur.gameindex].score.t2
-				);
-				break;
 			case DEAL_YELLOW_CARD:{
 				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
-				send_widget(&wy);
+				send_widget(&wy, sizeof(WidgetCard));
 				break;
 			}
 			case DEAL_RED_CARD: {
 				WidgetCard wr = WidgetCard_create(add_card(RED));
-				send_widget(&wr);
+				send_widget(&wr, sizeof(WidgetCard));
 				break;
 			}
 			case DELETE_CARD: {
@@ -843,7 +702,7 @@ int main(void) {
 			case TOGGLE_WIDGET_SCOREBOARD:
 				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
 				WidgetScoreboard wscore = WidgetScoreboard_create();
-				send_widget(&wscore);
+				send_widget(&wscore, sizeof(WidgetScoreboard));
 				break;
 			/*
 		case TOGGLE_WIDGET_HALFTIME:
@@ -854,17 +713,17 @@ int main(void) {
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
 				WidgetLivetable wlive = WidgetLivetable_create();
-				send_widget(&wlive);
+				send_widget(&wlive, sizeof(WidgetLivetable));
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
 				WidgetGameplan wgame = WidgetGameplan_create();
-				send_widget(&wgame);
+				send_widget(&wgame, sizeof(WidgetGameplan));
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
 				WidgetGamestart wspiel = WidgetGamestart_create();
-				send_widget(&wspiel);
+				send_widget(&wspiel, sizeof(WidgetGamestart));
 				break;
 			case RELOAD_JSON:
 				printf("TODO: RELOAD_JSON\n");
