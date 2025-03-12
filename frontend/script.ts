@@ -409,7 +409,10 @@ function write_card(view: DataView) {
 		card_message.innerHTML = "bekommt eine gelbe Karte"
 	}
 
-	setTimeout(() => card.style.display = "none", 5_000)
+	setTimeout(() => {
+		card.style.opacity = "0"
+		setTimeout(() => card.style.display = "none", 500)
+	}, 5_000)
 }
 
 interface LivetableLine {
@@ -614,48 +617,53 @@ socket.onmessage = (event: MessageEvent) => {
 		case WidgetMessage.WIDGET_SCOREBOARD:
 			// TODO WIP
 			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.display = "none", 10)
+			setTimeout(() => scoreboard.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_SCOREBOARD + 1:
 			scoreboard.style.display = "inline-flex"
 			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.opacity = "1", 500)
+			setTimeout(() => scoreboard.style.opacity = "1", 10)
 			write_scoreboard(view)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE:
 			// TODO WIP
 			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.display = "none", 10)
+			setTimeout(() => livetable.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE + 1:
 			// TODO WIP
 			livetable.style.display = "inline-flex"
 			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.opacity = "1", 500)
+			setTimeout(() => livetable.style.opacity = "1", 10)
 			write_livetable(view)
 			break
 		case WidgetMessage.WIDGET_GAMEPLAN:
-			gameplan.style.display = "none"
+			// TODO WIP
+			gameplan.style.opacity = "0"
+			setTimeout(() => gameplan.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_GAMEPLAN + 1:
 			gameplan.style.display = "inline-flex"
+			gameplan.style.opacity = "0"
+			setTimeout(() => gameplan.style.opacity = "1", 10)
 			write_gameplan(view)
 			break
 		case WidgetMessage.WIDGET_GAMESTART:
 			// TODO WIP
 			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.display = "none", 10)
+			setTimeout(() => gamestart.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_GAMESTART + 1:
 			// TODO WIP
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.opacity = "1", 500)
-			console.log("total size of the story: ", view.byteLength)
+			setTimeout(() => gamestart.style.opacity = "1", 10)
 			write_gamestart(view)
 			break
 		case WidgetMessage.WIDGET_CARD_SHOW:
 			card.style.display = "flex"
+			card.style.opacity = "0"
+			setTimeout(() => card.style.opacity = "1", 10)
 			write_card(view)
 			break
 		case WidgetMessage.SCOREBOARD_SET_TIMER:
