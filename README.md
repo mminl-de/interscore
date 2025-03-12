@@ -48,11 +48,12 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - FINAL FINAL port to windows/mac
 
 ### backend
-- (graceful Ctrl-C handling)
-- save to json
+- handle dealing multiple cards
+- d key causing SEGFAULT on empty input
 - Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
 - FINAL abstract program so it's applicable for other games
 - ENSURE `n` and `p` work
+- (graceful Ctrl-C handling)
 
 ### readme
 - context about what (and why) this is
