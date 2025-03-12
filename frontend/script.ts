@@ -222,6 +222,9 @@ function write_gameplan(view: DataView) {
 }
 
 function write_gamestart(view: DataView) {
+	while (gamestart_container.children.length > 0)
+		gamestart_container.removeChild(gamestart_container.lastChild!)
+
 	let offset = 1
 
 	let t1: String = ""
@@ -265,7 +268,6 @@ function write_gamestart(view: DataView) {
 	console.log("TODO 1 keeper: ", t1_keeper)
 
 	for (let t1f_ch = 0; t1f_ch < PLAYER_NAME_MAX_LEN; ++t1f_ch) {
-		console.log(offset)
 		const c = view.getUint8(offset)
 		t1_field += String.fromCharCode(c)
 		++offset
@@ -329,32 +331,54 @@ function write_gamestart(view: DataView) {
 	// TODO ADD gradients
 
 	const t1_el = document.createElement("div")
+	t1_el.classList.add("team")
+	const t1_background = Color_to_string(t1_col_left)
+	console.log("color 1: ", t1_background)
 
 	const t1_name_el = document.createElement("div")
-	t1_name_el.classList.add("heading")
+	t1_name_el.classList.add("bordered", "heading")
+	t1_name_el.style.backgroundColor = t1_background
 	t1_name_el.innerHTML = t1.toString()
 
 	const t1_keeper_el = document.createElement("div")
-	t1_keeper_el.classList.add("player")
-	t1_keeper_el.style.backgroundColor = Color_to_string(t1_col_left)
+	t1_keeper_el.classList.add("bordered", "player")
+	t1_keeper_el.style.backgroundColor = t1_background
+	t1_keeper_el.innerHTML = t1_keeper.toString()
 
 	const t1_field_el = document.createElement("div")
-	t1_field_el.classList.add("player")
-	t1_field_el.style.backgroundColor = Color_to_string(t1_col_left)
+	t1_field_el.classList.add("bordered", "player")
+	t1_field_el.style.backgroundColor = t1_background
+	t1_field_el.innerHTML = t1_field.toString()
 
 	t1_el.appendChild(t1_name_el)
+	t1_el.appendChild(t1_keeper_el)
+	t1_el.appendChild(t1_field_el)
 
 	gamestart_container.appendChild(t1_el)
 
 	const t2_el = document.createElement("div")
+	t2_el.classList.add("team")
+	const t2_background = Color_to_string(t2_col_left)
+	console.log("color 2: ", t2_background)
+
+	const t2_name_el = document.createElement("div")
+	t2_name_el.classList.add("bordered", "heading")
+	t2_name_el.style.backgroundColor = t2_background
+	t2_name_el.innerHTML = t2.toString()
 
 	const t2_keeper_el = document.createElement("div")
-	t2_keeper_el.classList.add("player")
-	t2_keeper_el.style.backgroundColor = Color_to_string(t2_col_left)
+	t2_keeper_el.classList.add("bordered", "player")
+	t2_keeper_el.style.backgroundColor = t2_background
+	t2_keeper_el.innerHTML = t2_keeper.toString()
 
 	const t2_field_el = document.createElement("div")
-	t2_field_el.classList.add("player")
-	t2_field_el.style.backgroundColor = Color_to_string(t2_col_left)
+	t2_field_el.classList.add("bordered", "player")
+	t2_field_el.style.backgroundColor = t2_background
+	t2_field_el.innerHTML = t2_field.toString()
+
+	t2_el.appendChild(t2_name_el)
+	t2_el.appendChild(t2_keeper_el)
+	t2_el.appendChild(t2_field_el)
 
 	gamestart_container.appendChild(t2_el)
 }
@@ -657,13 +681,13 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-// TODO function hotReloadCSS() {
-// TODO   document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-// TODO     const newLink = document.createElement('link')
-// TODO     newLink.rel = 'stylesheet'
-// TODO     newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
-// TODO     link.replaceWith(newLink)
-// TODO   })
-// TODO }
-// TODO
-// TODO setInterval(hotReloadCSS, 5000)
+function hotReloadCSS() {
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const newLink = document.createElement('link')
+    newLink.rel = 'stylesheet'
+    newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+    link.replaceWith(newLink)
+  })
+}
+
+setInterval(hotReloadCSS, 5000)

@@ -1,5 +1,7 @@
 .gamestart {
-	display: none;
+	/* TODO WIP */
+	display: flex;
+	flex-direction: column;
 
 	position: absolute;
 	top: 50%;
@@ -8,4 +10,22 @@
 
 	/* TODO WIP */
 	transition: opacity 0.5s ease-in-out;
+
+	gap: 20px;
+}
+
+.gamestart .container {
+	display: flex;
+	gap: 50px;
+}
+
+.gamestart .container > * {
+	width: 400px;
+	text-align: center;
+}
+
+.gamestart .team {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }

@@ -270,29 +270,31 @@ void send_widget(void *w, size_t size) {
 }
 
 WidgetScoreboard WidgetScoreboard_create() {
+	const u8 cur = md.cur.gameindex;
+
 	WidgetScoreboard w;
 	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
 
 	if (md.cur.halftime) {
-		strcpy(w.t2, md.teams[md.games[md.cur.gameindex].t1_index].name);
-		strcpy(w.t1, md.teams[md.games[md.cur.gameindex].t2_index].name);
-		w.score_t2 = md.games[md.cur.gameindex].score.t1;
-		w.score_t1 = md.games[md.cur.gameindex].score.t2;
+		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
+		strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
+		w.score_t2 = md.games[cur].score.t1;
+		w.score_t1 = md.games[cur].score.t2;
 
-		w.t1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
-		w.t1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		w.t2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		w.t2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
+		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
+		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
+		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
 	} else {
-		strcpy(w.t1, md.teams[md.games[md.cur.gameindex].t1_index].name);
-		strcpy(w.t2, md.teams[md.games[md.cur.gameindex].t2_index].name);
-		w.score_t1 = md.games[md.cur.gameindex].score.t1;
-		w.score_t2 = md.games[md.cur.gameindex].score.t2;
+		strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
+		strcpy(w.t2, md.teams[md.games[cur].t2_index].name);
+		w.score_t1 = md.games[cur].score.t1;
+		w.score_t2 = md.games[cur].score.t2;
 
-		w.t1_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_light);
-		w.t1_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t1_index].color_dark);
-		w.t2_color_left = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_dark);
-		w.t2_color_right = Color_from_hex(md.teams[md.games[md.cur.gameindex].t2_index].color_light);
+		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
+		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
+		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
@@ -302,7 +304,6 @@ WidgetScoreboard WidgetScoreboard_create() {
 WidgetGamestart WidgetGamestart_create() {
 	const u8 cur = md.cur.gameindex;
 
-	// TODO ADD colors
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
 	strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
@@ -311,11 +312,14 @@ WidgetGamestart WidgetGamestart_create() {
 	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
 	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
 	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
+
+	// TODO ADD colors
+	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
+	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
 	return w;
 }
 
 WidgetLivetable WidgetLivetable_create() {
-	printf("begin livetable\n");
 	WidgetLivetable w;
 	w.widget_num = WIDGET_LIVETABLE + WidgetLivetable_enabled;
 	w.len = md.teams_count;
@@ -347,7 +351,6 @@ WidgetLivetable WidgetLivetable_create() {
 				break;
 			}
 		}
-		printf("INDEX DEF: %d\n", best_index);
 		//search for better team without entry
 		for(int j=0; j < md.teams_count; j++){
 			int skip = false;
@@ -360,25 +363,15 @@ WidgetLivetable WidgetLivetable_create() {
 					best_index = team_calc_points(i);
 			}
 		}
-		printf("INDEX END: %d\n", best_index);
 
-		printf("livetable iteration: %d\n", i);
 		strcpy(w.teams[i], md.teams[best_index].name);
-		printf("begin entry name: %s\n", w.teams[i]);
 		w.points[i] = team_calc_points(best_index);
-		printf("begin entry point: %d\n", w.points[i]);
 		w.games_played[i] = team_calc_games_played(best_index);
-		printf("begin entry games played: %d\n", w.games_played[i]);
 		w.games_won[i] = team_calc_games_won(best_index);
-		printf("begin entry games won: %d\n", w.games_won[i]);
 		w.games_tied[i] = team_calc_games_tied(best_index);
-		printf("begin entry games tied: %d\n", w.games_tied[i]);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
-		printf("begin entry games lost: %d\n", w.games_lost[i]);
 		w.goals[i] = team_calc_goals(best_index);
-		printf("begin entry goals: %d\n", w.goals[i]);
 		w.goals_taken[i] = team_calc_goals_taken(best_index);
-		printf("begin entry goals taken: %d\n", w.goals[i]);
 		w.color[i] = Color_from_hex(md.teams[i].color_light);
 
 		teams_done[i] = best_index;
@@ -391,7 +384,6 @@ WidgetGameplan WidgetGameplan_create() {
 	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
 	for (u8 i = 0; i < md.games_count; i++){
-		printf("TODO tactical print\n");
 		strcpy(w.teams_1[i], md.teams[md.games[i].t1_index].name);
 		strcpy(w.teams_2[i], md.teams[md.games[i].t2_index].name);
 		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
@@ -401,9 +393,6 @@ WidgetGameplan WidgetGameplan_create() {
 		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
 		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
 		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
-		printf("TODO another tactical\n");
-
-		printf("%d.) %s, %d : %d ,%s\n", i, w.teams_1[i], w.goals_t1[i], w.goals_t2[i], w.teams_2[i]);
 	}
 
 	return w;
