@@ -437,56 +437,72 @@ bool send_message_to_site(char *message) {
 }
 
 void handle_rentnerend_btn_press(u8 *signal){
-	printf("received a signal: %d", *signal);
+	printf("received a signal: %d\n", *signal);
 	switch (*signal) {
 		case T1_SCORE_PLUS: {
 			md.games[md.cur.gameindex].score.t1++;
-			printf("New T1 score: %d\n", md.games[md.cur.gameindex].score.t1);
+			printf("New T1 score (+1): %d\n", md.games[md.cur.gameindex].score.t1);
 			break;
 		}
 		case T1_SCORE_MINUS: {
 			if(md.games[md.cur.gameindex].score.t1 > 0)
 				md.games[md.cur.gameindex].score.t1--;
+			printf("New T1 score (-1): %d\n", md.games[md.cur.gameindex].score.t1);
 			break;
 		}
 		case T2_SCORE_PLUS: {
 			md.games[md.cur.gameindex].score.t2++;
+			printf("New T2 score (+1): %d\n", md.games[md.cur.gameindex].score.t2);
 			break;
 		}
 		case T2_SCORE_MINUS: {
 			if(md.games[md.cur.gameindex].score.t2 > 0)
 				md.games[md.cur.gameindex].score.t2--;
+			printf("New T2 score (-1): %d\n", md.games[md.cur.gameindex].score.t2);
 			break;
 		}
 		case GAME_NEXT: {
 			if(md.cur.gameindex < md.games_count-1)
 				md.cur.gameindex++;
+			printf("New Game %d (+1): %s : %s\n", md.cur.gameindex,
+			        md.teams[md.games[md.cur.gameindex].t1_index].name,
+			        md.teams[md.games[md.cur.gameindex].t2_index].name);
 			break;
 		}
 		case GAME_PREV: {
 			if(md.cur.gameindex > 0)
 				md.cur.gameindex--;
+			printf("New Game %d (-1): %s : %s\n", md.cur.gameindex,
+			        md.teams[md.games[md.cur.gameindex].t1_index].name,
+			        md.teams[md.games[md.cur.gameindex].t2_index].name);
 			break;
 		}
 		case GAME_SWITCH_SIDES: {
 			md.cur.halftime = !md.cur.halftime;
+			printf("New Half %d: %s : %s\n", md.cur.halftime,
+			        md.teams[md.games[md.cur.gameindex].t1_index].name,
+			        md.teams[md.games[md.cur.gameindex].t2_index].name);
 			break;
 		}
 		case TIME_PLUS: {
 			md.cur.time++;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_MINUS: {
 			if(md.cur.time > 0)
 				md.cur.time--;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_TOGGLE_PAUSE: {
 			md.cur.pause = !md.cur.pause;
+			printf("Toggeling Time to %d: %d:%2d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_RESET: {
 			md.cur.time = GAME_LENGTH;
+			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		default: {

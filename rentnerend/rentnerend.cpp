@@ -520,7 +520,6 @@ void websocket_poll() {
 	else
 	*/
 		mg_mgr_poll(&mgr, 0);
-		printf("test\n");
 }
 
 int main(int argc, char *argv[]) {
