@@ -564,8 +564,8 @@ function write_livetable(view: DataView) {
 	}
 }
 
-let countdown: number = 0
-let duration: number = 0
+let countdown = 0
+let duration = 0
 let remaining_time = 0
 let timer_is_paused = true
 
@@ -613,7 +613,6 @@ enum WidgetMessage {
 }
 
 socket.onmessage = (event: MessageEvent) => {
-	// TODO
 	if (!(event.data instanceof ArrayBuffer))
 		console.error("Sent data is not in proper binary format!")
 
@@ -625,7 +624,6 @@ socket.onmessage = (event: MessageEvent) => {
 		case 0:
 			return
 		case WidgetMessage.WIDGET_SCOREBOARD:
-			// TODO WIP
 			scoreboard.style.opacity = "0"
 			setTimeout(() => scoreboard.style.display = "none", 500)
 			break
@@ -636,19 +634,16 @@ socket.onmessage = (event: MessageEvent) => {
 			write_scoreboard(view)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE:
-			// TODO WIP
 			livetable.style.opacity = "0"
 			setTimeout(() => livetable.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_LIVETABLE + 1:
-			// TODO WIP
 			livetable.style.display = "inline-flex"
 			livetable.style.opacity = "0"
 			setTimeout(() => livetable.style.opacity = "1", 10)
 			write_livetable(view)
 			break
 		case WidgetMessage.WIDGET_GAMEPLAN:
-			// TODO WIP
 			gameplan.style.opacity = "0"
 			setTimeout(() => gameplan.style.display = "none", 500)
 			break
@@ -659,12 +654,10 @@ socket.onmessage = (event: MessageEvent) => {
 			write_gameplan(view)
 			break
 		case WidgetMessage.WIDGET_GAMESTART:
-			// TODO WIP
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.display = "none", 500)
 			break
 		case WidgetMessage.WIDGET_GAMESTART + 1:
-			// TODO WIP
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.opacity = "1", 10)
@@ -681,10 +674,6 @@ socket.onmessage = (event: MessageEvent) => {
 			break
 		case WidgetMessage.SCOREBOARD_PAUSE_TIMER:
 			timer_is_paused = (view.getUint8(1) === 1)
-			break
-		// TODO
-		default:
-			console.log("TODO not a classical mode, anyways, here's the data: ", view)
 			break
 	}
 }

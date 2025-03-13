@@ -1,32 +1,36 @@
 # Interscore
 An overlay for OBS Studio that displays scores and other info about streamed sports games.
 
-## TODO new
+## TODO About
+- client-server using WebSockets for control
+- CLI WebSocket server in C, meant for admins
+- another client in Qt6 for referees, uses two windows for displaying score in the arena
+- uses localhost html page for overlaying stuff on OBS as client
+- multiple widgets: counting goals and time, showing all teams, now playing teams, red and yellow cards
+- custom tournament data using JSON (template in input.template.json)
+- made for own use for a local Cycleball Tournament under hilarious deadlines
 
-### lessons from last use
-- dont swap keybinding for teams after teamswitches
-- time as a nummer für sich:
-	- proper time reset
-	- time is paused after setting by default
-	- proper time input
-- finish other widgets
-- (easier WS connection)
-- dont spam ii to update scoreboard
+## Usage
+1. Compile the frontend script and the binaries with `make js b-install r-install`.
+2. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
+3. Launch the `interscore` binary.
+4. Give the `interscore-rentnerend` binary to your nearest referee.
+5. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
+6. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
+
+## TODO new
+- FINAL release binaries in GitHub Releases
+- FINAL REMOVE input.json and
 
 ### frontend
 - scoreboard: whatever's happening with the score cells
-- animations:
-    - ingame bar opening and closing
-    - players list spawning
-    - table spawning
-    - Smooth time
-- widgets:
-	- playing teams
-- livetable: fade out upcoming games, add ?s for score
+- smooth time animation
+- FINAL animate line by line
 - (total CSS redesign)
 - background for headings
 - comment all relevant CSS
 - gradient colors
+- team logos for gamestart
 
 ### rentnerend
 - sync backup via json file

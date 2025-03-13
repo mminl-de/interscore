@@ -87,30 +87,6 @@ typedef struct {
 } WidgetCard;
 #pragma pack(pop)
 
-/*
-Possible User Actions:
-####### Ingame Stuff
-- Yellow Card to Player 1, 2, 3 or 4 (DONE)
-- Red Card to Player 1, 2, 3 or 4 (DONE)
-## Error Handling
-- delete card (DONE)
-####### UI Stuff
-- Enable/Disable ==> Scoreboard Widget
-- Start ==> Start of the game/halftime animation
-- Enable/Disable ==> Halftime Widget
-- enable/Disable ==> Live Table Widget
-- Enable/Disable ==> Tunierverlauf Widget
-####### Debug Stuff
-- Exit (DONE)
-- Write State to JSON?
-- Reload JSON
-- Print State to Terminal?
-- Print Connection State to Terminal?
-- Print all possible commands
-- Print current Gamestate
-*/
-
-// Define the input characters:
 // Justice system
 #define DEAL_YELLOW_CARD 'y'
 #define DEAL_RED_CARD 'r'
@@ -119,16 +95,13 @@ Possible User Actions:
 // Widget toggling
 #define TOGGLE_WIDGET_SCOREBOARD 'i'
 #define TOGGLE_WIDGET_LIVETABLE 'l'
-#define TOGGLE_WIDGET_GAMEPLAN 'v'
+#define TOGGLE_WIDGET_GAMEPLAN 'g'
 #define TOGGLE_WIDGET_GAMESTART 's'
 
 // Meta
 #define EXIT 'q'
 #define RELOAD_JSON 'j'
 #define PRINT_HELP '?'
-
-// Other
-#define TEST '6'
 
 #define URL "http://0.0.0.0:8081"
 
@@ -721,40 +694,31 @@ int main(void) {
 			case PRINT_HELP:
 				printf(
 					"======= Keyboard options =======\n"
-					"y  Yellow Card\n"
-					"r  Red Card\n"
-					"d  Delete Card\n"
+					"y  yellow card\n"
+					"r  red card\n"
+					"d  delete card\n"
 					"\n"
-					"i  Toggle Widget: Scoreboard\n"
-					"l  Toggle Widget: Livetable\n"
-					"v  Toggle Widget: Gameplan\n"
-					"s  Toggle Widget: Gamestart\n"
-					"w  Resend current widgets"
+					"i  toggle scoreboard widget\n"
+					"l  toggle livetable widget\n"
+					"g  toggle gameplan widget\n"
+					"s  toggle gamestart widget\n"
 					"\n"
-					"(j  Reload JSON)\n"
+					"w  resend current widgets"
+					"\n"
+					"j  Reload input.json\n"
 					"?  print help\n"
 					"q  quit\n"
 					"================================\n"
 				);
 				break;
 			case EXIT:
-				printf("TODO: about to quit\n");
 				running = false;
-				break;
-			case TEST: {
-				// TODO FINAL REMOVE ig
-				char string[40];
-				sprintf(string, "Du bist eine");
-				send_message_to_site(string);
-				break;
-			}
 		}
 	}
 
 	// WebSocket stuff, again
 	if (pthread_join(thread, NULL) != 0)
 		fprintf(stderr, "ERROR: Failed to join thread!\n");
-	printf("TODO joined thread\n");
 
 cleanup:
 	mg_mgr_free(&mgr);

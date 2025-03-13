@@ -23,7 +23,7 @@ b-run:
 	./$(OUT)
 
 RSRC ?= rentnerend/rentnerend.cpp mongoose/mongoose.c common.c
-ROUT ?= rentnerend/rentnerend
+ROUT ?= rentnerend/interscore-rentnerend
 QT_FLAGS ?= `pkg-config Qt6Widgets --cflags --libs`
 
 r-install:
