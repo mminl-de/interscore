@@ -426,7 +426,7 @@ function write_card(view: DataView) {
 	setTimeout(() => {
 		card.style.opacity = "0"
 		setTimeout(() => card.style.display = "none", 500)
-	}, 5_000)
+	}, 7_000)
 }
 
 interface LivetableLine {
