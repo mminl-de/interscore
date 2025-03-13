@@ -5,118 +5,126 @@
             "logo": "assets/gifhorn.jpg",
 			"players": [
 				{
-                	"name": "Corvin Rowold",
+                	"name": "Erik Kramer",
 					"position": "keeper"
 				},
 				{
-                	"name": "Christian Kramer",
+                	"name": "Linus Kramer",
 					"position": "field"
 				}
 			],
-	    	"color_light": "#234521",
-	    	"color_dark": "#544521"
+			"color_light": "a83940",
+			"color_dark": "a83940"
         },
         {
-			"name": "NAUROD 1",
-            "logo": "assets/naurod.jpg",
+			"name": "SCHIEFBAHN",
+            "logo": "assets/schiefbahn.jpg",
 			"players": [
 				{
-                	"name": "Marco Wagner",
+                	"name": "Ben Juckenhöfel",
 					"position": "keeper"
 				},
 				{
-                	"name": "Till Wehner",
+                	"name": "Lukas Lank",
 					"position": "field"
 				}
 			],
-	    	"color_light": "#234521",
-	    	"color_dark": "#544521"
+	    	"color_light": "429931",
+	    	"color_dark": "429931"
         },
         {
-			"name": "NAUROD 2",
-            "logo": "assets/naurod.jpg",
+			"name": "Leeden",
+            "logo": "assets/leeden.jpg",
 			"players": [
 				{
-                	"name": "Timo Wagner",
+                	"name": "Pascal Westphal",
 					"position": "keeper"
 				},
 				{
-                	"name": "Pascal van Klev",
+                	"name": "Ilias Kröner",
 					"position": "field"
 				}
 			],
-            "keeper": {
-                "name": "Timo Wagner"
-            },
-            "field": {
-                "name": "Pascal van Klev"
-            },
-			"color_light": "#234521",
-			"color_dark": "#544521"
+			"color_light": "0036a3",
+			"color_dark": "0036a3"
         },
         {
-			"name": "LUDWIGSFELDE",
-            "logo": "assets/ludwigsfelde.svg",
+			"name": "OBERNFELD",
+            "logo": "assets/obernfeld.svg",
 			"players": [
 				{
-                	"name": "Matthias Dunkel",
+                	"name": "Hagen Weiß",
 					"position": "keeper"
 				},
 				{
-                	"name": "Felix Stege",
+                	"name": "Calvin Rudolph",
 					"position": "field"
 				}
 			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
+			"color_light": "009273",
+			"color_dark": "009273"
+        }
+        {
+			"name": "VELBERT",
+            "logo": "assets/velbert.svg",
+			"players": [
+				{
+                	"name": "Fritz Reinhold",
+					"position": "keeper"
+				},
+				{
+                	"name": "Thilo Peters",
+					"position": "field"
+				}
+			],
+	    	"color_light": "ef1708",
+	    	"color_dark": "ef1708"
         }
 	],
     "games": [
         {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2"
+            "team1": "SCHIEFBAHN",
+            "team2": "VELBERT"
         },
         {
             "team1": "GIFHORN",
-            "team2": "NAUROD 2"
+            "team2": "LEEDEN"
         },
         {
-            "team1": "NAUROD 1",
-            "team2": "LUDWIGSFELDE"
+            "team1": "OBERNFELD",
+            "team2": "VELBERT"
         },
         {
-            "team1": "LUDWIGSFELDE",
-            "team2": "NAUROD 2"
+            "team1": "SCHIEFBAHN",
+            "team2": "LEEDEN"
         },
         {
-            "team1": "NAUROD 1",
-            "team2": "GIFHORN"
+            "team1": "GIFHORN",
+            "team2": "OBERNFELD"
         },
         {
-            "team1": "LUDWIGSFELDE",
+            "team1": "LEEDEN",
+            "team2": "VELBERT"
+        },
+        {
+            "team1": "SCHIEFBAHN",
+            "team2": "OBERNFELD"
+        },
+        {
+            "team1": "GIFHORN",
+            "team2": "VELBERT"
+        },
+        {
+            "team1": "LEEDEN",
+            "team2": "OBERNFELD"
+        },
+        {
+            "team1": "SCHIEFBAHN",
             "team2": "GIFHORN"
         },
         {
             "team1": "NAUROD 1",
             "team2": "NAUROD 2",
-            "halftimescore": {
-                "team1": "0",
-                "team2": "3"
-            },
-            "score": {
-                "team1": "4",
-                "team2": "4"
-            },
-            "cards": [
-                {
-                    "player": "Christian Kramer",
-                    "type": "Y"
-                },
-                {
-                    "player": "Marco Wagner",
-                    "type": "R"
-                }
-			]
         }
 	]
 }
