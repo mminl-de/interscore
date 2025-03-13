@@ -223,10 +223,10 @@ function write_gameplan(view: DataView) {
 
 		if (cur < game_i) {
 			line.style.opacity = "0.9"
-			t1.style.color = "gray"
+			t1.style.color = "#bebebe"
 			s1.innerHTML = "?"
 			s2.innerHTML = "?"
-			t2.style.color = "gray"
+			t2.style.color = "#bebebe"
 		}
 
 		gameplan.appendChild(line)
