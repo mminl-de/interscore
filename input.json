@@ -14,7 +14,7 @@
 				}
 			],
 			"color_light": "a83940",
-			"color_dark": "a83940"
+			"color_dark": "72272c"
         },
         {
 			"name": "SCHIEFBAHN",
@@ -30,7 +30,7 @@
 				}
 			],
 	    	"color_light": "429931",
-	    	"color_dark": "429931"
+	    	"color_dark": "2a601f"
         },
         {
 			"name": "LEEDEN",
@@ -46,7 +46,7 @@
 				}
 			],
 			"color_light": "0036a3",
-			"color_dark": "0036a3"
+			"color_dark": "002b80"
         },
         {
 			"name": "OBERNFELD",
@@ -62,7 +62,7 @@
 				}
 			],
 			"color_light": "009273",
-			"color_dark": "009273"
+			"color_dark": "004d3c"
         },
         {
 			"name": "VELBERT",
@@ -78,7 +78,7 @@
 				}
 			],
 	    	"color_light": "ef1708",
-	    	"color_dark": "ef1708"
+	    	"color_dark": "ad1105"
         }
 	],
     "games": [
