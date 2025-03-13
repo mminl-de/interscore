@@ -222,7 +222,7 @@ function write_gameplan(view: DataView) {
 		line.appendChild(t2)
 
 		if (cur < game_i) {
-			line.style.opacity = "0.6"
+			line.style.opacity = "0.9"
 			s1.innerHTML = "?"
 			s2.innerHTML = "?"
 		}
