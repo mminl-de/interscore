@@ -1,22 +1,27 @@
 # Interscore
 An overlay for OBS Studio that displays scores and other info about streamed sports games.
 
-## TODO About
-- client-server using WebSockets for control
-- CLI WebSocket server in C, meant for admins
-- another client in Qt6 for referees, uses two windows for displaying score in the arena
-- uses localhost html page for overlaying stuff on OBS as client
-- multiple widgets: counting goals and time, showing all teams, now playing teams, red and yellow cards
-- custom tournament data using JSON (template in input.template.json)
-- made for own use for a local Cycleball Tournament under hilarious deadlines
+## About
+This is a small suite of programs communicating with WebSockets.
+The OBS overlay is an HTML file launched via the Browser source.
+The server is a terminal program controlled by character input, meant for admins.
+Another client uses Qt6 and is meant for the referees and the public display in the hall.
+
+The user feeds the tournament metadata with a JSON file.
+
+The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
+
+This project was made for our personal use in a Cycleball tournament under hilarious deadlines.
 
 ## Usage
-1. Compile the frontend script and the binaries with `make js b-install r-install`.
-2. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
-3. Launch the `interscore` binary.
-4. Give the `interscore-rentnerend` binary to your nearest referee.
-5. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
-6. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
+1. Ensure your OBS edition supports Browser Source.
+2. Compile the frontend script and the binaries with `make js b-install r-install`.
+3. Fill out `input.json` given the template at `input.template.json`.
+4. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
+5. Launch the `interscore` binary.
+6. Give the `interscore-rentnerend` binary to your nearest referee.
+7. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
+8. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
 
 ## TODO new
 - FINAL release binaries in GitHub Releases
@@ -31,6 +36,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 - comment all relevant CSS
 - gradient colors
 - team logos for gamestart
+- gameplan: highlight winner team
 
 ### rentnerend
 - sync backup via json file
