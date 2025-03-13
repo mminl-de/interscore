@@ -6,8 +6,8 @@ socket.binaryType = "arraybuffer"
 const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
 let scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
 let scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
-let scoreboard_score_1 = scoreboard.querySelector(".score-1")!
-let scoreboard_score_2 = scoreboard.querySelector(".score-2")!
+let scoreboard_score_1 = scoreboard.querySelector(".s1")!
+let scoreboard_score_2 = scoreboard.querySelector(".s2")!
 let scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
 let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
@@ -60,54 +60,32 @@ function write_scoreboard(view: DataView) {
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
 	++offset
 
-	const is_halftime = view.getUint8(offset)
-	++offset
+	++offset // ignoring is_halftime TODO
 
 	let t1_col_left: Color = { r: 0, g: 0, b: 0 }
 	let t1_col_right: Color = { r: 0, g: 0, b: 0 }
 	let t2_col_left: Color = { r: 0, g: 0, b: 0 }
 	let t2_col_right: Color = { r: 0, g: 0, b: 0 }
-	if (is_halftime) {
-		t1_col_left.r = view.getUint8(offset)
-		t1_col_left.g = view.getUint8(offset + 1)
-		t1_col_left.b = view.getUint8(offset + 2)
-		offset += 3
 
-		t1_col_right.r = view.getUint8(offset)
-		t1_col_right.g = view.getUint8(offset + 1)
-		t1_col_right.b = view.getUint8(offset + 2)
-		offset += 3
+	t1_col_left.r = view.getUint8(offset)
+	t1_col_left.g = view.getUint8(offset + 1)
+	t1_col_left.b = view.getUint8(offset + 2)
+	offset += 3
 
-		t2_col_left.r = view.getUint8(offset)
-		t2_col_left.g = view.getUint8(offset + 1)
-		t2_col_left.b = view.getUint8(offset + 2)
-		offset += 3
+	t1_col_right.r = view.getUint8(offset)
+	t1_col_right.g = view.getUint8(offset + 1)
+	t1_col_right.b = view.getUint8(offset + 2)
+	offset += 3
 
-		t2_col_right.r = view.getUint8(offset)
-		t2_col_right.g = view.getUint8(offset + 1)
-		t2_col_right.b = view.getUint8(offset + 2)
-		offset += 3
-	} else {
-		t2_col_left.r = view.getUint8(offset)
-		t2_col_left.g = view.getUint8(offset + 1)
-		t2_col_left.b = view.getUint8(offset + 2)
-		offset += 3
+	t2_col_left.r = view.getUint8(offset)
+	t2_col_left.g = view.getUint8(offset + 1)
+	t2_col_left.b = view.getUint8(offset + 2)
+	offset += 3
 
-		t2_col_right.r = view.getUint8(offset)
-		t2_col_right.g = view.getUint8(offset + 1)
-		t2_col_right.b = view.getUint8(offset + 2)
-		offset += 3
-
-		t1_col_left.r = view.getUint8(offset)
-		t1_col_left.g = view.getUint8(offset + 1)
-		t1_col_left.b = view.getUint8(offset + 2)
-		offset += 3
-
-		t1_col_right.r = view.getUint8(offset)
-		t1_col_right.g = view.getUint8(offset + 1)
-		t1_col_right.b = view.getUint8(offset + 2)
-		offset += 3
-	}
+	t2_col_right.r = view.getUint8(offset)
+	t2_col_right.g = view.getUint8(offset + 1)
+	t2_col_right.b = view.getUint8(offset + 2)
+	offset += 3
 
 	scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
 	scoreboard_t2.style.backgroundColor = Color_to_string(t2_col_left)
