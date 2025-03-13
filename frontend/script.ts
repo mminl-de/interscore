@@ -36,6 +36,11 @@ function Color_to_string(input: Color): string {
 	return `rgb(${input.r}, ${input.g}, ${input.b})`
 }
 
+function Color_gradient_to_string(left: Color, right: Color): string {
+	return `linear-gradient(90deg, rgb(${left.r}, ${left.g}, ${left.b}) 0%,` +
+		`rgb(${right.r}, ${right.g}, ${right.b}) 50%)`
+}
+
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
 
@@ -62,33 +67,37 @@ function write_scoreboard(view: DataView) {
 
 	++offset // ignoring is_halftime TODO
 
-	let t1_col_left: Color = { r: 0, g: 0, b: 0 }
-	let t1_col_right: Color = { r: 0, g: 0, b: 0 }
-	let t2_col_left: Color = { r: 0, g: 0, b: 0 }
-	let t2_col_right: Color = { r: 0, g: 0, b: 0 }
-
-	t1_col_left.r = view.getUint8(offset)
-	t1_col_left.g = view.getUint8(offset + 1)
-	t1_col_left.b = view.getUint8(offset + 2)
+	const t1_col_left: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2)
+	}
 	offset += 3
 
-	t1_col_right.r = view.getUint8(offset)
-	t1_col_right.g = view.getUint8(offset + 1)
-	t1_col_right.b = view.getUint8(offset + 2)
+	const t1_col_right: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2)
+	}
 	offset += 3
 
-	t2_col_left.r = view.getUint8(offset)
-	t2_col_left.g = view.getUint8(offset + 1)
-	t2_col_left.b = view.getUint8(offset + 2)
+	const t2_col_left: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2)
+	}
 	offset += 3
 
-	t2_col_right.r = view.getUint8(offset)
-	t2_col_right.g = view.getUint8(offset + 1)
-	t2_col_right.b = view.getUint8(offset + 2)
+	const t2_col_right: Color = {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2)
+	}
 	offset += 3
 
-	scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
-	scoreboard_t2.style.backgroundColor = Color_to_string(t2_col_left)
+	//scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
+	scoreboard_t1.style.background = Color_gradient_to_string(t1_col_right, t1_col_left)
+	scoreboard_t2.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
 }
 
 function write_gameplan(view: DataView) {
@@ -149,8 +158,30 @@ function write_gameplan(view: DataView) {
 	}
 	offset += GAMES_COUNT_MAX - game_n
 
-	let col_1: Color[] = []
-	let col_2: Color[] = []
+	let col_1_light: Color[] = []
+	let col_2_light: Color[] = []
+	for (let game_i = 0; game_i < game_n; ++game_i) {
+		// TODO OPTIMIZE
+		let c1: Color = { r: 0, g: 0, b: 0 }
+		let c2: Color = { r: 0, g: 0, b: 0 }
+		c1.r = view.getUint8(offset)
+		c2.r = view.getUint8(offset + 2 * GAMES_COUNT_MAX * 3)
+
+		c1.g = view.getUint8(offset + 1)
+		c2.g = view.getUint8(offset + 1 + 2 * GAMES_COUNT_MAX * 3)
+
+		c1.b = view.getUint8(offset + 2)
+		c2.b = view.getUint8(offset + 2 + 2 * GAMES_COUNT_MAX * 3)
+
+		offset += 3
+
+		col_1_light.push(c1)
+		col_2_light.push(c2)
+	}
+	offset += (GAMES_COUNT_MAX - game_n) * 3
+
+	let col_1_dark: Color[] = []
+	let col_2_dark: Color[] = []
 	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let c1: Color = { r: 0, g: 0, b: 0 }
 		let c2: Color = { r: 0, g: 0, b: 0 }
@@ -165,13 +196,10 @@ function write_gameplan(view: DataView) {
 
 		offset += 3
 
-		col_1.push(c1)
-		col_2.push(c2)
+		col_1_dark.push(c1)
+		col_2_dark.push(c2)
 	}
 	offset += (GAMES_COUNT_MAX - game_n) * 3
-
-	// TODO NOTE discarding the dark colors
-	offset += 2 * GAMES_COUNT_MAX * 3
 
 	for (let game_i = 0; game_i < game_n; ++game_i) {
 		let line = document.createElement("div")
@@ -180,7 +208,7 @@ function write_gameplan(view: DataView) {
 		let t1 = document.createElement("div")
 		t1.classList.add("bordered", "t1")
 		t1.innerHTML = teams_1[game_i].toString()
-		t1.style.backgroundColor = Color_to_string(col_1[game_i])
+		t1.style.background = Color_gradient_to_string(col_1_light[game_i], col_1_dark[game_i])
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
@@ -195,7 +223,7 @@ function write_gameplan(view: DataView) {
 
 		let t2 = document.createElement("div")
 		t2.classList.add("bordered", "t2")
-		t2.style.backgroundColor = Color_to_string(col_2[game_i])
+		t2.style.background = Color_gradient_to_string(col_2_light[game_i], col_2_dark[game_i])
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
 
@@ -294,6 +322,7 @@ function write_gamestart(view: DataView) {
 		b: view.getUint8(offset + 2),
 	}
 	offset += 3
+	console.log(Color_to_string(t1_col_left))
 
 	let t1_col_right: Color = {
 		r: view.getUint8(offset),
@@ -301,6 +330,7 @@ function write_gamestart(view: DataView) {
 		b: view.getUint8(offset + 2),
 	}
 	offset += 3
+	console.log(Color_to_string(t1_col_right))
 
 	let t2_col_left: Color = {
 		r: view.getUint8(offset),
@@ -320,23 +350,21 @@ function write_gamestart(view: DataView) {
 
 	const t1_el = document.createElement("div")
 	t1_el.classList.add("team")
-	const t1_background = Color_to_string(t1_col_left)
-	console.log("color 1: ", t1_background)
 
 	const t1_name_el = document.createElement("div")
 	t1_name_el.classList.add("bordered")
 	t1_name_el.style.fontSize = "60px";
-	t1_name_el.style.backgroundColor = t1_background
+	t1_name_el.style.background = Color_gradient_to_string(t1_col_left, t1_col_right)
 	t1_name_el.innerHTML = t1.toString()
 
 	const t1_keeper_el = document.createElement("div")
 	t1_keeper_el.classList.add("bordered", "player")
-	t1_keeper_el.style.backgroundColor = t1_background
+	t1_keeper_el.style.backgroundColor = "#bebebe"
 	t1_keeper_el.innerHTML = t1_keeper.toString()
 
 	const t1_field_el = document.createElement("div")
 	t1_field_el.classList.add("bordered", "player")
-	t1_field_el.style.backgroundColor = t1_background
+	t1_field_el.style.backgroundColor = "#bebebe"
 	t1_field_el.innerHTML = t1_field.toString()
 
 	t1_el.appendChild(t1_name_el)
@@ -347,23 +375,21 @@ function write_gamestart(view: DataView) {
 
 	const t2_el = document.createElement("div")
 	t2_el.classList.add("team")
-	const t2_background = Color_to_string(t2_col_left)
-	console.log("color 2: ", t2_background)
 
 	const t2_name_el = document.createElement("div")
 	t2_name_el.classList.add("bordered")
 	t2_name_el.style.fontSize = "60px";
-	t2_name_el.style.backgroundColor = t2_background
+	t2_name_el.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
 	t2_name_el.innerHTML = t2.toString()
 
 	const t2_keeper_el = document.createElement("div")
 	t2_keeper_el.classList.add("bordered", "player")
-	t2_keeper_el.style.backgroundColor = t2_background
+	t2_keeper_el.style.backgroundColor = "#bebebe"
 	t2_keeper_el.innerHTML = t2_keeper.toString()
 
 	const t2_field_el = document.createElement("div")
 	t2_field_el.classList.add("bordered", "player")
-	t2_field_el.style.backgroundColor = t2_background
+	t2_field_el.style.backgroundColor = "#bebebe"
 	t2_field_el.innerHTML = t2_field.toString()
 
 	t2_el.appendChild(t2_name_el)

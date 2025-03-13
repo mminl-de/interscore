@@ -21,7 +21,7 @@
 }
 
 .scoreboard .bar {
-	background-color: #10c960;
+	background: linear-gradient(90deg, #10c960 0%, #2bee7f 80%);
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -58,9 +58,9 @@
 	background-color: rgba(255,199,0,1);
 }
 
-.scoreboard .s1 .s2 {
+.scoreboard .s1, .scoreboard .s2 {
     color: white;
-	background-color: #7f7f7f;
+	background-color: #bebebe;
     font-size: 40px;
 	width: 30px;
 

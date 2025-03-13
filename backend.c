@@ -200,9 +200,11 @@ WidgetGamestart WidgetGamestart_create() {
 	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
 	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
 
-	// TODO ADD colors
 	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
 	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
+	w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
+	w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+
 	return w;
 }
 
