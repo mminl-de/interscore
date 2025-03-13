@@ -150,7 +150,8 @@ int teams_sort_after_name(const void *p1, const void *p2){
 int teams_sort_after_goals(const void *p1, const void *p2){
 	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
-	return t1_goals - t2_goals;
+	//reverse it, because bigger is better
+	return t2_goals - t1_goals;
 }
 
 int teams_sort_after_goalratio(const void *p1, const void *p2){
@@ -158,13 +159,15 @@ int teams_sort_after_goalratio(const void *p1, const void *p2){
 	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
 	u8 t1_goals_taken = team_calc_goals_taken(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_goals_taken = team_calc_goals_taken(md.players[((Team *)p2)->keeper_index].team_index);
-	return (t1_goals-t1_goals_taken) - (t2_goals-t2_goals_taken);
+	//reverse it, because bigger is better
+	return (t2_goals-t2_goals_taken) - (t1_goals-t1_goals_taken);
 }
 
 int teams_sort_after_points(const void *p1, const void *p2){
 	u8 t1_points = team_calc_points(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_points = team_calc_points(md.players[((Team *)p2)->keeper_index].team_index);
-	return t1_points - t2_points;
+	//reverse it, because bigger is better
+	return t2_points - t1_points;
 }
 
 void send_widget(void *w, size_t size) {
@@ -238,7 +241,6 @@ WidgetLivetable WidgetLivetable_create() {
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
 
-	printf("Team i: name, W/T/L, Goals/Goals Taken, Points, Color\n");
 	for(u8 i=0; i < md.teams_count; i++){
 		u8 teamindex = md.players[teams[i].keeper_index].team_index;
 		strcpy(w.teams[i], md.teams[teamindex].name);
@@ -250,9 +252,6 @@ WidgetLivetable WidgetLivetable_create() {
 		w.goals[i] = team_calc_goals(teamindex);
 		w.goals_taken[i] = team_calc_goals_taken(teamindex);
 		w.color[i] = Color_from_hex(md.teams[i].color_light);
-		printf("Team %d: %s, %d/%d/%d(%d), %d/%d, %d, %d/%d/%d\n", i+1, w.teams[i],
-		       w.games_won[i], w.games_tied[i], w.games_lost[i], w.games_played[i], w.goals[i], w.goals_taken[i],
-		       w.points[i], w.color[i].r, w.color[i].g, w.color[i].b);
 	}
 
 	return w;
