@@ -2,12 +2,11 @@
 An overlay for OBS Studio that displays scores and other info about streamed sports games.
 
 ## About
-This is a small suite of programs communicating with WebSockets.
-The OBS overlay is an HTML file launched via the Browser source.
-The server is a terminal program controlled by character input, meant for admins.
-Another client uses Qt6 and is meant for the referees and the public display in the hall.
+The OBS overlay is a single HTML file launched via the Browser source.
+The file contents are controlled via the WebSocket protocol using a CLI server program, meant for admins.
+Another client uses Qt6 and is meant for the referees and the public display in the hall. The can change the HTML contents by using the server as the middleman.
 
-The user feeds the tournament metadata with a JSON file.
+Tournament metadata (competing teams, timer lengths, game plan) is fed using a JSON file.
 
 The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
 
@@ -26,6 +25,8 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ## TODO new
 - FINAL release binaries in GitHub Releases
 - FINAL REMOVE input.json and
+- FINAL how does the backend behave if JSON keys are missing?
+- FINAL screenshots of backend options and rentnerend windows
 
 ### frontend
 - scoreboard: whatever's happening with the score cells
@@ -66,57 +67,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - ENSURE `n` and `p` work
 - (graceful Ctrl-C handling)
 
-### readme
-- context about what (and why) this is
-- describe the backend
-- describe the rentnerend (both windows)
-
 ### meta
 - Rauskriegen wer Feld und Außenspieler ist
 - How does the tiebreak work?
 - find colors for teams
-
-## Included info on different scenes/moments in stream
-### FINAL Start of game/halftime
-- list of players in both teams (with roles)
-
-### Ingame
-- both team's names (and colors)
-- game timer
-- countdown bar
-- is second halftime?
-- FINAL team logos
-
-### Halftime pause
-- Score at halftime
-- first or second halftime?
-
-### Live table
-- Numbers list of
-- All previous games calculated and printed with:
-    - team names
-    - numbers of games won
-    - number of games tied
-    - number of games lost
-    - points
-    - goals
-    - goals caseered
-    - tordiff
-
-### Turnierverlauf
-- previous games' info in a table (see above)
-    - team names
-    - score at halftime
-    - final score
-    - FINAL Cards given to players
-
-## User API description
-- user fills out a JSON with certain properties:
-    - team list:
-        - player list per team
-    - list of games
-    - time per game
-    - halftimes per game
-- program checks if every required field is filled (including array items)
-- server generates a hotkey table for quick goals assignment and transitions
-```
