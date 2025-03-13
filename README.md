@@ -3,7 +3,7 @@ An overlay for OBS Studio that displays scores and other info about streamed spo
 
 ## About
 The OBS overlay is a single HTML file launched via the Browser source.
-The file contents are controlled via the WebSocket protocol using a CLI server program, meant for admins.
+The DOM contents are controlled via the WebSocket protocol using a CLI server program, meant for admins.
 Another client uses Qt6 and is meant for the referees and the public display in the hall. The can change the HTML contents by using the server as the middleman.
 
 Tournament metadata (competing teams, timer lengths, game plan) is fed using a JSON file.
@@ -13,14 +13,15 @@ The overlay supports multiple "widgets" showing goals and the timer, teams parti
 This project was made for our personal use in a Cycleball tournament under hilarious deadlines.
 
 ## Usage
-1. Ensure your OBS edition supports Browser Source.
-2. Compile the frontend script and the binaries with `make js b-install r-install`.
-3. Fill out `input.json` given the template at `input.template.json`.
-4. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
-5. Launch the `interscore` binary.
-6. Give the `interscore-rentnerend` binary to your nearest referee.
-7. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
-8. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
+1. `git clone --recursive https://github.com/hiimsergey/interscore && cd interscore`
+2. Ensure your OBS edition supports Browser Source.
+3. Compile the frontend script and the binaries with `make js b-install r-install`.
+4. Fill out `input.json` given the template at `input.template.json`.
+5. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
+6. Launch the `interscore` binary.
+7. Give the `interscore-rentnerend` binary to your nearest referee.
+8. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
+9. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
 
 ## TODO new
 - FINAL release binaries in GitHub Releases

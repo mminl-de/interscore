@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QFontDatabase>
 #include <QWidget>
 #include <QPushButton>
 #include <QComboBox>
@@ -231,13 +232,13 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 }
 
 int text_width(const char *text, QFont font){
-		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
-		return text_size.width();
+	QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
+	return text_size.width();
 }
 
 int text_height(const char *text, QFont font){
-		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
-		return text_size.height()*0.6;
+	QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
+	return text_size.height()*0.6;
 }
 
 QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
@@ -292,7 +293,6 @@ void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_
 	l->setAlignment(y_alignment);
 	l->setAlignment(x_alignment);
 
-	// TODO TEST
 	l->setText(QString::fromUtf8(text));
 }
 
@@ -480,12 +480,26 @@ void create_display_window() {
 	wd.w = new QWidget;
 	wd.w->setWindowTitle("Scoreboard Display");
 
+	// Setting background color to black
+	QPalette palette = wd.w->palette();
+	palette.setColor(QPalette::Window, Qt::black);
+	wd.w->setAutoFillBackground(true);
+	wd.w->setPalette(palette);
+
 	wd.l.t1.name = new QLabel("", wd.w);
 	wd.l.t2.name = new QLabel("", wd.w);
 	wd.l.t1.score = new QLabel("", wd.w);
 	wd.l.t2.score = new QLabel("", wd.w);
 	wd.l.time = new QLabel("", wd.w);
 	wd.l.colon = new QLabel("", wd.w);
+
+	// Setting label colors to orange for score and white for the rest
+	wd.l.t1.name->setStyleSheet("color: white;");
+	wd.l.t2.name->setStyleSheet("color: white;");
+	wd.l.t1.score->setStyleSheet("color: #cc6600;");
+	wd.l.t2.score->setStyleSheet("color: #cc6600;");
+	wd.l.time->setStyleSheet("color: white;");
+	wd.l.colon->setStyleSheet("color: white;");
 
 	update_display_window();
 }
@@ -524,6 +538,14 @@ void websocket_poll() {
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
+
+	// Applying Kanit font globally
+	const int font_id = QFontDatabase::addApplicationFont("Kanit-Regular.ttf");
+	QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
+	if (!font_families.isEmpty()) {
+		QFont app_font(font_families.at(0));
+		QApplication::setFont(app_font);
+	}
 
 	char *json = file_read(JSON_PATH);
 	json_load(json);
