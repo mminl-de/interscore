@@ -68,7 +68,8 @@ typedef struct {
 
 typedef struct {
 	u8 widget_num;
-	u8 len; // amount of Games total
+	u8 len; // total amount of games
+	u8 cur; // current game
 	char teams_1[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
 	char teams_2[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
 	u8 goals_t1[GAMES_COUNT_MAX];
@@ -294,11 +295,12 @@ WidgetGameplan WidgetGameplan_create() {
 	WidgetGameplan w;
 	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
+	w.cur = md.cur.gameindex;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams_1[i], md.teams[md.games[i].t1_index].name);
 		strcpy(w.teams_2[i], md.teams[md.games[i].t2_index].name);
-		w.goals_t1[i] = 49; // TODO md.games[i].score.t1;
-		w.goals_t2[i] = 49; // TODO md.games[i].score.t2;
+		w.goals_t1[i] = md.games[i].score.t1;
+		w.goals_t2[i] = md.games[i].score.t2;
 
 		w.t1_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
 		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);

@@ -121,6 +121,10 @@ function write_gameplan(view: DataView) {
 	const game_n = view.getUint8(offset)
 	++offset
 
+	const cur = view.getUint8(offset)
+	console.log("cur is ", cur)
+	++offset
+
 	let teams_1: String[] = []
 	let teams_2: String[] = []
 	for (let game_i = 0; game_i < game_n; ++game_i) {
@@ -216,6 +220,12 @@ function write_gameplan(view: DataView) {
 		t2.style.backgroundColor = Color_to_string(col_2[game_i])
 		t2.innerHTML = teams_2[game_i].toString()
 		line.appendChild(t2)
+
+		if (cur < game_i) {
+			line.style.opacity = "0.6"
+			s1.innerHTML = "?"
+			s2.innerHTML = "?"
+		}
 
 		gameplan.appendChild(line)
 	}
