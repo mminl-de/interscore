@@ -223,6 +223,8 @@ function write_gameplan(view: DataView) {
 
 		if (cur < game_i) {
 			line.style.opacity = "0.9"
+			t1.style.opacity = "1"
+			t2.style.opacity = "1"
 			s1.innerHTML = "?"
 			s2.innerHTML = "?"
 		}
