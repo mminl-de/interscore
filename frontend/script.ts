@@ -348,7 +348,8 @@ function write_gamestart(view: DataView) {
 	console.log("color 1: ", t1_background)
 
 	const t1_name_el = document.createElement("div")
-	t1_name_el.classList.add("bordered", "heading")
+	t1_name_el.classList.add("bordered")
+	t1_name_el.style.fontSize = "60px";
 	t1_name_el.style.backgroundColor = t1_background
 	t1_name_el.innerHTML = t1.toString()
 
@@ -374,7 +375,8 @@ function write_gamestart(view: DataView) {
 	console.log("color 2: ", t2_background)
 
 	const t2_name_el = document.createElement("div")
-	t2_name_el.classList.add("bordered", "heading")
+	t2_name_el.classList.add("bordered")
+	t2_name_el.style.fontSize = "60px";
 	t2_name_el.style.backgroundColor = t2_background
 	t2_name_el.innerHTML = t2.toString()
 
