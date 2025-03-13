@@ -33,7 +33,7 @@
 	    	"color_dark": "429931"
         },
         {
-			"name": "Leeden",
+			"name": "LEEDEN",
             "logo": "assets/leeden.jpg",
 			"players": [
 				{
@@ -63,7 +63,7 @@
 			],
 			"color_light": "009273",
 			"color_dark": "009273"
-        }
+        },
         {
 			"name": "VELBERT",
             "logo": "assets/velbert.svg",
@@ -121,10 +121,6 @@
         {
             "team1": "SCHIEFBAHN",
             "team2": "GIFHORN"
-        },
-        {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2",
         }
 	]
 }
