@@ -31,21 +31,6 @@
 .gameplan .line {
 	display: flex;
 	gap: 10px;
-
-	/* TODO WIP */
-	position: relative;
-	background: transparent;
-}
-
-.gameplan .line::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background(0, 0, 0, 0.5);
-	z-index: -1;
 }
 
 .gameplan .t1, .gameplan .t2 {
