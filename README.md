@@ -25,12 +25,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ## TODO new
 - FINAL release binaries in GitHub Releases
-- FINAL REMOVE input.json and
+- FINAL REMOVE input.json and project.seer and assets
 - FINAL how does the backend behave if JSON keys are missing?
 - FINAL screenshots of backend options and rentnerend windows
 
 ### frontend
-- scoreboard: whatever's happening with the score cells
 - smooth time animation
 - FINAL animate line by line
 - (total CSS redesign)

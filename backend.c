@@ -402,13 +402,15 @@ void send_time_pause(bool pause) {
 
 void resend_widgets() {
 	WidgetScoreboard w_scoreboard = WidgetScoreboard_create();
-	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
 	WidgetGamestart w_gamestart = WidgetGamestart_create();
+	//WidgetLivetable w_livetable = WidgetLivetable_create();
+	WidgetGameplan w_gameplan = WidgetGameplan_create();
+
+	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
 	send_widget(&w_gamestart, sizeof(WidgetGamestart));
-	WidgetLivetable w_livetable = WidgetLivetable_create();
-	send_widget(&w_livetable, sizeof(WidgetLivetable));
-	//WidgetLivetable w_gameplan = WidgetLivetable_create();
-	//send_widget(&w_gameplan, sizeof(WidgetGameplan));
+	//send_widget(&w_livetable, sizeof(WidgetLivetable));
+	send_widget(&w_gameplan, sizeof(WidgetGameplan));
+
 	send_time(md.cur.time);
 	send_time_pause(md.cur.pause);
 }
@@ -474,7 +476,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 		}
 		case TIME_TOGGLE_PAUSE: {
 			md.cur.pause = !md.cur.pause;
-			printf("Toggeling Time to %d: %d:%2d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
+			printf("Toggling time to %d: %d:%2d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_RESET: {
