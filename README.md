@@ -30,23 +30,20 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL screenshots of backend options and rentnerend windows
 
 ### frontend
-- FINAL animate line by line
-- comment all relevant CSS
-- gradient colors
 - team logos for gamestart
 - gameplan: highlight winner team
+- FINAL animate line by line
+- FINAL comment all relevant CSS
+- FINAL handle dealing multiple cards
 
 ### rentnerend
 - sync backup via json file
 - play sound when timer runs out
-- fix mg_random bug
 - stop the crashing after long time
 - 7-min-button reading the seven from json (no hardcoding)
 - public window:
-	- colors ?
 	- (other widgets between games)
 - private window:
-	- colors ?
 	- deal yellow and red cards
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
@@ -56,15 +53,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL FINAL port to windows/mac
 
 ### backend
-- gameplan: there should be 6 games, not 7
-- handle dealing multiple cards
-- d key causing SEGFAULT on empty input
 - Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
 - FINAL abstract program so it's applicable for other games
-- ENSURE `n` and `p` work
 - (graceful Ctrl-C handling)
+- obs integration
 
 ### meta
 - Rauskriegen wer Feld und Außenspieler ist
 - How does the tiebreak work?
-- find colors for teams

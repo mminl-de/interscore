@@ -626,6 +626,10 @@ int main(void) {
 			}
 			case DELETE_CARD: {
 				u32 cur_i = md.cur.gameindex;
+				if(md.games[cur_i].cards_count == 0){
+					printf("No Cards to delete!\n");
+					break;
+				}
 				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
 					printf("%d. ", i + 1);
 					if (md.games[cur_i].cards[i].card_type == 0)
@@ -640,8 +644,9 @@ int main(void) {
 						printf("(field)\n");
 				}
 				printf("Select a card to delete: ");
-				u32 c = 0;
-				scanf("%ud", &c);
+				u32 c = md.games[cur_i].cards_count+1;
+				while(c > md.games[cur_i].cards_count || c <= 0)
+					scanf("%ud", &c);
 				// Overwrite c with the last element
 				md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
 				printf("Cards remaining:\n");
