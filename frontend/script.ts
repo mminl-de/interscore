@@ -562,7 +562,7 @@ function write_livetable(view: DataView) {
 		line.appendChild(goals)
 
 		const diff = document.createElement("div")
-		diff.innerHTML = (teams[team_i].goals! - teams[team_i].goals!).toString()
+		diff.innerHTML = (teams[team_i].goals! - teams[team_i].goals_taken!).toString()
 		diff.classList.add("bordered")
 		line.appendChild(diff)
 
