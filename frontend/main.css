@@ -10,12 +10,12 @@ body {
 .heading {
 	font-size: 60px;
 	text-align: center;
-	text-shadow: 10px 10px 10px rgba(0, 0, 0, 0.7);
+	text-shadow: 10px 10px 10px rgba(0, 0, 0, 0.9);
 }
 
 .bordered {
 	border: solid 3px black;
-	box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.7);
+	box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.9);
 }
 
 @font-face {
