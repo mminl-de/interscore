@@ -10,10 +10,6 @@
 	transform: translate(-50%, -50%);
 
 	transition: opacity 0.5s ease-in-out;
-
-	/* TODO WIP */
-	background: rgba(255, 255, 255, 0.2);
-	backdrop-filter: blur(10px);
 }
 
 .gameplan > * {
