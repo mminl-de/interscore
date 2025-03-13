@@ -28,54 +28,15 @@
 	height: 40px;
 }
 
-/* TODO NOTE
-.gameplan {
-	font-size: 50px;
-
-	margin: auto;
-	text-align: center;
+.gameplan .line {
 	display: flex;
-	flex-direction: column;
-	justify-content: center;
-
-	gap: 20px;
-
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-}
-
-.gameplan .heading {
-	font-size: 60px;
-}
-
-.line {
-	display: flex;
-	justify-content: center;
-
 	gap: 10px;
 }
 
-.line > * {
-	border: 3px solid black;
-}
-
-.s1, .s2 {
-	background-color: gray;
-	width: 60px;
-	padding: 0 10px;
+.gameplan .line > * {
+	opacity: 0.9;
 }
 
 .gameplan .t1, .gameplan .t2 {
-	background-color: brown;
-	width: 400px;
-	flex-grow: 1;
-
-	text-align: center;
+	opacity: 1;
 }
-
-.anticipated {
-	opacity: 0.6;
-}
-*/

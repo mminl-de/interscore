@@ -222,21 +222,7 @@ function write_gameplan(view: DataView) {
 		line.appendChild(t2)
 
 		if (cur < game_i) {
-			t1.style.background = "rgba(70, 70, 30, 0.9)"
-			t2.style.background = "rgba(20, 70, 30, 0.9)"
-			s1.style.background = "rgba(70, 70, 30, 0.9)"
-			s2.style.background = "rgba(20, 70, 30, 0.9)"
-
-			line.style.position = "relative"
-			t1.style.position = "relative"
-			t2.style.position = "relative"
-			s1.style.position = "relative"
-			s2.style.position = "relative"
-
-			t1.style.zIndex = "1";
-			t2.style.zIndex = "1";
-
-			line.style.opacity = "0.9"
+			//line.style.opacity = "0.9"
 			t1.style.opacity = "1"
 			t2.style.opacity = "1"
 			s1.innerHTML = "?"
