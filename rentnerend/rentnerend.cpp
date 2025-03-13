@@ -533,7 +533,6 @@ int main(int argc, char *argv[]) {
     create_display_window();
     create_input_window();
 
-	mg_log_set(MG_LL_DEBUG);
 	mg_mgr_init(&mgr);
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	QTimer *t1 = new QTimer(wi.w);

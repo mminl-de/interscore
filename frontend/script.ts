@@ -670,7 +670,7 @@ socket.onmessage = (event: MessageEvent) => {
 			scoreboard_set_timer(view)
 			break
 		case WidgetMessage.SCOREBOARD_PAUSE_TIMER:
-			timer_is_paused = !timer_is_paused
+			timer_is_paused = (view.getUint8(1) === 1)
 			break
 		// TODO
 		default:
