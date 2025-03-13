@@ -440,7 +440,8 @@ interface LivetableLine {
 	lost?: number,
 	goals?: number,
 	goals_taken?: number,
-	color?: Color
+	color_light?: Color,
+	color_dark?: Color
 }
 
 // TODO FINAL OPTIMIZE
@@ -513,10 +514,15 @@ function write_livetable(view: DataView) {
 	offset += (TEAMS_COUNT_MAX - team_n) * 2
 
 	for (let i = 0; i < team_n; ++i) {
-		teams[i].color = {
+		teams[i].color_light = {
 			r: view.getUint8(offset),
 			g: view.getUint8(offset + 1),
 			b: view.getUint8(offset + 2)
+		}
+		teams[i].color_dark = {
+			r: view.getUint8(offset + TEAMS_COUNT_MAX * 3),
+			g: view.getUint8(offset + TEAMS_COUNT_MAX * 3 + 1),
+			b: view.getUint8(offset + TEAMS_COUNT_MAX * 3 + 2)
 		}
 		offset += 3
 	}
@@ -528,7 +534,8 @@ function write_livetable(view: DataView) {
 		const name = document.createElement("div")
 		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("bordered", "name")
-		name.style.backgroundColor = teams[team_i].color!.toString().slice(0, 7)
+		name.style.background = Color_gradient_to_string(teams[team_i].color_light!, teams[team_i].color_dark!)
+		name.style.color = "#bebebe"
 		line.appendChild(name)
 
 		const points = document.createElement("div")
