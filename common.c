@@ -267,3 +267,50 @@ char* file_read(const char *path){
 	fclose(f);
 	return filestring;
 }
+
+void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *)) {
+    if (num < 2) return;
+
+    size_t mid = num / 2;
+    void *left = malloc(mid * size);
+    void *right = malloc((num - mid) * size);
+
+    if (!left || !right) {
+        perror("Memory allocation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    memcpy(left, base, mid * size);
+    memcpy(right, (char *)base + mid * size, (num - mid) * size);
+
+    merge_sort(left, mid, size, compar);
+    merge_sort(right, num - mid, size, compar);
+
+    // Merge two halves
+    size_t i = 0, j = 0, k = 0;
+    while (i < mid && j < num - mid) {
+        if (compar((char *)left + i * size, (char *)right + j * size) <= 0) {
+            memcpy((char *)base + k * size, (char *)left + i * size, size);
+            i++;
+        } else {
+            memcpy((char *)base + k * size, (char *)right + j * size, size);
+            j++;
+        }
+        k++;
+    }
+
+    while (i < mid) {
+        memcpy((char *)base + k * size, (char *)left + i * size, size);
+        i++;
+        k++;
+    }
+
+    while (j < num - mid) {
+        memcpy((char *)base + k * size, (char *)right + j * size, size);
+        j++;
+        k++;
+    }
+
+    free(left);
+    free(right);
+}

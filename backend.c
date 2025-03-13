@@ -140,14 +140,33 @@ Color Color_from_hex(const char *hex) {
 }
 
 int qsort_helper_u8(const void *p1, const void *p2) {
-	if(*(int*)p1 < *(int*)p2)
-		return -1;
-	if(*(int*)p1 > *(int*)p2)
-		return 1;
-	return 0;
+	return *(int*)p1 - *(int*)p2;
 }
 
-// To send a widget with this function, convert it to a string with a cast.
+int teams_sort_after_name(const void *p1, const void *p2){
+	return strcmp(((Team *)p1)->name, ((Team *)p2)->name);
+}
+
+int teams_sort_after_goals(const void *p1, const void *p2){
+	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
+	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
+	return t1_goals - t2_goals;
+}
+
+int teams_sort_after_goalratio(const void *p1, const void *p2){
+	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
+	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
+	u8 t1_goals_taken = team_calc_goals_taken(md.players[((Team *)p1)->keeper_index].team_index);
+	u8 t2_goals_taken = team_calc_goals_taken(md.players[((Team *)p2)->keeper_index].team_index);
+	return (t1_goals-t1_goals_taken) - (t2_goals-t2_goals_taken);
+}
+
+int teams_sort_after_points(const void *p1, const void *p2){
+	u8 t1_points = team_calc_points(md.players[((Team *)p1)->keeper_index].team_index);
+	u8 t2_points = team_calc_points(md.players[((Team *)p2)->keeper_index].team_index);
+	return t1_points - t2_points;
+}
+
 void send_widget(void *w, size_t size) {
 	if (c_front == NULL){
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
@@ -210,59 +229,30 @@ WidgetLivetable WidgetLivetable_create() {
 	WidgetLivetable w;
 	w.widget_num = WIDGET_LIVETABLE + WidgetLivetable_enabled;
 	w.len = md.teams_count;
-	int teams_done[md.teams_count];
-	int points[md.teams_count], goalratio[md.teams_count], goals[md.teams_count];
-	for (u8 i = 0; i < md.teams_count; i++) {
-		//punkte
-		points[i] = team_calc_points(i);
-		//torverhältnis
-		goalratio[i] = team_calc_goals(i) - team_calc_goals_taken(i);
-		//Mehr Tore
-		goals[i] = team_calc_goals(i);
-	}
-	qsort(points, md.teams_count, sizeof(u8), qsort_helper_u8);
-	qsort(goalratio, md.teams_count, sizeof(u8), qsort_helper_u8);
-	qsort(goals, md.teams_count, sizeof(u8), qsort_helper_u8);
-	for (u8 i = 0; i < md.teams_count; i++) {
-		u8 j;
-		for(j=i; j < md.teams_count-1 && points[j] != points[j+1]; j++);
-		if(j<i); // wtf
-		//TODO STARTHERE
-	}
-	for (u8 i = 0; i < md.teams_count; i++) {
-		//init best_index with first, not yet done team
-		u8 best_index = 0;
-		for(int k=0; k < i; k++){
-			if(k != teams_done[k]){
-				best_index = k;
-				break;
-			}
-		}
-		//search for better team without entry
-		for(int j=0; j < md.teams_count; j++){
-			int skip = false;
-			if(team_calc_points(best_index) < team_calc_points(i)){
-				for(int k=0; k < i; k++){
-					if(k == teams_done[k])
-						skip = true;
-				}
-				if(!skip)
-					best_index = team_calc_points(i);
-			}
-		}
+	Team teams[md.teams_count];
+	memcpy(teams, md.teams, sizeof(Team) * md.teams_count);
+	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_name);
+	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goals);
+	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
+	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
 
-		strcpy(w.teams[i], md.teams[best_index].name);
-		w.points[i] = team_calc_points(best_index);
-		w.games_played[i] = team_calc_games_played(best_index);
-		w.games_won[i] = team_calc_games_won(best_index);
-		w.games_tied[i] = team_calc_games_tied(best_index);
+	printf("Team i: name, W/T/L, Goals/Goals Taken, Points, Color\n");
+	for(u8 i=0; i < md.teams_count; i++){
+		u8 teamindex = md.players[teams[i].keeper_index].team_index;
+		strcpy(w.teams[i], md.teams[teamindex].name);
+		w.points[i] = team_calc_points(teamindex);
+		w.games_played[i] = team_calc_games_played(teamindex);
+		w.games_won[i] = team_calc_games_won(teamindex);
+		w.games_tied[i] = team_calc_games_tied(teamindex);
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
-		w.goals[i] = team_calc_goals(best_index);
-		w.goals_taken[i] = team_calc_goals_taken(best_index);
+		w.goals[i] = team_calc_goals(teamindex);
+		w.goals_taken[i] = team_calc_goals_taken(teamindex);
 		w.color[i] = Color_from_hex(md.teams[i].color_light);
-
-		teams_done[i] = best_index;
+		printf("Team %d: %s, %d/%d/%d(%d), %d/%d, %d, %d/%d/%d\n", i+1, w.teams[i],
+		       w.games_won[i], w.games_tied[i], w.games_lost[i], w.games_played[i], w.goals[i], w.goals_taken[i],
+		       w.points[i], w.color[i].r, w.color[i].g, w.color[i].b);
 	}
+
 	return w;
 }
 
@@ -301,7 +291,7 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 // Calculate the points of all games played so far of the team with index index.
 u16 team_calc_points(u8 index) {
 	u16 p = 0;
-	for (u8 i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i <= md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index) {
 			if (md.games[i].score.t1 > md.games[i].score.t2)
 				p += 3;
@@ -319,7 +309,7 @@ u16 team_calc_points(u8 index) {
 
 u8 team_calc_games_played(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i < md.games_count; i++)
+	for (u8 i = 0; i <= md.cur.gameindex; i++)
 		if (md.games[i].t1_index == index || md.games[i].t2_index == index)
 			p++;
 	return p;
@@ -327,7 +317,7 @@ u8 team_calc_games_played(u8 index){
 
 u8 team_calc_games_won(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i <= md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index && md.games[i].score.t1 > md.games[i].score.t2)
 			p++;
 		else if (md.games[i].t2_index == index && md.games[i].score.t2 > md.games[i].score.t1)
@@ -338,7 +328,7 @@ u8 team_calc_games_won(u8 index){
 
 u8 team_calc_games_tied(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i <= md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index && md.games[i].score.t1 == md.games[i].score.t2)
 			p++;
 		else if (md.games[i].t2_index == index && md.games[i].score.t2 == md.games[i].score.t1)
@@ -349,7 +339,7 @@ u8 team_calc_games_tied(u8 index){
 
 u16 team_calc_goals(u8 index){
 	u16 p = 0;
-	for (u8 i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i <= md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index)
 			p += md.games[i].score.t1;
 		else if (md.games[i].t2_index == index)
@@ -360,7 +350,7 @@ u16 team_calc_goals(u8 index){
 
 u16 team_calc_goals_taken(u8 index){
 	u16 p = 0;
-	for (u8 i = 0; i < md.games_count; i++) {
+	for (u8 i = 0; i <= md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index)
 			p += md.games[i].score.t2;
 		else if (md.games[i].t2_index == index)
@@ -403,12 +393,12 @@ void send_time_pause(bool pause) {
 void resend_widgets() {
 	WidgetScoreboard w_scoreboard = WidgetScoreboard_create();
 	WidgetGamestart w_gamestart = WidgetGamestart_create();
-	//WidgetLivetable w_livetable = WidgetLivetable_create();
+	WidgetLivetable w_livetable = WidgetLivetable_create();
 	WidgetGameplan w_gameplan = WidgetGameplan_create();
 
 	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
 	send_widget(&w_gamestart, sizeof(WidgetGamestart));
-	//send_widget(&w_livetable, sizeof(WidgetLivetable));
+	send_widget(&w_livetable, sizeof(WidgetLivetable));
 	send_widget(&w_gameplan, sizeof(WidgetGameplan));
 
 	send_time(md.cur.time);

@@ -52,7 +52,7 @@ typedef struct {
 
 typedef struct {
 	struct {
-		u8 gameindex; // index of the current game played in the games array
+		u8 gameindex; // index of the current game played in the games array.
 		bool halftime; // 0: first half, 1: second half
 		bool pause;
 		u16 time;
@@ -73,5 +73,6 @@ int team_index(const char *name);
 const char *json_generate();
 void json_load(const char *path);
 char *file_read(const char *path);
+void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
 
 #endif // _COMMON_H_
