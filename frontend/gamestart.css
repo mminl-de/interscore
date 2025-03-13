@@ -1,6 +1,5 @@
 .gamestart {
-	/* TODO WIP */
-	display: flex;
+	display: none;
 	flex-direction: column;
 
 	position: absolute;
@@ -8,7 +7,6 @@
 	left: 50%;
 	transform: translate(-50%, -50%);
 
-	/* TODO WIP */
 	transition: opacity 0.5s ease-in-out;
 
 	gap: 20px;

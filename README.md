@@ -30,10 +30,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL screenshots of backend options and rentnerend windows
 
 ### frontend
-- smooth time animation
 - FINAL animate line by line
-- (total CSS redesign)
-- background for headings
 - comment all relevant CSS
 - gradient colors
 - team logos for gamestart

@@ -177,13 +177,13 @@ function write_gameplan(view: DataView) {
 		let c1: Color = { r: 0, g: 0, b: 0 }
 		let c2: Color = { r: 0, g: 0, b: 0 }
 		c1.r = view.getUint8(offset)
-		c2.r = view.getUint8(offset + GAMES_COUNT_MAX * 3)
+		c2.r = view.getUint8(offset + 2 * GAMES_COUNT_MAX * 3)
 
 		c1.g = view.getUint8(offset + 1)
-		c2.g = view.getUint8(offset + 1 + GAMES_COUNT_MAX * 3)
+		c2.g = view.getUint8(offset + 1 + 2 * GAMES_COUNT_MAX * 3)
 
 		c1.b = view.getUint8(offset + 2)
-		c2.b = view.getUint8(offset + 2 + GAMES_COUNT_MAX * 3)
+		c2.b = view.getUint8(offset + 2 + 2 * GAMES_COUNT_MAX * 3)
 
 		offset += 3
 
@@ -223,10 +223,8 @@ function write_gameplan(view: DataView) {
 
 		if (cur < game_i) {
 			line.style.opacity = "0.9"
-			t1.style.color = "#bebebe"
 			s1.innerHTML = "?"
 			s2.innerHTML = "?"
-			t2.style.color = "#bebebe"
 		}
 
 		gameplan.appendChild(line)

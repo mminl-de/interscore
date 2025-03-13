@@ -17,6 +17,7 @@
 }
 
 .gameplan .t1, .gameplan .t2 {
+	color: #bebebe;
 	width: 300px;
 	height: 40px;
 	align-items: center;
