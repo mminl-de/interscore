@@ -63,7 +63,8 @@ typedef struct {
 	u8 games_lost[TEAMS_COUNT_MAX];
 	u16 goals[TEAMS_COUNT_MAX];
 	u16 goals_taken[TEAMS_COUNT_MAX];
-	Color color[TEAMS_COUNT_MAX];
+	Color color_light[TEAMS_COUNT_MAX];
+	Color color_dark[TEAMS_COUNT_MAX];
 } WidgetLivetable;
 
 typedef struct {
@@ -251,7 +252,8 @@ WidgetLivetable WidgetLivetable_create() {
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
 		w.goals[i] = team_calc_goals(teamindex);
 		w.goals_taken[i] = team_calc_goals_taken(teamindex);
-		w.color[i] = Color_from_hex(md.teams[i].color_light);
+		w.color_light[i] = Color_from_hex(md.teams[i].color_light);
+		w.color_dark[i] = Color_from_hex(md.teams[i].color_dark);
 	}
 
 	return w;
