@@ -176,9 +176,11 @@ int qsort_helper_u8(const void *p1, const void *p2) {
 
 // To send a widget with this function, convert it to a string with a cast.
 void send_widget(void *w, size_t size) {
-	if (c_front == NULL)
+	if (c_front == NULL){
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
-	else mg_ws_send(c_front, (char *) w, size, WEBSOCKET_OP_BINARY);
+		return;
+	}
+	mg_ws_send(c_front, (char *) w, size, WEBSOCKET_OP_BINARY);
 }
 
 WidgetScoreboard WidgetScoreboard_create() {
@@ -394,13 +396,48 @@ u16 team_calc_goals_taken(u8 index){
 	return p;
 }
 
-bool send_message_to_site(char *message) {
+void send_message_to_site(char *message) {
 	if (c_front == NULL) {
 		printf("client is not connected, couldnt send Message: '%s'\n", message);
-		return false;
+		return;
 	}
 	mg_ws_send(c_front, message, strlen(message), WEBSOCKET_OP_TEXT);
-	return true;
+}
+
+void send_time(u16 t){
+	if(c_front == NULL){
+		printf("client is not connected, couldnt send time\n");
+		return;
+	}
+	u8 buffer[3];
+	buffer[0] = SCOREBOARD_SET_TIMER;
+	u16 time = htons(t);
+	memcpy(&buffer[1], &time, sizeof(time));
+	mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+}
+
+void send_time_pause(bool pause) {
+	if(c_front == NULL){
+		printf("client is not connected, couldnt send time\n");
+		return;
+	}
+	u8 buffer[2];
+	buffer[0] = SCOREBOARD_PAUSE_TIMER;
+	buffer[1] = pause;
+	mg_ws_send(c_front, &buffer, sizeof(u8)*2, WEBSOCKET_OP_BINARY);
+}
+
+void resend_widgets() {
+	WidgetScoreboard w_scoreboard = WidgetScoreboard_create();
+	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
+	WidgetGamestart w_gamestart = WidgetGamestart_create();
+	send_widget(&w_gamestart, sizeof(WidgetGamestart));
+	WidgetLivetable w_livetable = WidgetLivetable_create();
+	send_widget(&w_livetable, sizeof(WidgetLivetable));
+	//WidgetLivetable w_gameplan = WidgetLivetable_create();
+	//send_widget(&w_gameplan, sizeof(WidgetGameplan));
+	send_time(md.cur.time);
+	send_time_pause(md.cur.pause);
 }
 
 void handle_rentnerend_btn_press(u8 *signal){
@@ -469,6 +506,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 		}
 		case TIME_RESET: {
 			md.cur.time = GAME_LENGTH;
+			md.cur.pause = true;
 			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
@@ -476,8 +514,8 @@ void handle_rentnerend_btn_press(u8 *signal){
 			printf("WARNING: Received unknown button press from rentnerend\n");
 			break;
 		}
-
 	}
+	resend_widgets();
 }
 
 void ev_handler(struct mg_connection *nc, int ev, void *p) {
@@ -544,32 +582,6 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	}
 }
 
-//@ret 1 if everything worked, 0 if it couldnt open one of the files
-bool copy_file(const char *source, const char *destination) {
-	FILE *src = fopen(source, "rb");
-	if (!src) {
-		perror("Error opening source file");
-		return false;
-	}
-
-	FILE *dest = fopen(destination, "wb");
-	if (!dest) {
-		perror("Error opening destination file");
-		fclose(src);
-		return false;
-	}
-
-	// Directly copy the content
-	char ch;
-	while ((ch = fgetc(src)) != EOF) {
-		fputc(ch, dest);
-	}
-
-	fclose(src);
-	fclose(dest);
-	return true;
-}
-
 u8 add_card(enum CardType type) {
 	const u8 cur = md.cur.gameindex;
 
@@ -611,18 +623,6 @@ u8 add_card(enum CardType type) {
 void *mongoose_update() {
 	while (running) mg_mgr_poll(&mgr, 100);
 	return NULL;
-}
-void send_time(u16 t){
-	u8 buffer[3];
-	buffer[0] = SCOREBOARD_SET_TIMER;
-	u16 time = htons(t);
-	memcpy(&buffer[1], &time, sizeof(time));
-	mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
-}
-
-void send_time_pause_toggle() {
-	const u8 data = SCOREBOARD_PAUSE_TIMER;
-	mg_ws_send(c_front, &data, sizeof(u8), WEBSOCKET_OP_BINARY);
 }
 
 int main(void) {
@@ -695,8 +695,7 @@ int main(void) {
 			// #### UI STUFF
 			case TOGGLE_WIDGET_SCOREBOARD:
 				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
-				WidgetScoreboard wscore = WidgetScoreboard_create();
-				send_widget(&wscore, sizeof(WidgetScoreboard));
+				resend_widgets();
 				break;
 			/*
 			case TOGGLE_WIDGET_HALFTIME:
@@ -706,18 +705,15 @@ int main(void) {
 			*/
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
-				WidgetLivetable wlive = WidgetLivetable_create();
-				send_widget(&wlive, sizeof(WidgetLivetable));
+				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
-				WidgetGameplan wgp = WidgetGameplan_create();
-				send_widget(&wgp, sizeof(WidgetGameplan));
+				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
-				WidgetGamestart wgs = WidgetGamestart_create();
-				send_widget(&wgs, sizeof(WidgetGamestart));
+				resend_widgets();
 				break;
 			case RELOAD_JSON:
 				printf("TODO: RELOAD_JSON\n");
@@ -725,15 +721,6 @@ int main(void) {
 			case PRINT_HELP:
 				printf(
 					"======= Keyboard options =======\n"
-					"n  Game Forward\n"
-					"p  Game Back\n"
-					"h  Game Halftime\n"
-					"\n"
-					"1  Goal Team 1\n"
-					"2  Goal Team 2\n"
-					"3  Remove Goal Team 1\n"
-					"4  Remove Goal Team 2\n"
-					"\n"
 					"y  Yellow Card\n"
 					"r  Red Card\n"
 					"d  Delete Card\n"
@@ -742,9 +729,7 @@ int main(void) {
 					"l  Toggle Widget: Livetable\n"
 					"v  Toggle Widget: Gameplan\n"
 					"s  Toggle Widget: Gamestart\n"
-					"\n"
-					"t  set timer\n"
-					"=  pause/resume timer\n"
+					"w  Resend current widgets"
 					"\n"
 					"(j  Reload JSON)\n"
 					"?  print help\n"
