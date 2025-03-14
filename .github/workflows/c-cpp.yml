@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install deps
-      run: pacman -Syu --noconfirm make json-c qt6-base qt6-multimedia
+      run: pacman -Syu --noconfirm make json-c qt6-base qt6-multimedia typescript
     - name: frontend
       run: make js
     - name: backend
