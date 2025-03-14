@@ -20,7 +20,7 @@ void matchday_init() {
 	md.cur.gameindex = 0;
 	md.cur.halftime = 0;
 	md.cur.pause = true;
-	md.cur.time = GAME_LENGTH;
+	md.cur.time = md.deftime;
 	for (u8 i = 0; i < md.games_count; i++) {
 		md.games[i].halftimescore.t1 = 0;
 		md.games[i].halftimescore.t2 = 0;
@@ -71,6 +71,8 @@ int team_index(const char *name) {
 
 char* json_generate() {
 	struct json_object *root = json_object_new_object();
+	json_object_object_add(root, "time", json_object_new_int(md.deftime));
+
 	struct json_object *teams = json_object_new_array();
 	struct json_object *games = json_object_new_array();
 	for(int i=0; i < md.teams_count; i++){
@@ -128,6 +130,11 @@ char* json_generate() {
 void json_load(const char *s) {
 	// Then split json into teams and games
 	struct json_object *root = json_tokener_parse(s);
+
+	struct json_object *time = json_object_new_object();
+	json_object_object_get_ex(root, "time", &time);
+	md.deftime = json_object_get_int(time);
+
 	struct json_object *teams = json_object_new_array();
 	struct json_object *games = json_object_new_array();
 	json_object_object_get_ex(root, "teams", &teams);

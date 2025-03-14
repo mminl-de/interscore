@@ -188,7 +188,7 @@ void btn_cb_time_toggle_pause() {
 	websocket_send_button_signal(TIME_TOGGLE_PAUSE);
 }
 void btn_cb_time_reset() {
-	md.cur.time = GAME_LENGTH;
+	md.cur.time = md.deftime;
 	md.cur.pause = true;
 	update_input_window();
 	update_display_window();

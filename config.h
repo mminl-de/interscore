@@ -7,7 +7,6 @@
 #define GAMES_COUNT_MAX 64
 
 // Default length of every halftime in sec
-#define GAME_LENGTH 10
 #define JSON_PATH "input.json"
 #define JSON_PATH_OLD "input.old.json"
 #define SOUND_GAME_END "assets/sound_game_end_shorter.wav"

@@ -473,7 +473,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case TIME_RESET: {
-			md.cur.time = GAME_LENGTH;
+			md.cur.time = md.deftime;
 			md.cur.pause = true;
 			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;

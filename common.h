@@ -57,6 +57,7 @@ typedef struct {
 		bool pause;
 		u16 time;
 	} cur;
+	u16 deftime;
 	Game *games;
 	u8 games_count;
 	Team *teams;
