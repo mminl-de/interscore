@@ -24,6 +24,10 @@ let card_message = card.querySelector(".card-message")!
 
 const livetable = document.querySelector(".livetable")! as HTMLElement
 
+const decoder = new TextDecoder("utf-8")
+let str_len: number // temporary variable for counting string lengths
+let u8_array: Uint8Array
+
 const BUFFER_LEN = 100
 const GAMES_COUNT_MAX = 64
 const TEAMS_COUNT_MAX = 32
@@ -243,12 +247,12 @@ function write_gamestart(view: DataView) {
 
 	let offset = 1
 
-	let t1: String = ""
-	let t2: String = ""
-	let t1_keeper: String = ""
-	let t1_field: String = ""
-	let t2_keeper: String = ""
-	let t2_field: String = ""
+	let t1: string = ""
+	let t2: string = ""
+	let t1_keeper: string = ""
+	let t1_field: string = ""
+	let t2_keeper: string = ""
+	let t2_field: string = ""
 
 	for (let t1_ch = 0; t1_ch < TEAM_NAME_MAX_LEN; ++t1_ch) {
 		const c = view.getUint8(offset)
@@ -272,48 +276,36 @@ function write_gamestart(view: DataView) {
 	}
 	console.log("TODO tactical t2 print: ", t2)
 
-	for (let t1k_ch = 0; t1k_ch < PLAYER_NAME_MAX_LEN; ++t1k_ch) {
-		const c = view.getUint8(offset)
-		t1_keeper += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += PLAYER_NAME_MAX_LEN - t1k_ch - 1
-			break
-		}
-	}
+	// TODO WIP
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	t1_keeper = decoder.decode(u8_array)
+	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 1 keeper: ", t1_keeper)
 
-	for (let t1f_ch = 0; t1f_ch < PLAYER_NAME_MAX_LEN; ++t1f_ch) {
-		const c = view.getUint8(offset)
-		t1_field += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += PLAYER_NAME_MAX_LEN - t1f_ch - 1
-			break
-		}
-	}
-	console.log("TODO 1 field: ", t1_field)
+	// TODO WIP
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	t1_field = decoder.decode(u8_array)
+	offset += TEAM_NAME_MAX_LEN
+	console.log("TODO 1 keeper: ", t1_keeper)
 
-	for (let t2k_ch = 0; t2k_ch < PLAYER_NAME_MAX_LEN; ++t2k_ch) {
-		const c = view.getUint8(offset)
-		t2_keeper += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += PLAYER_NAME_MAX_LEN - t2k_ch - 1
-			break
-		}
-	}
+	// TODO WIP
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	t2_keeper = decoder.decode(u8_array)
+	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 keeper: ", t2_keeper)
 
-	for (let t2f_ch = 0; t2f_ch < PLAYER_NAME_MAX_LEN; ++t2f_ch) {
-		const c = view.getUint8(offset)
-		t2_field += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += PLAYER_NAME_MAX_LEN - t2f_ch - 1
-			break
-		}
-	}
+	// TODO WIP
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	t2_field = decoder.decode(u8_array)
+	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 field: ", t2_field)
 
 	let t1_col_left: Color = {
@@ -360,12 +352,12 @@ function write_gamestart(view: DataView) {
 	const t1_keeper_el = document.createElement("div")
 	t1_keeper_el.classList.add("bordered", "player")
 	t1_keeper_el.style.backgroundColor = "#bebebe"
-	t1_keeper_el.innerHTML = t1_keeper.toString()
+	t1_keeper_el.innerHTML = t1_keeper
 
 	const t1_field_el = document.createElement("div")
 	t1_field_el.classList.add("bordered", "player")
 	t1_field_el.style.backgroundColor = "#bebebe"
-	t1_field_el.innerHTML = t1_field.toString()
+	t1_field_el.innerHTML = t1_field
 
 	t1_el.appendChild(t1_name_el)
 	t1_el.appendChild(t1_keeper_el)
@@ -385,12 +377,12 @@ function write_gamestart(view: DataView) {
 	const t2_keeper_el = document.createElement("div")
 	t2_keeper_el.classList.add("bordered", "player")
 	t2_keeper_el.style.backgroundColor = "#bebebe"
-	t2_keeper_el.innerHTML = t2_keeper.toString()
+	t2_keeper_el.innerHTML = t2_keeper
 
 	const t2_field_el = document.createElement("div")
 	t2_field_el.classList.add("bordered", "player")
 	t2_field_el.style.backgroundColor = "#bebebe"
-	t2_field_el.innerHTML = t2_field.toString()
+	t2_field_el.innerHTML = t2_field
 
 	t2_el.appendChild(t2_name_el)
 	t2_el.appendChild(t2_keeper_el)
