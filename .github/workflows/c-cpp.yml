@@ -10,11 +10,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container: archlinux:latest
 
     steps:
     - uses: actions/checkout@v4
     - name: install deps
-      run: sudo apt-get update && sudo apt-get install -y json-c qt6-base qt6-multimedia
+      run: sudo pacman -Syu json-c qt6-base qt6-multimedia
     - name: frontend
       run: make js
     - name: backend
