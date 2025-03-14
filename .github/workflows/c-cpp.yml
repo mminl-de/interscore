@@ -14,6 +14,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true  # Clone submodules
+        fetch-depth: 0  # Ensure full commit history (important for submodules)
     - name: install deps
       run: pacman -Syu --noconfirm make json-c qt6-base qt6-multimedia typescript gcc
     - name: frontend
