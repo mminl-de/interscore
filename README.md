@@ -32,13 +32,13 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ### frontend
 - team logos for gamestart
 - gameplan: highlight winner team
+- Fix Ludwigf bug
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
 
 ### rentnerend
-- play sound when timer runs out
-- stop the crashing after long time
+- stop the crashing after long time (probably gone)
 - 7-min-button reading the seven from json (no hardcoding)
 - public window:
 	- (other widgets between games)

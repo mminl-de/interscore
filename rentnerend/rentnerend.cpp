@@ -8,12 +8,16 @@
 #include <QLabel>
 #include <QIcon>
 #include <QTimer>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QDebug>
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include "../mongoose/mongoose.h"
 
 #include "../config.h"
+#include "qaudiooutput.h"
 #include "qnamespace.h"
 #include "../common.h"
 
@@ -88,6 +92,8 @@ w_display wd;
 struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
+QMediaPlayer *player = new QMediaPlayer;
+QAudioOutput *audio_output = new QAudioOutput;
 
 void btn_cb_t1_score_plus() {
 	if(!md.cur.halftime){
@@ -524,6 +530,11 @@ public:
 void update_timer() {
 	if (!md.cur.pause && md.cur.time > 0) {
 		md.cur.time--;
+		//play sound if time is up
+		if(md.cur.time == 0){
+			player->setPosition(0);
+			player->play();
+		}
 		update_display_window();
 		update_input_window();
 	}
@@ -550,6 +561,11 @@ void json_autosave() {
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
+
+	//Set up the Audio Source for the player
+	player->setAudioOutput(audio_output);
+	audio_output->setVolume(1);
+	player->setSource(QUrl::fromLocalFile(SOUND_GAME_END));
 
 	// Applying Kanit font globally
 	const int font_id = QFontDatabase::addApplicationFont("Kanit-Regular.ttf");

@@ -24,7 +24,7 @@ b-run:
 
 RSRC ?= rentnerend/rentnerend.cpp mongoose/mongoose.c common.c
 ROUT ?= rentnerend/interscore-rentnerend
-QT_FLAGS ?= `pkg-config Qt6Widgets --cflags --libs`
+QT_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs`
 
 r-install:
 	$(CPPC) -o $(ROUT) $(RSRC) \
@@ -45,3 +45,7 @@ r-run:
 
 js:
 	tsc --target es2017 frontend/script.ts
+
+clean:
+	[ -f input.old.json ] && mv input.old.json input.json
+	rm -f rentnerend/interscore-rentnerend interscore frontend/script.js input.old.json
