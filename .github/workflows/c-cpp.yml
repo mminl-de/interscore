@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: install deps
-      run: pacman -Syu --noconfirm make json-c qt6-base qt6-multimedia typescript gcc git
+      run: pacman -Syu --noconfirm make json-c qt6-base qt6-multimedia typescript gcc git pkgconf
     - uses: actions/checkout@v4
       with:
         submodules: true  # Clone submodules
