@@ -11,7 +11,13 @@ CompileFlags:
 	"-I/usr/lib/qt6/mkspecs/linux-g++",
 	"-lQt6Widgets",
 	"-lQt6Gui",
-	"-lQt6Core"
+	"-lQt6Core",
+	"-I/usr/include/qt6/QtMultimedia",
+	"-DQT_MULTIMEDIA_LIB",
+	"-I/usr/include/qt6/QtNetwork",
+	"-DQT_NETWORK_LIB",
+	"-lQt6Multimedia",
+	"-lQt6Network"
 	#"-I/usr/include/gtk-4.0",
 	#"-I/usr/include/pango-1.0",
 	#"-I/usr/include/fribidi",

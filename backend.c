@@ -101,7 +101,7 @@ typedef struct {
 
 // Meta
 #define EXIT 'q'
-#define RELOAD_JSON 'j'
+#define RELOAD_RENTNERJSON 'j'
 #define PRINT_HELP '?'
 
 #define URL "http://0.0.0.0:8081"
@@ -151,7 +151,8 @@ int teams_sort_after_name(const void *p1, const void *p2){
 int teams_sort_after_goals(const void *p1, const void *p2){
 	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
-	return t1_goals - t2_goals;
+	//reverse it, because bigger is better
+	return t2_goals - t1_goals;
 }
 
 int teams_sort_after_goalratio(const void *p1, const void *p2){
@@ -159,13 +160,15 @@ int teams_sort_after_goalratio(const void *p1, const void *p2){
 	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
 	u8 t1_goals_taken = team_calc_goals_taken(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_goals_taken = team_calc_goals_taken(md.players[((Team *)p2)->keeper_index].team_index);
-	return (t1_goals-t1_goals_taken) - (t2_goals-t2_goals_taken);
+	//reverse it, because bigger is better
+	return (t2_goals-t2_goals_taken) - (t1_goals-t1_goals_taken);
 }
 
 int teams_sort_after_points(const void *p1, const void *p2){
 	u8 t1_points = team_calc_points(md.players[((Team *)p1)->keeper_index].team_index);
 	u8 t2_points = team_calc_points(md.players[((Team *)p2)->keeper_index].team_index);
-	return t1_points - t2_points;
+	//reverse it, because bigger is better
+	return t2_points - t1_points;
 }
 
 void send_widget(void *w, size_t size) {
@@ -183,10 +186,10 @@ WidgetScoreboard WidgetScoreboard_create() {
 	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
 
 	if (md.cur.halftime) {
-		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
 		strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
-		w.score_t2 = md.games[cur].score.t1;
+		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
 		w.score_t1 = md.games[cur].score.t2;
+		w.score_t2 = md.games[cur].score.t1;
 
 		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
 		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
@@ -239,7 +242,6 @@ WidgetLivetable WidgetLivetable_create() {
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
 
-	printf("Team i: name, W/T/L, Goals/Goals Taken, Points, Color\n");
 	for(u8 i=0; i < md.teams_count; i++){
 		u8 teamindex = md.players[teams[i].keeper_index].team_index;
 		strcpy(w.teams[i], md.teams[teamindex].name);
@@ -471,7 +473,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case TIME_RESET: {
-			md.cur.time = GAME_LENGTH;
+			md.cur.time = md.deftime;
 			md.cur.pause = true;
 			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
@@ -624,6 +626,10 @@ int main(void) {
 			}
 			case DELETE_CARD: {
 				u32 cur_i = md.cur.gameindex;
+				if(md.games[cur_i].cards_count == 0){
+					printf("No Cards to delete!\n");
+					break;
+				}
 				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
 					printf("%d. ", i + 1);
 					if (md.games[cur_i].cards[i].card_type == 0)
@@ -638,8 +644,9 @@ int main(void) {
 						printf("(field)\n");
 				}
 				printf("Select a card to delete: ");
-				u32 c = 0;
-				scanf("%ud", &c);
+				u32 c = md.games[cur_i].cards_count+1;
+				while(c > md.games[cur_i].cards_count || c <= 0)
+					scanf("%ud", &c);
 				// Overwrite c with the last element
 				md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
 				printf("Cards remaining:\n");
@@ -681,8 +688,14 @@ int main(void) {
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
 				resend_widgets();
 				break;
-			case RELOAD_JSON:
-				printf("TODO: RELOAD_JSON\n");
+			case RELOAD_RENTNERJSON:
+				if (c_rentner == NULL){
+					fprintf(stderr, "ERROR: Rentnerend not connected, cant reload JSON!\n");
+					break;
+				}
+				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
+				char w = 0;
+				mg_ws_send(c_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
 				break;
 			case PRINT_HELP:
 				printf(
@@ -698,7 +711,7 @@ int main(void) {
 					"\n"
 					"w  resend current widgets"
 					"\n"
-					"j  Reload input.json\n"
+					"j  Reload rentnerend json\n"
 					"?  print help\n"
 					"q  quit\n"
 					"================================\n"
