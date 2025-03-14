@@ -45,6 +45,21 @@ function Color_gradient_to_string(left: Color, right: Color): string {
 		`rgb(${right.r}, ${right.g}, ${right.b}) 50%)`
 }
 
+function read_string(view: DataView, offset: number): string {
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	return decoder.decode(u8_array)
+}
+
+function read_color(view: DataView, offset: number): Color {
+	return {
+		r: view.getUint8(offset),
+		g: view.getUint8(offset + 1),
+		b: view.getUint8(offset + 2),
+	}
+}
+
 function write_scoreboard(view: DataView) {
 	console.log("Writing data to scoreboard:\n", view)
 
@@ -247,12 +262,9 @@ function write_gamestart(view: DataView) {
 
 	let offset = 1
 
+	// TODO REMOVE
 	let t1: string = ""
 	let t2: string = ""
-	let t1_keeper: string = ""
-	let t1_field: string = ""
-	let t2_keeper: string = ""
-	let t2_field: string = ""
 
 	for (let t1_ch = 0; t1_ch < TEAM_NAME_MAX_LEN; ++t1_ch) {
 		const c = view.getUint8(offset)
@@ -277,68 +289,38 @@ function write_gamestart(view: DataView) {
 	console.log("TODO tactical t2 print: ", t2)
 
 	// TODO WIP
-	str_len = 0
-	while (view.getUint8(offset + str_len) !== 0) ++str_len
-	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
-	t1_keeper = decoder.decode(u8_array)
-	offset += TEAM_NAME_MAX_LEN
+	const t1_keeper = read_string(view, offset)
+	offset += PLAYER_NAME_MAX_LEN
 	console.log("TODO 1 keeper: ", t1_keeper)
 
 	// TODO WIP
-	str_len = 0
-	while (view.getUint8(offset + str_len) !== 0) ++str_len
-	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
-	t1_field = decoder.decode(u8_array)
-	offset += TEAM_NAME_MAX_LEN
-	console.log("TODO 1 keeper: ", t1_keeper)
+	const t1_field = read_string(view, offset)
+	offset += PLAYER_NAME_MAX_LEN
+	console.log("TODO 1 keeper: ", t1_field)
 
 	// TODO WIP
-	str_len = 0
-	while (view.getUint8(offset + str_len) !== 0) ++str_len
-	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
-	t2_keeper = decoder.decode(u8_array)
+	const t2_keeper = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 keeper: ", t2_keeper)
 
 	// TODO WIP
-	str_len = 0
-	while (view.getUint8(offset + str_len) !== 0) ++str_len
-	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
-	t2_field = decoder.decode(u8_array)
+	const t2_field = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 field: ", t2_field)
 
-	let t1_col_left: Color = {
-		r: view.getUint8(offset),
-		g: view.getUint8(offset + 1),
-		b: view.getUint8(offset + 2),
-	}
+	let t1_col_left = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_left))
 
-	let t1_col_right: Color = {
-		r: view.getUint8(offset),
-		g: view.getUint8(offset + 1),
-		b: view.getUint8(offset + 2),
-	}
+	let t1_col_right = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_right))
 
-	let t2_col_left: Color = {
-		r: view.getUint8(offset),
-		g: view.getUint8(offset + 1),
-		b: view.getUint8(offset + 2),
-	}
+	let t2_col_left = read_color(view, offset)
 	offset += 3
 
-	let t2_col_right: Color = {
-		r: view.getUint8(offset),
-		g: view.getUint8(offset + 1),
-		b: view.getUint8(offset + 2),
-	}
+	let t2_col_right = read_color(view, offset)
 	offset += 3
-
-	// TODO ADD gradients
 
 	const t1_el = document.createElement("div")
 	t1_el.classList.add("team")
