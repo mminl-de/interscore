@@ -1,0 +1,21 @@
+name: can we compile?
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: frontend
+      run: make js
+    - name: backend
+      run: make b-install
+    - name: rentnerend
+      run: make r-install
