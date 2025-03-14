@@ -197,7 +197,7 @@ void websocket_send_button_signal(u8 signal) {
 		mg_ws_send(server_con, &signal, sizeof(u8), WEBSOCKET_OP_BINARY);
 }
 
-void websocket_send_json(char *s) {
+void websocket_send_json(const char *s) {
 	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
@@ -214,7 +214,13 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 			break;
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *wm = (struct mg_ws_message *) p;
-			printf("Received WebSocket message: %.*s\n", (int)wm->data.len, wm->data.buf);
+			if((int)wm->data.buf[0] == 0){
+				char* s = json_generate();
+				websocket_send_json(s);
+				free(s);
+				printf("INFO: Sent the newest JSON version to backend\n");
+			} else
+				printf("WARNING: Received unknown signal from WebSocket Server!\n");
 			break;
 		}
 		case MG_EV_ERROR:
@@ -526,14 +532,20 @@ void update_timer() {
 }
 
 void websocket_poll() {
-	/*
-	if (!server_connected){
-		srand(time(nullptr));
-		mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
-	}
-	else
-	*/
 		mg_mgr_poll(&mgr, 0);
+}
+
+void json_autosave() {
+	//Save the old JSON file in case that something goes wrong
+	if(rename(JSON_PATH, JSON_PATH_OLD) != 0){
+		printf("WARNING: Couldnt move %s to %s. Aborting autosaving the JSON\n", JSON_PATH, JSON_PATH_OLD);
+		return;
+	}
+	char *s = json_generate();
+	if(!file_write(JSON_PATH, s))
+		printf("WARNING: Couldnt autosave JSON!\n");
+	free(s);
+	printf("INFO: Autosaved JSON successfully!\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -567,6 +579,10 @@ int main(int argc, char *argv[]) {
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
 	t2->start(1000);
+
+	QTimer *t3 = new QTimer(wi.w);
+	QObject::connect(t3, &QTimer::timeout, &json_autosave);
+	t3->start(2*60*1000);
 
 	EventFilter *event_filter = new EventFilter;
 	app.installEventFilter(event_filter);

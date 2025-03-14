@@ -9,5 +9,6 @@
 // Default length of every halftime in sec
 #define GAME_LENGTH 420
 #define JSON_PATH "input.json"
+#define JSON_PATH_OLD "input.old.json"
 
 #endif // _CONFIG_H_

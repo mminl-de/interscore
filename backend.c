@@ -101,7 +101,7 @@ typedef struct {
 
 // Meta
 #define EXIT 'q'
-#define RELOAD_JSON 'j'
+#define RELOAD_RENTNERJSON 'j'
 #define PRINT_HELP '?'
 
 #define URL "http://0.0.0.0:8081"
@@ -688,8 +688,14 @@ int main(void) {
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
 				resend_widgets();
 				break;
-			case RELOAD_JSON:
-				printf("TODO: RELOAD_JSON\n");
+			case RELOAD_RENTNERJSON:
+				if (c_rentner == NULL){
+					fprintf(stderr, "ERROR: Rentnerend not connected, cant reload JSON!\n");
+					break;
+				}
+				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
+				char w = 0;
+				mg_ws_send(c_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
 				break;
 			case PRINT_HELP:
 				printf(
@@ -705,7 +711,7 @@ int main(void) {
 					"\n"
 					"w  resend current widgets"
 					"\n"
-					"j  Reload input.json\n"
+					"j  Reload rentnerend json\n"
 					"?  print help\n"
 					"q  quit\n"
 					"================================\n"

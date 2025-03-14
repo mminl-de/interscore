@@ -37,7 +37,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL handle dealing multiple cards
 
 ### rentnerend
-- sync backup via json file
 - play sound when timer runs out
 - stop the crashing after long time
 - 7-min-button reading the seven from json (no hardcoding)
@@ -53,11 +52,12 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL FINAL port to windows/mac
 
 ### backend
-- Sollten wir immer wieder den Tunierstate zwischenspeichern, falls das Programm aus irgendwelchen Gründen mal geschlossen werden sollte? In dem Zug, könnte man dann auch alles als JSON als Input definieren, so dass man auch manuell was ändern könnte und dann die JSON vom Programm reloaded wird. (Grundskizze in input.json)
 - FINAL abstract program so it's applicable for other games
 - (graceful Ctrl-C handling)
 - obs integration
+- Time als time_t definieren
+- FINAL make json_load resilient to bad input.json
+- Time in backend auch runterzählen (wenn nicht time_t einführen)
 
 ### meta
-- Rauskriegen wer Feld und Außenspieler ist
 - How does the tiebreak work?

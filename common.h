@@ -70,9 +70,10 @@ void matchday_init();
 void matchday_free();
 int player_index(const char *name);
 int team_index(const char *name);
-const char *json_generate();
+char *json_generate();
 void json_load(const char *path);
 char *file_read(const char *path);
+bool file_write(const char *path, const char *s);
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
 
 #endif // _COMMON_H_

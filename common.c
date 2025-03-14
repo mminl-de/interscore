@@ -69,21 +69,26 @@ int team_index(const char *name) {
 	return -1;
 }
 
-const char* json_generate() {
+char* json_generate() {
 	struct json_object *root = json_object_new_object();
 	struct json_object *teams = json_object_new_array();
 	struct json_object *games = json_object_new_array();
 	for(int i=0; i < md.teams_count; i++){
 		struct json_object *team = json_object_new_object();
+		json_object_object_add(team, "name", json_object_new_string(md.teams[i].name));
 		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_filename));
 		json_object_object_add(team, "color_light", json_object_new_string(md.teams[i].color_light));
 		json_object_object_add(team, "color_dark", json_object_new_string(md.teams[i].color_dark));
-		struct json_object *keeper = json_object_new_object();
-		json_object_object_add(keeper, "name", json_object_new_string(md.players[md.teams[i].keeper_index].name));
-		json_object_object_add(team, "keeper", keeper);
-		struct json_object *field = json_object_new_object();
-		json_object_object_add(field, "name", json_object_new_string(md.players[md.teams[i].field_index].name));
-		json_object_object_add(team, "field", field);
+		struct json_object *players = json_object_new_array();
+		struct json_object *player1 = json_object_new_object();
+		json_object_object_add(player1, "name", json_object_new_string(md.players[md.teams[i].keeper_index].name));
+		json_object_object_add(player1, "position", json_object_new_string("keeper"));
+		json_object_array_add(players, player1);
+		struct json_object *player2 = json_object_new_object();
+		json_object_object_add(player2, "name", json_object_new_string(md.players[md.teams[i].field_index].name));
+		json_object_object_add(player2, "position", json_object_new_string("field"));
+		json_object_array_add(players, player2);
+		json_object_object_add(team, "players", players);
 		json_object_array_add(teams, team);
 	}
 	for(int i=0; i < md.games_count; i++){
@@ -116,7 +121,7 @@ const char* json_generate() {
 	}
 	json_object_object_add(root, "teams", teams);
 	json_object_object_add(root, "games", games);
-	const char *str = json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
+	char *str = json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
 	return str;
 }
 
@@ -209,6 +214,7 @@ void json_load(const char *s) {
 			json_object_object_get_ex(score, "team2", &var);
 			md.games[i].score.t2 = json_object_get_int(var);
 		}
+
 		if (json_object_object_get_ex(game, "cards", &cards)) {
 
 			md.games[i].cards_count = json_object_array_length(cards);
@@ -266,6 +272,16 @@ char* file_read(const char *path){
 	filestring[file_size] = '\0';
 	fclose(f);
 	return filestring;
+}
+
+//Write the string to the file in path. If the file exists, overwrite it. If not, create it
+bool file_write(const char *path, const char *s){
+	FILE *f = fopen(path, "w");
+	if(f == NULL)
+		return false;
+	fprintf(f, "%s", s);
+	fclose(f);
+	return true;
 }
 
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *)) {
