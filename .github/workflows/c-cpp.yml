@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install deps
-      run: sudo pacman -Syu json-c qt6-base qt6-multimedia
+      run: pacman -Syu json-c qt6-base qt6-multimedia
     - name: frontend
       run: make js
     - name: backend
