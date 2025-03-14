@@ -36,10 +36,10 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
+- FINAL Ads
 
 ### rentnerend
 - stop the crashing after long time (probably gone)
-- 7-min-button reading the seven from json (no hardcoding)
 - public window:
 	- (other widgets between games)
 - private window:
