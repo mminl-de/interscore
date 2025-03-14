@@ -39,7 +39,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL Ads
 
 ### rentnerend
-- stop the crashing after long time (probably gone)
 - public window:
 	- (other widgets between games)
 - private window:
