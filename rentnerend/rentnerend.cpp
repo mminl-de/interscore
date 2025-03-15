@@ -196,18 +196,22 @@ void btn_cb_time_reset() {
 }
 
 void websocket_send_button_signal(u8 signal) {
+	printf("Sending btn press: %s\n", gettimems());
 	printf("sending signal\n");
 	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, &signal, sizeof(u8), WEBSOCKET_OP_BINARY);
+	printf("Finished sending btn press: %s\n", gettimems());
 }
 
 void websocket_send_json(const char *s) {
+	printf("sending json: %s\n", gettimems());
 	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, &s, strlen(s)*sizeof(char), WEBSOCKET_OP_BINARY);
+	printf("Finished sending json: %s\n", gettimems());
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
@@ -587,7 +591,7 @@ int main(int argc, char *argv[]) {
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	QTimer *t1 = new QTimer(wi.w);
 	QObject::connect(t1, &QTimer::timeout, &websocket_poll);
-	t1->start(1000);
+	t1->start(100);
 
 	wd.w->show();
     wi.w->show();

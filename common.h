@@ -78,5 +78,6 @@ void json_load(const char *path);
 char *file_read(const char *path);
 bool file_write(const char *path, const char *s);
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
+char *gettimems();
 
 #endif // _COMMON_H_

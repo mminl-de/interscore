@@ -394,6 +394,7 @@ void send_time_pause(bool pause) {
 }
 
 void resend_widgets() {
+	printf("Start resending widgets: %s\n", gettimems());
 	WidgetScoreboard w_scoreboard = WidgetScoreboard_create();
 	WidgetGamestart w_gamestart = WidgetGamestart_create();
 	WidgetLivetable w_livetable = WidgetLivetable_create();
@@ -411,10 +412,14 @@ void resend_widgets() {
 		send_time(md.cur.time - (time(NULL) - md.cur.timestart));
 		printf("pause: %ld\n", md.cur.time - (time(NULL) - md.cur.timestart));
 	}
+	//if(md.cur.time == md.deftime)
+//		send_time(md.deftime);
 	send_time_pause(md.cur.pause);
+	printf("End resending widgets: %s\n", gettimems());
 }
 
 void handle_rentnerend_btn_press(u8 *signal){
+	printf("Start handling btn press: %s\n", gettimems());
 	printf("received a signal: %d\n", *signal);
 	switch (*signal) {
 		case T1_SCORE_PLUS: {
@@ -494,6 +499,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 	}
+	printf("Stop handling btn press: %s\n", gettimems());
 	resend_widgets();
 }
 
@@ -600,7 +606,7 @@ u8 add_card(enum CardType type) {
 }
 
 void *mongoose_update() {
-	while (running) mg_mgr_poll(&mgr, 100);
+	while (running) mg_mgr_poll(&mgr, 20);
 	return NULL;
 }
 

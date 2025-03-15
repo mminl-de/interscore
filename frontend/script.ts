@@ -551,8 +551,9 @@ function write_livetable(view: DataView) {
 	}
 }
 
+let DEFTIME = 420 //TODO send this at the beginning from backend to frontend as its defined in input.json
 let countdown = 0
-let duration = 0
+//let duration = 0
 let remaining_time = 0
 let timer_is_paused = true
 
@@ -562,8 +563,8 @@ function scoreboard_set_timer(view: DataView) {
 	let offset = 1
 	const time_in_s = view.getUint16(offset)
 	remaining_time = time_in_s
-	duration = time_in_s
-	scoreboard_time_bar.style.width = "100%"
+	//duration = time_in_s
+	//scoreboard_time_bar.style.width = "100%"
 
 	update_timer_html()
 	countdown = setInterval(() => {
@@ -572,7 +573,7 @@ function scoreboard_set_timer(view: DataView) {
 
 		--remaining_time
 
-		const bar_width = Math.max(0, (remaining_time / duration) * 100)
+		const bar_width = Math.min(Math.max(0, (remaining_time / DEFTIME) * 100), 100)
 		scoreboard_time_bar.style.width = bar_width + "%"
 		update_timer_html()
 	}, 1000)
