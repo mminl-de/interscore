@@ -34,7 +34,7 @@ r-debug:
 	$(CPPC) -o $(ROUT) $(RSRC) $(CPPFLAGS) $(LD_FLAGS) -g
 
 r-fast:
-	$(CPPC) -o $(ROUT) $(RSRC) $(LD_FLAGS)
+	$(CPPC) -o $(ROUT) $(RSRC) -fpermissive -fPIC $(LD_FLAGS)
 
 r-run:
 	./$(ROUT)
