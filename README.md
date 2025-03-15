@@ -54,9 +54,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL abstract program so it's applicable for other games
 - (graceful Ctrl-C handling)
 - obs integration
-- Time als time_t definieren
 - FINAL make json_load resilient to bad input.json
-- Time in backend auch runterzählen (wenn nicht time_t einführen)
 
 ### meta
 - How does the tiebreak work?
