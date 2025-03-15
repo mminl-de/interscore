@@ -32,7 +32,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ### frontend
 - team logos for gamestart
 - gameplan: highlight winner team
-- Fix Ludwigf bug
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
