@@ -2,6 +2,7 @@
 #define _COMMON_H_
 
 #include <stdio.h>
+#include <time.h>
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -56,6 +57,7 @@ typedef struct {
 		bool halftime; // 0: first half, 1: second half
 		bool pause;
 		u16 time;
+		time_t timestart;
 	} cur;
 	u16 deftime;
 	Game *games;

@@ -404,7 +404,13 @@ void resend_widgets() {
 	send_widget(&w_livetable, sizeof(WidgetLivetable));
 	send_widget(&w_gameplan, sizeof(WidgetGameplan));
 
-	send_time(md.cur.time);
+	if(md.cur.pause){
+		printf("pause: %d\n", md.cur.time);
+		send_time(md.cur.time);
+	} else {
+		send_time(md.cur.time - (time(NULL) - md.cur.timestart));
+		printf("pause: %ld\n", md.cur.time - (time(NULL) - md.cur.timestart));
+	}
 	send_time_pause(md.cur.pause);
 }
 
@@ -468,6 +474,11 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case TIME_TOGGLE_PAUSE: {
+			if(!md.cur.pause){
+				md.cur.time -= time(NULL) - md.cur.timestart;
+			} else {
+				md.cur.timestart = time(NULL);
+			}
 			md.cur.pause = !md.cur.pause;
 			printf("Toggling time to %d: %d:%2d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
 			break;
