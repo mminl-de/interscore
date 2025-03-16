@@ -242,7 +242,7 @@ WidgetLivetable WidgetLivetable_create() {
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
 
-	for(u8 i=0; i < md.teams_count; i++){
+	for(u8 i = 0; i < md.teams_count; i++){
 		u8 teamindex = md.players[teams[i].keeper_index].team_index;
 		strcpy(w.teams[i], md.teams[teamindex].name);
 		w.points[i] = team_calc_points(teamindex);
@@ -252,8 +252,8 @@ WidgetLivetable WidgetLivetable_create() {
 		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
 		w.goals[i] = team_calc_goals(teamindex);
 		w.goals_taken[i] = team_calc_goals_taken(teamindex);
-		w.color_light[i] = Color_from_hex(md.teams[i].color_light);
-		w.color_dark[i] = Color_from_hex(md.teams[i].color_dark);
+		w.color_light[i] = Color_from_hex(teams[i].color_light);
+		w.color_dark[i] = Color_from_hex(teams[i].color_dark);
 	}
 
 	return w;
@@ -265,15 +265,15 @@ WidgetGameplan WidgetGameplan_create() {
 	w.len = md.games_count;
 	w.cur = md.cur.gameindex;
 	for (u8 i = 0; i < md.games_count; i++){
-		strcpy(w.teams_1[i], md.teams[md.games[i].t1_index].name);
-		strcpy(w.teams_2[i], md.teams[md.games[i].t2_index].name);
-		w.goals_t1[i] = md.games[i].score.t1;
-		w.goals_t2[i] = md.games[i].score.t2;
+		strcpy(w.teams_1[i], md.teams[md.games[i].t2_index].name);
+		strcpy(w.teams_2[i], md.teams[md.games[i].t1_index].name);
+		w.goals_t1[i] = md.games[i].score.t2;
+		w.goals_t2[i] = md.games[i].score.t1;
 
-		w.t1_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
-		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
-		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
-		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
+		w.t1_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
+		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
+		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
+		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
 	}
 
 	return w;
