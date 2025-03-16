@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QShortcut>
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -485,6 +486,7 @@ QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::Standa
 	return b;
 }
 
+
 // Function to create the display window
 void create_input_window() {
 	wi.w = new QWidget;
@@ -619,6 +621,9 @@ int main(int argc, char *argv[]) {
 
 	wd.w->show();
     wi.w->show();
+
+	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
+	QObject::connect(shortcut, &QShortcut::activated, [](){printf("test\n"); btn_cb_time_toggle_pause();});
 
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);

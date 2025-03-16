@@ -30,7 +30,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ## Lehren/Ideen vom 2. Stream
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 - Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür (evtl in gamestart widget)
-- Leertaste als Shortcut für Start/Stop
 - FINAL² Livereload, dass man backend neustarten kann
 - Widget spawn animation fixen(manchmal kaputt)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
