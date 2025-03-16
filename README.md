@@ -24,33 +24,27 @@ This project was made for our personal use in a Cycleball tournament under hilar
 9. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
 
 ## Demonstrations
-- https://www.youtube.com/watch?v=3LFNC_H9lVw (beta)
+- https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but gets the idea along)
 
 # TODO
 ## Lehren/Ideen vom 2. Stream
 - +20/+1min/Text-Feld für schnelle Custom-Zeit
-- Monofont damit die Buttons sich nicht verschieben
-- Idee: Ansagen durch KI bei der Hälfte
-- Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür
+- FINAL³ Idee: Ansagen durch KI bei der Hälfte
+- Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür (evtl in gamestart widget)
 - Leertaste als Shortcut für Start/Stop
-- Livereload, dass man backend neustarten kann
+- FINAL² Livereload, dass man backend neustarten kann
 - Widget spawn animation fixen(manchmal kaputt)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
 - Nicht erlauben, dass mehrere Widgets gleichzeitig aktiviert sind
 - Welche Spiele sichtbar sind im Livetable und Gameplan ist schlecht.
--- Livetable nicht aktualisiert bei der Halbzeit
--- Spielplan nicht aktualisiert bei der Halbzeit
--- Letztes Spiel wird nicht mehr verrechnet
 
 ## TODO new
 - FINAL release binaries in GitHub Releases
 - FINAL REMOVE input.json and project.seer and assets
-- FINAL how does the backend behave if JSON keys are missing?
 - FINAL screenshots of backend options and rentnerend windows
 
 ### frontend
 - team logos for gamestart
-- gameplan: highlight winner team
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards

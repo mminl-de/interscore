@@ -573,7 +573,7 @@ int main(int argc, char *argv[]) {
 	player->setSource(QUrl::fromLocalFile(SOUND_GAME_END));
 
 	// Applying Kanit font globally
-	const int font_id = QFontDatabase::addApplicationFont("ChivoMono-Regular.ttf");
+	const int font_id = QFontDatabase::addApplicationFont("fonts/ChivoMono-Regular.ttf");
 	QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
 	if (!font_families.isEmpty()) {
 		QFont app_font(font_families.at(0));
