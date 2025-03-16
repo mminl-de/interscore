@@ -23,6 +23,9 @@ This project was made for our personal use in a Cycleball tournament under hilar
 8. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
 9. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
 
+## Demonstrations
+- https://www.youtube.com/watch?v=3LFNC_H9lVw (beta)
+
 ## TODO new
 - FINAL release binaries in GitHub Releases
 - FINAL REMOVE input.json and project.seer and assets
