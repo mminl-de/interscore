@@ -251,6 +251,12 @@ function write_gameplan(view: DataView) {
 			line.style.opacity = "0.9"
 			s1.innerHTML = "?"
 			s2.innerHTML = "?"
+			t1.style.color = "#bebebe"
+			t2.style.color = "#bebebe"
+			s1.style.color = "#bebebe"
+			s2.style.color = "#bebebe"
+			s1.style.backgroundColor = "black"
+			s2.style.backgroundColor = "black"
 		}
 
 		gameplan.appendChild(line)
@@ -554,7 +560,6 @@ function write_livetable(view: DataView) {
 
 let DEFTIME = 420 //TODO send this at the beginning from backend to frontend as its defined in input.json
 let countdown = 0
-//let duration = 0
 let remaining_time = 0
 let timer_is_paused = true
 
@@ -562,10 +567,9 @@ function scoreboard_set_timer(view: DataView) {
 	clearInterval(countdown)
 
 	let offset = 1
+	// TODO NOW
 	const time_in_s = view.getUint16(offset)
 	remaining_time = time_in_s
-	//duration = time_in_s
-	//scoreboard_time_bar.style.width = "100%"
 
 	update_timer_html()
 	countdown = setInterval(() => {
@@ -574,7 +578,7 @@ function scoreboard_set_timer(view: DataView) {
 
 		--remaining_time
 
-		const bar_width = Math.min(Math.max(0, (remaining_time / DEFTIME) * 100), 100)
+		const bar_width = Math.max(0, (remaining_time / DEFTIME) * 100)
 		scoreboard_time_bar.style.width = bar_width + "%"
 		update_timer_html()
 	}, 1000)
