@@ -263,7 +263,10 @@ WidgetGameplan WidgetGameplan_create() {
 	WidgetGameplan w;
 	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
-	w.cur = md.cur.gameindex;
+	if(md.cur.gameindex == 0)
+		w.cur = 0;
+	else
+		w.cur = md.cur.gameindex-1;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams_1[i], md.teams[md.games[i].t1_index].name);
 		strcpy(w.teams_2[i], md.teams[md.games[i].t2_index].name);
@@ -294,7 +297,7 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 // Calculate the points of all games played so far of the team with index index.
 u16 team_calc_points(u8 index) {
 	u16 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++) {
+	for (u8 i = 0; i < md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index) {
 			if (md.games[i].score.t1 > md.games[i].score.t2)
 				p += 3;
@@ -312,7 +315,7 @@ u16 team_calc_points(u8 index) {
 
 u8 team_calc_games_played(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++)
+	for (u8 i = 0; i < md.cur.gameindex; i++)
 		if (md.games[i].t1_index == index || md.games[i].t2_index == index)
 			p++;
 	return p;
@@ -320,7 +323,7 @@ u8 team_calc_games_played(u8 index){
 
 u8 team_calc_games_won(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++) {
+	for (u8 i = 0; i < md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index && md.games[i].score.t1 > md.games[i].score.t2)
 			p++;
 		else if (md.games[i].t2_index == index && md.games[i].score.t2 > md.games[i].score.t1)
@@ -331,7 +334,7 @@ u8 team_calc_games_won(u8 index){
 
 u8 team_calc_games_tied(u8 index){
 	u8 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++) {
+	for (u8 i = 0; i < md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index && md.games[i].score.t1 == md.games[i].score.t2)
 			p++;
 		else if (md.games[i].t2_index == index && md.games[i].score.t2 == md.games[i].score.t1)
@@ -342,7 +345,7 @@ u8 team_calc_games_tied(u8 index){
 
 u16 team_calc_goals(u8 index){
 	u16 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++) {
+	for (u8 i = 0; i < md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index)
 			p += md.games[i].score.t1;
 		else if (md.games[i].t2_index == index)
@@ -353,7 +356,7 @@ u16 team_calc_goals(u8 index){
 
 u16 team_calc_goals_taken(u8 index){
 	u16 p = 0;
-	for (u8 i = 0; i <= md.cur.gameindex; i++) {
+	for (u8 i = 0; i < md.cur.gameindex; i++) {
 		if (md.games[i].t1_index == index)
 			p += md.games[i].score.t2;
 		else if (md.games[i].t2_index == index)

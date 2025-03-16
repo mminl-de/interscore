@@ -23,6 +23,22 @@ This project was made for our personal use in a Cycleball tournament under hilar
 8. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
 9. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
 
+## Lehren/Ideen vom 2. Stream
+- +20/+1min/Text-Feld für schnelle Custom-Zeit
+- Monofont damit die Buttons sich nicht verschieben
+- Idee: Ansagen durch KI bei der Hälfte
+- Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür
+- Leertaste als Shortcut für Start/Stop
+- Livereload, dass man backend neustarten kann
+- Widget spawn animation fixen(manchmal kaputt)
+- Beim Spielzurücksetzen spielt die Zeit verrückt
+- Nicht erlauben, dass mehrere Widgets gleichzeitig aktiviert sind
+- Welche Spiele sichtbar sind im Livetable und Gameplan ist schlecht.
+-- Livetable nicht aktualisiert bei der Halbzeit
+-- Spielplan nicht aktualisiert bei der Halbzeit
+-- Letztes Spiel wird nicht mehr verrechnet
+
+
 ## TODO new
 - FINAL release binaries in GitHub Releases
 - FINAL REMOVE input.json and project.seer and assets
