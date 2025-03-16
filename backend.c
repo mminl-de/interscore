@@ -216,17 +216,17 @@ WidgetGamestart WidgetGamestart_create() {
 
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
-	strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
-	strcpy(w.t2, md.teams[md.games[cur].t2_index].name);
-	strcpy(w.t1_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
-	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
-	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
-	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
+	strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
+	strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
+	strcpy(w.t1_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
+	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
+	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
+	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
 
-	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
-	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
-	w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
-	w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
+	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
+	w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+	w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
 
 	return w;
 }
