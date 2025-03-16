@@ -1,5 +1,6 @@
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
+// TODO rewrite string reading
 let socket = new WebSocket("ws://localhost:8081?client=frontend", "interscore")
 socket.binaryType = "arraybuffer"
 

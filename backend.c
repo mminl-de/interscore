@@ -186,16 +186,6 @@ WidgetScoreboard WidgetScoreboard_create() {
 	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
 
 	if (md.cur.halftime) {
-		strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
-		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
-		w.score_t1 = md.games[cur].score.t2;
-		w.score_t2 = md.games[cur].score.t1;
-
-		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
-		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
-		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
-		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
-	} else {
 		strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
 		strcpy(w.t2, md.teams[md.games[cur].t2_index].name);
 		w.score_t1 = md.games[cur].score.t1;
@@ -205,6 +195,16 @@ WidgetScoreboard WidgetScoreboard_create() {
 		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
 		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
 		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
+	} else {
+		strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
+		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
+		w.score_t1 = md.games[cur].score.t2;
+		w.score_t2 = md.games[cur].score.t1;
+
+		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
+		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
+		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
+		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
 	}
 
 	w.is_halftime = md.cur.halftime;
