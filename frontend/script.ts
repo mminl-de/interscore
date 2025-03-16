@@ -681,13 +681,13 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-//function hotReloadCSS() {
-//  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-//    const newLink = document.createElement('link')
-//    newLink.rel = 'stylesheet'
-//    newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
-//    link.replaceWith(newLink)
-//  })
-//}
-//
-//setInterval(hotReloadCSS, 5000)
+function hotReloadCSS() {
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+    const newLink = document.createElement('link')
+    newLink.rel = 'stylesheet'
+    newLink.href = (link as HTMLLinkElement).href.split('?')[0] + '?' + new Date().getTime()
+    link.replaceWith(newLink)
+  })
+}
+
+setInterval(hotReloadCSS, 5000)
