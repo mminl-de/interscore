@@ -709,14 +709,20 @@ int main(void) {
 			*/
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
+				WidgetGameplan_enabled = false;
+				WidgetGamestart_enabled = false;
 				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
+				WidgetGamestart_enabled = false;
+				WidgetLivetable_enabled = false;
 				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
+				WidgetLivetable_enabled = false;
+				WidgetGameplan_enabled = false;
 				resend_widgets();
 				break;
 			case RELOAD_RENTNERJSON:

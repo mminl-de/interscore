@@ -33,7 +33,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL² Livereload, dass man backend neustarten kann
 - Widget spawn animation fixen(manchmal kaputt)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
-- Nicht erlauben, dass mehrere Widgets gleichzeitig aktiviert sind
 - Welche Spiele sichtbar sind im Livetable und Gameplan ist schlecht.
 
 ## TODO new
