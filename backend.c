@@ -481,6 +481,17 @@ void handle_rentnerend_btn_press(u8 *signal){
 			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
+		case TIME_PLUS_20: {
+			md.cur.time += 20;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			break;
+		}
+		case TIME_MINUS_20: {
+			if(md.cur.time > 19)
+				md.cur.time -= 20;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			break;
+		}
 		case TIME_TOGGLE_PAUSE: {
 			if(!md.cur.pause){
 				md.cur.time -= time(NULL) - md.cur.timestart;

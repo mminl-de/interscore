@@ -342,7 +342,7 @@ void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *,
 char *gettimems(){
 	struct timeval t;
 	gettimeofday(&t, NULL);
-	char *s = malloc(20 * sizeof(char));
+	char *s = (char *)malloc(20 * sizeof(char));
 	sprintf(s, "%ld.%06ld", (long int)t.tv_sec, (long int)t.tv_usec);
 	return s;
 }
