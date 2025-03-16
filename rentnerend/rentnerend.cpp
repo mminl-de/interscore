@@ -1,16 +1,16 @@
 #include <QApplication>
-#include <QFontDatabase>
-#include <QWidget>
-#include <QPushButton>
-#include <QComboBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QIcon>
-#include <QTimer>
-#include <QMediaPlayer>
 #include <QAudioOutput>
+#include <QComboBox>
 #include <QDebug>
+#include <QFontDatabase>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QLabel>
+#include <QMediaPlayer>
+#include <QPushButton>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QWidget>
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -182,6 +182,7 @@ void btn_cb_time_minus() {
 	websocket_send_button_signal(TIME_MINUS);
 }
 void btn_cb_time_toggle_pause() {
+	// TODO NOW
 	md.cur.pause = !md.cur.pause;
 	update_input_window();
 	update_display_window();
