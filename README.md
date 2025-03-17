@@ -28,14 +28,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 ## Lehren/Ideen vom 2. Stream
-- +20/+1min/Text-Feld für schnelle Custom-Zeit
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 - Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür (evtl in gamestart widget)
-- Leertaste als Shortcut für Start/Stop
 - FINAL² Livereload, dass man backend neustarten kann
 - Widget spawn animation fixen(manchmal kaputt)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
-- Nicht erlauben, dass mehrere Widgets gleichzeitig aktiviert sind
 - Welche Spiele sichtbar sind im Livetable und Gameplan ist schlecht.
 
 ## TODO new
@@ -51,14 +48,13 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL Ads
 
 ### rentnerend
-- public window:
-	- (other widgets between games)
 - private window:
 	- deal yellow and red cards
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
 - FINAL Add possibility of teams missing
 - FINAL Add referees
+- FINAL Ads in public window
 - FINAL FINAL JSON-Creator GUI for non-technical users
 - FINAL FINAL port to windows/mac
 

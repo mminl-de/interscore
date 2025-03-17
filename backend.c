@@ -481,6 +481,17 @@ void handle_rentnerend_btn_press(u8 *signal){
 			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
+		case TIME_PLUS_20: {
+			md.cur.time += 20;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			break;
+		}
+		case TIME_MINUS_20: {
+			if(md.cur.time > 19)
+				md.cur.time -= 20;
+			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			break;
+		}
 		case TIME_TOGGLE_PAUSE: {
 			if(!md.cur.pause){
 				md.cur.time -= time(NULL) - md.cur.timestart;
@@ -698,14 +709,20 @@ int main(void) {
 			*/
 			case TOGGLE_WIDGET_LIVETABLE:
 				WidgetLivetable_enabled = !WidgetLivetable_enabled;
+				WidgetGameplan_enabled = false;
+				WidgetGamestart_enabled = false;
 				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMEPLAN:
 				WidgetGameplan_enabled = !WidgetGameplan_enabled;
+				WidgetGamestart_enabled = false;
+				WidgetLivetable_enabled = false;
 				resend_widgets();
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
+				WidgetLivetable_enabled = false;
+				WidgetGameplan_enabled = false;
 				resend_widgets();
 				break;
 			case RELOAD_RENTNERJSON:

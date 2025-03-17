@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QShortcut>
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
@@ -72,6 +73,8 @@ typedef struct {
 		struct {
 			QPushButton *plus;
 			QPushButton *minus;
+			QPushButton *plus20;
+			QPushButton *minus20;
 			QPushButton *toggle_pause;
 			QPushButton *reset;
 		} time;
@@ -181,6 +184,23 @@ void btn_cb_time_minus() {
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS);
 }
+void btn_cb_time_plus20() {
+	if(!md.cur.pause)
+		return;
+	md.cur.time += 20;
+	update_input_window();
+	update_display_window();
+	websocket_send_button_signal(TIME_PLUS_20);
+}
+void btn_cb_time_minus20() {
+	if(!md.cur.pause || md.cur.time < 20)
+		return;
+	md.cur.time -= 20;
+	update_input_window();
+	update_display_window();
+	websocket_send_button_signal(TIME_MINUS_20);
+}
+
 void btn_cb_time_toggle_pause() {
 	// TODO NOW
 	md.cur.pause = !md.cur.pause;
@@ -449,6 +469,8 @@ void update_input_window() {
 	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
 	update_button(wi.b.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 	update_button(wi.b.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.b.time.minus20, w, h, 0.43-width/2, 0.46-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.b.time.plus20, w, h, 0.54+width/2, 0.57+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 
 	update_button(wi.b.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
@@ -463,6 +485,7 @@ QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::Standa
 	QObject::connect(b, &QPushButton::clicked, callback_func);
 	return b;
 }
+
 
 // Function to create the display window
 void create_input_window() {
@@ -484,8 +507,10 @@ void create_input_window() {
 
 	wi.b.game.prev = button_new(wi.w, btn_cb_game_prev, QStyle::SP_ArrowBack, 32);
 	wi.b.game.switch_sides = button_new(wi.w, btn_cb_game_switch_sides, QStyle::SP_BrowserReload, 32);
-	wi.b.time.plus = button_new(wi.w, btn_cb_time_plus, QStyle::SP_ArrowUp, 32);
-	wi.b.time.minus = button_new(wi.w, btn_cb_time_minus, QStyle::SP_ArrowDown, 32);
+	wi.b.time.plus = button_new(wi.w, btn_cb_time_plus, QStyle::SP_ArrowUp, 25);
+	wi.b.time.minus = button_new(wi.w, btn_cb_time_minus, QStyle::SP_ArrowDown, 25);
+	wi.b.time.plus20 = button_new(wi.w, btn_cb_time_plus20, QStyle::SP_ArrowUp, 40);
+	wi.b.time.minus20 = button_new(wi.w, btn_cb_time_minus20, QStyle::SP_ArrowDown, 40);
 	wi.b.time.toggle_pause = button_new(wi.w, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
 	wi.b.time.reset = button_new(wi.w, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
 
@@ -596,6 +621,9 @@ int main(int argc, char *argv[]) {
 
 	wd.w->show();
     wi.w->show();
+
+	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
+	QObject::connect(shortcut, &QShortcut::activated, [](){printf("test\n"); btn_cb_time_toggle_pause();});
 
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
