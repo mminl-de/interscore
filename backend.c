@@ -50,6 +50,8 @@ typedef struct {
 	Color t1_color_right;
 	Color t2_color_left;
 	Color t2_color_right;
+	char next_t1[TEAM_NAME_MAX_LEN];
+	char next_t2[TEAM_NAME_MAX_LEN];
 } WidgetGamestart;
 
 typedef struct {
@@ -222,6 +224,14 @@ WidgetGamestart WidgetGamestart_create() {
 	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
 	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
 	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
+
+	if (cur + 1 == md.games_count) {
+		strcpy(w.next_t1, "");
+		strcpy(w.next_t2, "");
+	} else {
+		strcpy(w.next_t1, md.teams[md.games[cur + 1].t1_index].name);
+		strcpy(w.next_t2, md.teams[md.games[cur + 1].t2_index].name);
+	}
 
 	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
 	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
