@@ -24,7 +24,6 @@
 
 typedef struct {
 	QWidget *w;
-
 	struct {
 		struct {
 			QLabel* name;
@@ -92,6 +91,7 @@ w_display wd;
 struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
+// TODO CHECK if you can allocate in the stack
 QMediaPlayer *player = new QMediaPlayer;
 QAudioOutput *audio_output = new QAudioOutput;
 
@@ -605,7 +605,13 @@ int main(int argc, char *argv[]) {
 	QObject::connect(t3, &QTimer::timeout, &json_autosave);
 	t3->start(2*60*1000);
 
-	EventFilter *event_filter = new EventFilter;
-	app.installEventFilter(event_filter);
-	return app.exec();
+	EventFilter event_filter;
+	app.installEventFilter(&event_filter);
+
+	const int stat = app.exec();
+	delete player;
+	delete audio_output;
+	delete wd.w;
+	delete wi.w;
+	return stat;
 }

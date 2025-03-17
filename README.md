@@ -21,10 +21,10 @@ This project was made for our personal use in a Cycleball tournament under hilar
 6. Launch the `interscore` binary.
 7. Give the `interscore-rentnerend` binary to your nearest referee.
 8. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
-9. Press `?` (followed by Enter/Return) in the backend terminal for possible actions.
+9. Press `?` (followed by Enter/Return) in the backend terminal to see possible actions.
 
 ## Demonstrations
-- https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but gets the idea along)
+- https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)
 
 # TODO
 ## Lehren/Ideen vom 2. Stream
