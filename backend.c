@@ -52,6 +52,10 @@ typedef struct {
 	Color t2_color_right;
 	char next_t1[TEAM_NAME_MAX_LEN];
 	char next_t2[TEAM_NAME_MAX_LEN];
+	Color next_t1_color_left;
+	Color next_t1_color_right;
+	Color next_t2_color_left;
+	Color next_t2_color_right;
 } WidgetGamestart;
 
 typedef struct {
@@ -218,6 +222,7 @@ WidgetGamestart WidgetGamestart_create() {
 
 	WidgetGamestart w;
 	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
+	// TODO FINAL whyyyy?!
 	strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
 	strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
 	strcpy(w.t1_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
@@ -225,18 +230,22 @@ WidgetGamestart WidgetGamestart_create() {
 	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
 	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
 
-	if (cur + 1 == md.games_count) {
-		strcpy(w.next_t1, "");
-		strcpy(w.next_t2, "");
-	} else {
-		strcpy(w.next_t1, md.teams[md.games[cur + 1].t1_index].name);
-		strcpy(w.next_t2, md.teams[md.games[cur + 1].t2_index].name);
-	}
-
 	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
 	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
 	w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
 	w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
+
+	if (cur + 1 == md.games_count) {
+		strcpy(w.next_t1, "");
+		strcpy(w.next_t2, "");
+	} else {
+		strcpy(w.next_t1, md.teams[md.games[cur + 1].t2_index].name);
+		strcpy(w.next_t2, md.teams[md.games[cur + 1].t1_index].name);
+		w.next_t1_color_left = Color_from_hex(md.teams[md.games[cur + 1].t2_index].color_light);
+		w.next_t1_color_right = Color_from_hex(md.teams[md.games[cur + 1].t2_index].color_dark);
+		w.next_t2_color_left = Color_from_hex(md.teams[md.games[cur + 1].t1_index].color_light);
+		w.next_t2_color_right = Color_from_hex(md.teams[md.games[cur + 1].t1_index].color_dark);
+	}
 
 	return w;
 }

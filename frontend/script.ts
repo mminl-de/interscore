@@ -304,18 +304,18 @@ function write_gamestart(view: DataView) {
 	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 field: ", t2_field)
 
-	let t1_col_left = read_color(view, offset)
+	const t1_col_left = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_left))
 
-	let t1_col_right = read_color(view, offset)
+	const t1_col_right = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_right))
 
-	let t2_col_left = read_color(view, offset)
+	const t2_col_left = read_color(view, offset)
 	offset += 3
 
-	let t2_col_right = read_color(view, offset)
+	const t2_col_right = read_color(view, offset)
 	offset += 3
 
 	// TODO WIP
@@ -324,6 +324,18 @@ function write_gamestart(view: DataView) {
 
 	const next_t2 = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
+
+	const next_t1_color_left = read_color(view, offset)
+	offset += 3
+
+	const next_t1_color_right = read_color(view, offset)
+	offset += 3
+
+	const next_t2_color_left = read_color(view, offset)
+	offset += 3
+
+	const next_t2_color_right = read_color(view, offset)
+	offset += 3
 
 	const t1_el = document.createElement("div")
 	t1_el.classList.add("team")
@@ -372,7 +384,14 @@ function write_gamestart(view: DataView) {
 	else {
 		gamestart_next.style.display = "block"
 		gamestart_next_t1.innerHTML = next_t1
+		gamestart_next_t1.style.background =
+			Color_gradient_to_string(next_t1_color_left, next_t1_color_right)
 		gamestart_next_t2.innerHTML = next_t2
+		gamestart_next_t2.style.background =
+			Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
+		console.log("lol")
+		console.log(gamestart_next_t1.style.backgroundColor)
+		console.log("endlol")
 	}
 }
 
