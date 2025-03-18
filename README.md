@@ -39,13 +39,12 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ### Bis Deployment
 - OBS integration, OBS deamon (obs alternative?)
 - Windows Support
+- ability to reconnect rentnerend, if backend stops/rentnerend was started first
 
-## Lehren/Ideen vom 2. Stream
-- FINAL³ Idee: Ansagen durch KI bei der Hälfte
-- Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür (evtl in gamestart widget)
-- FINAL² Livereload, dass man backend neustarten kann
-- Widget spawn animation fixen(manchmal kaputt)
-- Beim Spielzurücksetzen spielt die Zeit verrückt
+### Nice to Have
+- Ability to mark teams as not attending
+- GUI for the JSON
+- auto color_dark
 
 ## TODO new
 - FINAL release binaries in GitHub Releases
@@ -54,6 +53,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ### frontend
 - team logos for gamestart
+- Widget spawn animation fixen(manchmal kaputt)
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
@@ -62,6 +62,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ### rentnerend
 - private window:
 	- deal yellow and red cards
+- Livereload, dass man backend neustarten kann
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
 - FINAL Add possibility of teams missing
@@ -69,12 +70,14 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL Ads in public window
 - FINAL FINAL JSON-Creator GUI for non-technical users
 - FINAL FINAL port to windows/mac
+- FINAL³ Idee: Ansagen durch KI bei der Hälfte
 
 ### backend
-- FINAL abstract program so it's applicable for other games
-- (graceful Ctrl-C handling)
+- Beim Spielzurücksetzen spielt die Zeit verrückt
 - obs integration
+- FINAL abstract program so it's applicable for other games
 - FINAL make json_load resilient to bad input.json
+- FINAL FINAL graceful Ctrl-C handling
 
 ### meta
 - How does the tiebreak work?
