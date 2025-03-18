@@ -263,10 +263,9 @@ WidgetGameplan WidgetGameplan_create() {
 	WidgetGameplan w;
 	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
 	w.len = md.games_count;
-	if(md.cur.gameindex == 0)
-		w.cur = 0;
-	else
-		w.cur = md.cur.gameindex-1;
+	w.cur = md.cur.gameindex;
+	if(md.cur.gameindex == md.games_count)
+		w.cur--;
 	for (u8 i = 0; i < md.games_count; i++){
 		strcpy(w.teams_1[i], md.teams[md.games[i].t2_index].name);
 		strcpy(w.teams_2[i], md.teams[md.games[i].t1_index].name);
@@ -448,19 +447,15 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case GAME_NEXT: {
-			if(md.cur.gameindex < md.games_count-1)
+			if(md.cur.gameindex < md.games_count)
 				md.cur.gameindex++;
-			printf("New Game %d (+1): %s : %s\n", md.cur.gameindex,
-			        md.teams[md.games[md.cur.gameindex].t1_index].name,
-			        md.teams[md.games[md.cur.gameindex].t2_index].name);
+			if(md.cur.gameindex == md.games_count)
+				WidgetScoreboard_enabled = false;
 			break;
 		}
 		case GAME_PREV: {
 			if(md.cur.gameindex > 0)
 				md.cur.gameindex--;
-			printf("New Game %d (-1): %s : %s\n", md.cur.gameindex,
-			        md.teams[md.games[md.cur.gameindex].t1_index].name,
-			        md.teams[md.games[md.cur.gameindex].t2_index].name);
 			break;
 		}
 		case GAME_SWITCH_SIDES: {
@@ -646,16 +641,22 @@ int main(void) {
 		char c = getchar();
 		switch (c) {
 			case DEAL_YELLOW_CARD:{
+				if(md.cur.gameindex == md.games_count)
+					break;
 				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
 				send_widget(&wy, sizeof(WidgetCard));
 				break;
 			}
 			case DEAL_RED_CARD: {
+				if(md.cur.gameindex == md.games_count)
+					break;
 				WidgetCard wr = WidgetCard_create(add_card(RED));
 				send_widget(&wr, sizeof(WidgetCard));
 				break;
 			}
 			case DELETE_CARD: {
+				if(md.cur.gameindex == md.games_count)
+					break;
 				u32 cur_i = md.cur.gameindex;
 				if(md.games[cur_i].cards_count == 0){
 					printf("No Cards to delete!\n");
@@ -699,6 +700,8 @@ int main(void) {
 			// #### UI STUFF
 			case TOGGLE_WIDGET_SCOREBOARD:
 				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
+				if(md.cur.gameindex == md.games_count)
+					WidgetScoreboard_enabled = false;
 				resend_widgets();
 				break;
 			/*
@@ -721,8 +724,12 @@ int main(void) {
 				break;
 			case TOGGLE_WIDGET_GAMESTART:
 				WidgetGamestart_enabled = !WidgetGamestart_enabled;
-				WidgetLivetable_enabled = false;
-				WidgetGameplan_enabled = false;
+				if(md.cur.gameindex == md.games_count)
+					WidgetGamestart_enabled = false;
+				else{
+					WidgetLivetable_enabled = false;
+					WidgetGameplan_enabled = false;
+				}
 				resend_widgets();
 				break;
 			case RELOAD_RENTNERJSON:

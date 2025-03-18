@@ -142,7 +142,8 @@ void json_load(const char *s) {
 	json_object_object_get_ex(root, "games", &games);
 
 	md.teams_count = json_object_array_length(teams);
-	md.teams = (Team *) malloc(md.teams_count * sizeof(Team));
+	//Add decoy team for the decoy game at the end
+	md.teams = (Team *) malloc((md.teams_count+1) * sizeof(Team));
 
 	md.players_count = md.teams_count*2;
 	md.players = (Player *) malloc(md.players_count * sizeof(Player));
@@ -188,9 +189,18 @@ void json_load(const char *s) {
 		md.teams[i].color_dark = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
 	}
+	//Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
+	md.teams[md.teams_count].name = malloc(5 * sizeof(char));
+	strcpy(md.teams[md.teams_count].name, "ENDE");
+	md.teams[md.teams_count].color_dark = md.teams[0].color_dark;
+	md.teams[md.teams_count].color_light = md.teams[0].color_light;
+	md.teams[md.teams_count].field_index = md.teams[0].field_index;
+	md.teams[md.teams_count].keeper_index = md.teams[0].keeper_index;
+	md.teams[md.teams_count].logo_filename = md.teams[0].logo_filename;
 
 	md.games_count = json_object_array_length(games);
-	md.games = (Game *) malloc(md.games_count * sizeof(Game));
+	//We alloc one game more, because its a filler game for the end
+	md.games = (Game *) malloc((md.games_count+1) * sizeof(Game));
 
 	for(int i=0; i < md.games_count; i++){
 		json_object *team, *game;
@@ -246,6 +256,15 @@ void json_load(const char *s) {
 			}
 		}
 	}
+	//Init Decoy-Game at the End
+	md.games[md.games_count].t1_index = md.teams_count;
+	md.games[md.games_count].t2_index = md.teams_count;
+	md.games[md.games_count].cards = NULL;
+	md.games[md.games_count].cards_count = 0;
+	md.games[md.games_count].score.t1 = 0;
+	md.games[md.games_count].score.t2 = 0;
+	md.games[md.games_count].halftimescore.t1 = 0;
+	md.games[md.games_count].halftimescore.t2 = 0;
 	return;
 }
 

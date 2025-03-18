@@ -27,13 +27,25 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but gets the idea along)
 
 # TODO
+
+## Neon Lila Mercedes Liste
+### Bis Samstag
+- Website
+- Werbewidget
+
+### Sergey
+- Logo
+
+### Bis Deployment
+- OBS integration, OBS deamon (obs alternative?)
+- Windows Support
+
 ## Lehren/Ideen vom 2. Stream
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 - Gleich Spielen ab der Hälfte zum nächsten Spiel ansagen/neues Widget dafür (evtl in gamestart widget)
 - FINAL² Livereload, dass man backend neustarten kann
 - Widget spawn animation fixen(manchmal kaputt)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
-- Welche Spiele sichtbar sind im Livetable und Gameplan ist schlecht.
 
 ## TODO new
 - FINAL release binaries in GitHub Releases

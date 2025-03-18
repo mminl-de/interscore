@@ -88,6 +88,7 @@ typedef struct {
 void update_input_window();
 void update_display_window();
 void websocket_send_button_signal(u8);
+void screen_input_toggle_visibility(bool hide);
 
 Matchday md;
 w_input wi;
@@ -147,9 +148,11 @@ void btn_cb_t2_score_minus() {
 	update_display_window();
 }
 void btn_cb_game_next() {
-	if (md.cur.gameindex >= md.games_count-1)
+	if (md.cur.gameindex >= md.games_count)
 		return;
 	md.cur.gameindex++;
+	if(md.cur.gameindex == md.games_count)
+		screen_input_toggle_visibility(true);
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_NEXT);
@@ -158,6 +161,8 @@ void btn_cb_game_prev() {
 	if (md.cur.gameindex <= 0)
 		return;
 	md.cur.gameindex--;
+	if(md.cur.gameindex == md.games_count-1)
+		screen_input_toggle_visibility(false);
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_PREV);
@@ -268,6 +273,52 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 	}
 }
 
+void screen_input_toggle_visibility(bool hide){
+	if(hide){
+		wi.b.t1.score_plus->hide();
+		wi.b.t1.score_minus->hide();
+		wi.b.t2.score_plus->hide();
+		wi.b.t2.score_minus->hide();
+		//wi.b.card.red->hide();
+		//wi.b.card.yellow->hide();
+		//wi.b.game.next->hide();
+		//wi.b.game.prev->hide();
+		wi.b.game.switch_sides->hide();
+		wi.b.time.plus->hide();
+		wi.b.time.minus->hide();
+		wi.b.time.plus20->hide();
+		wi.b.time.minus20->hide();
+		wi.b.time.reset->hide();
+		wi.b.time.toggle_pause->hide();
+		wi.l.time->hide();
+		wi.l.t1.score->hide();
+		//wi.l.t1.name->hide();
+		wi.l.t2.score->hide();
+		//wi.l.t2.name->hide();
+	} else {
+		wi.b.t1.score_plus->show();
+		wi.b.t1.score_minus->show();
+		wi.b.t2.score_plus->show();
+		wi.b.t2.score_minus->show();
+		//wi.b.card.red->show();
+		//wi.b.card.yellow->show();
+		//wi.b.game.next->show();
+		//wi.b.game.prev->show();
+		wi.b.game.switch_sides->show();
+		wi.b.time.plus->show();
+		wi.b.time.minus->show();
+		wi.b.time.plus20->show();
+		wi.b.time.minus20->show();
+		wi.b.time.reset->show();
+		wi.b.time.toggle_pause->show();
+		wi.l.time->show();
+		wi.l.t1.score->show();
+		//wi.l.t1.name->show();
+		wi.l.t2.score->show();
+		//wi.l.t2.name->show();
+	}
+}
+
 int text_width(const char *text, QFont font){
 	QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
 	return text_size.width();
@@ -343,6 +394,14 @@ void update_display_window() {
 	int w = wd.w->width();
 	int h = wd.w->height();
 
+	/*
+	if(md.cur.gameindex == md.games_count){
+		update_label(wd.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		update_label(wd.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		return;
+	}
+	*/
+
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
@@ -395,6 +454,14 @@ void update_input_window() {
 
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
+
+	/*if(md.cur.gameindex == md.games_count){
+		update_label(wi.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		update_label(wi.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		return;
+	}
+	*/
+
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	QFont f1 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
