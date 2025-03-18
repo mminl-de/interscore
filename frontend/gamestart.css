@@ -22,7 +22,7 @@
 	text-align: center;
 }
 
-.gamestart .team {
+.gamestart .t1, .gamestart .t2 {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;

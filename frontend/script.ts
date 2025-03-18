@@ -5,23 +5,30 @@ let socket = new WebSocket("ws://localhost:8081?client=frontend", "interscore")
 socket.binaryType = "arraybuffer"
 
 const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
-let scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
-let scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
-let scoreboard_score_1 = scoreboard.querySelector(".s1")!
-let scoreboard_score_2 = scoreboard.querySelector(".s2")!
-let scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
-let scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
-let scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
+const scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
+const scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
+const scoreboard_score_1 = scoreboard.querySelector(".s1")!
+const scoreboard_score_2 = scoreboard.querySelector(".s2")!
+const scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
+const scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
+const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 const gameplan = document.querySelector(".gameplan")! as HTMLElement
 
+// TODO CHECK if we still need this one
 const gamestart = document.querySelector(".gamestart")! as HTMLElement
-let gamestart_container = document.querySelector(".gamestart .container")! as HTMLElement
+// TODO CHECK if we still need this one
+const gamestart_container = document.querySelector(".gamestart .container")! as HTMLElement
+const gamestart_t1 = gamestart.querySelector(".t1")! as HTMLElement
+const gamestart_t2 = gamestart.querySelector(".t2")! as HTMLElement
+const gamestart_next = gamestart.querySelector(".next")! as HTMLElement
+const gamestart_next_t1 = gamestart_next.querySelector(".t1")! as HTMLElement
+const gamestart_next_t2 = gamestart_next.querySelector(".t2")! as HTMLElement
 
 const card = document.querySelector(".card")! as HTMLElement
-let card_graphic = card.querySelector(".card-graphic")! as HTMLElement
-let card_receiver = card.querySelector(".card-receiver")!
-let card_message = card.querySelector(".card-message")!
+const card_graphic = card.querySelector(".card-graphic")! as HTMLElement
+const card_receiver = card.querySelector(".card-receiver")!
+const card_message = card.querySelector(".card-message")!
 
 const livetable = document.querySelector(".livetable")! as HTMLElement
 
@@ -264,35 +271,17 @@ function write_gameplan(view: DataView) {
 }
 
 function write_gamestart(view: DataView) {
-	while (gamestart_container.children.length > 0)
-		gamestart_container.removeChild(gamestart_container.lastChild!)
+	gamestart_t1.innerHTML = ""
+	gamestart_t2.innerHTML = ""
 
 	let offset = 1
 
-	// TODO REMOVE
-	let t1: string = ""
-	let t2: string = ""
-
-	for (let t1_ch = 0; t1_ch < TEAM_NAME_MAX_LEN; ++t1_ch) {
-		const c = view.getUint8(offset)
-		t1 += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += TEAM_NAME_MAX_LEN - t1_ch - 1
-			break
-		}
-	}
+	const t1 = read_string(view, offset)
+	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO tactical t1 print: ", t1)
 
-	for (let t2_ch = 0; t2_ch < TEAM_NAME_MAX_LEN; ++t2_ch) {
-		const c = view.getUint8(offset)
-		t2 += String.fromCharCode(c)
-		++offset
-		if (c === 0) {
-			offset += TEAM_NAME_MAX_LEN - t2_ch - 1
-			break
-		}
-	}
+	const t2 = read_string(view, offset)
+	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO tactical t2 print: ", t2)
 
 	// TODO WIP
@@ -315,18 +304,37 @@ function write_gamestart(view: DataView) {
 	offset += TEAM_NAME_MAX_LEN
 	console.log("TODO 2 field: ", t2_field)
 
-	let t1_col_left = read_color(view, offset)
+	const t1_col_left = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_left))
 
-	let t1_col_right = read_color(view, offset)
+	const t1_col_right = read_color(view, offset)
 	offset += 3
 	console.log(Color_to_string(t1_col_right))
 
-	let t2_col_left = read_color(view, offset)
+	const t2_col_left = read_color(view, offset)
 	offset += 3
 
-	let t2_col_right = read_color(view, offset)
+	const t2_col_right = read_color(view, offset)
+	offset += 3
+
+	// TODO WIP
+	const next_t1 = read_string(view, offset)
+	offset += TEAM_NAME_MAX_LEN
+
+	const next_t2 = read_string(view, offset)
+	offset += TEAM_NAME_MAX_LEN
+
+	const next_t1_color_left = read_color(view, offset)
+	offset += 3
+
+	const next_t1_color_right = read_color(view, offset)
+	offset += 3
+
+	const next_t2_color_left = read_color(view, offset)
+	offset += 3
+
+	const next_t2_color_right = read_color(view, offset)
 	offset += 3
 
 	const t1_el = document.createElement("div")
@@ -348,14 +356,9 @@ function write_gamestart(view: DataView) {
 	t1_field_el.style.backgroundColor = "#bebebe"
 	t1_field_el.innerHTML = t1_field
 
-	t1_el.appendChild(t1_name_el)
-	t1_el.appendChild(t1_keeper_el)
-	t1_el.appendChild(t1_field_el)
-
-	gamestart_container.appendChild(t1_el)
-
-	const t2_el = document.createElement("div")
-	t2_el.classList.add("team")
+	gamestart_t1.appendChild(t1_name_el)
+	gamestart_t1.appendChild(t1_keeper_el)
+	gamestart_t1.appendChild(t1_field_el)
 
 	const t2_name_el = document.createElement("div")
 	t2_name_el.classList.add("bordered")
@@ -373,11 +376,23 @@ function write_gamestart(view: DataView) {
 	t2_field_el.style.backgroundColor = "#bebebe"
 	t2_field_el.innerHTML = t2_field
 
-	t2_el.appendChild(t2_name_el)
-	t2_el.appendChild(t2_keeper_el)
-	t2_el.appendChild(t2_field_el)
+	gamestart_t2.appendChild(t2_name_el)
+	gamestart_t2.appendChild(t2_keeper_el)
+	gamestart_t2.appendChild(t2_field_el)
 
-	gamestart_container.appendChild(t2_el)
+	if (next_t1 === "") gamestart_next.style.display = "none"
+	else {
+		gamestart_next.style.display = "block"
+		gamestart_next_t1.innerHTML = next_t1
+		gamestart_next_t1.style.background =
+			Color_gradient_to_string(next_t1_color_left, next_t1_color_right)
+		gamestart_next_t2.innerHTML = next_t2
+		gamestart_next_t2.style.background =
+			Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
+		console.log("lol")
+		console.log(gamestart_next_t1.style.backgroundColor)
+		console.log("endlol")
+	}
 }
 
 function write_card(view: DataView) {

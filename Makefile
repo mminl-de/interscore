@@ -2,7 +2,7 @@ SRC ?= backend.c mongoose/mongoose.c common.c
 OUT ?= interscore
 CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
 CC ?= cc
-CPPC ?= c++
+CXX ?= c++
 
 b-install:
 	$(CC) -o $(OUT) $(SRC) \
@@ -28,13 +28,13 @@ CPPFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
 LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
 
 r-install:
-	$(CPPC) -o $(ROUT) $(RSRC) -O3 $(CPPFLAGS) $(LD_FLAGS)
+	$(CXX) -o $(ROUT) $(RSRC) -O3 $(CPPFLAGS) $(LD_FLAGS)
 
 r-debug:
-	$(CPPC) -o $(ROUT) $(RSRC) $(CPPFLAGS) $(LD_FLAGS) -g
+	$(CXX) -o $(ROUT) $(RSRC) $(CPPFLAGS) $(LD_FLAGS) -g
 
 r-fast:
-	$(CPPC) -o $(ROUT) $(RSRC) -fpermissive -fPIC $(LD_FLAGS)
+	$(CXX) -o $(ROUT) $(RSRC) -fpermissive -fPIC $(LD_FLAGS)
 
 r-run:
 	./$(ROUT)
