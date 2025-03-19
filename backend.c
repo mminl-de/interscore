@@ -105,12 +105,19 @@ typedef struct {
 #define TOGGLE_WIDGET_GAMEPLAN 'g'
 #define TOGGLE_WIDGET_GAMESTART 's'
 
+// OBS
+#define OBS_START_STREAMING 'S'
+#define OBS_STOP_STREAMING 'P'
+#define OBS_REPLAY 'R'
+
 // Meta
 #define EXIT 'q'
 #define RELOAD_RENTNERJSON 'j'
+#define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
 #define URL "http://0.0.0.0:8081"
+#define OBS_URL "http://0.0.0.0:4444"
 
 //TODO put all function definitions here
 u16 team_calc_points(u8 index);
@@ -123,9 +130,10 @@ u16 team_calc_goals_taken(u8 index);
 Matchday md;
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-struct mg_connection *c_front = NULL;
-struct mg_connection *c_rentner = NULL;
-struct mg_mgr mgr;
+struct mg_connection *con_front = NULL;
+struct mg_connection *con_rentner = NULL;
+struct mg_connection *con_obs = NULL;
+struct mg_mgr mgr_svr, mgr_obs;
 
 bool WidgetScoreboard_enabled = false;
 bool WidgetGamestart_enabled = false;
@@ -178,11 +186,11 @@ int teams_sort_after_points(const void *p1, const void *p2){
 }
 
 void send_widget(void *w, size_t size) {
-	if (c_front == NULL){
+	if (con_front == NULL){
 		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
 		return;
 	}
-	mg_ws_send(c_front, (char *) w, size, WEBSOCKET_OP_BINARY);
+	mg_ws_send(con_front, (char *) w, size, WEBSOCKET_OP_BINARY);
 }
 
 WidgetScoreboard WidgetScoreboard_create() {
@@ -384,15 +392,15 @@ u16 team_calc_goals_taken(u8 index){
 }
 
 void send_message_to_site(char *message) {
-	if (c_front == NULL) {
+	if (con_front == NULL) {
 		printf("client is not connected, couldnt send Message: '%s'\n", message);
 		return;
 	}
-	mg_ws_send(c_front, message, strlen(message), WEBSOCKET_OP_TEXT);
+	mg_ws_send(con_front, message, strlen(message), WEBSOCKET_OP_TEXT);
 }
 
 void send_time(u16 t){
-	if(c_front == NULL){
+	if(con_front == NULL){
 		printf("client is not connected, couldnt send time\n");
 		return;
 	}
@@ -400,18 +408,18 @@ void send_time(u16 t){
 	buffer[0] = SCOREBOARD_SET_TIMER;
 	u16 time = htons(t);
 	memcpy(&buffer[1], &time, sizeof(time));
-	mg_ws_send(c_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+	mg_ws_send(con_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
 }
 
 void send_time_pause(bool pause) {
-	if(c_front == NULL){
+	if(con_front == NULL){
 		printf("client is not connected, couldnt send time\n");
 		return;
 	}
 	u8 buffer[2];
 	buffer[0] = SCOREBOARD_PAUSE_TIMER;
 	buffer[1] = pause;
-	mg_ws_send(c_front, &buffer, sizeof(u8)*2, WEBSOCKET_OP_BINARY);
+	mg_ws_send(con_front, &buffer, sizeof(u8)*2, WEBSOCKET_OP_BINARY);
 }
 
 void resend_widgets() {
@@ -531,7 +539,39 @@ void handle_rentnerend_btn_press(u8 *signal){
 	resend_widgets();
 }
 
-void ev_handler(struct mg_connection *nc, int ev, void *p) {
+void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
+	switch(ev) {
+	case MG_EV_CONNECT:
+        printf("Connected to OBS WebSocket server\n");
+		break;
+	case MG_EV_WS_OPEN:
+        printf("WebSocket handshake completed\n");
+        con_obs = con;  // Save the connection
+	    const char *identify_msg = "{\"op\": 1, \"d\": {\"rpcVersion\": 1, \"eventSubscriptions\": 255}}";
+    mg_ws_send(con_obs, identify_msg, strlen(identify_msg), WEBSOCKET_OP_TEXT);
+		break;
+	case MG_EV_WS_MSG: {
+        struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
+        printf("Received: %.*s\n", (int)wm->data.len, wm->data.buf);
+		break;
+	}
+	case MG_EV_CLOSE:
+        printf("WebSocket connection closed\n");
+		con_obs = NULL;
+		break;
+	// Signals not worth logging
+	case MG_EV_OPEN:
+	case MG_EV_POLL:
+	case MG_EV_READ:
+	case MG_EV_WRITE:
+	case MG_EV_HTTP_HDRS:
+		break;
+	default:
+		printf("Ignoring unknown signal (client) %d ...\n", ev);
+	}
+}
+
+void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	// TODO FINAL CONSIDER keeping these cases
 	switch (ev) {
 		case MG_EV_CONNECT:
@@ -542,7 +582,7 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 			break;
 		case MG_EV_CLOSE:
 			printf("Client disconnected!\n");
-			c_front = NULL;
+			con_front = NULL;
 			break;
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
@@ -555,22 +595,22 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
     		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
 			printf("Clienttype: %s\n", client_type);
 			if(!strcmp(client_type, "frontend")){
-				c_front = nc;
+				con_front = con;
 			} else if(client_type[0] == '\0'){
-				c_rentner = nc;
+				con_rentner = con;
 			} else{
 				printf("ERROR: Unknown Client is trying to connect!");
-				nc->is_closing = true;
+				con->is_closing = true;
 				break;
 			}
 			//TODO check if upgrade is successfull
-			mg_ws_upgrade(nc, hm, NULL);
+			mg_ws_upgrade(con, hm, NULL);
 			printf("Client upgraded to WebSocket connection!\n");
 			break;
 		}
 		case MG_EV_WS_OPEN:
 			printf("Connection opened!\n");
-			//c_front = nc;
+			//con_front = con;
 			break;
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
@@ -591,7 +631,7 @@ void ev_handler(struct mg_connection *nc, int ev, void *p) {
 		case MG_EV_HTTP_HDRS:
 			break;
 		default:
-			printf("Ignoring unknown signal %d ...\n", ev);
+			printf("Ignoring unknown signal (server) %d ...\n", ev);
 	}
 }
 
@@ -634,19 +674,25 @@ u8 add_card(enum CardType type) {
 }
 
 void *mongoose_update() {
-	while (running) mg_mgr_poll(&mgr, 20);
+	while (running) {
+		mg_mgr_poll(&mgr_svr, 20);
+		mg_mgr_poll(&mgr_obs, 20);
+	}
 	return NULL;
 }
 
 int main(void) {
-	// WebSocket stuff
-	mg_mgr_init(&mgr);
-	mg_http_listen(&mgr, URL, ev_handler, NULL);
+	// WebSocket server stuff
+	mg_mgr_init(&mgr_svr);
+	mg_http_listen(&mgr_svr, URL, ev_handler_server, NULL);
 	pthread_t thread;
 	if (pthread_create(&thread, NULL, mongoose_update, NULL) != 0) {
 		fprintf(stderr, "ERROR: Failed to create thread for updating the connection!");
 		goto cleanup;
 	}
+	// WebSocket as Client(OBS) stuff
+	mg_mgr_init(&mgr_obs);
+
 
 	// User data stuff
 	char *json = file_read(JSON_PATH);
@@ -751,14 +797,40 @@ int main(void) {
 				}
 				resend_widgets();
 				break;
+			case OBS_START_STREAMING: {
+				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartRecord\", \"requestId\": \"1\"}}";
+				if(con_obs == NULL){
+					printf("WARNING: Cant send command, OBS is not connected!\n");
+					break;
+				}
+				mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+				break;
+			}
+			case OBS_STOP_STREAMING: {
+				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopRecord\", \"requestId\": \"2\"}}";
+				if(con_obs == NULL){
+					printf("WARNING: Cant send command, OBS is not connected!\n");
+					break;
+				}
+				mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+				break;
+			}
+			case OBS_REPLAY: {
+				printf("WARNING: Not implemented yet!\n");
+				break;
+			}
 			case RELOAD_RENTNERJSON:
-				if (c_rentner == NULL){
+				if (con_rentner == NULL){
 					fprintf(stderr, "ERROR: Rentnerend not connected, cant reload JSON!\n");
 					break;
 				}
 				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
 				char w = 0;
-				mg_ws_send(c_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
+				mg_ws_send(con_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
+				break;
+			case CONNECT_OBS:
+				mg_ws_connect(&mgr_obs, OBS_URL, ev_handler_client, NULL, NULL);
+				printf("Trying to connect to OBS...\n");
 				break;
 			case PRINT_HELP:
 				printf(
@@ -771,10 +843,14 @@ int main(void) {
 					"l  toggle livetable widget\n"
 					"g  toggle gameplan widget\n"
 					"s  toggle gamestart widget\n"
+					"w  resend current widgets\n"
 					"\n"
-					"w  resend current widgets"
+					"S  Start Stream/Recording\n"
+					"P  Stop Stream/Recording\n"
+					"R  Replay\n"
 					"\n"
 					"j  Reload rentnerend json\n"
+					"o  connect to obs\n"
 					"?  print help\n"
 					"q  quit\n"
 					"================================\n"
@@ -794,6 +870,7 @@ int main(void) {
 		fprintf(stderr, "ERROR: Failed to join thread!\n");
 
 cleanup:
-	mg_mgr_free(&mgr);
+	mg_mgr_free(&mgr_svr);
+	mg_mgr_free(&mgr_obs);
 	return 0;
 }

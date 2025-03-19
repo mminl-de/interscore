@@ -1,10 +1,3 @@
-# Detect the init system
-ifeq ($(shell command -v systemctl 2>/dev/null),)
-    INIT_SYSTEM = openrc
-else
-    INIT_SYSTEM = systemd
-endif
-
 SRC ?= backend.c mongoose/mongoose.c common.c
 OUT ?= interscore
 CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
@@ -13,7 +6,7 @@ CXX ?= c++
 
 b-install:
 	$(CC) -o $(OUT) $(SRC) \
-	-O3 $(CFLAGS) \
+	-Oz $(CFLAGS) -s \
 	-ljson-c \
 
 b-debug:
@@ -35,7 +28,7 @@ CPPFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
 LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
 
 r-install:
-	$(CXX) -o $(ROUT) $(RSRC) -O3 $(CPPFLAGS) $(LD_FLAGS)
+	$(CXX) -o $(ROUT) $(RSRC) -O3 $(CPPFLAGS) $(LD_FLAGS) -s
 
 r-debug:
 	$(CXX) -o $(ROUT) $(RSRC) $(CPPFLAGS) $(LD_FLAGS) -g
@@ -50,23 +43,10 @@ js:
 	tsc --target es2017 frontend/script.ts
 
 backer-install:
-	mkdir -p /srv/www/fonts
-	cp fonts/Kanit-Regular.ttf /srv/www/fonts/
-	cd frontend && cp *.css *.html *.js /srv/www/
-	chmod 644 /srv/www/*
-	chmod 755 /srv/www/fonts
-	cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old || true
-	cp nginx.conf /etc/nginx/nginx.conf
-ifeq ($(INIT_SYSTEM), systemd)
-	systemctl stop nginx
-	systemctl start nginx
-else ifeq ($(INIT_SYSTEM), openrc)
-	rc-service nginx stop
-	rc-service nginx start
-else
-	@echo "WARNING: Unsupported init system. Skipping restarting nginx"
-endif
-
+	mkdir -p ~/.config/obs-studio/basic/profiles
+	mkdir -p ~/.config/obs-studio/basic/scenes
+	cp obs/scenes/radball.json ~/.config/obs-studio/basic/scenes/
+	cp -r obs/profiles/radball/ ~/.config/obs-studio/basic/profiles/
 
 clean:
 	[ -f input.old.json ] && mv input.old.json input.json
