@@ -1,3 +1,6 @@
 [submodule "mongoose"]
 	path = mongoose
 	url = https://github.com/cesanta/mongoose
+[submodule "remoteend"]
+	path = remoteend
+	url = https://github.com/mminl-de/interscore-remoteend
