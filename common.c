@@ -365,3 +365,15 @@ char *gettimems(){
 	sprintf(s, "%ld.%06ld", (long int)t.tv_sec, (long int)t.tv_usec);
 	return s;
 }
+
+void add_card(enum CardType type, u8 player_index){
+	const u8 cur = md.cur.gameindex;
+
+	if (md.games[cur].cards_count == 0)
+		md.games[cur].cards = (Card *)malloc(0 + 1 * sizeof(Card));
+	else
+		md.games[cur].cards = (Card *)realloc(md.games[cur].cards, (md.games[cur].cards_count+1) * sizeof(Card));
+
+	md.games[cur].cards[md.games[cur].cards_count].player_index = player_index;
+	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+}

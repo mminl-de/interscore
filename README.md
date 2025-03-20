@@ -60,8 +60,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL Ads
 
 ### rentnerend
-- private window:
-	- deal yellow and red cards
 - Livereload, dass man backend neustarten kann
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr

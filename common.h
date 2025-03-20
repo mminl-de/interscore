@@ -14,7 +14,7 @@ enum InputType {
 	T1_SCORE_PLUS, T1_SCORE_MINUS, T2_SCORE_PLUS, T2_SCORE_MINUS,
 	GAME_NEXT, GAME_PREV, GAME_SWITCH_SIDES,
 	TIME_PLUS, TIME_MINUS, TIME_PLUS_20, TIME_MINUS_20,
-	TIME_TOGGLE_PAUSE, TIME_RESET
+	TIME_TOGGLE_PAUSE, TIME_RESET, YELLOW_CARD, RED_CARD
 };
 
 #pragma pack(push, 1)
@@ -80,5 +80,6 @@ char *file_read(const char *path);
 bool file_write(const char *path, const char *s);
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
 char *gettimems();
+void add_card(enum CardType type, u8 player_index);
 
 #endif // _COMMON_H_

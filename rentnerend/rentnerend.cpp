@@ -86,6 +86,7 @@ typedef struct {
 
 void update_input_window();
 void update_display_window();
+void websocket_send_card(CardType type, int player_index);
 void websocket_send_button_signal(u8);
 void screen_input_toggle_visibility(bool hide);
 
@@ -219,6 +220,33 @@ void btn_cb_time_reset() {
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_RESET);
+}
+
+void btn_cb_red_card() {
+	int player_index = wi.dd_card_players->currentData().toInt();
+	if(player_index == -1)
+		return;
+	add_card(RED, player_index);
+	websocket_send_card(RED, player_index);
+}
+
+void btn_cb_yellow_card() {
+	int player_index = wi.dd_card_players->currentData().toInt();
+	if(player_index == -1)
+		return;
+	add_card(YELLOW, player_index);
+	websocket_send_card(YELLOW, player_index);
+}
+
+void websocket_send_card(CardType type, int player_index){
+	if(!server_connected){
+		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		return;
+	}
+	u8 s[2];
+	s[0] = YELLOW_CARD + type;
+	s[1] = player_index;
+	mg_ws_send(server_con, s, sizeof(u8)+sizeof(u8), WEBSOCKET_OP_BINARY);
 }
 
 void websocket_send_button_signal(u8 signal) {
@@ -390,6 +418,11 @@ void update_button(QPushButton *b, int w, int h, float x_start, float x_end, flo
 	b->resize(w*(x_end-x_start), h*(y_end-y_start));
 }
 
+void update_combobox(QComboBox *b, int w, int h, float x_start, float x_end, float y_start, float y_end) {
+	b->move(w*x_start, h*y_start);
+	b->resize(w*(x_end-x_start), h*(y_end-y_start));
+}
+
 void update_display_window() {
 	int w = wd.w->width();
 	int h = wd.w->height();
@@ -454,13 +487,6 @@ void update_input_window() {
 
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
-
-	/*if(md.cur.gameindex == md.games_count){
-		update_label(wi.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
-		update_label(wi.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
-		return;
-	}
-	*/
 
 	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	QFont f1 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
@@ -541,6 +567,18 @@ void update_input_window() {
 
 	update_button(wi.b.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
+
+	wi.dd_card_players->clear();
+	u8 t1_index = md.games[md.cur.gameindex].t1_index;
+	u8 t2_index = md.games[md.cur.gameindex].t2_index;
+	wi.dd_card_players->addItem("");
+	wi.dd_card_players->addItem(md.players[md.teams[t1_index].keeper_index].name, QVariant(md.teams[t1_index].keeper_index));
+	wi.dd_card_players->addItem(md.players[md.teams[t1_index].field_index].name, QVariant(md.teams[t1_index].field_index));
+	wi.dd_card_players->addItem(md.players[md.teams[t2_index].keeper_index].name, QVariant(md.teams[t2_index].keeper_index));
+	wi.dd_card_players->addItem(md.players[md.teams[t2_index].field_index].name, QVariant(md.teams[t2_index].field_index));
+	update_combobox(wi.dd_card_players, w, h, 0.88, 0.98, 0.69, 0.73);
+	update_button(wi.b.card.red, w, h, 0.88, 0.925, 0.74, 0.79);
+	update_button(wi.b.card.yellow, w, h, 0.935, 0.98, 0.74, 0.79);
 }
 
 //fontsize is only used for icons atm, cry about it
@@ -580,6 +618,10 @@ void create_input_window() {
 	wi.b.time.minus20 = button_new(wi.w, btn_cb_time_minus20, QStyle::SP_ArrowDown, 40);
 	wi.b.time.toggle_pause = button_new(wi.w, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
 	wi.b.time.reset = button_new(wi.w, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
+
+	wi.b.card.red = button_new(wi.w, btn_cb_red_card, QStyle::SP_ArrowRight, 32);
+	wi.b.card.yellow = button_new(wi.w, btn_cb_yellow_card, QStyle::SP_ArrowLeft, 32);
+	wi.dd_card_players = new QComboBox(wi.w);
 
 	update_input_window();
 }
@@ -632,7 +674,7 @@ void update_timer() {
 			player->setPosition(0);
 			player->play();
 		}
-		update_display_window();
+update_display_window();
 		update_input_window();
 	}
 	if (md.cur.time == 0)

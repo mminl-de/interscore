@@ -391,6 +391,14 @@ u16 team_calc_goals_taken(u8 index){
 	return p;
 }
 
+void obs_send_cmd(const char *s){
+	if(con_obs == NULL){
+		printf("WARNING: Cant send command, OBS is not connected!\n");
+		return;
+	}
+	mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+}
+
 void send_message_to_site(char *message) {
 	if (con_front == NULL) {
 		printf("client is not connected, couldnt send Message: '%s'\n", message);
@@ -530,6 +538,14 @@ void handle_rentnerend_btn_press(u8 *signal){
 			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
+		case RED_CARD: {
+			add_card(RED, signal[1]);
+			printf("Added Red Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
+		}
+		case YELLOW_CARD: {
+			add_card(YELLOW, signal[1]);
+			printf("Added Yellow Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
+		}
 		default: {
 			printf("WARNING: Received unknown button press from rentnerend\n");
 			break;
@@ -538,6 +554,13 @@ void handle_rentnerend_btn_press(u8 *signal){
 	printf("Stop handling btn press: %s\n", gettimems());
 	resend_widgets();
 }
+
+void obs_switch_scene(void *scene_name){
+	char cmd[strlen(scene_name)+256];
+    snprintf(cmd, sizeof(cmd), "{\"op\": 6, \"d\": {\"requestType\": \"SetCurrentProgramScene\", \"requestId\": \"switch_scene\", \"requestData\": {\"sceneName\": \"%s\"}}}", (char *)scene_name);
+	obs_send_cmd(cmd);
+}
+
 
 void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	switch(ev) {
@@ -553,6 +576,14 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	case MG_EV_WS_MSG: {
         struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
         printf("Received: %.*s\n", (int)wm->data.len, wm->data.buf);
+		//Check if the replay buffer was saved. If yes we want to view the replay and then go back
+        if (strstr(wm->data.buf, "\"eventType\":\"ReplayBufferSaved\"") != NULL) {
+			printf("\n\ncrazy lets replay\n\n");
+			mg_timer_add(&mgr_obs, 1000, 0, obs_switch_scene, "replay");
+			printf("\n\nSET REPLAY\n\n");
+			mg_timer_add(&mgr_obs, 11000, 0, obs_switch_scene, "live");
+			printf("\n\nSET LIVE\n\n");
+		}
 		break;
 	}
 	case MG_EV_CLOSE:
@@ -635,44 +666,6 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	}
 }
 
-u8 add_card(enum CardType type) {
-	const u8 cur = md.cur.gameindex;
-
-	if (md.games[cur].cards_count == 0)
-		md.games[cur].cards = malloc(0 + 1 * sizeof(Card));
-	else
-		md.games[cur].cards = realloc(md.games[cur].cards, (md.games[cur].cards_count+1) * sizeof(Card));
-	printf("Select player:\n1. %s (Keeper %s)\n2. %s (Field %s)\n3. %s (Keeper %s)\n4. %s (Field %s)\n",
-		md.players[md.teams[md.games[cur].t1_index].keeper_index].name, md.teams[md.games[cur].t1_index].name,
-		md.players[md.teams[md.games[cur].t1_index].field_index].name, md.teams[md.games[cur].t1_index].name,
-		md.players[md.teams[md.games[cur].t2_index].keeper_index].name, md.teams[md.games[cur].t2_index].name,
-		md.players[md.teams[md.games[cur].t2_index].field_index].name, md.teams[md.games[cur].t2_index].name);
-
-	char ch;
-	u8 player_i = 0;
-	while (!player_i) {
-		ch = getchar();
-		switch(ch) {
-			case '1':
-				player_i = md.teams[md.games[cur].t1_index].keeper_index;
-				printf("TODO chose '%s'\n", md.players[player_i].name);
-				break;
-			case '2':
-				player_i = md.teams[md.games[cur].t1_index].field_index;
-				break;
-			case '3':
-				player_i = md.teams[md.games[cur].t2_index].keeper_index;
-				break;
-			case '4':
-				player_i = md.teams[md.games[cur].t2_index].field_index;
-				break;
-		}
-	}
-	md.games[cur].cards[md.games[cur].cards_count].player_index = player_i;
-	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
-	return md.games[cur].cards_count - 1;
-}
-
 void *mongoose_update() {
 	while (running) {
 		mg_mgr_poll(&mgr_svr, 20);
@@ -705,20 +698,6 @@ int main(void) {
 	while (running) {
 		char c = getchar();
 		switch (c) {
-			case DEAL_YELLOW_CARD:{
-				if(md.cur.gameindex == md.games_count)
-					break;
-				WidgetCard wy = WidgetCard_create(add_card(YELLOW));
-				send_widget(&wy, sizeof(WidgetCard));
-				break;
-			}
-			case DEAL_RED_CARD: {
-				if(md.cur.gameindex == md.games_count)
-					break;
-				WidgetCard wr = WidgetCard_create(add_card(RED));
-				send_widget(&wr, sizeof(WidgetCard));
-				break;
-			}
 			case DELETE_CARD: {
 				if(md.cur.gameindex == md.games_count)
 					break;
@@ -799,24 +778,18 @@ int main(void) {
 				break;
 			case OBS_START_STREAMING: {
 				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartRecord\", \"requestId\": \"1\"}}";
-				if(con_obs == NULL){
-					printf("WARNING: Cant send command, OBS is not connected!\n");
-					break;
-				}
-				mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+				obs_send_cmd(s);
 				break;
 			}
 			case OBS_STOP_STREAMING: {
 				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopRecord\", \"requestId\": \"2\"}}";
-				if(con_obs == NULL){
-					printf("WARNING: Cant send command, OBS is not connected!\n");
-					break;
-				}
-				mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+				obs_send_cmd(s);
 				break;
 			}
 			case OBS_REPLAY: {
-				printf("WARNING: Not implemented yet!\n");
+				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"3\"}}";
+				obs_send_cmd(s);
+				//The scene switching etc is done in ev_handler_client
 				break;
 			}
 			case RELOAD_RENTNERJSON:

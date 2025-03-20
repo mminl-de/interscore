@@ -6,6 +6,7 @@ We need to set up nginx with the nginx-mod-rtmp module
 Then install/configure the rtmp server and the http server, which will host the frontend site with `make js backer-install`
 ## glue rtmp and website together and restream it (NOT FINISHED)
 Install Dependencies:
-`pacman -S chromium xorg-server-xvfb obs-server`
+`pacman -S xorg-server-xvfb`
+OBS Appimage (Browser Support)
 Then just run the backerend script.
 `backerend <RTMP Output Stream>`

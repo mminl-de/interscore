@@ -47,6 +47,9 @@ backer-install:
 	mkdir -p ~/.config/obs-studio/basic/scenes
 	cp obs/scenes/radball.json ~/.config/obs-studio/basic/scenes/
 	cp -r obs/profiles/radball/ ~/.config/obs-studio/basic/profiles/
+	mkdir -p /etc/nginx/
+	cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old || true
+	cp nginx.conf /etc/nginx/nginx.conf
 
 clean:
 	[ -f input.old.json ] && mv input.old.json input.json
