@@ -37,9 +37,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - Logo
 
 ### Bis Deployment
-- OBS integration, OBS deamon (obs alternative?)
 - Windows Support
-- ability to reconnect rentnerend, if backend stops/rentnerend was started first
 
 ### Nice to Have
 - Ability to mark teams as not attending
@@ -73,7 +71,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 
 ### backend
-- Beim Spielzurücksetzen spielt die Zeit verrückt
 - OBS Replays sind noch bisschen buggy irgendwie
 - FINAL abstract program so it's applicable for other games
 - FINAL make json_load resilient to bad input.json
