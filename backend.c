@@ -104,6 +104,7 @@ typedef struct {
 #define TOGGLE_WIDGET_LIVETABLE 'l'
 #define TOGGLE_WIDGET_GAMEPLAN 'g'
 #define TOGGLE_WIDGET_GAMESTART 's'
+#define RESEND_CURRENT_WIDGETS 'w'
 
 // OBS
 #define OBS_START_STREAMING 'S'
@@ -443,11 +444,11 @@ void resend_widgets() {
 	send_widget(&w_gameplan, sizeof(WidgetGameplan));
 
 	if(md.cur.pause){
-		printf("pause: %d\n", md.cur.time);
+		printf("pause pause: %d\n", md.cur.time);
 		send_time(md.cur.time);
 	} else {
 		send_time(md.cur.time - (time(NULL) - md.cur.timestart));
-		printf("pause: %ld\n", md.cur.time - (time(NULL) - md.cur.timestart));
+		printf("pause nicht pause: %ld\n", md.cur.time - (time(NULL) - md.cur.timestart));
 	}
 	//if(md.cur.time == md.deftime)
 //		send_time(md.deftime);
@@ -523,6 +524,8 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case TIME_TOGGLE_PAUSE: {
+			if(md.cur.time == 0)
+				return;
 			if(!md.cur.pause){
 				md.cur.time -= time(NULL) - md.cur.timestart;
 			} else {
@@ -641,6 +644,8 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			//TODO check if upgrade is successfull
 			mg_ws_upgrade(con, hm, NULL);
 			printf("Client upgraded to WebSocket connection!\n");
+			if(con_front != NULL)
+				resend_widgets();
 			break;
 		}
 		case MG_EV_WS_OPEN:
@@ -696,6 +701,8 @@ int main(void) {
 	char *json = file_read(JSON_PATH);
 	json_load(json);
 	free(json);
+	md.cur.pause = true;
+	md.cur.time = md.deftime;
 	//matchday_init();
 
 	printf("Server loaded!\n");
@@ -779,6 +786,9 @@ int main(void) {
 					WidgetLivetable_enabled = false;
 					WidgetGameplan_enabled = false;
 				}
+				resend_widgets();
+				break;
+			case RESEND_CURRENT_WIDGETS:
 				resend_widgets();
 				break;
 			case OBS_START_STREAMING: {
