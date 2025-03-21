@@ -1,0 +1,31 @@
+body {
+	background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%);
+}
+
+.ads {
+	display: block;
+
+	background-color: rgba(255, 255, 255, 0.3);
+	backdrop-filter: blur(20px);
+
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	transition: opacity 0.5s ease-in-out;
+
+	width: 800px;
+	padding: 50px;
+}
+
+.ads .container {
+	display: flex;
+	align-items: center;
+
+	gap: 50px;
+}
+
+object {
+	height: 100px;
+}

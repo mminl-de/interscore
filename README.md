@@ -28,6 +28,14 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 
+## right after performance
+- tidy up assets folder (especially logo.svg)
+- remoteend:
+	- idiomatic restructuring
+	- tight packing of five switches
+	- server sends back active widgets
+	- layout: change port above switches
+
 ## Neon Lila Mercedes Liste
 ### Bis Samstag
 - Website

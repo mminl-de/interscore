@@ -1,0 +1,47 @@
+<svg width="190" height="190" viewBox="0 0 190 190" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style type="text/css">
+      @font-face {
+          font-family: "Kanit";
+          src: url("Kanit-Regular.ttf") format("truetype");
+      }
+    </style>
+
+    <linearGradient id="topleft-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#cb676e;stop-opacity:1" />
+      <stop offset="90%" style="stop-color:#be4149;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="topright-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0055ff;stop-opacity:1" />
+      <stop offset="90%" style="stop-color:#0044cc;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="bottom-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0b8e44;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#42f08d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- First Rectangle -->
+  <g>
+    <rect x="0" y="0" width="90" height="120" rx="6" fill="black"/>
+    <rect x="8" y="8" width="74" height="94" rx="6" fill="url(#topleft-grad)"/>
+    <text x="45" y="70" font-family="Kanit" font-size="60" text-anchor="middle" dominant-baseline="middle">2</text>
+  </g>
+
+  <!-- Second Rectangle -->
+  <g>
+    <rect x="100" y="0" width="90" height="120" rx="6" fill="black"/>
+    <rect x="108" y="8" width="74" height="94" rx="6" fill="url(#topright-grad)"/>
+    <text x="145" y="70" font-family="Kanit" font-size="60" text-anchor="middle" dominant-baseline="middle">1</text>
+  </g>
+
+  <!-- Bottom Rectangle -->
+  <g>
+    <rect x="0" y="130" width="190" height="60" rx="6" fill="black"/>
+    <rect x="8" y="138" width="174" height="34" rx="6" fill="url(#bottom-grad)"/>
+    <text x="95" y="160" font-family="Kanit" font-size="40" text-anchor="middle" dominant-baseline="middle">7:00</text>
+  </g>
+</svg>
+
