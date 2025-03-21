@@ -61,7 +61,8 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL Ads
 
 ### rentnerend
-- Livereload, dass man backend neustarten kann
+- change yellow/red card icons
+- FINAL change all icons to nice looking icons
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
 - FINAL Add possibility of teams missing
@@ -72,8 +73,9 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 
 ### backend
+- JSON hot reload von rentnerend->backend actually funktionierend machen (als text senden?)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
-- obs integration
+- OBS Replays sind noch bisschen buggy irgendwie
 - FINAL abstract program so it's applicable for other games
 - FINAL make json_load resilient to bad input.json
 - FINAL FINAL graceful Ctrl-C handling

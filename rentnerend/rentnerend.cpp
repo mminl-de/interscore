@@ -78,6 +78,7 @@ typedef struct {
 			QPushButton *toggle_pause;
 			QPushButton *reset;
 		} time;
+		QPushButton *connect;
 	} b;
 	QComboBox *dd_card_players;
 } w_input;
@@ -89,6 +90,7 @@ void update_display_window();
 void websocket_send_card(CardType type, int player_index);
 void websocket_send_button_signal(u8);
 void screen_input_toggle_visibility(bool hide);
+void ev_handler(struct mg_connection *c, int ev, void *p);
 
 Matchday md;
 w_input wi;
@@ -240,6 +242,11 @@ void btn_cb_yellow_card() {
 	wi.dd_card_players->setCurrentIndex(0);
 }
 
+void btn_cb_connect() {
+	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
+	update_input_window();
+}
+
 void websocket_send_card(CardType type, int player_index){
 	if(!server_connected){
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
@@ -296,6 +303,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 			printf("WebSocket closed!\n");
 			server_con = NULL;
 			server_connected = false;
+			update_input_window();
 			break;
 		// signals that are not important
 		case MG_EV_OPEN:
@@ -583,6 +591,17 @@ void update_input_window() {
 	update_combobox(wi.dd_card_players, w, h, 0.88, 0.98, 0.69, 0.73);
 	update_button(wi.b.card.yellow, w, h, 0.88, 0.925, 0.74, 0.79);
 	update_button(wi.b.card.red, w, h, 0.935, 0.98, 0.74, 0.79);
+
+	update_button(wi.b.connect, w, h, 0.93, 0.99, 0.93, 0.99);
+	if(server_con == NULL){
+		wi.b.connect->setEnabled(true);
+		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning);
+		wi.b.connect->setIcon(icon);
+	} else {
+		wi.b.connect->setEnabled(false);
+		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_DialogApplyButton);
+		wi.b.connect->setIcon(icon);
+	}
 }
 
 //fontsize is only used for icons atm, cry about it
@@ -626,6 +645,8 @@ void create_input_window() {
 	wi.b.card.red = button_new(wi.w, btn_cb_red_card, QStyle::SP_ArrowRight, 32);
 	wi.b.card.yellow = button_new(wi.w, btn_cb_yellow_card, QStyle::SP_ArrowLeft, 32);
 	wi.dd_card_players = new QComboBox(wi.w);
+
+	wi.b.connect = button_new(wi.w, btn_cb_connect, QStyle::SP_MessageBoxCritical, 50);
 
 	update_input_window();
 }
