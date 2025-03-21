@@ -127,6 +127,7 @@ u8 team_calc_games_won(u8 index);
 u8 team_calc_games_tied(u8 index);
 u16 team_calc_goals(u8 index);
 u16 team_calc_goals_taken(u8 index);
+void obs_switch_scene(void *scene_name);
 
 Matchday md;
 bool running = true;
@@ -460,6 +461,61 @@ void handle_rentnerend_btn_press(u8 *signal){
 	printf("Start handling btn press: %s\n", gettimems());
 	printf("received a signal: %d\n", *signal);
 	switch (*signal) {
+		case WIDGET_SCOREBOARD_TOGGLE: {
+			WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
+			if(md.cur.gameindex == md.games_count)
+				WidgetScoreboard_enabled = false;
+			resend_widgets();
+			break;
+		}
+		case WIDGET_GAMEPLAN_TOGGLE: {
+			WidgetGameplan_enabled = !WidgetGameplan_enabled;
+			WidgetGamestart_enabled = false;
+			WidgetLivetable_enabled = false;
+			resend_widgets();
+			break;
+		}
+		case WIDGET_LIVEPLAN_TOGGLE: {
+			WidgetLivetable_enabled = !WidgetLivetable_enabled;
+			WidgetGameplan_enabled = false;
+			WidgetGamestart_enabled = false;
+			resend_widgets();
+			break;
+		}
+		case WIDGET_GAMESTART_TOGGLE: {
+			WidgetGamestart_enabled = !WidgetGamestart_enabled;
+			if(md.cur.gameindex == md.games_count)
+				WidgetGamestart_enabled = false;
+			else{
+				WidgetLivetable_enabled = false;
+				WidgetGameplan_enabled = false;
+			}
+			resend_widgets();
+			break;
+		}
+		case WIDGET_ADS_TOGGLE: {
+			printf("WARNING: Ads are not implemented yet!\n");
+			break;
+		}
+		case OBS_STREAM_START: {
+			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}";
+			obs_send_cmd(s);
+			break;
+		}
+		case OBS_STREAM_STOP: {
+			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}";
+			obs_send_cmd(s);
+			break;
+		}
+		case OBS_REPLAY_START: {
+			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"3\"}}";
+			obs_send_cmd(s);
+			break;
+		}
+		case OBS_REPLAY_STOP: {
+			obs_switch_scene("live");
+			break;
+		}
 		case T1_SCORE_PLUS: {
 			md.games[md.cur.gameindex].score.t1++;
 			printf("New T1 score (+1): %d\n", md.games[md.cur.gameindex].score.t1);
@@ -567,7 +623,6 @@ void obs_switch_scene(void *scene_name){
     snprintf(cmd, sizeof(cmd), "{\"op\": 6, \"d\": {\"requestType\": \"SetCurrentProgramScene\", \"requestId\": \"switch_scene\", \"requestData\": {\"sceneName\": \"%s\"}}}", (char *)scene_name);
 	obs_send_cmd(cmd);
 }
-
 
 void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	switch(ev) {
