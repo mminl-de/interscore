@@ -1,7 +1,3 @@
-body {
-	background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%);
-}
-
 .ads {
 	display: block;
 
@@ -23,9 +19,14 @@ body {
 	display: flex;
 	align-items: center;
 
-	gap: 50px;
+	margin: 0 50px;
+	gap: 100px;
+}
+
+h1 {
+	width: 450px;
 }
 
 object {
-	height: 100px;
+	height: 150px;
 }

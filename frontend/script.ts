@@ -30,6 +30,8 @@ const card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 const card_receiver = card.querySelector(".card-receiver")!
 const card_message = card.querySelector(".card-message")!
 
+const ad = document.querySelector(".ads")! as HTMLElement
+
 const livetable = document.querySelector(".livetable")! as HTMLElement
 
 const decoder = new TextDecoder("utf-8")
@@ -616,8 +618,9 @@ enum WidgetMessage {
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_GAMESTART = 7,
 	WIDGET_CARD_SHOW = 9,
-	SCOREBOARD_SET_TIMER = 10,
-	SCOREBOARD_PAUSE_TIMER = 11
+	WIDGET_AD = 10,
+	SCOREBOARD_SET_TIMER = 12,
+	SCOREBOARD_PAUSE_TIMER = 13
 }
 
 socket.onmessage = (event: MessageEvent) => {
@@ -676,6 +679,15 @@ socket.onmessage = (event: MessageEvent) => {
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
 			write_card(view)
+			break
+		case WidgetMessage.WIDGET_AD:
+			ad.style.opacity = "0"
+			setTimeout(() => ad.style.display = "none", 500)
+			break
+		case WidgetMessage.WIDGET_AD + 1:
+			ad.style.display = "block"
+			ad.style.opacity = "0"
+			setTimeout(() => ad.style.opacity = "1", 10)
 			break
 		case WidgetMessage.SCOREBOARD_SET_TIMER:
 			scoreboard_set_timer(view)

@@ -17,8 +17,9 @@ enum WidgetMessage {
 	WIDGET_GAMEPLAN = 5,
 	WIDGET_GAMESTART = 7,
 	WIDGET_CARD_SHOW = 9,
-	SCOREBOARD_SET_TIMER = 10,
-	SCOREBOARD_PAUSE_TIMER = 11
+	WIDGET_AD = 10,
+	SCOREBOARD_SET_TIMER = 12,
+	SCOREBOARD_PAUSE_TIMER = 13
 };
 
 #pragma pack(push, 1)
@@ -92,6 +93,10 @@ typedef struct {
 	enum CardType type;
 	char name[PLAYER_NAME_MAX_LEN];
 } WidgetCard;
+
+typedef struct {
+	u8 widget_num;
+} WidgetAd;
 #pragma pack(pop)
 
 // Justice system
@@ -141,6 +146,7 @@ bool WidgetScoreboard_enabled = false;
 bool WidgetGamestart_enabled = false;
 bool WidgetLivetable_enabled = false;
 bool WidgetGameplan_enabled = false;
+bool WidgetAds_enabled = false;
 
 // Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
 u8 hex_char_to_int(const char c) {
@@ -322,6 +328,10 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 	return w;
 }
 
+WidgetAd WidgetAd_create() {
+	return (WidgetAd) { .widget_num = WIDGET_AD + WidgetAds_enabled };
+}
+
 // Calculate the points of all games played so far of the team with index index.
 u16 team_calc_points(u8 index) {
 	u16 p = 0;
@@ -438,11 +448,13 @@ void resend_widgets() {
 	WidgetGamestart w_gamestart = WidgetGamestart_create();
 	WidgetLivetable w_livetable = WidgetLivetable_create();
 	WidgetGameplan w_gameplan = WidgetGameplan_create();
+	WidgetAd w_ad = WidgetAd_create();
 
 	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
 	send_widget(&w_gamestart, sizeof(WidgetGamestart));
 	send_widget(&w_livetable, sizeof(WidgetLivetable));
 	send_widget(&w_gameplan, sizeof(WidgetGameplan));
+	send_widget(&w_ad, sizeof(WidgetAd));
 
 	if(md.cur.pause){
 		printf("pause pause: %d\n", md.cur.time);
@@ -494,7 +506,8 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case WIDGET_ADS_TOGGLE: {
-			printf("WARNING: Ads are not implemented yet!\n");
+			WidgetAds_enabled = !WidgetAds_enabled;
+			resend_widgets();
 			break;
 		}
 		case OBS_STREAM_START: {
