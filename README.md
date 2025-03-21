@@ -28,6 +28,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 
+## right before performance
+- frontend:
+	- give heading backgrounds
+	- brighten up the colors so you can see the labels
+
 ## right after performance
 - tidy up assets folder (especially logo.svg)
 - remoteend:
@@ -35,14 +40,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 	- tight packing of five switches
 	- server sends back active widgets
 	- layout: change port above switches
+	- remoteend looks for first match, without hard coded ip
+- frontend:
+	- replace "ADS" with "AD"
 
 ## Neon Lila Mercedes Liste
-### Bis Samstag
-- Website
-- Werbewidget
-
-### Sergey
-- Logo
 
 ### Bis Deployment
 - Windows Support
@@ -53,7 +55,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - auto color_dark
 
 ## TODO new
-- FINAL release binaries in GitHub Releases
 - FINAL REMOVE input.json and project.seer and assets
 - FINAL screenshots of backend options and rentnerend windows
 
@@ -64,7 +65,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
-- FINAL Ads
 
 ### rentnerend
 - change yellow/red card icons
