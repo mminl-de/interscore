@@ -244,7 +244,6 @@ void btn_cb_yellow_card() {
 
 void btn_cb_connect() {
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
-	update_input_window();
 }
 
 void websocket_send_card(CardType type, int player_index){
@@ -273,18 +272,22 @@ void websocket_send_json(const char *s) {
 	if (!server_connected)
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
-		mg_ws_send(server_con, &s, strlen(s)*sizeof(char), WEBSOCKET_OP_BINARY);
+		mg_ws_send(server_con, s, strlen(s)*sizeof(char), WEBSOCKET_OP_TEXT);
 	printf("Finished sending json: %s\n", gettimems());
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
 	switch(ev) {
-		case MG_EV_WS_OPEN:
+		case MG_EV_WS_OPEN: {
 			printf("WebSocket conenction established!\n");
 			server_con = c;
 			server_connected = true;
-			//TODO FINAL hash von der JSON senden um sicher zu gehen, dass es die gleiche ist
+			update_input_window();
+			char* s = json_generate();
+			websocket_send_json(s);
+			free(s);
 			break;
+		}
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *wm = (struct mg_ws_message *) p;
 			if((int)wm->data.buf[0] == 0){

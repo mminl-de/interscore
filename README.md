@@ -73,7 +73,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 
 ### backend
-- JSON hot reload von rentnerend->backend actually funktionierend machen (als text senden?)
 - Beim Spielzurücksetzen spielt die Zeit verrückt
 - OBS Replays sind noch bisschen buggy irgendwie
 - FINAL abstract program so it's applicable for other games

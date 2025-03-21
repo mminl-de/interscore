@@ -652,9 +652,10 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
 			printf("received message: %s\n", (char *)m->data.buf);
-			if(((char *)m->data.buf)[0] == '{')
+			if(((char *)m->data.buf)[0] == '{'){
 				json_load((char *)m->data.buf);
-			else
+				resend_widgets();
+			} else
 				handle_rentnerend_btn_press((u8 *)m->data.buf);
 			break;
 		}
