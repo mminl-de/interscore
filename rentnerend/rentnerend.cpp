@@ -228,6 +228,7 @@ void btn_cb_red_card() {
 		return;
 	add_card(RED, player_index);
 	websocket_send_card(RED, player_index);
+	wi.dd_card_players->setCurrentIndex(0);
 }
 
 void btn_cb_yellow_card() {
@@ -236,6 +237,7 @@ void btn_cb_yellow_card() {
 		return;
 	add_card(YELLOW, player_index);
 	websocket_send_card(YELLOW, player_index);
+	wi.dd_card_players->setCurrentIndex(0);
 }
 
 void websocket_send_card(CardType type, int player_index){
@@ -307,8 +309,8 @@ void screen_input_toggle_visibility(bool hide){
 		wi.b.t1.score_minus->hide();
 		wi.b.t2.score_plus->hide();
 		wi.b.t2.score_minus->hide();
-		//wi.b.card.red->hide();
-		//wi.b.card.yellow->hide();
+		wi.b.card.red->hide();
+		wi.b.card.yellow->hide();
 		//wi.b.game.next->hide();
 		//wi.b.game.prev->hide();
 		wi.b.game.switch_sides->hide();
@@ -323,13 +325,14 @@ void screen_input_toggle_visibility(bool hide){
 		//wi.l.t1.name->hide();
 		wi.l.t2.score->hide();
 		//wi.l.t2.name->hide();
+		wi.dd_card_players->hide();
 	} else {
 		wi.b.t1.score_plus->show();
 		wi.b.t1.score_minus->show();
 		wi.b.t2.score_plus->show();
 		wi.b.t2.score_minus->show();
-		//wi.b.card.red->show();
-		//wi.b.card.yellow->show();
+		wi.b.card.red->show();
+		wi.b.card.yellow->show();
 		//wi.b.game.next->show();
 		//wi.b.game.prev->show();
 		wi.b.game.switch_sides->show();
@@ -344,6 +347,7 @@ void screen_input_toggle_visibility(bool hide){
 		//wi.l.t1.name->show();
 		wi.l.t2.score->show();
 		//wi.l.t2.name->show();
+		wi.dd_card_players->show();
 	}
 }
 
@@ -577,8 +581,8 @@ void update_input_window() {
 	wi.dd_card_players->addItem(md.players[md.teams[t2_index].keeper_index].name, QVariant(md.teams[t2_index].keeper_index));
 	wi.dd_card_players->addItem(md.players[md.teams[t2_index].field_index].name, QVariant(md.teams[t2_index].field_index));
 	update_combobox(wi.dd_card_players, w, h, 0.88, 0.98, 0.69, 0.73);
-	update_button(wi.b.card.red, w, h, 0.88, 0.925, 0.74, 0.79);
-	update_button(wi.b.card.yellow, w, h, 0.935, 0.98, 0.74, 0.79);
+	update_button(wi.b.card.yellow, w, h, 0.88, 0.925, 0.74, 0.79);
+	update_button(wi.b.card.red, w, h, 0.935, 0.98, 0.74, 0.79);
 }
 
 //fontsize is only used for icons atm, cry about it

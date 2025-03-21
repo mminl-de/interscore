@@ -53,6 +53,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ### frontend
 - team logos for gamestart
+- Fix Font Problems wth Umlaute in Cards section
 - Widget spawn animation fixen(manchmal kaputt)
 - FINAL animate line by line
 - FINAL comment all relevant CSS

@@ -80,6 +80,6 @@ char *file_read(const char *path);
 bool file_write(const char *path, const char *s);
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
 char *gettimems();
-void add_card(enum CardType type, u8 player_index);
+u8 add_card(enum CardType type, u8 player_index);
 
 #endif // _COMMON_H_

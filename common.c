@@ -108,7 +108,7 @@ char* json_generate() {
 		json_object_object_add(game, "score", score);
 
 		if(md.games[i].cards_count > 0){
-			struct json_object *cards = json_object_new_object();
+			struct json_object *cards = json_object_new_array();
 			for(int j=0; j < md.games[j].cards_count; j++){
 				struct json_object *card = json_object_new_object();
 				json_object_object_add(card, "player", json_object_new_string(md.players[md.games[i].cards[j].player_index].name));
@@ -116,7 +116,7 @@ char* json_generate() {
 					json_object_object_add(card, "type", json_object_new_string("Y"));
 				else
 					json_object_object_add(card, "type", json_object_new_string("R"));
-				json_object_object_add(cards, "card", card);
+				json_object_array_add(cards, card);
 			}
 			json_object_object_add(game, "cards", cards);
 		}
@@ -366,7 +366,7 @@ char *gettimems(){
 	return s;
 }
 
-void add_card(enum CardType type, u8 player_index){
+u8 add_card(enum CardType type, u8 player_index){
 	const u8 cur = md.cur.gameindex;
 
 	if (md.games[cur].cards_count == 0)
@@ -376,4 +376,5 @@ void add_card(enum CardType type, u8 player_index){
 
 	md.games[cur].cards[md.games[cur].cards_count].player_index = player_index;
 	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+	return md.games[cur].cards_count-1;
 }

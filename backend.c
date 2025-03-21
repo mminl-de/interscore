@@ -539,12 +539,16 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case RED_CARD: {
-			add_card(RED, signal[1]);
+			WidgetCard wc = WidgetCard_create(add_card(RED, signal[1]));
+			send_widget(&wc, sizeof(WidgetCard));
 			printf("Added Red Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
+			break;
 		}
 		case YELLOW_CARD: {
-			add_card(YELLOW, signal[1]);
+			WidgetCard wc = WidgetCard_create(add_card(YELLOW, signal[1]));
+			send_widget(&wc, sizeof(WidgetCard));
 			printf("Added Yellow Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
+			break;
 		}
 		default: {
 			printf("WARNING: Received unknown button press from rentnerend\n");
@@ -691,7 +695,7 @@ int main(void) {
 	char *json = file_read(JSON_PATH);
 	json_load(json);
 	free(json);
-	matchday_init();
+	//matchday_init();
 
 	printf("Server loaded!\n");
 
