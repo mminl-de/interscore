@@ -20,8 +20,8 @@
     {
       "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
-      "color_light":"65c752",
-      "color_dark":"439a32",
+      "color_light":"0058ab",
+      "color_dark":"fbd914",
       "players":[
         {
           "name":"Maximilian Schmidt",
@@ -36,8 +36,8 @@
     {
       "name":"WALDREMS",
       "logo":"assets\/leeden.jpg",
-      "color_light":"004de6",
-      "color_dark":"0044cc",
+      "color_light":"33cc33",
+      "color_dark":"c2f0c2",
       "players":[
         {
           "name":"Björn Bootsmann",
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "name":"GROẞKOSCHEN",
+      "name":"GROSSKOSCHEN",
       "logo":"assets\/obernfeld.svg",
       "color_light":"00cca0",
       "color_dark":"009978",

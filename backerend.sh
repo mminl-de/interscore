@@ -6,4 +6,4 @@ Xvfb :99 -screen 0 1920x1080x24 &
 export DISPLAY=:99
 sleep 3
 echo "start obs"
-obs --disable-shutdown-check --startreplaybuffer --collection radball.json --profile radball --scene live --websocket_port 4444
+~/mnl/obs --disable-shutdown-check --startreplaybuffer --collection radball.json --profile radball --scene live --websocket_port 4444
