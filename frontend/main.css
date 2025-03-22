@@ -6,7 +6,7 @@ body {
 
     margin: 32px;           /* space from the top and left edges */
 
-	background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%);
+	/* TODO DEBUG background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%); */
 }
 
 .heading {

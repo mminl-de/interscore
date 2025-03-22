@@ -30,7 +30,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ## right before performance
 - frontend:
-	- brighten up the colors so you can see the labels
 	- add QR to ad widget
 	- team logos for gamestart?
 
