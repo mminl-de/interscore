@@ -5,16 +5,23 @@ body {
     font-size: 32px;
 
     margin: 32px;           /* space from the top and left edges */
+
+	/* TODO DEBUG background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%); */
 }
 
 .heading {
 	font-size: 60px;
 	text-align: center;
-	text-shadow: 15px 15px 15px rgba(0, 0, 0, 0.9);
+	text-shadow:
+		2px 2px 0 white,
+		-2px 2px 0 white,
+		2px -2px 0 white,
+		-2px -2px 0 white;
 }
 
 .bordered {
-	border: solid 3px black;
+	border: solid 4px black;
+	border-radius: 10px;
 	box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.9);
 }
 

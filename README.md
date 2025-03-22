@@ -28,11 +28,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 
-## right before performance
-- frontend:
-	- give heading backgrounds
-	- brighten up the colors so you can see the labels
-
 ## right after performance
 - tidy up assets folder (especially logo.svg)
 - remoteend:
@@ -43,6 +38,12 @@ This project was made for our personal use in a Cycleball tournament under hilar
 	- remoteend looks for first match, without hard coded ip
 - frontend:
 	- replace "ADS" with "AD"
+- website:
+	- rewrite:
+		- fully mobile-friendly
+		- more images:
+			- widgets
+		- tutorial page
 
 ## Neon Lila Mercedes Liste
 

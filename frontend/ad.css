@@ -1,5 +1,5 @@
-.ads {
-	display: none;
+.ad {
+	display: block;
 
 	background-color: rgba(255, 255, 255, 0.3);
 	backdrop-filter: blur(20px);
@@ -15,12 +15,12 @@
 	padding: 50px;
 }
 
-.ads .container {
+.ad .container {
 	display: flex;
 	align-items: center;
 
 	margin: 0 50px;
-	gap: 100px;
+	gap: 80px;
 }
 
 h1 {
