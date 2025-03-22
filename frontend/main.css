@@ -12,14 +12,11 @@ body {
 .heading {
 	font-size: 60px;
 	text-align: center;
-	text-shadow: 15px 15px 15px rgba(0, 0, 0, 0.9);
-
-	/* TODO NOW */
-	border: solid 2px black;
-	background-color: rgba(255, 255, 255, 0.1);
-	backdrop-filter: blur(30px);
-	border-radius: 20px;
-	padding: 5px 30px;
+	text-shadow:
+		2px 2px 0 white,
+		-2px 2px 0 white,
+		2px -2px 0 white,
+		-2px -2px 0 white;
 }
 
 .bordered {
