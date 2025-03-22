@@ -50,7 +50,7 @@
       ]
     },
     {
-      "name":"GROSSKOSCHEN",
+      "name":"GROẞKOSCHEN",
       "logo":"assets\/obernfeld.svg",
       "color_light":"00cca0",
       "color_dark":"009978",
@@ -97,7 +97,7 @@
     },
     {
       "team1":"WALDREMS",
-      "team2":"GROẞKOSCHEN",
+      "team2":"GROSSKOSCHEN",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -121,7 +121,7 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"GROẞKOSCHEN",
+      "team2":"GROSSKOSCHEN",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -144,7 +144,7 @@
       }
     },
     {
-      "team1":"GROẞKOSCHEN",
+      "team1":"GROSSKOSCHEN",
       "team2":"EHRENBERG",
       "halftimescore":{
         "team1":0,
@@ -180,7 +180,7 @@
       }
     },
     {
-      "team1":"GROẞKOSCHEN",
+      "team1":"GROSSKOSCHEN",
       "team2":"KISSING 2",
       "halftimescore":{
         "team1":0,

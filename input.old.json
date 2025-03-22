@@ -50,7 +50,7 @@
       ]
     },
     {
-      "name":"GROẞKOSCHEN",
+      "name":"GROSSKOSCHEN",
       "logo":"assets\/obernfeld.svg",
       "color_light":"00cca0",
       "color_dark":"009978",
@@ -68,8 +68,8 @@
     {
       "name":"KISSING 2",
       "logo":"assets\/velbert.svg",
-      "color_light":"0066ff",
-      "color_dark":"181818",
+      "color_light":"f94639",
+      "color_dark":"ad1105",
       "players":[
         {
           "name":"Lukas Keller",
