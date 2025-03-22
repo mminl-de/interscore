@@ -4,8 +4,8 @@
     {
       "name":"GIFHORN",
       "logo":"assets\/gifhorn.jpg",
-      "color_light":"a83940",
-      "color_dark":"72272c",
+      "color_light":"c4545c",
+      "color_dark":"ab3b42",
       "players":[
         {
           "name":"Erik Kramer",
@@ -20,8 +20,8 @@
     {
       "name":"SCHIEFBAHN",
       "logo":"assets\/schiefbahn.jpg",
-      "color_light":"429931",
-      "color_dark":"2a601f",
+      "color_light":"65c752",
+      "color_dark":"439a32",
       "players":[
         {
           "name":"Ben Juckenhöfel",
@@ -36,8 +36,8 @@
     {
       "name":"LEEDEN",
       "logo":"assets\/leeden.jpg",
-      "color_light":"0036a3",
-      "color_dark":"002b80",
+      "color_light":"004de6",
+      "color_dark":"0044cc",
       "players":[
         {
           "name":"Pascal Westphal",
@@ -52,8 +52,8 @@
     {
       "name":"OBERNFELD",
       "logo":"assets\/obernfeld.svg",
-      "color_light":"009273",
-      "color_dark":"004d3c",
+      "color_light":"00cca0",
+      "color_dark":"009978",
       "players":[
         {
           "name":"Hagen Weiß",
@@ -68,7 +68,7 @@
     {
       "name":"VELBERT",
       "logo":"assets\/velbert.svg",
-      "color_light":"ef1708",
+      "color_light":"f94639",
       "color_dark":"ad1105",
       "players":[
         {
