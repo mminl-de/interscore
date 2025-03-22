@@ -556,11 +556,18 @@ void handle_rentnerend_btn_press(u8 *signal){
 				md.cur.gameindex++;
 			if(md.cur.gameindex == md.games_count)
 				WidgetScoreboard_enabled = false;
+			char str[200];
+			sprintf(str, "cp -r ~/radball/replays/game_%d/* ~/radball/replays/last-game/", md.cur.gameindex-1);
+			system(str);
 			break;
 		}
 		case GAME_PREV: {
-			if(md.cur.gameindex > 0)
+			if(md.cur.gameindex > 0) {
 				md.cur.gameindex--;
+				char str[200];
+				sprintf(str, "cp -r ~/radball/replays/game_%d/* ~/radball/replays/last-game/", md.cur.gameindex);
+				system(str);
+			}
 			break;
 		}
 		case GAME_SWITCH_SIDES: {
@@ -792,6 +799,17 @@ int main(void) {
 	while (running) {
 		char c = getchar();
 		switch (c) {
+			case '+':
+				md.cur.gameindex++;
+				break;
+			case '-':
+				md.cur.gameindex--;
+			case '0':
+				md.cur.halftime = !md.cur.halftime;
+			case '1':
+				md.games[md.cur.gameindex].score.t1++;
+			case '2':
+				md.games[md.cur.gameindex].score.t2++;
 			case DELETE_CARD: {
 				if(md.cur.gameindex == md.games_count)
 					break;
