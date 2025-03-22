@@ -30,7 +30,7 @@ const card_graphic = card.querySelector(".card-graphic")! as HTMLElement
 const card_receiver = card.querySelector(".card-receiver")!
 const card_message = card.querySelector(".card-message")!
 
-const ad = document.querySelector(".ads")! as HTMLElement
+const ad = document.querySelector(".ad")! as HTMLElement
 
 const livetable = document.querySelector(".livetable")! as HTMLElement
 

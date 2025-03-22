@@ -146,7 +146,7 @@ bool WidgetScoreboard_enabled = false;
 bool WidgetGamestart_enabled = false;
 bool WidgetLivetable_enabled = false;
 bool WidgetGameplan_enabled = false;
-bool WidgetAds_enabled = false;
+bool WidgetAd_enabled = false;
 
 // Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
 u8 hex_char_to_int(const char c) {
@@ -329,7 +329,7 @@ WidgetCard WidgetCard_create(const u8 card_i) {
 }
 
 WidgetAd WidgetAd_create() {
-	return (WidgetAd) { .widget_num = WIDGET_AD + WidgetAds_enabled };
+	return (WidgetAd) { .widget_num = WIDGET_AD + WidgetAd_enabled };
 }
 
 // Calculate the points of all games played so far of the team with index index.
@@ -505,8 +505,8 @@ void handle_rentnerend_btn_press(u8 *signal){
 			resend_widgets();
 			break;
 		}
-		case WIDGET_ADS_TOGGLE: {
-			WidgetAds_enabled = !WidgetAds_enabled;
+		case WIDGET_AD_TOGGLE: {
+			WidgetAd_enabled = !WidgetAd_enabled;
 			resend_widgets();
 			break;
 		}

@@ -1,4 +1,4 @@
-.ads {
+.ad {
 	display: block;
 
 	background-color: rgba(255, 255, 255, 0.3);
@@ -15,7 +15,7 @@
 	padding: 50px;
 }
 
-.ads .container {
+.ad .container {
 	display: flex;
 	align-items: center;
 
