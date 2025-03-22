@@ -8,75 +8,75 @@
       "color_dark":"ab3b42",
       "players":[
         {
-          "name":"Erik Kramer",
+          "name":"Corvin Rowold",
           "position":"keeper"
         },
         {
-          "name":"Linus Kramer",
+          "name":"Christian Kramer",
           "position":"field"
         }
       ]
     },
     {
-      "name":"SCHIEFBAHN",
+      "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
       "color_light":"65c752",
       "color_dark":"439a32",
       "players":[
         {
-          "name":"Ben Juckenhöfel",
+          "name":"Maximilian Schmidt",
           "position":"keeper"
         },
         {
-          "name":"Lukas Lank",
+          "name":"Vinzenz Winkler",
           "position":"field"
         }
       ]
     },
     {
-      "name":"LEEDEN",
+      "name":"WALDREMS",
       "logo":"assets\/leeden.jpg",
       "color_light":"004de6",
       "color_dark":"0044cc",
       "players":[
         {
-          "name":"Pascal Westphal",
+          "name":"Björn Bootsmann",
           "position":"keeper"
         },
         {
-          "name":"Ilias Kröner",
+          "name":"Marcel Schüle",
           "position":"field"
         }
       ]
     },
     {
-      "name":"OBERNFELD",
+      "name":"GROẞKOSCHEN",
       "logo":"assets\/obernfeld.svg",
       "color_light":"00cca0",
       "color_dark":"009978",
       "players":[
         {
-          "name":"Hagen Weiß",
+          "name":"Tim Lehmann",
           "position":"keeper"
         },
         {
-          "name":"Calvin Rudolph",
+          "name":"Eric Lehmann",
           "position":"field"
         }
       ]
     },
     {
-      "name":"VELBERT",
+      "name":"KISSING 2",
       "logo":"assets\/velbert.svg",
       "color_light":"f94639",
       "color_dark":"ad1105",
       "players":[
         {
-          "name":"Fritz Reinhold",
+          "name":"Lukas Keller",
           "position":"keeper"
         },
         {
-          "name":"Thilo Peters",
+          "name":"Andreas Pongratz",
           "position":"field"
         }
       ]
@@ -84,8 +84,32 @@
   ],
   "games":[
     {
-      "team1":"SCHIEFBAHN",
-      "team2":"VELBERT",
+      "team1":"GIFHORN",
+      "team2":"EHRENBERG",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"WALDREMS",
+      "team2":"GROẞKOSCHEN",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"KISSING 2",
+      "team2":"EHRENBERG",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -97,7 +121,7 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"LEEDEN",
+      "team2":"GROẞKOSCHEN",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -108,8 +132,8 @@
       }
     },
     {
-      "team1":"OBERNFELD",
-      "team2":"VELBERT",
+      "team1":"WALDREMS",
+      "team2":"KISSING 2",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -120,44 +144,8 @@
       }
     },
     {
-      "team1":"SCHIEFBAHN",
-      "team2":"LEEDEN",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"GIFHORN",
-      "team2":"OBERNFELD",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"LEEDEN",
-      "team2":"VELBERT",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"SCHIEFBAHN",
-      "team2":"OBERNFELD",
+      "team1":"GROẞKOSCHEN",
+      "team2":"EHRENBERG",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -169,7 +157,7 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"VELBERT",
+      "team2":"KISSING 2",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -180,8 +168,8 @@
       }
     },
     {
-      "team1":"LEEDEN",
-      "team2":"OBERNFELD",
+      "team1":"WALDREMS",
+      "team2":"EHRENBERG",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -192,8 +180,20 @@
       }
     },
     {
-      "team1":"SCHIEFBAHN",
-      "team2":"GIFHORN",
+      "team1":"GROẞKOSCHEN",
+      "team2":"KISSING 2",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"GIFHORN",
+      "team2":"WALDREMS",
       "halftimescore":{
         "team1":0,
         "team2":0
