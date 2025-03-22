@@ -21,7 +21,7 @@
       "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
       "color_light":"0058ab",
-      "color_dark":"fbd914",
+      "color_dark":"968003",
       "players":[
         {
           "name":"Maximilian Schmidt",
@@ -36,8 +36,8 @@
     {
       "name":"WALDREMS",
       "logo":"assets\/leeden.jpg",
-      "color_light":"33cc33",
-      "color_dark":"c2f0c2",
+      "color_light":"001000",
+      "color_dark":"003330",
       "players":[
         {
           "name":"Björn Bootsmann",
@@ -50,10 +50,10 @@
       ]
     },
     {
-      "name":"GROẞKOSCHEN",
+      "name":"GROSSKOSCHEN",
       "logo":"assets\/obernfeld.svg",
-      "color_light":"00cca0",
-      "color_dark":"009978",
+      "color_light":"181818",
+      "color_dark":"7f7f7f",
       "players":[
         {
           "name":"Tim Lehmann",
@@ -68,8 +68,8 @@
     {
       "name":"KISSING 2",
       "logo":"assets\/velbert.svg",
-      "color_light":"f94639",
-      "color_dark":"ad1105",
+      "color_light":"181818",
+      "color_dark":"0066ff",
       "players":[
         {
           "name":"Lukas Keller",
