@@ -654,9 +654,16 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		//Check if the replay buffer was saved. If yes we want to view the replay and then go back
         if (strstr(wm->data.buf, "\"eventType\":\"ReplayBufferSaved\"") != NULL) {
 			printf("\n\ncrazy lets replay\n\n");
-			mg_timer_add(&mgr_obs, 1000, 0, obs_switch_scene, "replay");
+			char str[200];
+			system("ffmpeg -y -ss 00:00:02 -i ~/radball/replays/instant-replay.mkv -c copy ~/radball/replays/instant-replay1.mkv");
+			usleep(500);
+			sprintf(str, "cp ~/radball/replays/instant-replay1.mkv ~/radball/replays/game_%d/replay_%05d.mkv", md.cur.gameindex, md.games[md.cur.gameindex].replays_count++);
+			printf("copying: %s\n", str);
+			system(str);
+			//mg_timer_add(&mgr_obs, 1000, 0, obs_switch_scene, "replay");
+			obs_switch_scene("replay");
 			printf("\n\nSET REPLAY\n\n");
-			mg_timer_add(&mgr_obs, 11000, 0, obs_switch_scene, "live");
+			mg_timer_add(&mgr_obs, 6000, 0, obs_switch_scene, "live");
 			printf("\n\nSET LIVE\n\n");
 		}
 		break;
@@ -771,6 +778,13 @@ int main(void) {
 	free(json);
 	md.cur.pause = true;
 	md.cur.time = md.deftime;
+	for(int i=0; i < md.games_count; i++){
+		char str[200];
+		sprintf(str, "mkdir -p ~/radball/replays/game_%d", i);
+		printf("making dir: %s\n", str);
+		system(str);
+		md.games[i].replays_count = 0;
+	}
 	//matchday_init();
 
 	printf("Server loaded!\n");
