@@ -29,8 +29,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 # TODO
 
 ## right after performance
-- read & remove new_json.md & remove new_matchday.json
-- tidy up assets folder (especially logo.svg)
+- remove new_matchday.json
 - remoteend:
 	- rename it
 	- idiomatic restructuring

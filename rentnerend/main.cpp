@@ -1,9 +1,67 @@
 #include <cstdio>
 
 #include <QApplication>
+#include <QComboBox>
 #include <QFontDatabase>
+#include <QLabel>
+#include <QPushButton>
 
 #include "../common.h"
+
+typedef struct {
+	QWidget *widget;
+	struct {
+		struct {
+			QLabel *name;
+			QLabel *score;
+		} t1;
+		struct {
+			QLabel *name;
+			QLabel *score;
+		} t2;
+		QLabel *time;
+	} labels;
+} WindowDisplay;
+
+typedef struct {
+	QWidget *widget;
+	struct {
+		struct {
+			QLabel *name;
+			QLabel *score;
+		} t1;
+		struct {
+			QLabel *name;
+			QLabel *score;
+		} t2;
+		QLabel *time;
+	} labels;
+	struct {
+		struct {
+			QPushButton *score_plus;
+			QPushButton *score_minus;
+		} t1;
+		struct {
+			QPushButton *score_plus;
+			QPushButton *score_minus;
+		} t2;
+		struct {
+			QPushButton *next;
+			QPushButton *prev;
+			QPushButton *switch_sides;
+		} game;
+		struct {
+			QPushButton *plus_1;
+			QPushButton *minus_1;
+			QPushButton *plus_20;
+			QPushButton *minus_20;
+			QPushButton *toggle_pause;
+			QPushButton *reset;
+		} time;
+		QPushButton *connection;
+	} buttons;
+	QComboBox *card_dealer;
+} WindowInput;
 
 int main(int argc, char *argv[]) {
 	const QApplication app(argc, argv);
