@@ -31,11 +31,13 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ## right after performance
 - tidy up assets folder (especially logo.svg)
 - remoteend:
+	- rename it
 	- idiomatic restructuring
 	- tight packing of five switches
 	- server sends back active widgets
 	- layout: change port above switches
 	- remoteend looks for first match, without hard coded ip
+	- remove timeout / dont sleep when this app is on
 - frontend:
 	- replace "ADS" with "AD"
 - website:
