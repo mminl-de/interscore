@@ -48,7 +48,11 @@ This project was made for our personal use in a Cycleball tournament under hilar
 			- widgets
 		- tutorial page
 
-## Neon Lila Mercedes Liste
+## REWRITE
+- restyle frontend
+- restructure rentnerend
+- restyle remoteend:
+	- toggle stream and toggle replay
 
 ### Bis Deployment
 - Windows Support
