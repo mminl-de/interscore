@@ -36,8 +36,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 	- server sends back active widgets
 	- layout: change port above switches
 	- remoteend looks for first match, without hard coded ip
-- frontend:
-	- replace "ADS" with "AD"
 - website:
 	- rewrite:
 		- fully mobile-friendly
