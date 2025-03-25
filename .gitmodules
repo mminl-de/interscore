@@ -4,3 +4,6 @@
 [submodule "remoteend"]
 	path = remoteend
 	url = https://github.com/mminl-de/interscore-remoteend
+[submodule "remote"]
+	path = remote
+	url = https://github.com/mminl-de/interscore-remoteend

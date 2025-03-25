@@ -38,6 +38,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 	- layout: change port above switches
 	- remoteend looks for first match, without hard coded ip
 	- remove timeout / dont sleep when this app is on
+	- vibrate on start/end stream
 - frontend:
 	- replace "ADS" with "AD"
 - website:
