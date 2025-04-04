@@ -67,6 +67,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ### rentnerend
 - change yellow/red card icons
+- FINAL Cards for Coaches
 - FINAL change all icons to nice looking icons
 - FINAL Feedback/Suggestions Site + Widget
 - FINAL Halbzeituhr
@@ -82,6 +83,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL abstract program so it's applicable for other games
 - FINAL make json_load resilient to bad input.json
 - FINAL FINAL graceful Ctrl-C handling
+- Time is not send when hot reloading/sending json
 
 ### meta
 - How does the tiebreak work?

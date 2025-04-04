@@ -53,6 +53,7 @@ typedef struct {
 	Score score;
 	Card *cards;
 	u8 cards_count;
+	u8 replays_count;
 } Game;
 
 typedef struct {
