@@ -1,144 +1,144 @@
 {
-    "teams": [
-        {
+	"teams": [
+		{
 			"name": "GIFHORN",
-            "logo": "assets/gifhorn.jpg",
+			"logo": "assets/gifhorn.jpg",
 			"players": [
 				{
-                	"name": "Erik Kramer",
+					"name": "Erik Kramer",
 					"position": "keeper"
 				},
 				{
-                	"name": "Linus Kramer",
+					"name": "Linus Kramer",
 					"position": "field"
 				}
 			],
-	    	"color_light": "#234521",
-	    	"color_dark": "#544521"
-        },
-        {
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		},
+		{
 			"name": "SCHIEFBAHN",
-            "logo": "assets/schiefbahn.jpg",
+			"logo": "assets/schiefbahn.jpg",
 			"players": [
 				{
-                	"name": "Ben Juckenhöfel",
+					"name": "Ben Juckenhöfel",
 					"position": "keeper"
 				},
 				{
-                	"name": "Lukas Lank",
+					"name": "Lukas Lank",
 					"position": "field"
 				}
 			],
-	    	"color_light": "#234521",
-	    	"color_dark": "#544521"
-        },
-        {
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		},
+		{
 			"name": "Leeden",
-            "logo": "assets/leeden.jpg",
+			"logo": "assets/leeden.jpg",
 			"players": [
 				{
-                	"name": "Pascal Westphal",
+					"name": "Pascal Westphal",
 					"position": "keeper"
 				},
 				{
-                	"name": "Ilias Kröner",
+					"name": "Ilias Kröner",
 					"position": "field"
 				}
 			],
 			"color_light": "#234521",
 			"color_dark": "#544521"
-        },
-        {
+		},
+		{
 			"name": "OBERNFELD",
-            "logo": "assets/obernfeld.svg",
+			"logo": "assets/obernfeld.svg",
 			"players": [
 				{
-                	"name": "Hagen Weiß",
+					"name": "Hagen Weiß",
 					"position": "keeper"
 				},
 				{
-                	"name": "Calvin Rudolph",
+					"name": "Calvin Rudolph",
 					"position": "field"
 				}
 			],
 			"color_light": "#234521",
 			"color_dark": "#544521"
-        }
-        {
+		}
+		{
 			"name": "VELBERT",
-            "logo": "assets/velbert.svg",
+			"logo": "assets/velbert.svg",
 			"players": [
 				{
-                	"name": "Fritz Reinhold",
+					"name": "Fritz Reinhold",
 					"position": "keeper"
 				},
 				{
-                	"name": "Thilo Peters",
+					"name": "Thilo Peters",
 					"position": "field"
 				}
 			],
 			"color_light": "#234521",
 			"color_dark": "#544521"
-        }
+		}
 	],
-    "games": [
-        {
-            "team1": "SCHIEFBAHN",
-            "team2": "VELBERT"
-        },
-        {
-            "team1": "GIFHORN",
-            "team2": "LEEDEN"
-        },
-        {
-            "team1": "OBERNFELD",
-            "team2": "VELBERT"
-        },
-        {
-            "team1": "SCHIEFBAHN",
-            "team2": "LEEDEN"
-        },
-        {
-            "team1": "GIFHORN",
-            "team2": "OBERNFELD"
-        },
-        {
-            "team1": "LEEDEN",
-            "team2": "VELBERT"
-        },
-        {
-            "team1": "SCHIEFBAHN",
-            "team2": "OBERNFELD"
-        },
-        {
-            "team1": "GIFHORN",
-            "team2": "VELBERT"
-        },
-        {
-            "team1": "LEEDEN",
-            "team2": "OBERNFELD"
-        },
-        {
-            "team1": "SCHIEFBAHN",
-            "team2": "GIFHORN",
-            "halftimescore": {
-                "team1": "0",
-                "team2": "3"
-            },
-            "score": {
-                "team1": "4",
-                "team2": "4"
-            },
-            "cards": [
-                {
-                    "player": "Erik Kramer",
-                    "type": "Y"
-                },
-                {
-                    "player": "Linus Kramer",
-                    "type": "R"
-                }
+	"games": [
+		{
+			"team1": "SCHIEFBAHN",
+			"team2": "VELBERT"
+		},
+		{
+			"team1": "GIFHORN",
+			"team2": "LEEDEN"
+		},
+		{
+			"team1": "OBERNFELD",
+			"team2": "VELBERT"
+		},
+		{
+			"team1": "SCHIEFBAHN",
+			"team2": "LEEDEN"
+		},
+		{
+			"team1": "GIFHORN",
+			"team2": "OBERNFELD"
+		},
+		{
+			"team1": "LEEDEN",
+			"team2": "VELBERT"
+		},
+		{
+			"team1": "SCHIEFBAHN",
+			"team2": "OBERNFELD"
+		},
+		{
+			"team1": "GIFHORN",
+			"team2": "VELBERT"
+		},
+		{
+			"team1": "LEEDEN",
+			"team2": "OBERNFELD"
+		},
+		{
+			"team1": "SCHIEFBAHN",
+			"team2": "GIFHORN",
+			"halftimescore": {
+				"team1": "0",
+				"team2": "3"
+			},
+			"score": {
+				"team1": "4",
+				"team2": "4"
+			},
+			"cards": [
+				{
+					"player": "Erik Kramer",
+					"type": "Y"
+				},
+				{
+					"player": "Linus Kramer",
+					"type": "R"
+				}
 			]
-        }
+		}
 	]
 }
