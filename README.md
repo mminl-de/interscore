@@ -28,6 +28,17 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 
+## TODO BEFORE REWRITE - DEADLINE 12.4
+1 << 4
+- P2: Send ALL data when reconnecting rentnerend to backend
+- P3: Change red and yellow card icon
+- P2: Fix replay delay
+- P2: Hopefully fix the delay problem all together by overlaying timestamp/small blinking square
+- P1: Allow more Games in Gameplan
+- P1: "Gleich spielen" -> "Jetzt Spielen"
+- P1: Make replay System work properly as highlights after game
+- P4: FINAL add different replay possibilities with different buttons in app
+
 ## right after performance
 - tidy up assets folder (especially logo.svg)
 - remoteend:
