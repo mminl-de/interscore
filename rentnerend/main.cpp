@@ -7,63 +7,127 @@
 #include <QPushButton>
 
 #include "../common.h"
+#include "qpushbutton.h"
 
-typedef struct {
-	QWidget *widget;
-	struct {
-		struct {
-			QLabel *name;
-			QLabel *score;
-		} t1;
-		struct {
-			QLabel *name;
-			QLabel *score;
-		} t2;
-		QLabel *time;
-	} labels;
-} WindowDisplay;
+#define ORANGE "#c60"
 
-typedef struct {
-	QWidget *widget;
+extern "C" struct WindowDisplay {
+	QWidget widget;
 	struct {
 		struct {
-			QLabel *name;
-			QLabel *score;
+			QLabel name;
+			QLabel score;
 		} t1;
 		struct {
-			QLabel *name;
-			QLabel *score;
+			QLabel name;
+			QLabel score;
 		} t2;
-		QLabel *time;
+		QLabel time;
+		QLabel colon;
+	} labels;
+
+void
+init() {
+	this->widget.setWindowTitle("Interscore: Scoreboard Display");
+
+	// Setting colors
+	this->labels.t1.name.setStyleSheet("color: white;");
+	this->labels.t2.name.setStyleSheet("color: white;");
+	this->labels.t1.score.setStyleSheet("color:" ORANGE ";");
+	this->labels.t2.score.setStyleSheet("color:" ORANGE ";");
+	printf("TODO hii\n");
+	this->labels.time.setStyleSheet("color: white;");
+	this->labels.colon.setStyleSheet("color: white;");
+
+	this->update();
+}
+
+void
+update() {
+
+}
+};
+
+extern "C" struct WindowInput {
+	QWidget widget;
+	struct {
+		struct {
+			QLabel name;
+			QLabel score;
+		} t1;
+		struct {
+			QLabel name;
+			QLabel score;
+		} t2;
+		QLabel time;
 	} labels;
 	struct {
 		struct {
-			QPushButton *score_plus;
-			QPushButton *score_minus;
+			QPushButton score_plus;
+			QPushButton score_minus;
 		} t1;
 		struct {
-			QPushButton *score_plus;
-			QPushButton *score_minus;
+			QPushButton score_plus;
+			QPushButton score_minus;
 		} t2;
 		struct {
-			QPushButton *next;
-			QPushButton *prev;
-			QPushButton *switch_sides;
+			QPushButton next;
+			QPushButton prev;
+			QPushButton switch_sides;
 		} game;
 		struct {
-			QPushButton *plus_1;
-			QPushButton *minus_1;
-			QPushButton *plus_20;
-			QPushButton *minus_20;
-			QPushButton *toggle_pause;
-			QPushButton *reset;
+			QPushButton plus_1;
+			QPushButton minus_1;
+			QPushButton plus_20;
+			QPushButton minus_20;
+			QPushButton toggle_pause;
+			QPushButton reset;
 		} time;
-		QPushButton *connection;
+		QPushButton connection;
 	} buttons;
-	QComboBox *card_dealer;
-} WindowInput;
+	QComboBox card_dealer;
 
-int main(int argc, char *argv[]) {
+void
+init() {
+	this->widget.setWindowTitle("Interscore: Scoreboard Input");
+	// TODO WIP
+	this->update();
+}
+
+void
+update() {
+
+}
+};
+
+WindowDisplay wd;
+WindowInput wi;
+
+struct EventFilter : public QObject {
+bool
+eventFilter(QObject *obj, QEvent *event) override {
+	if (event->type() == QEvent::Resize) {
+		wd.update();
+		wi.update();
+	}
+	return QObject::eventFilter(obj, event);
+}
+};
+
+QPushButton *
+Button_new(QWidget *window, void (*cb)(), QStyle::StandardPixmap icon, u16 fontsize) {
+	QPushButton *result = new QPushButton("", window);
+
+	QIcon qicon = QApplication::style()->standardIcon(icon);
+	result->setIcon(qicon);
+	result->setIconSize(QSize(fontsize, fontsize));
+
+	QObject::connect(result, &QPushButton::clicked, cb);
+	return result;
+}
+
+int
+main(int argc, char *argv[]) {
 	const QApplication app(argc, argv);
 
 	// TODO ADD audio player setup
@@ -81,6 +145,11 @@ int main(int argc, char *argv[]) {
 	// TODO ADD create both windows
 	// and show them
 	// maybe make an about window
+	wd.init();
+	wi.init();
+
+	wd.widget.show();
+	wi.widget.show();
 
 	// TODO ADD connect mongoose
 
