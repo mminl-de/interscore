@@ -14,6 +14,7 @@ const scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 
 const gameplan = document.querySelector(".gameplan")! as HTMLElement
+const scroller = document.querySelector(".gameplan-container .scroller")! as HTMLElement
 
 // TODO CHECK if we still need this one
 const gamestart = document.querySelector(".gamestart")! as HTMLElement
@@ -43,6 +44,7 @@ const GAMES_COUNT_MAX = 64
 const TEAMS_COUNT_MAX = 32
 const TEAM_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
+const SCROLL_DURATION = 7_000
 
 interface Color { r: number, g: number, b: number }
 
@@ -270,6 +272,37 @@ function write_gameplan(view: DataView) {
 
 		gameplan.appendChild(line)
 	}
+
+	// TODO
+	function smoothScrollTo(targetY, duration = 2_000) {
+		const startY = scroller.scrollTop
+		const deltaY = targetY - startY
+		const startTime = performance.now()
+
+		function step(currentTime) {
+			const elapsed = currentTime - startTime
+			const progress = Math.min(elapsed / duration, 1)
+			const eased = progress < 0.5
+				? 2 * progress * progress // easeIn
+				: -1 + (4 - 2 * progress) * progress // easeOut
+
+			scroller.scrollTop = startY + deltaY * eased
+
+			if (progress < 1) {
+				requestAnimationFrame(step)
+			}
+		}
+
+		requestAnimationFrame(step)
+	}
+
+	setTimeout(() => {
+		smoothScrollTo(scroller.scrollHeight, SCROLL_DURATION)
+
+		setTimeout(() => {
+			smoothScrollTo(0, SCROLL_DURATION)
+		}, SCROLL_DURATION + 2000) // duration + delay
+	}, 2000)
 }
 
 function write_gamestart(view: DataView) {
@@ -584,7 +617,6 @@ function scoreboard_set_timer(view: DataView) {
 	clearInterval(countdown)
 
 	let offset = 1
-	// TODO NOW
 	const time_in_s = view.getUint16(offset)
 	remaining_time = time_in_s
 
