@@ -8,11 +8,11 @@
       "color_dark":"ab3b42",
       "players":[
         {
-          "name":"Corvin Rowold",
+          "name":"Erik Kramer",
           "position":"keeper"
         },
         {
-          "name":"Christian Kramer",
+          "name":"Linus Kramer",
           "position":"field"
         }
       ]
@@ -21,62 +21,78 @@
       "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
       "color_light":"0058ab",
-      "color_dark":"968003",
+      "color_dark":"0028ab",
       "players":[
         {
-          "name":"Maximilian Schmidt",
+          "name":"Ben Börngen",
           "position":"keeper"
         },
         {
-          "name":"Vinzenz Winkler",
+          "name":"Frederick Etzold",
           "position":"field"
         }
       ]
     },
     {
-      "name":"WALDREMS",
+      "name":"NIEDER-SEIFERSDORF",
       "logo":"assets\/leeden.jpg",
-      "color_light":"001000",
-      "color_dark":"003330",
+      "color_light":"e1fe1c",
+      "color_dark":"ffdd00",
       "players":[
         {
-          "name":"Björn Bootsmann",
+          "name":"Alwin Großmann",
           "position":"keeper"
         },
         {
-          "name":"Marcel Schüle",
+          "name":"Laurence Tschirch",
           "position":"field"
         }
       ]
     },
     {
-      "name":"GROSSKOSCHEN",
+      "name":"LUDWIGSFELDE",
       "logo":"assets\/obernfeld.svg",
-      "color_light":"181818",
-      "color_dark":"7f7f7f",
+      "color_light":"ff0b0b",
+      "color_dark":"bc0b0b",
       "players":[
         {
-          "name":"Tim Lehmann",
+          "name":"Jeremy Bunzler",
           "position":"keeper"
         },
         {
-          "name":"Eric Lehmann",
+          "name":"Lennert Kuboth",
           "position":"field"
         }
       ]
     },
     {
-      "name":"KISSING 2",
+      "name":"BURGKUNSTADT",
       "logo":"assets\/velbert.svg",
-      "color_light":"181818",
-      "color_dark":"0066ff",
+      "color_light":"0f81e0",
+      "color_dark":"0046ff",
       "players":[
         {
-          "name":"Lukas Keller",
+          "name":"Benedikt Kohlmann",
           "position":"keeper"
         },
         {
-          "name":"Andreas Pongratz",
+          "name":"Lenny Eckert",
+          "position":"field"
+        }
+      ]
+    },
+    {
+      "name":"KIESELBRONN 1",
+      "logo":"assets\/velbert.svg",
+      "color_light":"2f3a64",
+      "color_dark":"1f2264",
+      "players":[
+        {
+          "name":"Robin Häußermann",
+          "position":"keeper"
+        },
+        {
+          "name":"Nico Scholl",
           "position":"field"
         }
       ]
@@ -85,7 +101,7 @@
   "games":[
     {
       "team1":"GIFHORN",
-      "team2":"EHRENBERG",
+      "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -96,8 +112,8 @@
       }
     },
     {
-      "team1":"WALDREMS",
-      "team2":"GROSSKOSCHEN",
+      "team1":"EHRENBERG",
+      "team2":"BURGKUNSTADT",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -108,44 +124,8 @@
       }
     },
     {
-      "team1":"KISSING 2",
-      "team2":"EHRENBERG",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"GIFHORN",
-      "team2":"GROSSKOSCHEN",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"WALDREMS",
-      "team2":"KISSING 2",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
-      }
-    },
-    {
-      "team1":"GROSSKOSCHEN",
-      "team2":"EHRENBERG",
+      "team1":"NIEDER-SEIFERSDORF",
+      "team2":"LUDWIGSFELDE",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -157,7 +137,7 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"KISSING 2",
+      "team2":"BURGKUNSTADT",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -168,8 +148,8 @@
       }
     },
     {
-      "team1":"WALDREMS",
-      "team2":"EHRENBERG",
+      "team1":"NIEDER-SEIFERSDORF",
+      "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -180,8 +160,20 @@
       }
     },
     {
-      "team1":"GROSSKOSCHEN",
-      "team2":"KISSING 2",
+      "team1":"EHRENBERG",
+      "team2":"LUDWIGSFELDE",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"BURGKUNSTADT",
+      "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -193,7 +185,91 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"WALDREMS",
+      "team2":"LUDWIGSFELDE",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"EHRENBERG",
+      "team2":"NIEDER-SEIFERSDORF",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"LUDWIGSFELDE",
+      "team2":"BURGKUNSTADT",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"EHRENBERG",
+      "team2":"KIESELBRONN 1",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"GIFHORN",
+      "team2":"NIEDER-SEIFERSDORF",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"LUDWIGSFELDE",
+      "team2":"KIESELBRONN 1",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"NIEDER-SEIFERSDORF",
+      "team2":"BURGKUNSTADT",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"GIFHORN",
+      "team2":"EHRENBERG",
       "halftimescore":{
         "team1":0,
         "team2":0

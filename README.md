@@ -35,6 +35,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - P2: Fix replay delay
 - P2: Hopefully fix the delay problem all together by overlaying timestamp/small blinking square
 - P1: Allow more Games in Gameplan
+- P1: Handle bigger Teamnames in ALL Widgets. We have: "Nieder-Seifersdorf"
 - P1: "Gleich spielen" -> "Jetzt Spielen"
 - P1: Make replay System work properly as highlights after game
 - P4: FINAL add different replay possibilities with different buttons in app
