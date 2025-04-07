@@ -18,3 +18,6 @@ rrelease:
 
 rrun:
 	./$(ROUT)
+
+help:
+	@echo -e "[backend]\nbdebug: debug build\nbrelease: release build\n\n[rentnerend]\nrdebug: debug build\nrrelease: release build\nrrun: run last compiled build"

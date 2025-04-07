@@ -62,7 +62,7 @@ typedef struct {
 		bool halftime;
 		bool pause;
 		u16 time;
-		std::chrono start_time;
+		std::chrono::system_clock::time_point start_time;
 	} cur;
 	u16 deftime;
 	Game *games;
