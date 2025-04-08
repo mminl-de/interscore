@@ -1,3 +1,4 @@
+#include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
@@ -552,20 +553,21 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case GAME_NEXT: {
-			if(md.cur.gameindex < md.games_count)
+			if(md.cur.gameindex < md.games_count){
 				md.cur.gameindex++;
+				char str[200];
+				sprintf(str, "cp -r ~/radball/replays/game_%2d/* ~/radball/replays/last-game/", md.cur.gameindex-1);
+				system(str);
+			}
 			if(md.cur.gameindex == md.games_count)
 				WidgetScoreboard_enabled = false;
-			char str[200];
-			sprintf(str, "cp -r ~/radball/replays/game_%d/* ~/radball/replays/last-game/", md.cur.gameindex-1);
-			system(str);
 			break;
 		}
 		case GAME_PREV: {
 			if(md.cur.gameindex > 0) {
 				md.cur.gameindex--;
 				char str[200];
-				sprintf(str, "cp -r ~/radball/replays/game_%d/* ~/radball/replays/last-game/", md.cur.gameindex);
+				sprintf(str, "cp -r ~/radball/replays/game_%2d/* ~/radball/replays/last-game/", (int)fmax(0, md.cur.gameindex-1));
 				system(str);
 			}
 			break;

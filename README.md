@@ -100,3 +100,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 ### meta
 - How does the tiebreak work?
+
+# stuff
+ffplay command for low latency: `ffplay -fflags nobuffer -flags low_delay -framedrop -analyzeduration 0 -sync ext -noframedrop -rtmp_buffer 10 -infbuf rtmp://localhost/live/test`
