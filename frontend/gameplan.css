@@ -1,13 +1,30 @@
-.gameplan {
-	display: none;
-	flex-direction: column;
-
-	gap: 20px;
-
+.gameplan-container {
+	overflow: hidden;
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	height: 87vh;
+}
+
+.scroller {
+	height: 100%;
+	overflow-y: auto; /* TODO WIP */
+
+	/* So still see shadows on the right */
+	padding: 50px;
+
+	mask-image: linear-gradient(to bottom, transparent, black 10%, black 70%, transparent);
+}
+
+.gameplan {
+	/* So you can scroll a bit beyond the end */
+	padding-bottom: 200px;
+
+	display: none;
+	flex-direction: column;
+
+	gap: 20px;
 
 	transition: opacity 0.5s ease-in-out;
 }

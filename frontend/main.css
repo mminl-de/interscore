@@ -25,6 +25,10 @@ body {
 	box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.9);
 }
 
+::-webkit-scrollbar {
+	display: none;
+}
+
 @font-face {
     font-family: "Kanit";
 	src: url("../fonts/Kanit-Regular.ttf") format("truetype");
