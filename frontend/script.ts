@@ -1,3 +1,4 @@
+// TODO NOTE dont ever hardcode styles :pray:
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
 // TODO rewrite string reading
@@ -58,7 +59,7 @@ function Color_gradient_to_string(left: Color, right: Color): string {
 }
 
 function Color_font_contrast(input: Color): string {
-	return (Math.max(input.r, input.g, input.b) > 127) ? "black" : "white"
+	return (Math.max(input.r, input.g, input.b) > 191) ? "black" : "white"
 }
 
 function read_string(view: DataView, offset: number): string {
@@ -564,7 +565,6 @@ function write_livetable(view: DataView) {
 		name.classList.add("bordered", "name")
 		name.style.background = Color_gradient_to_string(teams[team_i].color_light!, teams[team_i].color_dark!)
 		name.style.color = Color_font_contrast(teams[team_i].color_light!)
-		name.style.color = "#bebebe"
 		line.appendChild(name)
 
 		const points = document.createElement("div")
