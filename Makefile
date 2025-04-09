@@ -17,7 +17,7 @@ b-debug:
 b-fast:
 	$(CC) -o $(OUT) $(SRC) \
 	-fshort-enums \
-	-ljson-c
+	-lm -ljson-c
 
 b-run:
 	./$(OUT)
