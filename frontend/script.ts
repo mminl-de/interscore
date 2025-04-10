@@ -379,7 +379,7 @@ function write_gamestart(view: DataView) {
 	t1_name_el.classList.add("bordered")
 	t1_name_el.style.fontSize = "60px";
 	t1_name_el.style.background = Color_gradient_to_string(t1_col_left, t1_col_right)
-	t1_name_el.style.color = Color_font_contrast(t1_col_left)
+	t1_name_el.style.color = Color_font_contrast(t1_col_right)
 	t1_name_el.innerHTML = t1.toString()
 
 	const t1_keeper_el = document.createElement("div")
@@ -400,7 +400,7 @@ function write_gamestart(view: DataView) {
 	t2_name_el.classList.add("bordered")
 	t2_name_el.style.fontSize = "60px";
 	t2_name_el.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
-	t1_name_el.style.color = Color_font_contrast(t2_col_left)
+	t2_name_el.style.color = Color_font_contrast(t2_col_left)
 	t2_name_el.innerHTML = t2.toString()
 
 	const t2_keeper_el = document.createElement("div")

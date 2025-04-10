@@ -796,7 +796,7 @@ int main(void) {
 	}
 	//matchday_init();
 
-	printf("Server loaded!\n");
+	printf("Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
 
 	while (running) {
 		char c = getchar();
