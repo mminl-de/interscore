@@ -125,6 +125,7 @@ typedef struct {
 
 #define URL "http://0.0.0.0:8081"
 #define OBS_URL "http://0.0.0.0:4444"
+const char *REPLAY_PATH  = "/home/mrmine/prg/interscore/replays";
 
 //TODO put all function definitions here
 u16 team_calc_points(u8 index);
@@ -148,6 +149,10 @@ bool WidgetGamestart_enabled = false;
 bool WidgetLivetable_enabled = false;
 bool WidgetGameplan_enabled = false;
 bool WidgetAd_enabled = false;
+
+int max(int x, int y){
+	return x < y ? y : x;
+}
 
 // Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
 u8 hex_char_to_int(const char c) {
@@ -470,6 +475,11 @@ void resend_widgets() {
 	printf("End resending widgets: %s\n", gettimems());
 }
 
+void run_system(void *s){
+	printf("RUNNING: %s\n", (char*)s);
+	printf("RET CODE: %d", system((char*)s));
+}
+
 void handle_rentnerend_btn_press(u8 *signal){
 	printf("Start handling btn press: %s\n", gettimems());
 	printf("received a signal: %d\n", *signal);
@@ -512,18 +522,31 @@ void handle_rentnerend_btn_press(u8 *signal){
 			break;
 		}
 		case OBS_STREAM_START: {
-			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}";
-			obs_send_cmd(s);
+			//const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}";
+			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
 			break;
 		}
 		case OBS_STREAM_STOP: {
-			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}";
-			obs_send_cmd(s);
+			//const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}";
+			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
 			break;
 		}
 		case OBS_REPLAY_START: {
-			const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"3\"}}";
-			obs_send_cmd(s);
+			int base_delay = 1000;
+			mg_timer_add(&mgr_obs, base_delay+500, 0, obs_switch_scene, "replay");
+			mg_timer_add(&mgr_obs, base_delay+6500, 0, obs_switch_scene, "live");
+
+			//now save replay
+			static char s[200], s2[200];
+			//This errors when /dev/shm is not there. If that happens just use /tmp here and in replay.sh (it will be slower)
+			sprintf(s, "ffmpeg -y -sseof -3 -i '/dev/shm/livebuffer.ts' -c copy '%s/instant-replay.mkv'", REPLAY_PATH);
+			//We wait to save the replay 0.5s because thats circa the delay we have on stream
+			mg_timer_add(&mgr_obs, base_delay, 0, run_system, s);
+
+			//After we save the replay we copy it to the games directory
+			sprintf(s2, "cp -r '%s/instant-replay.mkv' '%s/game_%02d/replay-%05d.mkv'", REPLAY_PATH, REPLAY_PATH, md.cur.gameindex, md.games[md.cur.gameindex].replays_count++);
+			printf("s2: %s\n", s2);
+			mg_timer_add(&mgr_obs, base_delay+400, 0, run_system, s2);
 			break;
 		}
 		case OBS_REPLAY_STOP: {
@@ -556,7 +579,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 			if(md.cur.gameindex < md.games_count){
 				md.cur.gameindex++;
 				char str[200];
-				sprintf(str, "cp -r ~/radball/replays/game_%2d/* ~/radball/replays/last-game/", md.cur.gameindex-1);
+				sprintf(str, "cp -r %s/game_%02d/* %s/last-game/", REPLAY_PATH, md.cur.gameindex-1, REPLAY_PATH);
 				system(str);
 			}
 			if(md.cur.gameindex == md.games_count)
@@ -567,7 +590,7 @@ void handle_rentnerend_btn_press(u8 *signal){
 			if(md.cur.gameindex > 0) {
 				md.cur.gameindex--;
 				char str[200];
-				sprintf(str, "cp -r ~/radball/replays/game_%2d/* ~/radball/replays/last-game/", (int)fmax(0, md.cur.gameindex-1));
+				sprintf(str, "cp -r %s/game_%02d/* %s/last-game/", REPLAY_PATH, max(0, md.cur.gameindex-1), REPLAY_PATH);
 				system(str);
 			}
 			break;
@@ -581,24 +604,24 @@ void handle_rentnerend_btn_press(u8 *signal){
 		}
 		case TIME_PLUS: {
 			md.cur.time++;
-			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_MINUS: {
 			if(md.cur.time > 0)
 				md.cur.time--;
-			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_PLUS_20: {
 			md.cur.time += 20;
-			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_MINUS_20: {
 			if(md.cur.time > 19)
 				md.cur.time -= 20;
-			printf("New Time (-1): %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_TOGGLE_PAUSE: {
@@ -610,13 +633,13 @@ void handle_rentnerend_btn_press(u8 *signal){
 				md.cur.timestart = time(NULL);
 			}
 			md.cur.pause = !md.cur.pause;
-			printf("Toggling time to %d: %d:%2d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
+			printf("Toggling time to %d: %d:%02d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case TIME_RESET: {
 			md.cur.time = md.deftime;
 			md.cur.pause = true;
-			printf("Reseting Time to: %d:%2d\n", md.cur.time/60, md.cur.time%60);
+			printf("Reseting Time to: %d:%02d\n", md.cur.time/60, md.cur.time%60);
 			break;
 		}
 		case RED_CARD: {
@@ -659,22 +682,6 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		break;
 	case MG_EV_WS_MSG: {
         struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
-        printf("Received: %.*s\n", (int)wm->data.len, wm->data.buf);
-		//Check if the replay buffer was saved. If yes we want to view the replay and then go back
-        if (strstr(wm->data.buf, "\"eventType\":\"ReplayBufferSaved\"") != NULL) {
-			printf("\n\ncrazy lets replay\n\n");
-			char str[200];
-			system("ffmpeg -y -ss 00:00:02 -i ~/radball/replays/instant-replay.mkv -c copy ~/radball/replays/instant-replay1.mkv");
-			usleep(500);
-			sprintf(str, "cp ~/radball/replays/instant-replay1.mkv ~/radball/replays/game_%d/replay_%05d.mkv", md.cur.gameindex, md.games[md.cur.gameindex].replays_count++);
-			printf("copying: %s\n", str);
-			system(str);
-			//mg_timer_add(&mgr_obs, 1000, 0, obs_switch_scene, "replay");
-			obs_switch_scene("replay");
-			printf("\n\nSET REPLAY\n\n");
-			mg_timer_add(&mgr_obs, 6000, 0, obs_switch_scene, "live");
-			printf("\n\nSET LIVE\n\n");
-		}
 		break;
 	}
 	case MG_EV_CLOSE:
@@ -789,7 +796,7 @@ int main(void) {
 	md.cur.time = md.deftime;
 	for(int i=0; i < md.games_count; i++){
 		char str[200];
-		sprintf(str, "mkdir -p ~/radball/replays/game_%d", i);
+		sprintf(str, "mkdir -p %s/game_%02d", REPLAY_PATH, i);
 		printf("making dir: %s\n", str);
 		system(str);
 		md.games[i].replays_count = 0;
