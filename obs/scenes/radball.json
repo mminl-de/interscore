@@ -43,6 +43,9 @@
     "scaling_level": 0,
     "scaling_off_x": 0.0,
     "scaling_off_y": 0.0,
+    "virtual-camera": {
+        "type2": 3
+    },
     "modules": {
         "scripts-tool": [],
         "output-timer": {
@@ -71,7 +74,7 @@
     "version": 2,
     "sources": [
         {
-            "prev_ver": 520093698,
+            "prev_ver": 520093699,
             "name": "frontend",
             "uuid": "8df86720-a7c1-4ffe-84eb-508ca1d3ddd8",
             "id": "browser_source",
@@ -106,13 +109,13 @@
             "private_settings": {}
         },
         {
-            "prev_ver": 520093698,
+            "prev_ver": 520093699,
             "name": "live",
             "uuid": "7020838d-8ba9-4276-a43b-3de995868b32",
             "id": "scene",
             "versioned_id": "scene",
             "settings": {
-                "id_counter": 2,
+                "id_counter": 4,
                 "custom_size": false,
                 "items": [
                     {
@@ -144,12 +147,12 @@
                             "y": -1.0
                         },
                         "scale": {
-                            "x": 1.5,
-                            "y": 1.5
+                            "x": 1.0,
+                            "y": 1.0
                         },
                         "scale_rel": {
-                            "x": 1.5,
-                            "y": 1.5
+                            "x": 1.0,
+                            "y": 1.0
                         },
                         "bounds": {
                             "x": 0.0,
@@ -224,46 +227,11 @@
                             "duration": 0
                         },
                         "private_settings": {}
-                    }
-                ]
-            },
-            "mixers": 0,
-            "sync": 0,
-            "flags": 0,
-            "volume": 1.0,
-            "balance": 0.5,
-            "enabled": true,
-            "muted": false,
-            "push-to-mute": false,
-            "push-to-mute-delay": 0,
-            "push-to-talk": false,
-            "push-to-talk-delay": 0,
-            "hotkeys": {
-                "OBSBasic.SelectScene": [],
-                "libobs.show_scene_item.2": [],
-                "libobs.hide_scene_item.2": [],
-                "libobs.show_scene_item.1": [],
-                "libobs.hide_scene_item.1": []
-            },
-            "deinterlace_mode": 0,
-            "deinterlace_field_order": 0,
-            "monitoring_type": 0,
-            "private_settings": {}
-        },
-        {
-            "prev_ver": 520093698,
-            "name": "replay",
-            "uuid": "cddb8fbc-83d3-4afb-88df-64260be2715b",
-            "id": "scene",
-            "versioned_id": "scene",
-            "settings": {
-                "id_counter": 2,
-                "custom_size": false,
-                "items": [
+                    },
                     {
-                        "name": "rtmp-input",
-                        "source_uuid": "db2f819f-e1da-4726-a250-ec5b22f875dc",
-                        "visible": true,
+                        "name": "rtmp relay",
+                        "source_uuid": "cb5451ad-3a31-4c87-9bdc-4343798ca7c6",
+                        "visible": false,
                         "locked": false,
                         "rot": 0.0,
                         "scale_ref": {
@@ -278,7 +246,7 @@
                         "crop_top": 0,
                         "crop_right": 0,
                         "crop_bottom": 0,
-                        "id": 2,
+                        "id": 4,
                         "group_item_backup": false,
                         "pos": {
                             "x": 0.0,
@@ -289,12 +257,12 @@
                             "y": -1.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0
+                            "x": 0.5406249761581421,
+                            "y": 0.5407407283782959
                         },
                         "scale_rel": {
-                            "x": 1.0,
-                            "y": 1.0
+                            "x": 0.5406249761581421,
+                            "y": 0.5407407283782959
                         },
                         "bounds": {
                             "x": 0.0,
@@ -314,7 +282,44 @@
                             "duration": 0
                         },
                         "private_settings": {}
-                    },
+                    }
+                ]
+            },
+            "mixers": 0,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1.0,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {
+                "OBSBasic.SelectScene": [],
+                "libobs.show_scene_item.2": [],
+                "libobs.hide_scene_item.2": [],
+                "libobs.show_scene_item.1": [],
+                "libobs.hide_scene_item.1": [],
+                "libobs.show_scene_item.4": [],
+                "libobs.hide_scene_item.4": []
+            },
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 520093699,
+            "name": "replay",
+            "uuid": "cddb8fbc-83d3-4afb-88df-64260be2715b",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 2,
+                "custom_size": false,
+                "items": [
                     {
                         "name": "replay_file",
                         "source_uuid": "eb7ea8e7-6335-4353-99bf-7c531c50b039",
@@ -386,9 +391,7 @@
             "hotkeys": {
                 "OBSBasic.SelectScene": [],
                 "libobs.show_scene_item.1": [],
-                "libobs.hide_scene_item.1": [],
-                "libobs.show_scene_item.2": [],
-                "libobs.hide_scene_item.2": []
+                "libobs.hide_scene_item.1": []
             },
             "deinterlace_mode": 0,
             "deinterlace_field_order": 0,
@@ -396,17 +399,18 @@
             "private_settings": {}
         },
         {
-            "prev_ver": 520093698,
+            "prev_ver": 520093699,
             "name": "replay_file",
             "uuid": "eb7ea8e7-6335-4353-99bf-7c531c50b039",
             "id": "ffmpeg_source",
             "versioned_id": "ffmpeg_source",
             "settings": {
-                "local_file": "/home/mrmine/prg/interscore/replay.mkv",
-                "is_local_file": true,
-                "speed_percent": 50,
                 "hw_decode": true,
-                "close_when_inactive": true
+                "close_when_inactive": true,
+                "ffmpeg_options": "",
+                "local_file": "/home/mrmine/prg/interscore/replays/instant-replay.mkv",
+                "is_local_file": true,
+                "speed_percent": 50
             },
             "mixers": 255,
             "sync": 0,
@@ -435,17 +439,52 @@
             "private_settings": {}
         },
         {
-            "prev_ver": 520093698,
+            "prev_ver": 520093699,
+            "name": "rtmp relay",
+            "uuid": "cb5451ad-3a31-4c87-9bdc-4343798ca7c6",
+            "id": "v4l2_input",
+            "versioned_id": "v4l2_input",
+            "settings": {
+                "device_id": "/dev/video2",
+                "input": 0,
+                "pixelformat": 842093913,
+                "color_range": 0,
+                "buffering": false
+            },
+            "mixers": 0,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1.0,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 520093699,
             "name": "rtmp-input",
             "uuid": "db2f819f-e1da-4726-a250-ec5b22f875dc",
             "id": "ffmpeg_source",
             "versioned_id": "ffmpeg_source",
             "settings": {
                 "input_format": "",
-                "hw_decode": true,
+                "hw_decode": false,
                 "input": "rtmp://localhost:1935/live/test",
+                "seekable": false,
+                "ffmpeg_options": "-fflags nobuffer -flags low_delay -framedrop -analyzeduration 0 -sync ext -rtmp_buffer 5 -infbuf",
                 "is_local_file": false,
-                "reconnect_delay_sec": 1
+                "clear_on_media_end": true,
+                "restart_on_activate": false,
+                "reconnect_delay_sec": 1,
+                "buffering_mb": 0
             },
             "mixers": 255,
             "sync": 0,

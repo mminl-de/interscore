@@ -210,7 +210,8 @@ void btn_cb_time_minus20() {
 }
 
 void btn_cb_time_toggle_pause() {
-	// TODO NOW
+	if(md.cur.time == 0)
+		return;
 	md.cur.pause = !md.cur.pause;
 	update_input_window();
 	update_display_window();
