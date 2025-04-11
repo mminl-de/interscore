@@ -37,6 +37,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - P2: Hopefully fix the delay problem altogether by overlaying timestamp/small blinking square
 - P3: Change red and yellow card icon
 - P4: add different replay possibilities with different buttons in app
+- P6: keep remote connection when leaving (not killing) the app
 
 ## right after performance
 - tidy up assets folder (especially logo.svg)
