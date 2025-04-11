@@ -31,15 +31,12 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ## TODO BEFORE REWRITE - DEADLINE 12.4
 1 << 4
 - P1: fix time bugs
-- P1: Handle bigger Teamnames in ALL Widgets. We have: "Nieder-Seifersdorf"
 - P1: Make replay System work properly as highlights after game
-- P1: dynamic font color for team names
 - P2: Send ALL data when reconnecting rentnerend to backend
 - P2: Fix replay delay
 - P2: Hopefully fix the delay problem altogether by overlaying timestamp/small blinking square
 - P3: Change red and yellow card icon
 - P4: add different replay possibilities with different buttons in app
-- P5: Allow more Games in Gameplan
 
 ## right after performance
 - tidy up assets folder (especially logo.svg)

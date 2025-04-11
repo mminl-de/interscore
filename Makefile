@@ -17,13 +17,13 @@ b-debug:
 b-fast:
 	$(CC) -o $(OUT) $(SRC) \
 	-fshort-enums \
-	-ljson-c
+	-lm -ljson-c
 
 b-run:
 	./$(OUT)
 
 RSRC ?= rentnerend/rentnerend.cpp mongoose/mongoose.c common.c
-ROUT ?= rentnerend/interscore-rentnerend
+ROUT ?= rentnerend/interscore-server
 CPPFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
 LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
 

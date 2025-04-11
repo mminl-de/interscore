@@ -34,7 +34,7 @@
       ]
     },
     {
-      "name":"NIEDER-SEIFERSDORF",
+      "name":"N.-SEIFERSDORF",
       "logo":"assets\/leeden.jpg",
       "color_light":"e1fe1c",
       "color_dark":"ffdd00",
@@ -107,7 +107,7 @@
         "team2":0
       },
       "score":{
-        "team1":0,
+        "team1":1,
         "team2":0
       }
     },
@@ -124,7 +124,7 @@
       }
     },
     {
-      "team1":"NIEDER-SEIFERSDORF",
+      "team1":"N.-SEIFERSDORF",
       "team2":"LUDWIGSFELDE",
       "halftimescore":{
         "team1":0,
@@ -148,7 +148,7 @@
       }
     },
     {
-      "team1":"NIEDER-SEIFERSDORF",
+      "team1":"N.-SEIFERSDORF",
       "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
@@ -197,7 +197,7 @@
     },
     {
       "team1":"EHRENBERG",
-      "team2":"NIEDER-SEIFERSDORF",
+      "team2":"N.-SEIFERSDORF",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -233,7 +233,7 @@
     },
     {
       "team1":"GIFHORN",
-      "team2":"NIEDER-SEIFERSDORF",
+      "team2":"N.-SEIFERSDORF",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -256,7 +256,7 @@
       }
     },
     {
-      "team1":"NIEDER-SEIFERSDORF",
+      "team1":"N.-SEIFERSDORF",
       "team2":"BURGKUNSTADT",
       "halftimescore":{
         "team1":0,

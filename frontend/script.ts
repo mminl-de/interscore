@@ -1,3 +1,4 @@
+// TODO NOTE dont ever hardcode styles :pray:
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
 // TODO rewrite string reading
@@ -55,6 +56,10 @@ function Color_to_string(input: Color): string {
 function Color_gradient_to_string(left: Color, right: Color): string {
 	return `linear-gradient(90deg, rgb(${left.r}, ${left.g}, ${left.b}) 0%,` +
 		`rgb(${right.r}, ${right.g}, ${right.b}) 50%)`
+}
+
+function Color_font_contrast(input: Color): string {
+	return (Math.max(input.r, input.g, input.b) > 191) ? "black" : "white"
 }
 
 function read_string(view: DataView, offset: number): string {
@@ -128,7 +133,9 @@ function write_scoreboard(view: DataView) {
 
 	//scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
 	scoreboard_t1.style.background = Color_gradient_to_string(t1_col_right, t1_col_left)
+	scoreboard_t1.style.color = Color_font_contrast(t1_col_left)
 	scoreboard_t2.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
+	scoreboard_t2.style.color = Color_font_contrast(t2_col_left)
 }
 
 function write_gameplan(view: DataView) {
@@ -140,7 +147,6 @@ function write_gameplan(view: DataView) {
 	++offset
 
 	const cur = view.getUint8(offset)
-	console.log("cur is ", cur)
 	++offset
 
 	let teams_1: String[] = []
@@ -240,6 +246,7 @@ function write_gameplan(view: DataView) {
 		t1.classList.add("bordered", "t1")
 		t1.innerHTML = teams_1[game_i].toString()
 		t1.style.background = Color_gradient_to_string(col_1_light[game_i], col_1_dark[game_i])
+		t1.style.color = Color_font_contrast(col_1_light[game_i])
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
@@ -254,8 +261,9 @@ function write_gameplan(view: DataView) {
 
 		let t2 = document.createElement("div")
 		t2.classList.add("bordered", "t2")
-		t2.style.background = Color_gradient_to_string(col_2_light[game_i], col_2_dark[game_i])
 		t2.innerHTML = teams_2[game_i].toString()
+		t2.style.background = Color_gradient_to_string(col_2_light[game_i], col_2_dark[game_i])
+		t1.style.color = Color_font_contrast(col_2_light[game_i])
 		line.appendChild(t2)
 
 		if (cur < game_i) {
@@ -313,39 +321,31 @@ function write_gamestart(view: DataView) {
 
 	const t1 = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
-	console.log("TODO tactical t1 print: ", t1)
 
 	const t2 = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
-	console.log("TODO tactical t2 print: ", t2)
 
 	// TODO WIP
 	const t1_keeper = read_string(view, offset)
 	offset += PLAYER_NAME_MAX_LEN
-	console.log("TODO 1 keeper: ", t1_keeper)
 
 	// TODO WIP
 	const t1_field = read_string(view, offset)
 	offset += PLAYER_NAME_MAX_LEN
-	console.log("TODO 1 keeper: ", t1_field)
 
 	// TODO WIP
 	const t2_keeper = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
-	console.log("TODO 2 keeper: ", t2_keeper)
 
 	// TODO WIP
 	const t2_field = read_string(view, offset)
 	offset += TEAM_NAME_MAX_LEN
-	console.log("TODO 2 field: ", t2_field)
 
 	const t1_col_left = read_color(view, offset)
 	offset += 3
-	console.log(Color_to_string(t1_col_left))
 
 	const t1_col_right = read_color(view, offset)
 	offset += 3
-	console.log(Color_to_string(t1_col_right))
 
 	const t2_col_left = read_color(view, offset)
 	offset += 3
@@ -379,6 +379,7 @@ function write_gamestart(view: DataView) {
 	t1_name_el.classList.add("bordered")
 	t1_name_el.style.fontSize = "60px";
 	t1_name_el.style.background = Color_gradient_to_string(t1_col_left, t1_col_right)
+	t1_name_el.style.color = Color_font_contrast(t1_col_right)
 	t1_name_el.innerHTML = t1.toString()
 
 	const t1_keeper_el = document.createElement("div")
@@ -399,6 +400,7 @@ function write_gamestart(view: DataView) {
 	t2_name_el.classList.add("bordered")
 	t2_name_el.style.fontSize = "60px";
 	t2_name_el.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
+	t2_name_el.style.color = Color_font_contrast(t2_col_left)
 	t2_name_el.innerHTML = t2.toString()
 
 	const t2_keeper_el = document.createElement("div")
@@ -424,9 +426,6 @@ function write_gamestart(view: DataView) {
 		gamestart_next_t2.innerHTML = next_t2
 		gamestart_next_t2.style.background =
 			Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
-		console.log("lol")
-		console.log(gamestart_next_t1.style.backgroundColor)
-		console.log("endlol")
 	}
 }
 
@@ -533,7 +532,6 @@ function write_livetable(view: DataView) {
 
 	for (let i = 0; i < team_n; ++i) {
 		teams[i].goals = view.getUint16(offset, true)
-		if (view.getUint16(offset) === 6) console.log("amogus")
 		offset += 2
 	}
 	offset += (TEAMS_COUNT_MAX - team_n) * 2
@@ -566,7 +564,7 @@ function write_livetable(view: DataView) {
 		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("bordered", "name")
 		name.style.background = Color_gradient_to_string(teams[team_i].color_light!, teams[team_i].color_dark!)
-		name.style.color = "#bebebe"
+		name.style.color = Color_font_contrast(teams[team_i].color_light!)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
