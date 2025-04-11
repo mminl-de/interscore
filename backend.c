@@ -150,7 +150,7 @@ bool WidgetLivetable_enabled = false;
 bool WidgetGameplan_enabled = false;
 bool WidgetAd_enabled = false;
 
-int max(int x, int y){
+int max(int x, int y) {
 	return x < y ? y : x;
 }
 

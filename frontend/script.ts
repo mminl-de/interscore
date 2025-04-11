@@ -304,13 +304,16 @@ function write_gameplan(view: DataView) {
 		requestAnimationFrame(step)
 	}
 
-	setTimeout(() => {
-		smoothScrollTo(scroller.scrollHeight, SCROLL_DURATION)
-
+	if (game_n > 10) {
+		gameplan.parentElement?.classList.add("masked")
 		setTimeout(() => {
-			smoothScrollTo(0, SCROLL_DURATION)
-		}, SCROLL_DURATION + 2000) // duration + delay
-	}, 2000)
+			smoothScrollTo(scroller.scrollHeight, SCROLL_DURATION)
+
+			setTimeout(() => {
+				smoothScrollTo(0, SCROLL_DURATION)
+			}, SCROLL_DURATION + 2000) // duration + delay
+		}, 2000)
+	}
 }
 
 function write_gamestart(view: DataView) {
