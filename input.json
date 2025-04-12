@@ -93,28 +93,10 @@
       "score":{
         "team1":0,
         "team2":0
-      },
-      "cards":[
-        {
-          "player":"Erik Kramer",
-          "type":"Y"
-        }
-      ]
-    },
-    {
-      "team1":"EHRENBERG",
-      "team2":"BURGKUNSTADT",
-      "halftimescore":{
-        "team1":0,
-        "team2":0
-      },
-      "score":{
-        "team1":0,
-        "team2":0
       }
     },
     {
-      "team1":"GIFHORN",
+      "team1":"EHRENBERG",
       "team2":"BURGKUNSTADT",
       "halftimescore":{
         "team1":0,
@@ -138,8 +120,8 @@
       }
     },
     {
-      "team1":"BURGKUNSTADT",
-      "team2":"KIESELBRONN 1",
+      "team1":"GIFHORN",
+      "team2":"BURGKUNSTADT",
       "halftimescore":{
         "team1":0,
         "team2":0
@@ -162,7 +144,7 @@
       }
     },
     {
-      "team1":"EHRENBERG",
+      "team1":"BURGKUNSTADT",
       "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
@@ -176,6 +158,18 @@
     {
       "team1":"GIFHORN",
       "team2":"N.-SEIFERSDORF",
+      "halftimescore":{
+        "team1":0,
+        "team2":0
+      },
+      "score":{
+        "team1":0,
+        "team2":0
+      }
+    },
+    {
+      "team1":"EHRENBERG",
+      "team2":"KIESELBRONN 1",
       "halftimescore":{
         "team1":0,
         "team2":0
