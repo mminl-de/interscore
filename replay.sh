@@ -2,7 +2,7 @@
 
 while true; do
   echo "[ffmpeg] Writing to /dev/shm/livebuffer.ts"
-  ffmpeg -i rtmp://localhost:1935/live/test \
+  ffmpeg -i rtmp://localhost:1935/live \
          -c copy \
          -f mpegts \
          -y /dev/shm/livebuffer.ts &
