@@ -646,8 +646,11 @@ void create_input_window() {
 	wi.b.time.toggle_pause = button_new(wi.w, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
 	wi.b.time.reset = button_new(wi.w, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
 
-	wi.b.card.red = button_new(wi.w, btn_cb_red_card, QStyle::SP_ArrowRight, 32);
-	wi.b.card.yellow = button_new(wi.w, btn_cb_yellow_card, QStyle::SP_ArrowLeft, 32);
+	wi.b.card.red = button_new(wi.w, btn_cb_red_card, QStyle::SP_DialogApplyButton, 32);
+	wi.b.card.yellow = button_new(wi.w, btn_cb_yellow_card, QStyle::SP_DialogApplyButton, 32);
+	wi.b.card.red->setStyleSheet("background-color: red;");
+	wi.b.card.yellow->setStyleSheet("background-color: yellow;");
+
 	wi.dd_card_players = new QComboBox(wi.w);
 
 	wi.b.connect = button_new(wi.w, btn_cb_connect, QStyle::SP_MessageBoxCritical, 50);

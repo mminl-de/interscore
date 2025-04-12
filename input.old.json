@@ -36,8 +36,8 @@
 		{
 			"name":"N.-SEIFERSDORF",
 			"logo":"assets\/leeden.jpg",
-			"color_light":"e1fe1c",
-			"color_dark":"ffdd00",
+			"color_light":"a1ae0c",
+			"color_dark":"bfad00",
 			"players":[
 				{
 					"name":"Alwin Großmann",
@@ -91,8 +91,8 @@
 				"team2":0
 			},
 			"score":{
-				"team1":1,
-				"team2":0
+				"team1":2,
+				"team2":1
 			}
 		},
 		{
