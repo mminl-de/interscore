@@ -27,31 +27,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)
 
 # TODO
-
-## TODO BEFORE REWRITE - DEADLINE 12.4
-1 << 4
-- P1: fix time bugs
-- P1: Make replay System work properly as highlights after game (needs testing)
-- P2: Send ALL data when reconnecting rentnerend to backend
-- P2: Hopefully fix the delay problem altogether by overlaying timestamp/small blinking square
-- P4: add different replay possibilities with different buttons in app
-- P6: keep remote connection when leaving (not killing) the app
-
-## right after performance
-- tidy up assets folder (especially logo.svg)
-- remoteend:
-	- idiomatic restructuring
-	- tight packing of five switches
-	- server sends back active widgets
-	- layout: change port above switches
-	- remoteend looks for first match, without hard coded ip
-- website:
-	- rewrite:
-		- fully mobile-friendly
-		- more images:
-			- widgets
-		- tutorial page
-
 ## Neon Lila Mercedes Liste
 
 ### Bis Deployment
@@ -62,20 +37,22 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - GUI for the JSON
 - auto color_dark
 
-## TODO new
-- FINAL REMOVE input.json and project.seer and assets
-- FINAL screenshots of backend options and rentnerend windows
+## TODO
 
 ### frontend
+- fix time bugs
+- refresh green balken every time the time changes, ont only when time is not paused
 - team logos for gamestart
 - Fix Font Problems wth Umlaute in Cards section
 - Widget spawn animation fixen(manchmal kaputt)
+- Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
 
 ### rentnerend
-- change yellow/red card icons
+- additional button + functionality for half time and side switch
+- see and pardon in the justice system UI
 - FINAL Cards for Coaches
 - FINAL change all icons to nice looking icons
 - FINAL Feedback/Suggestions Site + Widget
@@ -93,9 +70,36 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - FINAL make json_load resilient to bad input.json
 - FINAL FINAL graceful Ctrl-C handling
 - Time is not send when hot reloading/sending json
+- FINAL^4 add ability to count time up(+verlängerung) for other sports
+
+### OBS
+- Make replay System work properly, test it throughly
+- Find a robust solution to combat delay (like blinking square)
+
+### Remoteend
+- Add Ability to start and end replay of a game
+- Add different replay possibilities
+- Waterboard remoteend (keep alive + dont kill websocket connection)
+- server sends widgets status (on/off)
+- change ip and port
+- hybrid auto search for server/hardcoded ip (autosearch with popup and ability to ignore)
+- Display Gamerelated information:
+	- Scoreboard Infos: Teams playing, Score, Time, Half
+	- Connection Status of all Clients (backend, rentnerend, frontend)
+	- OBS Scene / replay situation
+- FINAL^3 Change input.json (e.g. Gameplan order, later create whole input.json with remoteend)
+
+### interscore.mminl.de
+- UX improvement: look like frontend
+- mobile friendly
+- tutorial page
+- more images and widgets
 
 ### meta
 - How does the tiebreak work?
+- assets folder in seperate repo (only logos)
+- FINAL screenshots of backend options and rentnerend windows
+- Checkliste for streams
 
 # stuff
 ffplay command for low latency: `ffplay -fflags nobuffer -flags low_delay -framedrop -analyzeduration 0 -sync ext -noframedrop -rtmp_buffer 10 -infbuf rtmp://localhost/live/test`
