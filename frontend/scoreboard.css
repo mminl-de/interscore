@@ -30,6 +30,7 @@
 	height: 30px;
 
 	border-radius: 8px;
+	border-right: 3px solid black;
 
 	/* TODO WIP transition: width linear; */
 	transition: width 0.5s ease-in-out;

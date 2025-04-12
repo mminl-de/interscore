@@ -125,7 +125,7 @@ typedef struct {
 
 #define URL "http://0.0.0.0:8081"
 #define OBS_URL "http://0.0.0.0:4444"
-const char *REPLAY_PATH  = "/home/mrmine/prg/interscore/replays";
+const char *REPLAY_PATH  = /* /home/user */ "prg/interscore/replays";
 
 //TODO put all function definitions here
 u16 team_calc_points(u8 index);
@@ -796,7 +796,7 @@ int main(void) {
 	md.cur.time = md.deftime;
 	for(int i=0; i < md.games_count; i++){
 		char str[200];
-		sprintf(str, "mkdir -p %s/game_%02d", REPLAY_PATH, i);
+		sprintf(str, "mkdir -p %s/%s/game_%02d", getenv("HOME"), REPLAY_PATH, i);
 		printf("making dir: %s\n", str);
 		system(str);
 		md.games[i].replays_count = 0;

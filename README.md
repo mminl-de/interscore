@@ -34,7 +34,6 @@ This project was made for our personal use in a Cycleball tournament under hilar
 - P1: Make replay System work properly as highlights after game (needs testing)
 - P2: Send ALL data when reconnecting rentnerend to backend
 - P2: Hopefully fix the delay problem altogether by overlaying timestamp/small blinking square
-- P3: Change red and yellow card icon
 - P4: add different replay possibilities with different buttons in app
 - P6: keep remote connection when leaving (not killing) the app
 
