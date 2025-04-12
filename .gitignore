@@ -1,6 +1,7 @@
 .vscode/
 frontend/script.js
 rentnerend/interscore-rentnerend
+rentnerend/interscore-server
 interscore
 project.seer
 replays/

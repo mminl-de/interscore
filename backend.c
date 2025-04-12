@@ -801,6 +801,10 @@ int main(void) {
 		system(str);
 		md.games[i].replays_count = 0;
 	}
+	char str[200];
+	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
+	printf("making dir: %s\n", str);
+	system(str);
 	//matchday_init();
 
 	printf("Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
