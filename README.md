@@ -79,7 +79,7 @@ This project was made for our personal use in a Cycleball tournament under hilar
 ### Remoteend
 - Add Ability to start and end replay of a game
 - Add different replay possibilities
-- Waterboard remoteend (keep alive + dont kill websocket connection)
+- Waterboard remoteend (dont kill websocket connection)
 - server sends widgets status (on/off)
 - change ip and port
 - hybrid auto search for server/hardcoded ip (autosearch with popup and ability to ignore)
