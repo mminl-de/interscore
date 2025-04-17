@@ -1,0 +1,108 @@
+.scoreboard {
+	background-color: pink;
+	width: 800px;
+	height: 200px;
+	position: relative;
+	top: 3vh;
+	left: 2vw;
+}
+
+.scoreboard > *{
+	box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+
+.t1, .t2 {
+	width: 50%;
+	height: 30%;
+
+	position: absolute;
+	top: 35%;
+
+	justify-content: center;
+
+	z-index: 1;
+}
+
+.t1 {
+	background: linear-gradient(0deg, brown 0%, red 50%);
+	left: 0;
+}
+
+.t2 {
+	background: linear-gradient(0deg, cyan 0%, aquamarine 50%);
+	right: 0;
+
+	text-align: right;
+}
+
+.halftime {
+	display: flex;
+	background: linear-gradient(0deg, gold 20%, yellow 50%);
+
+	width: 15%;
+	height: 40%;
+	justify-content: center;
+
+	position: absolute;
+	top: 20%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	z-index: 1;
+}
+
+.score {
+	background: linear-gradient(0deg, gray 0%, darkgray 50%);
+	border: 3px solid gray;
+	display: flex;
+
+	width: 20%;
+	height: 50%;
+
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	font-size: var(--size-font-big);
+	justify-content: center;
+	align-items: center;
+
+	z-index: 2;
+}
+
+.score > * {
+	font-weight: bold;
+}
+
+.time {
+	background: linear-gradient(0deg, green 0%, lime 80%);
+
+	display: flex;
+
+	width: 15%;
+	height: 40%;
+
+	position: absolute;
+	top: 80%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	justify-content: center;
+	align-items: flex-end;
+
+	z-index: 1;
+}
+
+.timebar {
+	display: flex;
+	background: linear-gradient(270deg, green 0%, lime 10%);
+
+	width: 90%;
+	height: 40%;
+
+	position: absolute;
+	top: 60%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}

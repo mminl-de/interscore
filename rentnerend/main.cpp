@@ -3,11 +3,12 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QFontDatabase>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 
 #include "../common.h"
-#include "qpushbutton.h"
 
 #define ORANGE "#c60"
 
@@ -26,8 +27,7 @@ extern "C" struct WindowDisplay {
 		QLabel colon;
 	} labels;
 
-void
-init() {
+WindowDisplay() {
 	this->widget.setWindowTitle("Interscore: Scoreboard Display");
 
 	// Setting colors
@@ -35,10 +35,25 @@ init() {
 	this->labels.t2.name.setStyleSheet("color: white;");
 	this->labels.t1.score.setStyleSheet("color:" ORANGE ";");
 	this->labels.t2.score.setStyleSheet("color:" ORANGE ";");
-	printf("TODO hii\n");
 	this->labels.time.setStyleSheet("color: white;");
 	this->labels.colon.setStyleSheet("color: white;");
 
+	QHBoxLayout *top_bar = new QHBoxLayout(&this->widget);
+	top_bar->addWidget(&this->labels.t1.name);
+	top_bar->addWidget(&this->labels.t2.name);
+
+	QHBoxLayout *middle_bar = new QHBoxLayout(&this->widget);
+	middle_bar->addWidget(&this->labels.t1.score);
+	middle_bar->addWidget(&this->labels.colon);
+	middle_bar->addWidget(&this->labels.t2.score);
+
+	QVBoxLayout *layout = new QVBoxLayout(&this->widget);
+	layout->addLayout(top_bar);
+	layout->addLayout(middle_bar);
+	layout->addWidget(&this->labels.time);
+
+	this->widget.setLayout(layout);
+	// TODO NOW
 	this->update();
 }
 
@@ -87,8 +102,7 @@ extern "C" struct WindowInput {
 	} buttons;
 	QComboBox card_dealer;
 
-void
-init() {
+WindowInput() {
 	this->widget.setWindowTitle("Interscore: Scoreboard Input");
 	// TODO WIP
 	this->update();
@@ -100,15 +114,18 @@ update() {
 }
 };
 
-WindowDisplay wd;
-WindowInput wi;
-
 struct EventFilter : public QObject {
+	WindowDisplay *wd;
+	WindowInput *wi;
+
+EventFilter(WindowDisplay *wd, WindowInput *wi)
+	: wd(wd), wi(wi) {}
+
 bool
 eventFilter(QObject *obj, QEvent *event) override {
 	if (event->type() == QEvent::Resize) {
-		wd.update();
-		wi.update();
+		wd->update();
+		wi->update();
 	}
 	return QObject::eventFilter(obj, event);
 }
@@ -128,7 +145,7 @@ Button_new(QWidget *window, void (*cb)(), QStyle::StandardPixmap icon, u16 fonts
 
 int
 main(int argc, char *argv[]) {
-	const QApplication app(argc, argv);
+	QApplication app(argc, argv);
 
 	// TODO ADD audio player setup
 
@@ -141,12 +158,16 @@ main(int argc, char *argv[]) {
 	}
 
 	// TODO ADD read json
+	// load json
+	// free json
+	// init matchday
 
-	// TODO ADD create both windows
-	// and show them
-	// maybe make an about window
-	wd.init();
-	wi.init();
+	WindowDisplay wd;
+	WindowInput wi;
+
+	// Event filter for handling layout on window resize.
+	EventFilter filter(&wd, &wi);
+	app.installEventFilter(&filter);
 
 	wd.widget.show();
 	wi.widget.show();

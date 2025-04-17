@@ -1,0 +1,18 @@
+:root {
+	--size-font: 32px;
+	--size-font-big: 60px;
+}
+
+body {
+	font-family: "Kanit";
+	font-size: var(--size-font);
+}
+
+.rounded {
+	border-radius: 20px / 10px;
+}
+
+@font-face {
+	font-family: "Kanit";
+	src: url("../fonts/Kanit-Regular.ttf") format("truetype");
+}
