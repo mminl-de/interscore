@@ -1,6 +1,13 @@
 :root {
 	--size-font: 32px;
-	--size-font-big: 60px;
+	--size-font-big: 64px;
+	--size-font-smol: 24px;
+
+	--gap: 10px;
+	--corner: 10px;
+
+	--light-gray: #bbb;
+	--gold: #ec3;
 }
 
 body {
@@ -8,8 +15,12 @@ body {
 	font-size: var(--size-font);
 }
 
-.rounded {
-	border-radius: 20px / 10px;
+.bordered {
+	border: 5px solid black;
+	border-bottom: 6px solid black;
+	border-radius: var(--corner);
+	box-shadow: inset 3px 2px 0 rgba(0, 0, 0, 0.5),
+		15px 15px 15px rgba(0, 0, 0, 0.9);
 }
 
 @font-face {
