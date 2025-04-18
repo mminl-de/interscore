@@ -6,6 +6,7 @@
         <link rel="icon" type="image/svg+xml" href="../assets/logo.svg"/>
         <link rel="stylesheet" href="main.css"/>
         <link rel="stylesheet" href="scoreboard.css"/>
+        <link rel="stylesheet" href="card.css"/>
         <title>Interscore</title>
     </head>
 
@@ -15,27 +16,41 @@
 				<div class="bordered t1">[Team 1]</div>
 				<div class="bordered score">
 					<div class="s1">0</div>
-					<div>:</div>
+					<div>&nbsp;:&nbsp;</div>
 					<div class="s2">0</div>
 				</div>
 				<div class="bordered t2">[Team 2]</div>
 			</div>
 
-			<div class="bordered time-container">
-				<div class="timebar"></div>
-				<div class="time">
-					<div class="minutes">0</div>
-					<div>:</div>
-					<div class="seconds">00</div>
-				</div>
-			</div>
-
 			<div class="bottom">
+				<div class="bordered time-container">
+					<div class="timebar"></div>
+					<div class="time">
+						<div class="minutes">0</div>
+						<div>:</div>
+						<div class="seconds">00</div>
+					</div>
+				</div>
 				<div class="bordered halftime">
 					<div class="string-halftime">HZ</div>
+					<div>&nbsp;</div>
 					<div class="ht">0</div>
 				</div>
 			</div>
 		</div>
+
+		<!-- TODO
+		<div class="card">
+			<div class="bordered graphic"></div>
+			<div class="bordered info">
+				<div class="name">[Player]</div>
+				<div class="message">
+					<div class="pre">gets a </div>
+					<div class="card-color">???</div>
+					<div class="post">card.</div>
+				</div>
+			</div>
+		</div>
+		-->
 	</body>
 </html>

@@ -17,9 +17,9 @@ body {
 
 .bordered {
 	border: 5px solid black;
-	border-bottom: 6px solid black;
+	border-bottom: 7px solid black;
 	border-radius: var(--corner);
-	box-shadow: inset 3px 2px 0 rgba(0, 0, 0, 0.5),
+	box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.4),
 		15px 15px 15px rgba(0, 0, 0, 0.9);
 }
 
