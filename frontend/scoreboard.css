@@ -1,5 +1,6 @@
 .scoreboard {
-	display: inline-flex;
+	/*display: inline-flex; TODO */
+	display: none;
 	flex-direction: column;
 	gap: var(--gap);
 
