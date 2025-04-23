@@ -1,7 +1,7 @@
 .card {
 	display: none;
 	/* display: flex; TODO */
-	gap: 4px;
+	gap: var(--gap-smol);
 
 	position: absolute;
 	top: 3%;
@@ -16,7 +16,7 @@
 }
 
 .card .info {
-	padding: 10px 20px;
+	padding: 10px var(--padding-text);
 	border-radius: 0 var(--corner) var(--corner) 0;
 
 	min-width: 300px;
