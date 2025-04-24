@@ -1,0 +1,42 @@
+.gameplan {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	border-spacing: var(--gap-smol) 20px;
+
+	width: max-content;
+}
+
+.gameplan td {
+	border-radius: 0;
+
+	padding: calc(var(--padding-text) / 4) var(--padding-text);
+}
+
+.gameplan td:first-child, .gameplan td:last-child {
+	border-radius: var(--corner) 0 0 var(--corner);
+
+	min-width: 300px;
+	max-width: 500px;
+}
+
+.gameplan td:first-child {
+	text-align: right;
+}
+
+.gameplan td:nth-child(2) {
+	display: flex;
+	justify-content: center;
+
+	width: 100px;
+}
+
+.gameplan td:last-child {
+	border-radius: 0 var(--corner) var(--corner) 0;
+}
+
+.gameplan td {
+	background-color: cyan;
+}

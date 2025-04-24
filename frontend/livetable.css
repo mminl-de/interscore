@@ -1,4 +1,6 @@
 .livetable {
+	display: none; /* TODO */
+
 	position: absolute;
 	top: 50%;
 	left: 50%;
