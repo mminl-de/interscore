@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="scoreboard.css"/>
         <link rel="stylesheet" href="livetable.css"/>
         <link rel="stylesheet" href="gameplan.css"/>
+        <link rel="stylesheet" href="gamestart.css"/>
         <link rel="stylesheet" href="card.css"/>
         <title>Interscore</title>
     </head>
@@ -28,7 +29,7 @@
 				<div class="timebar"></div>
 				<div class="time">
 					<div class="minutes">0</div>
-					<div>:</div>
+					<div>&nbsp;:&nbsp;</div>
 					<div class="seconds">00</div>
 				</div>
 			</div>
@@ -40,70 +41,103 @@
 			</div>
 		</div>
 
-		<table class="livetable">
-			<tr>
-				<th class="bordered string-livetable-team">Team</th>
-				<th class="bordered string-livetable-score">Punkte</th>
-				<th class="bordered string-livetable-played">Gespielt</th>
-				<th class="bordered string-livetable-won">Gewonnen</th>
-				<th class="bordered string-livetable-draws">Unentsch.</th>
-				<th class="bordered string-livetable-lost">Verloren</th>
-				<th class="bordered string-livetable-goals">Tore</th>
-				<th class="bordered string-livetable-diff">Differenz</th>
-			</tr>
-			<tr>
-				<td class="bordered">TODO Gifhorn 3</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20.</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO +20</th>
-			</tr>
-			<tr>
-				<td class="bordered">TODO Gifhorn 3</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20.</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO 20</th>
-				<td class="bordered">TODO +20</th>
-			</tr>
-		</table>
+		<div class="livetable">
+			<div class="heading string-livetable">Livetabelle</div>
+			<table>
+				<tr>
+					<th class="bordered string-livetable-team">Team</th>
+					<th class="bordered string-livetable-score">Punkte</th>
+					<th class="bordered string-livetable-played">Gespielt</th>
+					<th class="bordered string-livetable-won">Gewonnen</th>
+					<th class="bordered string-livetable-draws">Unentsch.</th>
+					<th class="bordered string-livetable-lost">Verloren</th>
+					<th class="bordered string-livetable-goals">Tore</th>
+					<th class="bordered string-livetable-diff">Differenz</th>
+				</tr>
+				<tr>
+					<td class="bordered">TODO Gifhorn 3</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20.</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO +20</th>
+				</tr>
+				<tr>
+					<td class="bordered">TODO Gifhorn 3</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20.</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO 20</th>
+					<td class="bordered">TODO +20</th>
+				</tr>
+			</table>
+		</div>
 
-		<table class="gameplan">
-			<tr>
-				<td class="bordered">GIFHORN</th>
-				<td class="bordered score">
-					<div class="s1">0</div>
-					<div>&nbsp;:&nbsp;</div>
-					<div class="s2">0</div>
-				</td>
-				<td class="bordered">LUDWIGSFELDE</th>
-			</tr>
-			<tr>
-				<td class="bordered">NAUROD</th>
-				<td class="bordered">
-					<div class="s1">0</div>
-					<div>&nbsp;:&nbsp;</div>
-					<div class="s2">0</div>
-				</td>
-				<td class="bordered">LUDWIGSFELDE</th>
-			</tr>
-			<tr>
-				<td class="bordered">NAUROD</th>
-				<td class="bordered">
-					<div class="s1">0</div>
-					<div>&nbsp;:&nbsp;</div>
-					<div class="s2">0</div>
-				</td>
-				<td class="bordered">GIFHORN</th>
-			</tr>
-		</table>
+		<div class="gameplan">
+			<div class="heading string-gameplan">Spielplan</div>
+			<table>
+				<tr>
+					<td class="bordered">GIFHORN</th>
+					<td class="bordered score">
+						<div class="s1">0</div>
+						<div>&nbsp;:&nbsp;</div>
+						<div class="s2">0</div>
+					</td>
+					<td class="bordered">LUDWIGSFELDE</th>
+				</tr>
+				<tr>
+					<td class="bordered">NAUROD</th>
+					<td class="bordered">
+						<div class="s1">0</div>
+						<div>&nbsp;:&nbsp;</div>
+						<div class="s2">0</div>
+					</td>
+					<td class="bordered">LUDWIGSFELDE</th>
+				</tr>
+				<tr>
+					<td class="bordered">NAUROD</th>
+					<td class="bordered">
+						<div class="s1">0</div>
+						<div>&nbsp;:&nbsp;</div>
+						<div class="s2">0</div>
+					</td>
+					<td class="bordered">GIFHORN</th>
+				</tr>
+			</table>
+		</div>
 
-		<!-- TODO gamestart -->
+		<div class="gamestart">
+			<div class="heading string-gamestart">Jetzt spielen</div>
+			<table class="now">
+				<tr>
+					<th class="bordered">one</th>
+					<th class="bordered">one</th>
+				</tr>
+				<tr>
+					<td class="bordered">
+						<div class="player">Linux Kramer</div>
+						<div class="role">Defender</div>
+					</td>
+					<td class="bordered">one</td>
+				</tr>
+				<tr>
+					<td class="bordered">one</td>
+					<td class="bordered">one</td>
+				</tr>
+			</table>
+
+			<div class="heading string-gamestart-next">Als nächstes</div>
+			<table class="next">
+				<tr>
+					<th class="bordered">one</th>
+					<th class="bordered">one</th>
+				</tr>
+			</table>
+		</div>
 
 		<div class="card">
 			<div class="bordered graphic"></div>

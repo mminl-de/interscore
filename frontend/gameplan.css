@@ -1,12 +1,19 @@
 .gameplan {
+	display: none;
+	/* display: flex; TODO */
+	flex-direction: column;
+	align-items: center;
+
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 
-	border-spacing: var(--gap-smol) 20px;
-
 	width: max-content;
+}
+
+.gameplan table {
+	border-spacing: var(--gap-smol) 20px;
 }
 
 .gameplan td {
@@ -27,16 +34,16 @@
 }
 
 .gameplan td:nth-child(2) {
+	background-color: var(--light-gray);
+
 	display: flex;
 	justify-content: center;
 
 	width: 100px;
+
+	font-weight: bold;
 }
 
 .gameplan td:last-child {
 	border-radius: 0 var(--corner) var(--corner) 0;
-}
-
-.gameplan td {
-	background-color: cyan;
 }

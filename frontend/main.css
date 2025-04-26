@@ -1,5 +1,6 @@
 :root {
 	--size-font: 32px;
+	--size-font-mid: 46px;
 	--size-font-big: 64px;
 	--size-font-smol: 24px;
 
@@ -7,8 +8,11 @@
 	--gap-smol: 4px;
 	--corner: 10px;
 	--padding-text: 20px;
+	--padding-table: 50px;
+	--padding-table-bottom: 300px;
 
 	--light-gray: #bbb;
+	--dark-gray: #888;
 	--gold: #ec3;
 }
 
@@ -23,6 +27,23 @@ body {
 	border-radius: var(--corner);
 	box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.4),
 		15px 15px 15px rgba(0, 0, 0, 0.9);
+}
+
+.heading {
+	/* TODO TEST */
+	background-color: rgba(255, 255, 255, 0.7);
+	background-filter: blur(40px);
+
+	border: 5px solid black;
+	border-bottom: 7px solid black;
+	border-radius: var(--corner);
+	box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.4),
+		15px 15px 15px rgba(0, 0, 0, 0.9);
+
+	font-size: var(--size-font-big);
+	font-weight: bold;
+
+	padding: 0 var(--padding-text);
 }
 
 @font-face {

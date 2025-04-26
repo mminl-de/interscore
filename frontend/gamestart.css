@@ -1,0 +1,47 @@
+.gamestart {
+	display: flex; /* TODO flex */
+	flex-direction: column;
+	align-items: center;
+
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.gamestart table {
+	border-spacing: 200px var(--gap-smol);
+
+	padding-top: var(--padding-table);
+}
+
+.gamestart th {
+	min-width: 400px;
+	font-size: var(--size-font-mid);
+}
+
+.gamestart td {
+	text-align: center;
+
+	border-radius: 0;
+}
+
+.gamestart tr:last-child td {
+	border-radius: 0 0 var(--corner) var(--corner);
+}
+
+.gamestart .player {
+	font-size: var(--size-font-mid);
+}
+
+.gamestart .role {
+	color: gray;
+}
+
+.gamestart .now {
+	padding-bottom: var(--padding-table-bottom);
+}
+
+.gamestart .now th {
+	border-radius: var(--corner) var(--corner) 0 0;
+}

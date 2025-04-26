@@ -30,13 +30,14 @@
 }
 
 .scoreboard .score {
-	background: var(--light-gray);
+	background-color: var(--light-gray);
 
 	display: flex;
 	justify-content: center;
 	align-items: center;
 
 	font-size: var(--size-font-big);
+	font-weight: bold;
 
 	min-width: 180px;
 	height: 80px;
@@ -47,7 +48,7 @@
 
 	position: relative;
 
-	height: 40px;
+	height: 30px;
 }
 
 .scoreboard .timebar {
