@@ -37,19 +37,19 @@ extern "C" WindowDisplay::WindowDisplay() {
 	// Setting colors
 	this->widget.setStyleSheet("background-color: black");
 	this->labels.t1.name.setStyleSheet("font-size: 130px; color: white;");
-	this->labels.t2.name.setStyleSheet("font-size: 130px; color: white;");
 	this->labels.t1.score.setStyleSheet("font-size: 600px; color:" ORANGE ";");
+	this->labels.t2.name.setStyleSheet("font-size: 130px; color: white;");
 	this->labels.t2.score.setStyleSheet("font-size: 600px; color:" ORANGE ";");
 	this->labels.time.setStyleSheet("font-size: 500px; color: white;");
 	this->labels.colon.setStyleSheet("font-size: 600px; color: white;");
 
 	// Centering everything everywhere
 	this->labels.t1.name.setAlignment(Qt::AlignCenter);
-	this->labels.t2.name.setAlignment(Qt::AlignCenter);
 	this->labels.t1.score.setAlignment(Qt::AlignCenter);
-	this->labels.colon.setAlignment(Qt::AlignCenter);
+	this->labels.t2.name.setAlignment(Qt::AlignCenter);
 	this->labels.t2.score.setAlignment(Qt::AlignCenter);
 	this->labels.time.setAlignment(Qt::AlignCenter);
+	this->labels.colon.setAlignment(Qt::AlignCenter);
 
 	// Filling in content
 	this->labels.t1.name.setText("Team 1");
@@ -60,11 +60,11 @@ extern "C" WindowDisplay::WindowDisplay() {
 	this->labels.colon.setText(":");
 
 	// Structuring
-	QHBoxLayout *top_bar = new QHBoxLayout();
+	QHBoxLayout *top_bar = new QHBoxLayout;
 	top_bar->addWidget(&this->labels.t1.name);
 	top_bar->addWidget(&this->labels.t2.name);
 
-	QHBoxLayout *middle_bar = new QHBoxLayout();
+	QHBoxLayout *middle_bar = new QHBoxLayout;
 	middle_bar->addWidget(&this->labels.t1.score, 3);
 	middle_bar->addWidget(&this->labels.colon, 1);
 	middle_bar->addWidget(&this->labels.t2.score, 3);
@@ -94,6 +94,7 @@ extern "C" struct WindowInput {
 			QLabel score;
 		} t2;
 		QLabel time;
+		QLabel colon;
 	} labels;
 	struct {
 		struct {
@@ -126,14 +127,77 @@ extern "C" struct WindowInput {
 };
 
 extern "C" WindowInput::WindowInput() {
-	this->widget.setWindowTitle("Interscore: Scoreboard Input");
 	// TODO WIP
+	this->widget.setWindowTitle("Interscore: Scoreboard Input");
+
+	// Setting colors
+	this->labels.t1.name.setStyleSheet("font-size: 100px; color: black;");
+	this->labels.t1.score.setStyleSheet("font-size: 400px; color:" ORANGE ";");
+	this->labels.t2.name.setStyleSheet("font-size: 100px; color: black;");
+	this->labels.t2.score.setStyleSheet("font-size: 400px; color:" ORANGE ";");
+	this->labels.time.setStyleSheet("font-size: 300px; color: black;");
+	this->labels.colon.setStyleSheet("font-size: 300px; color: black;");
+	// TODO CONTINUE
+
+	// Centering everything everywhere
+	this->labels.t1.name.setAlignment(Qt::AlignCenter);
+	this->labels.t1.score.setAlignment(Qt::AlignCenter);
+	this->labels.t2.name.setAlignment(Qt::AlignCenter);
+	this->labels.t2.score.setAlignment(Qt::AlignCenter);
+	this->labels.time.setAlignment(Qt::AlignCenter);
+	this->labels.colon.setAlignment(Qt::AlignCenter);
+
+	// Filling in content
+	this->labels.t1.name.setText("Team 1");
+	this->labels.t1.score.setText("0");
+	this->labels.t2.name.setText("Team 2");
+	this->labels.t2.score.setText("0");
+	this->labels.time.setText("0.00");
+	this->labels.colon.setText(":");
+
+	// Structuring
+	QHBoxLayout *top_bar = new QHBoxLayout;
+	top_bar->addWidget(&this->buttons.game.prev);
+	top_bar->addWidget(&this->labels.t2.name);
+	top_bar->addWidget(&this->buttons.game.switch_sides);
+	top_bar->addWidget(&this->labels.t1.name);
+	top_bar->addWidget(&this->buttons.game.next);
+
+	QVBoxLayout *t2 = new QVBoxLayout;
+	t2->addWidget(&this->buttons.t2.score_plus);
+	t2->addWidget(&this->labels.t2.score);
+	t2->addWidget(&this->buttons.t2.score_minus);
+
+	QVBoxLayout *t1 = new QVBoxLayout;
+	t1->addWidget(&this->buttons.t1.score_plus);
+	t1->addWidget(&this->labels.t1.score);
+	t1->addWidget(&this->buttons.t1.score_minus);
+
+	QHBoxLayout *middle_bar = new QHBoxLayout;
+	middle_bar->addLayout(t2, 3);
+	middle_bar->addWidget(&this->labels.colon, 1);
+	middle_bar->addLayout(t1, 3);
+
+	QGridLayout *bottom_bar = new QGridLayout;
+	bottom_bar->addWidget(&this->buttons.time.minus_20, 0, 0, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.minus_1, 0, 1, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.toggle_pause, 0, 2);
+	bottom_bar->addWidget(&this->buttons.time.reset, 0, 3);
+	bottom_bar->addWidget(&this->labels.time, 1, 2, 1, 2);
+	bottom_bar->addWidget(&this->buttons.time.plus_1, 0, 4, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.plus_20, 0, 5, 2, 1);
+
+	QVBoxLayout *layout = new QVBoxLayout(&this->widget);
+	layout->addLayout(top_bar, 1);
+	layout->addLayout(middle_bar, 2);
+	layout->addLayout(bottom_bar, 2);
+
 	this->update();
 }
 
 extern "C" void
 WindowInput::update() {
-
+	// TODO
 }
 
 struct EventFilter : public QObject {
@@ -171,7 +235,7 @@ main(int argc, char *argv[]) {
 	// TODO ADD audio player setup
 
 	// Applying custom font globally
-	const i32 font_id = QFontDatabase::addApplicationFont("fonts/ChivoMono-Regular.ttf");
+	const i32 font_id = QFontDatabase::addApplicationFont("fonts/Kanit-Regular.ttf");
 	const QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
 	if (!font_families.isEmpty()) {
 		const QFont app_font(font_families.at(0));
@@ -190,8 +254,8 @@ main(int argc, char *argv[]) {
 	EventFilter filter(&wd, &wi);
 	app.installEventFilter(&filter);
 
-	wd.widget.show();
-	//wi.widget.show();
+	//wd.widget.show();
+	wi.widget.show();
 
 	// TODO ADD connect mongoose
 
