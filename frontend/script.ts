@@ -101,7 +101,7 @@ function write_scoreboard(view: DataView) {
 	scoreboard_score_2.innerHTML = view.getUint8(offset).toString()
 	++offset
 
-	++offset // ignoring is_halftime TODO
+	++offset // Ignore is_halftime TODO
 
 	const t1_col_left: Color = {
 		r: view.getUint8(offset),
@@ -131,7 +131,6 @@ function write_scoreboard(view: DataView) {
 	}
 	offset += 3
 
-	//scoreboard_t1.style.backgroundColor = Color_to_string(t1_col_left)
 	scoreboard_t1.style.background = Color_gradient_to_string(t1_col_right, t1_col_left)
 	scoreboard_t1.style.color = Color_font_contrast(t1_col_left)
 	scoreboard_t2.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
@@ -741,7 +740,7 @@ socket.onclose = () => {
 
 console.log("Client loaded!")
 
-// TODO NOTE
+// For debugging
 //function hotReloadCSS() {
 //  document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
 //    const newLink = document.createElement('link')
