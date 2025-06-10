@@ -103,7 +103,7 @@ QMediaPlayer *player = new QMediaPlayer;
 QAudioOutput *audio_output = new QAudioOutput;
 
 void btn_cb_t1_score_plus() {
-	if(!md.cur.halftime){
+	if (!md.cur.halftime) {
 		md.games[md.cur.gameindex].score.t1++;
 		websocket_send_button_signal(T1_SCORE_PLUS);
 	} else {
@@ -114,7 +114,7 @@ void btn_cb_t1_score_plus() {
 	update_display_window();
 }
 void btn_cb_t1_score_minus() {
-	if(!md.cur.halftime){
+	if (!md.cur.halftime) {
 		if (md.games[md.cur.gameindex].score.t1 > 0)
 			md.games[md.cur.gameindex].score.t1--;
 		websocket_send_button_signal(T1_SCORE_MINUS);
@@ -127,7 +127,7 @@ void btn_cb_t1_score_minus() {
 	update_display_window();
 }
 void btn_cb_t2_score_plus() {
-	if(!md.cur.halftime){
+	if (!md.cur.halftime) {
 		md.games[md.cur.gameindex].score.t2++;
 		websocket_send_button_signal(T2_SCORE_PLUS);
 	} else {
@@ -138,7 +138,7 @@ void btn_cb_t2_score_plus() {
 	update_display_window();
 }
 void btn_cb_t2_score_minus() {
-	if(!md.cur.halftime){
+	if (!md.cur.halftime) {
 		if (md.games[md.cur.gameindex].score.t2 > 0)
 			md.games[md.cur.gameindex].score.t2--;
 		websocket_send_button_signal(T2_SCORE_MINUS);
@@ -154,7 +154,7 @@ void btn_cb_game_next() {
 	if (md.cur.gameindex >= md.games_count)
 		return;
 	md.cur.gameindex++;
-	if(md.cur.gameindex == md.games_count)
+	if (md.cur.gameindex == md.games_count)
 		screen_input_toggle_visibility(true);
 	update_input_window();
 	update_display_window();
@@ -164,7 +164,7 @@ void btn_cb_game_prev() {
 	if (md.cur.gameindex <= 0)
 		return;
 	md.cur.gameindex--;
-	if(md.cur.gameindex == md.games_count-1)
+	if (md.cur.gameindex == md.games_count-1)
 		screen_input_toggle_visibility(false);
 	update_input_window();
 	update_display_window();
@@ -177,7 +177,7 @@ void btn_cb_game_switch_sides() {
 	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
 void btn_cb_time_plus() {
-	if(!md.cur.pause)
+	if (!md.cur.pause)
 		return;
 	md.cur.time++;
 	update_input_window();
@@ -185,7 +185,7 @@ void btn_cb_time_plus() {
 	websocket_send_button_signal(TIME_PLUS);
 }
 void btn_cb_time_minus() {
-	if(!md.cur.pause || md.cur.time <= 0)
+	if (!md.cur.pause || md.cur.time <= 0)
 		return;
 	md.cur.time--;
 	update_input_window();
@@ -193,7 +193,7 @@ void btn_cb_time_minus() {
 	websocket_send_button_signal(TIME_MINUS);
 }
 void btn_cb_time_plus20() {
-	if(!md.cur.pause)
+	if (!md.cur.pause)
 		return;
 	md.cur.time += 20;
 	update_input_window();
@@ -201,7 +201,7 @@ void btn_cb_time_plus20() {
 	websocket_send_button_signal(TIME_PLUS_20);
 }
 void btn_cb_time_minus20() {
-	if(!md.cur.pause || md.cur.time < 20)
+	if (!md.cur.pause || md.cur.time < 20)
 		return;
 	md.cur.time -= 20;
 	update_input_window();
@@ -210,7 +210,7 @@ void btn_cb_time_minus20() {
 }
 
 void btn_cb_time_toggle_pause() {
-	if(md.cur.time == 0)
+	if (md.cur.time == 0)
 		return;
 	md.cur.pause = !md.cur.pause;
 	update_input_window();
@@ -227,7 +227,7 @@ void btn_cb_time_reset() {
 
 void btn_cb_red_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
-	if(player_index == -1)
+	if (player_index == -1)
 		return;
 	add_card(RED, player_index);
 	websocket_send_card(RED, player_index);
@@ -236,7 +236,7 @@ void btn_cb_red_card() {
 
 void btn_cb_yellow_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
-	if(player_index == -1)
+	if (player_index == -1)
 		return;
 	add_card(YELLOW, player_index);
 	websocket_send_card(YELLOW, player_index);
@@ -247,8 +247,8 @@ void btn_cb_connect() {
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 }
 
-void websocket_send_card(CardType type, int player_index){
-	if(!server_connected){
+void websocket_send_card(CardType type, int player_index) {
+	if (!server_connected) {
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 		return;
 	}
@@ -291,7 +291,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		}
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *wm = (struct mg_ws_message *) p;
-			if((int)wm->data.buf[0] == 0){
+			if ((int)wm->data.buf[0] == 0) {
 				char* s = json_generate();
 				websocket_send_json(s);
 				free(s);
@@ -315,8 +315,8 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 	}
 }
 
-void screen_input_toggle_visibility(bool hide){
-	if(hide){
+void screen_input_toggle_visibility(bool hide) {
+	if (hide) {
 		wi.b.t1.score_plus->hide();
 		wi.b.t1.score_minus->hide();
 		wi.b.t2.score_plus->hide();
@@ -363,12 +363,12 @@ void screen_input_toggle_visibility(bool hide){
 	}
 }
 
-int text_width(const char *text, QFont font){
+int text_width(const char *text, QFont font) {
 	QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
 	return text_size.width();
 }
 
-int text_height(const char *text, QFont font){
+int text_height(const char *text, QFont font) {
 	QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
 	return text_size.height()*0.6;
 }
@@ -444,7 +444,7 @@ void update_display_window() {
 	int h = wd.w->height();
 
 	/*
-	if(md.cur.gameindex == md.games_count){
+	if (md.cur.gameindex == md.games_count) {
 		update_label(wd.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
 		update_label(wd.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
 		return;
@@ -597,7 +597,7 @@ void update_input_window() {
 	update_button(wi.b.card.red, w, h, 0.935, 0.98, 0.74, 0.79);
 
 	update_button(wi.b.connect, w, h, 0.93, 0.99, 0.93, 0.99);
-	if(server_con == NULL){
+	if (server_con == NULL) {
 		wi.b.connect->setEnabled(true);
 		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning);
 		wi.b.connect->setIcon(icon);
@@ -702,7 +702,7 @@ void update_timer() {
 	if (!md.cur.pause && md.cur.time > 0) {
 		md.cur.time--;
 		//play sound if time is up
-		if(md.cur.time == 0){
+		if (md.cur.time == 0) {
 			player->setPosition(0);
 			player->play();
 		}
@@ -719,12 +719,12 @@ void websocket_poll() {
 
 void json_autosave() {
 	//Save the old JSON file in case that something goes wrong
-	if(rename(JSON_PATH, JSON_PATH_OLD) != 0){
+	if (rename(JSON_PATH, JSON_PATH_OLD) != 0) {
 		printf("WARNING: Couldnt move %s to %s. Aborting autosaving the JSON\n", JSON_PATH, JSON_PATH_OLD);
 		return;
 	}
 	char *s = json_generate();
-	if(!file_write(JSON_PATH, s))
+	if (!file_write(JSON_PATH, s))
 		printf("WARNING: Couldnt autosave JSON!\n");
 	free(s);
 	printf("INFO: Autosaved JSON successfully!\n");
@@ -739,7 +739,7 @@ int main(int argc, char *argv[]) {
 	player->setSource(QUrl::fromLocalFile(SOUND_GAME_END));
 
 	// Applying Kanit font globally
-	const int font_id = QFontDatabase::addApplicationFont("fonts/ChivoMono-Regular.ttf");
+	const int font_id = QFontDatabase::addApplicationFont("assets/ChivoMono-Regular.ttf");
 	QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
 	if (!font_families.isEmpty()) {
 		QFont app_font(font_families.at(0));
@@ -764,7 +764,7 @@ int main(int argc, char *argv[]) {
     wi.w->show();
 
 	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
-	QObject::connect(shortcut, &QShortcut::activated, [](){printf("test\n"); btn_cb_time_toggle_pause();});
+	QObject::connect(shortcut, &QShortcut::activated, []() {printf("test\n"); btn_cb_time_toggle_pause();});
 
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
