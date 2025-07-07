@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include <QApplication>
 #include <QComboBox>
 #include <QFontDatabase>
@@ -12,7 +10,9 @@
 
 #define ORANGE "#c60"
 
-extern "C" struct WindowDisplay {
+extern "C" {
+
+struct DisplayWindow {
 	QWidget widget;
 	struct {
 		struct {
@@ -27,11 +27,11 @@ extern "C" struct WindowDisplay {
 		QLabel colon;
 	} labels;
 
-	WindowDisplay();
+	DisplayWindow();
 	void update();
 };
 
-extern "C" WindowDisplay::WindowDisplay() {
+DisplayWindow::DisplayWindow() {
 	this->widget.setWindowTitle("Interscore: Scoreboard Display");
 
 	// Setting colors
@@ -77,12 +77,12 @@ extern "C" WindowDisplay::WindowDisplay() {
 	this->update();
 }
 
-extern "C" void
-WindowDisplay::update() {
+void
+DisplayWindow::update() {
 	// TODO
 }
 
-extern "C" struct WindowInput {
+struct InputWindow {
 	QWidget widget;
 	struct {
 		struct {
@@ -122,11 +122,11 @@ extern "C" struct WindowInput {
 	} buttons;
 	QComboBox card_dealer;
 
-	WindowInput();
+	InputWindow();
 	void update();
 };
 
-extern "C" WindowInput::WindowInput() {
+InputWindow::InputWindow() {
 	// TODO WIP
 	this->widget.setWindowTitle("Interscore: Scoreboard Input");
 
@@ -195,16 +195,16 @@ extern "C" WindowInput::WindowInput() {
 	this->update();
 }
 
-extern "C" void
-WindowInput::update() {
+void
+InputWindow::update() {
 	// TODO
 }
 
 struct EventFilter : public QObject {
-	WindowDisplay *wd;
-	WindowInput *wi;
+	DisplayWindow *wd;
+	InputWindow *wi;
 
-	EventFilter(WindowDisplay *wd, WindowInput *wi) : wd(wd), wi(wi) {}
+	EventFilter(DisplayWindow *wd, InputWindow *wi) : wd(wd), wi(wi) {}
 
 	bool
 	eventFilter(QObject *obj, QEvent *event) override {
@@ -216,9 +216,9 @@ struct EventFilter : public QObject {
 	}
 };
 
-QPushButton *
-Button_new(QWidget *window, void (*cb)(), QStyle::StandardPixmap icon, u16 fontsize) {
-	QPushButton *result = new QPushButton("", window);
+QPushButton *const
+button_with_icon(QWidget *const window, void (*const cb)(), QStyle::StandardPixmap icon, u16 fontsize) {
+	QPushButton *const result = new QPushButton("", window);
 
 	QIcon qicon = QApplication::style()->standardIcon(icon);
 	result->setIcon(qicon);
@@ -227,6 +227,8 @@ Button_new(QWidget *window, void (*cb)(), QStyle::StandardPixmap icon, u16 fonts
 	QObject::connect(result, &QPushButton::clicked, cb);
 	return result;
 }
+
+} // extern "C"
 
 int
 main(int argc, char *argv[]) {
@@ -247,8 +249,8 @@ main(int argc, char *argv[]) {
 	// free json
 	// init matchday
 
-	WindowDisplay wd;
-	WindowInput wi;
+	DisplayWindow wd;
+	InputWindow wi;
 
 	// Event filter for handling layout on window resize.
 	EventFilter filter(&wd, &wi);
