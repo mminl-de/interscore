@@ -1,12 +1,15 @@
 #include <QApplication>
+#include <QAudioOutput>
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QLabel>
+#include <QMediaPlayer>
 #include <QPushButton>
+#include <QVBoxLayout>
 
 #include "../common.h"
+#include "../config.h"
 
 #define ORANGE "#c60"
 
@@ -216,7 +219,7 @@ struct EventFilter : public QObject {
 	}
 };
 
-QPushButton *const
+QPushButton *
 button_with_icon(QWidget *const window, void (*const cb)(), QStyle::StandardPixmap icon, u16 fontsize) {
 	QPushButton *const result = new QPushButton("", window);
 
@@ -235,6 +238,13 @@ main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
 	// TODO ADD audio player setup
+	QMediaPlayer player = QMediaPlayer();
+	QAudioOutput audio_output = QAudioOutput();
+
+	player.setAudioOutput(&audio_output);
+	audio_output.setVolume(1);
+	player.setSource(QUrl::fromLocalFile(RENTNEREND_SOUND));
+	player.play();
 
 	// Applying custom font globally
 	const i32 font_id = QFontDatabase::addApplicationFont("fonts/Kanit-Regular.ttf");
