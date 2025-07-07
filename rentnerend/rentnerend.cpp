@@ -22,6 +22,7 @@
 #include "qnamespace.h"
 #include "../common.h"
 
+extern "C" {
 
 typedef struct {
 	QWidget *w;
@@ -297,7 +298,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 				free(s);
 				printf("INFO: Sent the newest JSON version to backend\n");
 			} else
-				printf("WARNING: Received unknown signal from WebSocket Server!\n");
+			printf("WARNING: Received unknown signal from WebSocket Server!\n");
 			break;
 		}
 		case MG_EV_ERROR:
@@ -311,7 +312,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 			break;
 		// signals that are not important
 		case MG_EV_OPEN:
-		break;
+			break;
 	}
 }
 
@@ -374,15 +375,15 @@ int text_height(const char *text, QFont font) {
 }
 
 QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
-    QFont font = QApplication::font();
-    font.setBold(bold);
+	QFont font = QApplication::font();
+	font.setBold(bold);
 
-    int low = 1, high = 500;  // Reasonable font size range
-    int bestSize = low;
+	int low = 1, high = 500;  // Reasonable font size range
+	int bestSize = low;
 
-    while (low <= high) {
-        int mid = (low + high) / 2;
-        font.setPointSize(mid);
+	while (low <= high) {
+		int mid = (low + high) / 2;
+		font.setPointSize(mid);
 		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
 		//the rectangle calculates height way to conservative
 		//textRect.setHeight(textRect.height() * 1.5);
@@ -390,16 +391,16 @@ QFont biggest_font_possible(const char *text, int max_width, int max_height, boo
 		int width = text_size.width();
 		int height = text_size.height();
 
-        if (width <= max_width && height <= max_height) {
-            bestSize = mid;  // Found a valid size, try bigger
-            low = mid + 1;
-        } else {
-            high = mid - 1;  // Too big, try smaller
-        }
-    }
+		if (width <= max_width && height <= max_height) {
+			bestSize = mid;  // Found a valid size, try bigger
+			low = mid + 1;
+		} else {
+			high = mid - 1;  // Too big, try smaller
+		}
+	}
 
-    font.setPointSize(bestSize);
-    return font;
+	font.setPointSize(bestSize);
+	return font;
 }
 
 //alignment: 0:= left, 1:= center, 2:=right
@@ -706,7 +707,7 @@ void update_timer() {
 			player->setPosition(0);
 			player->play();
 		}
-update_display_window();
+		update_display_window();
 		update_input_window();
 	}
 	if (md.cur.time == 0)
@@ -714,7 +715,7 @@ update_display_window();
 }
 
 void websocket_poll() {
-		mg_mgr_poll(&mgr, 0);
+	mg_mgr_poll(&mgr, 0);
 }
 
 void json_autosave() {
@@ -746,13 +747,13 @@ int main(int argc, char *argv[]) {
 		QApplication::setFont(app_font);
 	}
 
-	char *json = file_read(JSON_PATH);
+	char *json = common_read_file(JSON_PATH);
 	json_load(json);
 	free(json);
 	matchday_init();
 
-    create_display_window();
-    create_input_window();
+	create_display_window();
+	create_input_window();
 
 	mg_mgr_init(&mgr);
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
@@ -761,7 +762,7 @@ int main(int argc, char *argv[]) {
 	t1->start(100);
 
 	wd.w->show();
-    wi.w->show();
+	wi.w->show();
 
 	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
 	QObject::connect(shortcut, &QShortcut::activated, []() {printf("test\n"); btn_cb_time_toggle_pause();});
@@ -784,3 +785,5 @@ int main(int argc, char *argv[]) {
 	delete wi.w;
 	return stat;
 }
+
+} // extern "C"

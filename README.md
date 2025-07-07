@@ -1,5 +1,6 @@
 # Interscore
-An Livestream System for Cycleball that includes an OBS Overlay, software for the judges, indipendend backend, advanced replay system, android app to manage the OBS Overlay/replays etc. cycleball.eu integration and docker images for all the backend stuff is planned.
+A livestream system for Cycleball that includes an OBS overlay, software for the judges, independent backend, advanced replay system, Android app to manage the OBS Overlay/replays etc.
+[cycleball.eu](https://cycleball.eu) integration and docker images for all the backend stuff are planned.
 
 ## About
 The OBS overlay is a single HTML file launched via the Browser source.
@@ -10,10 +11,10 @@ Tournament metadata (competing teams, timer lengths, game plan) is fed using a J
 
 The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
 
-This project was made for our personal use in a Cycleball tournament under hilarious deadlines.
+This project was made for our personal use prior to a Cycleball tournament under ridiculous deadlines.
 
-### Related Projects
-- The Android App: https://github.com/mminl-de/interscore-remoteend
+## Related Projects
+- Android App: https://github.com/mminl-de/interscore-remoteend
 - cycleball.eu library: https://github.com/mminl-de/cycleu
 
 ## Usage
