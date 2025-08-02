@@ -1,0 +1,3 @@
+[submodule "cycleu"]
+	path = cycleu
+	url = https://github.com/mminl-de/cycleu
