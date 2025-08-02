@@ -1,3 +1,5 @@
+#include <cstdlib> // TODO CONSIDER
+
 #include <QApplication>
 #include <QAudioOutput>
 #include <QComboBox>
@@ -8,6 +10,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include "../common/matchday.h"
 #include "../common.h"
 #include "../config.h"
 
@@ -237,14 +240,13 @@ int
 main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
-	// TODO ADD audio player setup
+	// Audio setup
 	QMediaPlayer player = QMediaPlayer();
 	QAudioOutput audio_output = QAudioOutput();
-
 	player.setAudioOutput(&audio_output);
-	audio_output.setVolume(1);
 	player.setSource(QUrl::fromLocalFile(RENTNEREND_SOUND));
-	player.play();
+	audio_output.setVolume(1);
+	player.play(); // TODO DEBUG THEN REMOVE
 
 	// Applying custom font globally
 	const i32 font_id = QFontDatabase::addApplicationFont("fonts/Kanit-Regular.ttf");
@@ -258,9 +260,13 @@ main(int argc, char *argv[]) {
 	// load json
 	// free json
 	// init matchday
+	const char *json = util_read_file(JSON_PATH);
+	Matchday md = matchday_init(json); // TODO MEM free matchday later
+	free(json);
 
-	DisplayWindow wd;
-	InputWindow wi;
+	// Actual window creation
+	DisplayWindow wd;	// constructor call
+	InputWindow wi;		// constructor call
 
 	// Event filter for handling layout on window resize.
 	EventFilter filter(&wd, &wi);
