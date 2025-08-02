@@ -22,69 +22,223 @@
 #include "qnamespace.h"
 #include "../common.h"
 
+// TODO MOVE
+#define URL "ws://localhost:8081?client=rentner"
+#define ORANGE "#c60"
+
+QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
+	QFont font = QApplication::font();
+	font.setBold(bold);
+
+	int low = 1, high = 500;  // Reasonable font size range
+	int bestSize = low;
+
+	while (low <= high) {
+		int mid = (low + high) / 2;
+		font.setPointSize(mid);
+		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
+		//the rectangle calculates height way to conservative
+		//textRect.setHeight(textRect.height() * 1.5);
+		//textRect.setWidth(textRect.width() * 1.1);
+		int width = text_size.width();
+		int height = text_size.height();
+
+		if (width <= max_width && height <= max_height) {
+			bestSize = mid;  // Found a valid size, try bigger
+			low = mid + 1;
+		} else {
+			high = mid - 1;  // Too big, try smaller
+		}
+	}
+
+	font.setPointSize(bestSize);
+	return font;
+}
+
 extern "C" {
 
-typedef struct {
-	QWidget *w;
+struct DisplayWindow {
+	QWidget widget;
 	struct {
 		struct {
-			QLabel* name;
-			QLabel* score;
+			QLabel name;
+			QLabel score;
 		} t1;
 		struct {
-			QLabel* name;
-			QLabel* score;
+			QLabel name;
+			QLabel score;
 		} t2;
-		QLabel* time;
-		QLabel* colon;
-	} l;
-} w_display;
+		QLabel time;
+		QLabel colon;
+	} labels;
 
-typedef struct {
-	QWidget *w;
+	DisplayWindow();
+	void update();
+};
+
+DisplayWindow::DisplayWindow() {
+	this->widget.setWindowTitle("Interscore: Scoreboard Display");
+
+	// Setting colors
+	this->widget.setStyleSheet("background-color: black");
+	this->labels.t1.name.setStyleSheet("font-size: 130px; color: white;");
+	this->labels.t1.score.setStyleSheet("font-size: 600px; color:" ORANGE ";");
+	this->labels.t2.name.setStyleSheet("font-size: 130px; color: white;");
+	this->labels.t2.score.setStyleSheet("font-size: 600px; color:" ORANGE ";");
+	this->labels.time.setStyleSheet("font-size: 500px; color: white;");
+	this->labels.colon.setStyleSheet("font-size: 600px; color: white;");
+
+	// Centering everything everywhere
+	this->labels.t1.name.setAlignment(Qt::AlignCenter);
+	this->labels.t1.score.setAlignment(Qt::AlignCenter);
+	this->labels.t2.name.setAlignment(Qt::AlignCenter);
+	this->labels.t2.score.setAlignment(Qt::AlignCenter);
+	this->labels.time.setAlignment(Qt::AlignCenter);
+	this->labels.colon.setAlignment(Qt::AlignCenter);
+
+	// Filling in content
+	this->labels.t1.name.setText("Team 1");
+	this->labels.t1.score.setText("0");
+	this->labels.t2.name.setText("Team 2");
+	this->labels.t2.score.setText("0");
+	this->labels.time.setText("0.00");
+	this->labels.colon.setText(":");
+
+	// Structuring
+	QHBoxLayout *top_bar = new QHBoxLayout;
+	top_bar->addWidget(&this->labels.t1.name);
+	top_bar->addWidget(&this->labels.t2.name);
+
+	QHBoxLayout *middle_bar = new QHBoxLayout;
+	middle_bar->addWidget(&this->labels.t1.score, 3);
+	middle_bar->addWidget(&this->labels.colon, 1);
+	middle_bar->addWidget(&this->labels.t2.score, 3);
+
+	QVBoxLayout *layout = new QVBoxLayout(&this->widget);
+	layout->addLayout(top_bar, 1);
+	layout->addLayout(middle_bar, 2);
+	layout->addWidget(&this->labels.time, 2);
+
+	this->update();
+}
+
+void
+DisplayWindow::update() {
+	// TODO
+}
+
+struct InputWindow {
+	QWidget widget;
 	struct {
 		struct {
-			QLabel* name;
-			QLabel* score;
+			QLabel name;
+			QLabel score;
 		} t1;
 		struct {
-			QLabel* name;
-			QLabel* score;
+			QLabel name;
+			QLabel score;
 		} t2;
-		QLabel* time;
-	} l;
+		QLabel time;
+		QLabel colon;
+	} labels;
 	struct {
 		struct {
-			QPushButton *score_plus;
-			QPushButton *score_minus;
+			QPushButton score_plus;
+			QPushButton score_minus;
 		} t1;
 		struct {
-			QPushButton *score_plus;
-			QPushButton *score_minus;
+			QPushButton score_plus;
+			QPushButton score_minus;
 		} t2;
 		struct {
-			QPushButton *next;
-			QPushButton *prev;
-			QPushButton *switch_sides;
+			QPushButton next;
+			QPushButton prev;
+			QPushButton switch_sides;
 		} game;
 		struct {
-			QPushButton *yellow;
-			QPushButton *red;
-		} card;
-		struct {
-			QPushButton *plus;
-			QPushButton *minus;
-			QPushButton *plus20;
-			QPushButton *minus20;
-			QPushButton *toggle_pause;
-			QPushButton *reset;
+			QPushButton plus_1;
+			QPushButton minus_1;
+			QPushButton plus_20;
+			QPushButton minus_20;
+			QPushButton toggle_pause;
+			QPushButton reset;
 		} time;
-		QPushButton *connect;
-	} b;
-	QComboBox *dd_card_players;
-} w_input;
+		QPushButton connection;
+	} buttons;
+	QComboBox card_dealer;
 
-#define URL "ws://localhost:8081?client=rentner"
+	InputWindow();
+	void update();
+};
+
+InputWindow::InputWindow() {
+	// TODO WIP
+	this->widget.setWindowTitle("Interscore: Scoreboard Input");
+
+	// Setting colors
+	this->labels.t1.name.setStyleSheet("font-size: 100px; color: black;");
+	this->labels.t1.score.setStyleSheet("font-size: 400px; color:" ORANGE ";");
+	this->labels.t2.name.setStyleSheet("font-size: 100px; color: black;");
+	this->labels.t2.score.setStyleSheet("font-size: 400px; color:" ORANGE ";");
+	this->labels.time.setStyleSheet("font-size: 300px; color: black;");
+	this->labels.colon.setStyleSheet("font-size: 300px; color: black;");
+	// TODO CONTINUE
+
+	// Centering everything everywhere
+	this->labels.t1.name.setAlignment(Qt::AlignCenter);
+	this->labels.t1.score.setAlignment(Qt::AlignCenter);
+	this->labels.t2.name.setAlignment(Qt::AlignCenter);
+	this->labels.t2.score.setAlignment(Qt::AlignCenter);
+	this->labels.time.setAlignment(Qt::AlignCenter);
+	this->labels.colon.setAlignment(Qt::AlignCenter);
+
+	// Filling in content
+	this->labels.t1.name.setText("Team 1");
+	this->labels.t1.score.setText("0");
+	this->labels.t2.name.setText("Team 2");
+	this->labels.t2.score.setText("0");
+	this->labels.time.setText("0.00");
+	this->labels.colon.setText(":");
+
+	// Structuring
+	QHBoxLayout *top_bar = new QHBoxLayout;
+	top_bar->addWidget(&this->buttons.game.prev);
+	top_bar->addWidget(&this->labels.t2.name);
+	top_bar->addWidget(&this->buttons.game.switch_sides);
+	top_bar->addWidget(&this->labels.t1.name);
+	top_bar->addWidget(&this->buttons.game.next);
+
+	QVBoxLayout *t2 = new QVBoxLayout;
+	t2->addWidget(&this->buttons.t2.score_plus);
+	t2->addWidget(&this->labels.t2.score);
+	t2->addWidget(&this->buttons.t2.score_minus);
+
+	QVBoxLayout *t1 = new QVBoxLayout;
+	t1->addWidget(&this->buttons.t1.score_plus);
+	t1->addWidget(&this->labels.t1.score);
+	t1->addWidget(&this->buttons.t1.score_minus);
+
+	QHBoxLayout *middle_bar = new QHBoxLayout;
+	middle_bar->addLayout(t2, 3);
+	middle_bar->addWidget(&this->labels.colon, 1);
+	middle_bar->addLayout(t1, 3);
+
+	QGridLayout *bottom_bar = new QGridLayout;
+	bottom_bar->addWidget(&this->buttons.time.minus_20, 0, 0, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.minus_1, 0, 1, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.toggle_pause, 0, 2);
+	bottom_bar->addWidget(&this->buttons.time.reset, 0, 3);
+	bottom_bar->addWidget(&this->labels.time, 1, 2, 1, 2);
+	bottom_bar->addWidget(&this->buttons.time.plus_1, 0, 4, 2, 1);
+	bottom_bar->addWidget(&this->buttons.time.plus_20, 0, 5, 2, 1);
+
+	QVBoxLayout *layout = new QVBoxLayout(&this->widget);
+	layout->addLayout(top_bar, 1);
+	layout->addLayout(middle_bar, 2);
+	layout->addLayout(bottom_bar, 2);
+
+	this->update();
+}
 
 void update_input_window();
 void update_display_window();
@@ -94,14 +248,15 @@ void screen_input_toggle_visibility(bool hide);
 void ev_handler(struct mg_connection *c, int ev, void *p);
 
 Matchday md;
-w_input wi;
-w_display wd;
 struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
-// TODO CHECK if you can allocate in the stack
-QMediaPlayer *player = new QMediaPlayer;
-QAudioOutput *audio_output = new QAudioOutput;
+
+QMediaPlayer player = QMediaPlayer();
+QAudioOutput audio_output = QAudioOutput();
+
+DisplayWindow wd; // constructor call
+InputWindow wi;   // constructor call
 
 void btn_cb_t1_score_plus() {
 	if (!md.cur.halftime) {
@@ -227,21 +382,21 @@ void btn_cb_time_reset() {
 }
 
 void btn_cb_red_card() {
-	int player_index = wi.dd_card_players->currentData().toInt();
+	int player_index = wi.card_dealer->currentData().toInt();
 	if (player_index == -1)
 		return;
 	add_card(RED, player_index);
 	websocket_send_card(RED, player_index);
-	wi.dd_card_players->setCurrentIndex(0);
+	wi.card_dealer->setCurrentIndex(0);
 }
 
 void btn_cb_yellow_card() {
-	int player_index = wi.dd_card_players->currentData().toInt();
+	int player_index = wi.card_dealer->currentData().toInt();
 	if (player_index == -1)
 		return;
 	add_card(YELLOW, player_index);
 	websocket_send_card(YELLOW, player_index);
-	wi.dd_card_players->setCurrentIndex(0);
+	wi.card_dealer->setCurrentIndex(0);
 }
 
 void btn_cb_connect() {
@@ -297,8 +452,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 				websocket_send_json(s);
 				free(s);
 				printf("INFO: Sent the newest JSON version to backend\n");
-			} else
-			printf("WARNING: Received unknown signal from WebSocket Server!\n");
+			} else printf("WARNING: Received unknown signal from WebSocket Server!\n");
 			break;
 		}
 		case MG_EV_ERROR:
@@ -318,49 +472,51 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 void screen_input_toggle_visibility(bool hide) {
 	if (hide) {
-		wi.b.t1.score_plus->hide();
-		wi.b.t1.score_minus->hide();
-		wi.b.t2.score_plus->hide();
-		wi.b.t2.score_minus->hide();
-		wi.b.card.red->hide();
-		wi.b.card.yellow->hide();
-		//wi.b.game.next->hide();
-		//wi.b.game.prev->hide();
-		wi.b.game.switch_sides->hide();
-		wi.b.time.plus->hide();
-		wi.b.time.minus->hide();
-		wi.b.time.plus20->hide();
-		wi.b.time.minus20->hide();
-		wi.b.time.reset->hide();
-		wi.b.time.toggle_pause->hide();
-		wi.l.time->hide();
-		wi.l.t1.score->hide();
-		//wi.l.t1.name->hide();
-		wi.l.t2.score->hide();
-		//wi.l.t2.name->hide();
-		wi.dd_card_players->hide();
+		wi.buttons.t1.score_plus.hide();
+		wi.buttons.t1.score_minus.hide();
+		wi.buttons.t2.score_plus.hide();
+		wi.buttons.t2.score_minus.hide();
+		// TODO
+		//wi.buttons.cards.red->hide();
+		//wi.buttons.cards.yellow->hide();
+		//wi.buttons.game.next->hide();
+		//wi.buttons.game.prev->hide();
+		wi.buttons.game.switch_sides.hide();
+		wi.buttons.time.plus_1.hide();
+		wi.buttons.time.minus_1.hide();
+		wi.buttons.time.plus_20.hide();
+		wi.buttons.time.minus_20.hide();
+		wi.buttons.time.reset.hide();
+		wi.buttons.time.toggle_pause.hide();
+		wi.labels.time.hide();
+		wi.labels.t1.score.hide();
+		//wi.labels.t1.name->hide();
+		wi.labels.t2.score.hide();
+		//wi.labels.t2.name->hide();
+		wi.card_dealer.hide();
 	} else {
-		wi.b.t1.score_plus->show();
-		wi.b.t1.score_minus->show();
-		wi.b.t2.score_plus->show();
-		wi.b.t2.score_minus->show();
-		wi.b.card.red->show();
-		wi.b.card.yellow->show();
-		//wi.b.game.next->show();
-		//wi.b.game.prev->show();
-		wi.b.game.switch_sides->show();
-		wi.b.time.plus->show();
-		wi.b.time.minus->show();
-		wi.b.time.plus20->show();
-		wi.b.time.minus20->show();
-		wi.b.time.reset->show();
-		wi.b.time.toggle_pause->show();
-		wi.l.time->show();
-		wi.l.t1.score->show();
-		//wi.l.t1.name->show();
-		wi.l.t2.score->show();
-		//wi.l.t2.name->show();
-		wi.dd_card_players->show();
+		wi.buttons.t1.score_plus.show();
+		wi.buttons.t1.score_minus.show();
+		wi.buttons.t2.score_plus.show();
+		wi.buttons.t2.score_minus.show();
+		// TODO
+		//wi.buttons.card.red->show();
+		//wi.buttons.card.yellow->show();
+		//wi.buttons.game.next->show();
+		//wi.buttons.game.prev->show();
+		wi.buttons.game.switch_sides.show();
+		wi.buttons.time.plus_1.show();
+		wi.buttons.time.minus_1.show();
+		wi.buttons.time.plus_20.show();
+		wi.buttons.time.minus_20.show();
+		wi.buttons.time.reset.show();
+		wi.buttons.time.toggle_pause.show();
+		wi.labels.time.show();
+		wi.labels.t1.score.show();
+		//wi.labels.t1.name->show();
+		wi.labels.t2.score.show();
+		//wi.labels.t2.name->show();
+		wi.card_dealer.show();
 	}
 }
 
@@ -374,37 +530,8 @@ int text_height(const char *text, QFont font) {
 	return text_size.height()*0.6;
 }
 
-QFont biggest_font_possible(const char *text, int max_width, int max_height, bool bold) {
-	QFont font = QApplication::font();
-	font.setBold(bold);
-
-	int low = 1, high = 500;  // Reasonable font size range
-	int bestSize = low;
-
-	while (low <= high) {
-		int mid = (low + high) / 2;
-		font.setPointSize(mid);
-		QSize text_size = QFontMetrics(font).size(Qt::TextSingleLine, text);
-		//the rectangle calculates height way to conservative
-		//textRect.setHeight(textRect.height() * 1.5);
-		//textRect.setWidth(textRect.width() * 1.1);
-		int width = text_size.width();
-		int height = text_size.height();
-
-		if (width <= max_width && height <= max_height) {
-			bestSize = mid;  // Found a valid size, try bigger
-			low = mid + 1;
-		} else {
-			high = mid - 1;  // Too big, try smaller
-		}
-	}
-
-	font.setPointSize(bestSize);
-	return font;
-}
-
-//alignment: 0:= left, 1:= center, 2:=right
-//if fontsize is -1 use biggest fontsize possible
+// alignment: 0:= left, 1:= center, 2:=right
+// if fontsize is -1 use biggest fontsize possible
 void update_label(QLabel *l, float x_start, float x_end, float y_start, float y_end, const char *text, int fontsize, bool bold, Qt::Alignment x_alignment, Qt::Alignment y_alignment) {
 	int w = l->parentWidget()->width();
 	int h = l->parentWidget()->height();
@@ -441,13 +568,13 @@ void update_combobox(QComboBox *b, int w, int h, float x_start, float x_end, flo
 }
 
 void update_display_window() {
-	int w = wd.w->width();
-	int h = wd.w->height();
+	int w = wd.widget.width();
+	int h = wd.widget.height();
 
 	/*
 	if (md.cur.gameindex == md.games_count) {
-		update_label(wd.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
-		update_label(wd.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		update_label(wd.labels.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
+		update_label(wd.labels.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
 		return;
 	}
 	*/
@@ -470,15 +597,15 @@ void update_display_window() {
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	update_label(wd.l.t1.name, 0.02, 0.47, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
+	update_label(wd.labels.t1.name, 0.02, 0.47, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
-	update_label(wd.l.colon, 0.47, 0.53, 0.01, 0.25, ":", f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
+	update_label(wd.labels.colon, 0.47, 0.53, 0.01, 0.25, ":", f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
 	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	update_label(wd.l.t2.name, 0.53, 0.98, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
+	update_label(wd.labels.t2.name, 0.53, 0.98, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
 	//Display the Scores
 	if (md.cur.halftime)
@@ -486,21 +613,21 @@ void update_display_window() {
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 
-	update_label(wd.l.t1.score, 0, 0.5, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
+	update_label(wd.labels.t1.score, 0, 0.5, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
 
 	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(wd.l.t2.score, 0.5, 1, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
+	update_label(wd.labels.t2.score, 0.5, 1, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
 
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
-	update_label(wd.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignHCenter, Qt::AlignBottom);
+	update_label(wd.labels.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignHCenter, Qt::AlignBottom);
 }
 
 void update_input_window() {
-	int w = wi.w->width();
-	int h = wi.w->height();
+	int w = wi.window->width();
+	int h = wi.window->height();
 
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
@@ -520,25 +647,25 @@ void update_input_window() {
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
-	update_label(wi.l.t1.name, 0.06, 0.46, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
+	update_label(wi.labels.t1.name, 0.06, 0.46, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
-	float height = (float)text_height(wi.l.t1.name->text().toUtf8().constData(), wi.l.t1.name->font())/h;
+	float height = (float)text_height(wi.labels.t1.name->text().toUtf8().constData(), wi.labels.t1.name->font())/h;
 
 	//Display prev game;
-	update_button(wi.b.game.prev, w, h, 0.01, 0.05, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
+	update_button(wi.buttons.game.prev, w, h, 0.01, 0.05, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display switch sides;
-	update_button(wi.b.game.switch_sides, w, h, 0.47, 0.53, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
+	update_button(wi.buttons.game.switch_sides, w, h, 0.47, 0.53, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display next game;
-	update_button(wi.b.game.next, w, h, 0.95, 0.99, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
+	update_button(wi.buttons.game.next, w, h, 0.95, 0.99, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display Team 2 Name
 	if (md.cur.halftime)
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
 	else
 		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
-	update_label(wi.l.t2.name, 0.54, 0.94, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
+	update_label(wi.labels.t2.name, 0.54, 0.94, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
 
 	//Display the Scores
@@ -547,65 +674,65 @@ void update_input_window() {
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
-	update_label(wi.l.t1.score, 0, 0.5, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wi.labels.t1.score, 0, 0.5, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 1
 	float width;
-	width = (float)text_width(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/w;
-	height = (float)text_height(wi.l.t1.score->text().toUtf8().constData(), wi.l.t1.score->font())/h;
-	update_button(wi.b.t1.score_plus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.21, 0.25);
-	update_button(wi.b.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.49);
+	width = (float)text_width(wi.labels.t1.score->text().toUtf8().constData(), wi.labels.t1.score->font())/w;
+	height = (float)text_height(wi.labels.t1.score->text().toUtf8().constData(), wi.labels.t1.score->font())/h;
+	update_button(wi.buttons.t1.score_plus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.21, 0.25);
+	update_button(wi.buttons.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Score Team 2
 	if (md.cur.halftime)
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
 	else
 		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
-	update_label(wi.l.t2.score, 0.5, 1, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wi.labels.t2.score, 0.5, 1, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 2
-	width = (float)text_width(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/w;
-	height = (float)text_height(wi.l.t2.score->text().toUtf8().constData(), wi.l.t2.score->font())/h;
-	update_button(wi.b.t2.score_plus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.21, 0.25);
-	update_button(wi.b.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.49);
+	width = (float)text_width(wi.labels.t2.score->text().toUtf8().constData(), wi.labels.t2.score->font())/w;
+	height = (float)text_height(wi.labels.t2.score->text().toUtf8().constData(), wi.labels.t2.score->font())/h;
+	update_button(wi.buttons.t2.score_plus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.21, 0.25);
+	update_button(wi.buttons.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Time
 	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
-	update_label(wi.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
+	update_label(wi.labels.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Time
-	width = (float)text_width(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/w;
-	height = (float)text_height(wi.l.time->text().toUtf8().constData(), wi.l.time->font())/h;
-	//update_button(&wi.b.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
-	update_button(wi.b.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
-	update_button(wi.b.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
-	update_button(wi.b.time.minus20, w, h, 0.43-width/2, 0.46-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
-	update_button(wi.b.time.plus20, w, h, 0.54+width/2, 0.57+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	width = (float)text_width(wi.labels.time->text().toUtf8().constData(), wi.labels.time->font())/w;
+	height = (float)text_height(wi.labels.time->text().toUtf8().constData(), wi.labels.time->font())/h;
+	//update_button(&wi.buttons.t2.score_plus, wi.fixed, 0+(wi.width/2 - width)/2, wi.width/2-(wi.width/2 - width)/2, wi.height/5, wi.height/5 + ((wi.height/2+wi.height/8) - wi.height/5)-height);
+	update_button(wi.buttons.time.minus, w, h, 0.47-width/2, 0.5-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.buttons.time.plus, w, h, 0.5+width/2, 0.53+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.buttons.time.minus20, w, h, 0.43-width/2, 0.46-width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
+	update_button(wi.buttons.time.plus20, w, h, 0.54+width/2, 0.57+width/2, 0.5+(0.5-height)/4, 1-(0.5-height)/2);
 
-	update_button(wi.b.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
-	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
+	update_button(wi.buttons.time.toggle_pause, w, h, 0.51-width/2, 0.49, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
+	update_button(wi.buttons.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 
-	wi.dd_card_players->clear();
+	wi.card_dealer->clear();
 	u8 t1_index = md.games[md.cur.gameindex].t1_index;
 	u8 t2_index = md.games[md.cur.gameindex].t2_index;
-	wi.dd_card_players->addItem("");
-	wi.dd_card_players->addItem(md.players[md.teams[t1_index].keeper_index].name, QVariant(md.teams[t1_index].keeper_index));
-	wi.dd_card_players->addItem(md.players[md.teams[t1_index].field_index].name, QVariant(md.teams[t1_index].field_index));
-	wi.dd_card_players->addItem(md.players[md.teams[t2_index].keeper_index].name, QVariant(md.teams[t2_index].keeper_index));
-	wi.dd_card_players->addItem(md.players[md.teams[t2_index].field_index].name, QVariant(md.teams[t2_index].field_index));
-	update_combobox(wi.dd_card_players, w, h, 0.88, 0.98, 0.69, 0.73);
-	update_button(wi.b.card.yellow, w, h, 0.88, 0.925, 0.74, 0.79);
-	update_button(wi.b.card.red, w, h, 0.935, 0.98, 0.74, 0.79);
+	wi.card_dealer->addItem("");
+	wi.card_dealer->addItem(md.players[md.teams[t1_index].keeper_index].name, QVariant(md.teams[t1_index].keeper_index));
+	wi.card_dealer->addItem(md.players[md.teams[t1_index].field_index].name, QVariant(md.teams[t1_index].field_index));
+	wi.card_dealer->addItem(md.players[md.teams[t2_index].keeper_index].name, QVariant(md.teams[t2_index].keeper_index));
+	wi.card_dealer->addItem(md.players[md.teams[t2_index].field_index].name, QVariant(md.teams[t2_index].field_index));
+	update_combobox(wi.card_dealer, w, h, 0.88, 0.98, 0.69, 0.73);
+	// TODO update_button(wi.buttons.card.yellow, w, h, 0.88, 0.925, 0.74, 0.79);
+	// TODO update_button(wi.buttons.card.red, w, h, 0.935, 0.98, 0.74, 0.79);
 
-	update_button(wi.b.connect, w, h, 0.93, 0.99, 0.93, 0.99);
+	update_button(wi.buttons.connection, w, h, 0.93, 0.99, 0.93, 0.99);
 	if (server_con == NULL) {
-		wi.b.connect->setEnabled(true);
+		wi.buttons.connection->setEnabled(true);
 		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning);
-		wi.b.connect->setIcon(icon);
+		wi.buttons.connection->setIcon(icon);
 	} else {
-		wi.b.connect->setEnabled(false);
+		wi.buttons.connection->setEnabled(false);
 		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_DialogApplyButton);
-		wi.b.connect->setIcon(icon);
+		wi.buttons.connection->setIcon(icon);
 	}
 }
 
@@ -625,67 +752,40 @@ void create_input_window() {
 	wi.w = new QWidget;
 	wi.w->setWindowTitle("Scoreboard Input");
 
-	wi.l.t1.name = new QLabel("", wi.w);
-	wi.l.t2.name = new QLabel("", wi.w);
-	wi.l.t1.score = new QLabel("", wi.w);
-	wi.l.t2.score = new QLabel("", wi.w);
-	wi.l.time = new QLabel("", wi.w);
+	wi.labels.t1.name = new QLabel("", wi.widget);
+	wi.labels.t2.name = new QLabel("", wi.widget);
+	wi.labels.t1.score = new QLabel("", wi.widget);
+	wi.labels.t2.score = new QLabel("", wi.widget);
+	wi.labels.time = new QLabel("", wi.widget);
 	//Create Buttons
-	wi.b.t1.score_minus = button_new(wi.w, btn_cb_t1_score_minus, QStyle::SP_ArrowDown, 32);
-	wi.b.t1.score_plus = button_new(wi.w, btn_cb_t1_score_plus, QStyle::SP_ArrowUp, 32);
-	wi.b.t2.score_minus = button_new(wi.w, btn_cb_t2_score_minus, QStyle::SP_ArrowDown, 32);
-	wi.b.t2.score_plus = button_new(wi.w, btn_cb_t2_score_plus, QStyle::SP_ArrowUp, 32);
+	wi.buttons.t1.score_minus = button_new(&wi.widget, btn_cb_t1_score_minus, QStyle::SP_ArrowDown, 32);
+	wi.buttons.t1.score_plus = button_new(&wi.widget, btn_cb_t1_score_plus, QStyle::SP_ArrowUp, 32);
+	wi.buttons.t2.score_minus = button_new(&wi.widget, btn_cb_t2_score_minus, QStyle::SP_ArrowDown, 32);
+	wi.buttons.t2.score_plus = button_new(&wi.widget, btn_cb_t2_score_plus, QStyle::SP_ArrowUp, 32);
 
-	wi.b.game.next = button_new(wi.w, btn_cb_game_next, QStyle::SP_ArrowForward, 32);
+	wi.buttons.game.next = button_new(&wi.widget, btn_cb_game_next, QStyle::SP_ArrowForward, 32);
 
-	wi.b.game.prev = button_new(wi.w, btn_cb_game_prev, QStyle::SP_ArrowBack, 32);
-	wi.b.game.switch_sides = button_new(wi.w, btn_cb_game_switch_sides, QStyle::SP_BrowserReload, 32);
-	wi.b.time.plus = button_new(wi.w, btn_cb_time_plus, QStyle::SP_ArrowUp, 25);
-	wi.b.time.minus = button_new(wi.w, btn_cb_time_minus, QStyle::SP_ArrowDown, 25);
-	wi.b.time.plus20 = button_new(wi.w, btn_cb_time_plus20, QStyle::SP_ArrowUp, 40);
-	wi.b.time.minus20 = button_new(wi.w, btn_cb_time_minus20, QStyle::SP_ArrowDown, 40);
-	wi.b.time.toggle_pause = button_new(wi.w, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
-	wi.b.time.reset = button_new(wi.w, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
+	wi.buttons.game.prev = button_new(&wi.widget, btn_cb_game_prev, QStyle::SP_ArrowBack, 32);
+	wi.buttons.game.switch_sides = button_new(&wi.widget, btn_cb_game_switch_sides, QStyle::SP_BrowserReload, 32);
+	wi.buttons.time.plus = button_new(&wi.widget, btn_cb_time_plus, QStyle::SP_ArrowUp, 25);
+	wi.buttons.time.minus = button_new(&wi.widget, btn_cb_time_minus, QStyle::SP_ArrowDown, 25);
+	wi.buttons.time.plus20 = button_new(&wi.widget, btn_cb_time_plus20, QStyle::SP_ArrowUp, 40);
+	wi.buttons.time.minus20 = button_new(&wi.widget, btn_cb_time_minus20, QStyle::SP_ArrowDown, 40);
+	wi.buttons.time.toggle_pause = button_new(&wi.widget, btn_cb_time_toggle_pause, QStyle::SP_MediaPause, 32);
+	wi.buttons.time.reset = button_new(&wi.widget, btn_cb_time_reset, QStyle::SP_BrowserReload, 32);
 
-	wi.b.card.red = button_new(wi.w, btn_cb_red_card, QStyle::SP_DialogApplyButton, 32);
-	wi.b.card.yellow = button_new(wi.w, btn_cb_yellow_card, QStyle::SP_DialogApplyButton, 32);
-	wi.b.card.red->setStyleSheet("background-color: red;");
-	wi.b.card.yellow->setStyleSheet("background-color: yellow;");
+	// TODO
+	//wi.buttons.card.red = button_new(&wi.widget, btn_cb_red_card, QStyle::SP_DialogApplyButton, 32);
+	//wi.buttons.card.yellow = button_new(&wi.widget, btn_cb_yellow_card, QStyle::SP_DialogApplyButton, 32);
+	//wi.buttons.card.red->setStyleSheet("background-color: red;");
+	//wi.buttons.card.yellow->setStyleSheet("background-color: yellow;");
 
-	wi.dd_card_players = new QComboBox(wi.w);
+	// TODO NOW
+	wi.card_dealer = new QComboBox(&wi.widget);
 
-	wi.b.connect = button_new(wi.w, btn_cb_connect, QStyle::SP_MessageBoxCritical, 50);
+	wi.buttons.connection = button_new(&wi.widget, btn_cb_connect, QStyle::SP_MessageBoxCritical, 50);
 
 	update_input_window();
-}
-
-// Function to create the display window
-void create_display_window() {
-	wd.w = new QWidget;
-	wd.w->setWindowTitle("Scoreboard Display");
-
-	// Setting background color to black
-	QPalette palette = wd.w->palette();
-	palette.setColor(QPalette::Window, Qt::black);
-	wd.w->setAutoFillBackground(true);
-	wd.w->setPalette(palette);
-
-	wd.l.t1.name = new QLabel("", wd.w);
-	wd.l.t2.name = new QLabel("", wd.w);
-	wd.l.t1.score = new QLabel("", wd.w);
-	wd.l.t2.score = new QLabel("", wd.w);
-	wd.l.time = new QLabel("", wd.w);
-	wd.l.colon = new QLabel("", wd.w);
-
-	// Setting label colors to orange for score and white for the rest
-	wd.l.t1.name->setStyleSheet("color: white;");
-	wd.l.t2.name->setStyleSheet("color: white;");
-	wd.l.t1.score->setStyleSheet("color: #cc6600;");
-	wd.l.t2.score->setStyleSheet("color: #cc6600;");
-	wd.l.time->setStyleSheet("color: white;");
-	wd.l.colon->setStyleSheet("color: white;");
-
-	update_display_window();
 }
 
 class EventFilter : public QObject {
@@ -704,8 +804,8 @@ void update_timer() {
 		md.cur.time--;
 		//play sound if time is up
 		if (md.cur.time == 0) {
-			player->setPosition(0);
-			player->play();
+			player.setPosition(0);
+			player.play();
 		}
 		update_display_window();
 		update_input_window();
@@ -731,47 +831,51 @@ void json_autosave() {
 	printf("INFO: Autosaved JSON successfully!\n");
 }
 
-int main(int argc, char *argv[]) {
+} // extern "C"
+
+int
+main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
-	//Set up the Audio Source for the player
-	player->setAudioOutput(audio_output);
-	audio_output->setVolume(1);
-	player->setSource(QUrl::fromLocalFile(SOUND_GAME_END));
+	// Audio setup
+	player.setAudioOutput(&audio_output);
+	player.setSource(QUrl::fromLocalFile(SOUND_GAME_END));
+	audio_output.setVolume(1);
+	player.play(); // TODO DEBUG THEN REMOVE
 
 	// Applying Kanit font globally
-	const int font_id = QFontDatabase::addApplicationFont("assets/ChivoMono-Regular.ttf");
-	QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
+	const int32_t font_id = QFontDatabase::addApplicationFont("assets/ChivoMono-Regular.ttf");
+	const QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
 	if (!font_families.isEmpty()) {
-		QFont app_font(font_families.at(0));
+		const QFont app_font(font_families.at(0));
 		QApplication::setFont(app_font);
 	}
 
+	// TODO REFACTOR
 	char *json = common_read_file(JSON_PATH);
 	json_load(json);
 	free(json);
-	matchday_init();
 
-	create_display_window();
-	create_input_window();
+	// TODO REFACTOR
+	matchday_init();
 
 	mg_mgr_init(&mgr);
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
-	QTimer *t1 = new QTimer(wi.w);
+	QTimer *t1 = new QTimer(&wi.widget);
 	QObject::connect(t1, &QTimer::timeout, &websocket_poll);
 	t1->start(100);
 
-	wd.w->show();
-	wi.w->show();
+	// TODO wd.widget.show();
+	wi.widget.show();
 
-	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
+	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), &wi.widget);
 	QObject::connect(shortcut, &QShortcut::activated, []() {printf("test\n"); btn_cb_time_toggle_pause();});
 
-	QTimer *t2 = new QTimer(wi.w);
+	QTimer *t2 = new QTimer(&wi.widget);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
 	t2->start(1000);
 
-	QTimer *t3 = new QTimer(wi.w);
+	QTimer *t3 = new QTimer(&wi.widget);
 	QObject::connect(t3, &QTimer::timeout, &json_autosave);
 	t3->start(2*60*1000);
 
@@ -779,11 +883,6 @@ int main(int argc, char *argv[]) {
 	app.installEventFilter(&event_filter);
 
 	const int stat = app.exec();
-	delete player;
-	delete audio_output;
-	delete wd.w;
-	delete wi.w;
+	// TODO FREE wi and wd keys
 	return stat;
 }
-
-} // extern "C"
