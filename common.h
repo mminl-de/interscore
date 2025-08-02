@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <chrono>
 
@@ -27,6 +29,7 @@ typedef struct { u16 h; u8 s, b; } HSB;
 typedef struct { u8 s1, s2; } Score;
 typedef enum { CARD_YELLOW, CARD_RED } CardType;
 
+#pragma pack(push, 1)
 typedef struct {
 	Player *player;
 	CardType type;
@@ -55,18 +58,4 @@ struct Game {
 	u8 cards_count;
 	u8 replays_count;
 };
-
-typedef struct {
-	struct {
-		Game *game;
-		bool halftime;
-		bool pause;
-		u16 time;
-		std::chrono::system_clock::time_point start_time;
-	} cur;
-	u16 deftime;
-	Game *games;
-	u8 games_count;
-	Team *teams;
-	u8 teams_count;
-} Matchday;
+#pragma pack(pop)

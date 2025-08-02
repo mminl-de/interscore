@@ -19,6 +19,5 @@ typedef struct {
 } Matchday;
 #pragma pack(pop)
 
-Matchday matchday_init();
-void matchday_parse_json(Matchday *md, const char *json);
+Matchday matchday_init(const char *json);
 void matchday_free();

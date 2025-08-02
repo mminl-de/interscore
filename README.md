@@ -28,6 +28,9 @@ This project was made for our personal use in a Cycleball tournament under hilar
 
 # TODO
 
+## open questions (2025-07-08)
+- do we need to move away the common/matchday code? ig only rentnerend will use it?
+
 ## right after performance
 - remove new_matchday.json
 - remoteend:
