@@ -22,7 +22,7 @@ b-fast:
 b-run:
 	./$(OUT)
 
-RSRC ?= rentnerend/main.cpp mongoose/mongoose.c common.c
+RSRC ?= rentnerend/*.cpp mongoose/mongoose.c
 ROUT ?= rentnerend/interscore
 CPPFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
 LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
