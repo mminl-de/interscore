@@ -112,6 +112,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
 - FINAL delte cards
 - FINAL² Add referees
+- FINAL ENSURE assets are always found by the executable
 
 ## backend
 - OBS Replays sind noch bisschen buggy irgendwie

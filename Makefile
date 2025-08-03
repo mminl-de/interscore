@@ -22,22 +22,11 @@ b-fast:
 b-run:
 	./$(OUT)
 
-RSRC ?= rentnerend/*.cpp mongoose/mongoose.c
-ROUT ?= rentnerend/interscore
-CPPFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
-LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
-
-r-install:
-	$(CXX) -o $(ROUT) $(RSRC) -O3 $(CPPFLAGS) $(LD_FLAGS) -s
-
-r-debug:
-	$(CXX) -o $(ROUT) $(RSRC) $(CPPFLAGS) $(LD_FLAGS) -g
-
 r-fast:
-	$(CXX) -o $(ROUT) $(RSRC) -fpermissive -fPIC $(LD_FLAGS)
+	${MAKE} --no-print-directory -C rentnerend fast
 
 r-run:
-	./$(ROUT)
+	rentnerend/interscore
 
 js:
 	tsc --target es2017 frontend/script.ts

@@ -6,10 +6,10 @@
 #define ORANGE "#f60" // TODO NOW
 
 displaywindow::DisplayWindow::DisplayWindow() {
-	this->widget.setWindowTitle("Interscore: Scoreboard Display");
+	this->window.setWindowTitle("Interscore: Scoreboard Display");
 
 	// Setting colors
-	this->widget.setStyleSheet("background-color: black");
+	this->window.setStyleSheet("background-color: black");
 	this->labels.t1.name.setStyleSheet("font-size: 130px; color: white;");
 	this->labels.t1.score.setStyleSheet("font-size: 600px; color:" ORANGE ";");
 	this->labels.t2.name.setStyleSheet("font-size: 130px; color: white;");
@@ -43,7 +43,7 @@ displaywindow::DisplayWindow::DisplayWindow() {
 	middle_bar->addWidget(&this->labels.colon, 1);
 	middle_bar->addWidget(&this->labels.t2.score, 3);
 
-	QVBoxLayout *layout = new QVBoxLayout(&this->widget);
+	QVBoxLayout *layout = new QVBoxLayout(&this->window);
 	layout->addLayout(top_bar, 1);
 	layout->addLayout(middle_bar, 2);
 	layout->addWidget(&this->labels.time, 2);

@@ -6,7 +6,7 @@
 namespace displaywindow {
 
 struct DisplayWindow {
-	QWidget widget;
+	QWidget window;
 	struct {
 		struct {
 			QLabel name;
