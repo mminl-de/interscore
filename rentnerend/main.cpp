@@ -6,7 +6,7 @@
 #include "audio.hpp"
 #include "constants.hpp"
 #include "displaywindow.hpp"
-#include "inputwindow.hpp"
+#include "launchwindow.hpp"
 
 int
 main(int argc, char *argv[]) {
@@ -26,18 +26,37 @@ main(int argc, char *argv[]) {
 	// TODO PLAN
 	// matchday
 
-	inputwindow::InputWindow iw; // constructor call
-	iw.window.show();
+	launchwindow::LaunchWindow lw; // constructor call
+	lw.window.show();
 
 	//displaywindow::DisplayWindow dw; // constructor call
 	//dw.window.show();
 
-	// TODO NOTES
-	// windows
-	// matchday
+	// TODO NOTE actual screens
+	// ## launch
+	// absolute title
+	// open old tournament
+	// create new tournament
+	// about us
+	// set language
 	//
-	// ## 2
-	// callbacks
+	// ## actual
+	// change tournament
+	// about us
+	// set language
+
+	// TODO NOTE things on the start screen
+	// title and version
+	// about button
+	// settings
+	//     set language
+	// load json or create new one
+	// ## json
+	// event name
+	// number of groups
+	// role list
+	// player list
+	// game list
 
 	// TODO PLAN
 	// websockets
