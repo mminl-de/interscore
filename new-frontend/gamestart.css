@@ -1,0 +1,29 @@
+.gamestart {
+	display: none;
+	flex-direction: column;
+
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	transition: opacity 0.5s ease-in-out;
+
+	gap: 20px;
+}
+
+.gamestart .container {
+	display: flex;
+	gap: 50px;
+}
+
+.gamestart .container > * {
+	width: 500px;
+	text-align: center;
+}
+
+.gamestart .t1, .gamestart .t2 {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}

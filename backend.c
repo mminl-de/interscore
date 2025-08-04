@@ -1,4 +1,3 @@
-#include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
@@ -120,6 +119,7 @@ typedef struct {
 // Meta
 #define EXIT 'q'
 #define RELOAD_RENTNERJSON 'j'
+#define RELOAD_FRONTJSON 'x'
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
@@ -283,7 +283,7 @@ WidgetLivetable WidgetLivetable_create() {
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
 	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
 
-	for(u8 i = 0; i < md.teams_count; i++){
+	for(u8 i = 0; i < md.teams_count; i++) {
 		u8 teamindex = md.players[teams[i].keeper_index].team_index;
 		strcpy(w.teams[i], md.teams[teamindex].name);
 		w.points[i] = team_calc_points(teamindex);
@@ -767,7 +767,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	}
 }
 
-void *mongoose_update() {
+void *mongoose_update(void *arg) {
 	while (running) {
 		mg_mgr_poll(&mgr_svr, 20);
 		mg_mgr_poll(&mgr_obs, 20);
@@ -789,7 +789,11 @@ int main(void) {
 
 
 	// User data stuff
-	char *json = file_read(JSON_PATH);
+	struct mg_fs *fs = &mg_fs_posix;
+	struct mg_str data = mg_file_read(fs, JSON_PATH);
+	char *json = malloc(data.len + 1);
+	strncpy(json, data.buf, data.len);
+	json[data.len] = '\0';
 	json_load(json);
 	free(json);
 	md.cur.pause = true;
@@ -929,6 +933,15 @@ int main(void) {
 				char w = 0;
 				mg_ws_send(con_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
 				break;
+			case RELOAD_FRONTJSON:
+				if (con_front == NULL){
+					fprintf(stderr, "ERROR: Frontend not connected, cant reload JSON!\n");
+					break;
+				}
+				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
+				char *ww = json_generate();
+				mg_ws_send(con_front, ww, strlen(ww), WEBSOCKET_OP_TEXT);
+				break;
 			case CONNECT_OBS:
 				mg_ws_connect(&mgr_obs, OBS_URL, ev_handler_client, NULL, NULL);
 				printf("Trying to connect to OBS...\n");
@@ -951,6 +964,7 @@ int main(void) {
 					"R  Replay\n"
 					"\n"
 					"j  Reload rentnerend json\n"
+					"x  Reload frontend json\n"
 					"o  connect to obs\n"
 					"?  print help\n"
 					"q  quit\n"

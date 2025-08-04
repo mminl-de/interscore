@@ -42,6 +42,9 @@ r-run:
 js:
 	tsc --target es2017 frontend/script.ts
 
+js-new:
+	tsc --target es2017 new-frontend/script.ts
+
 backer-install:
 	mkdir -p ~/.config/obs-studio/basic/profiles
 	mkdir -p ~/.config/obs-studio/basic/scenes
