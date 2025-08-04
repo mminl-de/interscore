@@ -1,6 +1,3 @@
-[submodule "mongoose"]
-	path = mongoose
-	url = https://github.com/cesanta/mongoose
-[submodule "remote"]
-	path = remote
-	url = https://github.com/mminl-de/interscore-remoteend
+[submodule "cycleu"]
+	path = cycleu
+	url = https://github.com/mminl-de/cycleu

@@ -124,7 +124,7 @@ char* json_generate() {
 	}
 	json_object_object_add(root, "teams", teams);
 	json_object_object_add(root, "games", games);
-	char *str = json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
+	char *str = (char *) json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
 	return str;
 }
 
@@ -190,7 +190,7 @@ void json_load(const char *s) {
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
 	}
 	//Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
-	md.teams[md.teams_count].name = malloc(5 * sizeof(char));
+	md.teams[md.teams_count].name = (char *) malloc(5 * sizeof(char));
 	strcpy(md.teams[md.teams_count].name, "ENDE");
 	md.teams[md.teams_count].color_dark = md.teams[0].color_dark;
 	md.teams[md.teams_count].color_light = md.teams[0].color_light;
@@ -199,7 +199,7 @@ void json_load(const char *s) {
 	md.teams[md.teams_count].logo_filename = md.teams[0].logo_filename;
 
 	md.games_count = json_object_array_length(games);
-	//We alloc one game more, because its a filler game for the end
+	// We alloc one game more, because its a filler game for the end
 	md.games = (Game *) malloc((md.games_count+1) * sizeof(Game));
 
 	for(int i=0; i < md.games_count; i++){
@@ -268,9 +268,9 @@ void json_load(const char *s) {
 	return;
 }
 
-//@ret the string of the whole content of the file. In case of an error: NULL
+// @ret the string of the whole content of the file. In case of an error: NULL
 //The responsibility of the string, gets passed to the caller! It has to free!
-char* file_read(const char *path){
+char* common_read_file(const char *path) {
 	// First convert path to actual string containing whole file
 	FILE *f = fopen(path, "rb");
 	if (f == NULL) {
@@ -304,7 +304,7 @@ char* file_read(const char *path){
 //Write the string to the file in path. If the file exists, overwrite it. If not, create it
 bool file_write(const char *path, const char *s){
 	FILE *f = fopen(path, "w");
-	if(f == NULL)
+	if (f == NULL)
 		return false;
 	fprintf(f, "%s", s);
 	fclose(f);
