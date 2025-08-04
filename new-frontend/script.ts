@@ -47,6 +47,12 @@ const TEAM_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
 const SCROLL_DURATION = 7_000
 
+const WIDGET_SCOREBOARD_SHOWN = false
+const WIDGET_GAMEPLAN = false
+const WIDGET_LIVEPLAN_SHOWN = false
+const WIDGET_GAMESTART_SHOWN = false
+const WIDGET_AD_SHOWN = false
+
 enum CardType { Yellow, Red }
 // enum PlayerRole { Keeper, Field} TODO String?
 
@@ -392,27 +398,35 @@ function write_gamestart(m: Matchday) {
 }
 
 // TODO refactor as handler function for receiving a card, also adding it to Matchday m
-function write_card(view: DataView) {
+function write_card(player_index: number, type: CardType) {
 	let offset = 1
-	const is_red = view.getUint8(offset)
+	const player_index =
+	const display_length = 7_000
 
-	let name: String = ""
-
-	card_receiver.innerHTML = name.toString()
-	if (is_red === 1) {
+	card_receiver.innerHTML = md.player[player_index].name.toString() //TODO do we need toString?
+	if (type === CardType.Yellow) {
 		card_graphic.style.backgroundColor = "#ff0000"
 		card_message.innerHTML = "bekommt eine rote Karte"
-	} else {
+	} else if (type === CardType.Red) {
 		card_graphic.style.backgroundColor = "#ffff00"
 		card_message.innerHTML = "bekommt eine gelbe Karte"
+	} else {
+		console.log("Unknown CardType... exiting")
+		return //TODO can we do that and no UI appears?
+	}
+
+	md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards.length] = {
+		player_index: player_index,
+		card_type: type
 	}
 
 	setTimeout(() => {
 		card.style.opacity = "0"
 		setTimeout(() => card.style.display = "none", 500)
-	}, 7_000)
+	}, display_length)
 }
 
+// TODO Does this need to be ?
 interface LivetableLine {
 	name?: string,
 	points?: number,
@@ -426,7 +440,6 @@ interface LivetableLine {
 	color_left?: number
 }
 
-// TODO FINAL OPTIMIZE
 function write_livetable(m: Matchday) {
 	while (livetable.children.length > 2)
 		livetable.removeChild(livetable.lastChild!)
@@ -555,53 +568,80 @@ function write_livetable(m: Matchday) {
 	}
 }
 
-//TODO transform this too
-let DEFTIME = 420
-let countdown = 0
-let remaining_time = 0
-let timer_is_paused = true
+let countdown = 0 //TODO ASK what is this?
 
+// Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
 function scoreboard_set_timer(view: DataView) {
 	clearInterval(countdown)
 
 	let offset = 1
 	const time_in_s = view.getUint16(offset)
-	remaining_time = time_in_s
+	md.cur.time = time_in_s
 
 	update_timer_html()
 	countdown = setInterval(() => {
-		if (timer_is_paused) return
-		if (remaining_time <= 1) clearInterval(countdown)
+		if (md.cur.pause) return
+		if (md.cur.time <= 1) clearInterval(countdown)
 
-		--remaining_time
+		--md.cur.time
 
-		const bar_width = Math.max(0, (remaining_time / DEFTIME) * 100)
+		const bar_width = Math.max(0, (md.cur.time / md.deftime) * 100)
 		scoreboard_time_bar.style.width = bar_width + "%"
 		update_timer_html()
 	}, 1000)
 }
 
 function update_timer_html() {
-	const minutes = Math.floor(remaining_time / 60).toString().padStart(2, "0")
-	const seconds = (remaining_time % 60).toString().padStart(2, "0")
+	const minutes = Math.floor(md.cur.time / 60).toString().padStart(2, "0")
+	const seconds = (md.cur.time % 60).toString().padStart(2, "0")
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
+}
+
+function update_ui() {
+	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard()
+	if(WIDGET_GAMEPLAN) write_gameplan()
+	if(WIDGET_LIVEPLAN_SHOWN) write_liveplan()
+	if(WIDGET_GAMESTART_SHOWN) write_gamestart()
+	if(WIDGET_AD_SHOWN) write_ad() //TODO This does not exist, right?
 }
 
 socket.onopen = () => {
 	console.log("Connected to WebSocket server!")
 }
 
-enum WidgetMessage {
-	JSON = 123, // ASCII of: {
-	WIDGET_SCOREBOARD = 1,
-	WIDGET_LIVETABLE = 3,
-	WIDGET_GAMEPLAN = 5,
-	WIDGET_GAMESTART = 7,
-	WIDGET_CARD_SHOW = 9,
-	WIDGET_AD = 10,
-	SCOREBOARD_SET_TIMER = 12,
-	SCOREBOARD_PAUSE_TIMER = 13
+// This is 1-1 the InputType enum from common.h
+enum Message {
+	WIDGET_SCOREBOARD_SHOW,
+	WIDGET_SCOREBOARD_HIDE,
+	WIDGET_GAMEPLAN_SHOW,
+	WIDGET_GAMEPLAN_HIDE,
+	WIDGET_LIVEPLAN_SHOW, //TODO liveplan or livetable?
+	WIDGET_LIVEPLAN_HIDE,
+	WIDGET_GAMESTART_SHOW,
+	WIDGET_GAMESTART_HIDE,
+	WIDGET_AD_TOGGLE,
+	OBS_STREAM_START,
+	OBS_STREAM_STOP,
+	OBS_REPLAY_START,
+	OBS_REPLAY_STOP,
+	T1_SCORE_PLUS,
+	T1_SCORE_MINUS0,
+	T2_SCORE_PLUS,
+	T2_SCORE_MINUS,
+	GAME_NEXT,
+	GAME_PREV,
+	GAME_SWITCH_SIDES,
+	TIME_PLUS,
+	TIME_MINUS,
+	TIME_PLUS_20,
+	TIME_MINUS_20,
+	TIME_TOGGLE_ON,
+	TIME_TOGGLE_OFF,
+	TIME_RESET,
+	YELLOW_CARD,
+	RED_CARD,
+	UPDATE_JSON = 123, // ASCII of: {
 }
 
 socket.onmessage = (event: MessageEvent) => {
@@ -617,71 +657,148 @@ socket.onmessage = (event: MessageEvent) => {
 	const mode: number = buffer.charCodeAt(0)
 	console.log("mode: " + mode)
 	switch (mode) {
-		case WidgetMessage.JSON:
-			console.log("Parsing JSON now");
-			md = parse_json(buffer) //TODO Does this work?
-			console.log("JSON parsed. Here it is:", md);
-			break
-		case WidgetMessage.WIDGET_SCOREBOARD:
-			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.display = "none", 500)
-			break
-		case WidgetMessage.WIDGET_SCOREBOARD + 1:
+		case Message.WIDGET_SCOREBOARD_SHOW:
+			WIDGET_SCOREBOARD_SHOWN = true
 			scoreboard.style.display = "inline-flex"
 			scoreboard.style.opacity = "0"
 			setTimeout(() => scoreboard.style.opacity = "1", 10)
 			write_scoreboard(md)
 			break
-		case WidgetMessage.WIDGET_LIVETABLE:
-			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.display = "none", 500)
+		case Message.WIDGET_SCOREBOARD_HIDE:
+			WIDGET_SCOREBOARD_SHOWN = false
+			scoreboard.style.opacity = "0"
+			setTimeout(() => scoreboard.style.display = "none", 500)
 			break
-		case WidgetMessage.WIDGET_LIVETABLE + 1:
-			livetable.style.display = "inline-flex"
-			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.opacity = "1", 10)
-			write_livetable(md)
-			break
-		case WidgetMessage.WIDGET_GAMEPLAN:
-			gameplan.style.opacity = "0"
-			setTimeout(() => gameplan.style.display = "none", 500)
-			break
-		case WidgetMessage.WIDGET_GAMEPLAN + 1:
+		case Message.WIDGET_GAMEPLAN_SHOW:
+			WIDGET_GAMEPLAN_SHOWN = true
 			gameplan.style.display = "inline-flex"
 			gameplan.style.opacity = "0"
 			setTimeout(() => gameplan.style.opacity = "1", 10)
 			write_gameplan(md)
 			break
-		case WidgetMessage.WIDGET_GAMESTART:
-			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.display = "none", 500)
+		case Message.WIDGET_GAMEPLAN_HIDE:
+			WIDGET_GAMEPLAN_SHOWN = false
+			gameplan.style.opacity = "0"
+			setTimeout(() => gameplan.style.display = "none", 500)
 			break
-		case WidgetMessage.WIDGET_GAMESTART + 1:
+		case Message.WIDGET_LIVEPLAN_SHOW:
+			WIDGET_LIVEPLAN_SHOWN = true
+			livetable.style.display = "inline-flex"
+			livetable.style.opacity = "0"
+			setTimeout(() => livetable.style.opacity = "1", 10)
+			write_livetable(md)
+			break
+		case Message.WIDGET_LIVEPLAN_HIDE:
+			WIDGET_LIVEPLAN_SHOWN = false
+			livetable.style.opacity = "0"
+			setTimeout(() => livetable.style.display = "none", 500)
+			break
+		case Message.WIDGET_GAMESTART_SHOW:
+			WIDGET_GAMESTART_SHOWN = true
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.opacity = "1", 10)
 			write_gamestart(md)
 			break
-		case WidgetMessage.WIDGET_CARD_SHOW:
-			card.style.display = "flex"
-			card.style.opacity = "0"
-			setTimeout(() => card.style.opacity = "1", 10)
-			//write_card(view)
+		case Message.WIDGET_GAMESTART_HIDE:
+			WIDGET_GAMESTART_SHOWN = false
+			gamestart.style.opacity = "0"
+			setTimeout(() => gamestart.style.display = "none", 500)
 			break
-		case WidgetMessage.WIDGET_AD:
-			ad.style.opacity = "0"
-			setTimeout(() => ad.style.display = "none", 500)
-			break
-		case WidgetMessage.WIDGET_AD + 1:
+		case Message.WIDGET_AD_SHOW: // TODO does this work?
+			WIDGET_AD_SHOWN = true
 			ad.style.display = "block"
 			ad.style.opacity = "0"
 			setTimeout(() => ad.style.opacity = "1", 10)
 			break
-		case WidgetMessage.SCOREBOARD_SET_TIMER:
-			//scoreboard_set_timer(view)
+		case Message.WIDGET_AD_HIDE:
+			WIDGET_AD_SHOWN = false
+			ad.style.opacity = "0"
+			setTimeout(() => ad.style.display = "none", 500)
 			break
-		case WidgetMessage.SCOREBOARD_PAUSE_TIMER:
-			//timer_is_paused = (view.getUint8(1) === 1)
+		case Message.T1_SCORE_PLUS:
+			md.games[md.cur.gameindex].score.t1++
+			update_ui()
+			break
+		case Message.T1_SCORE_MINUS:
+			if(md.games[md.cur.gameindex].score.t1 > 0) {
+				md.games[md.cur.gameindex].score.t1--
+				update_ui()
+			}
+			break
+		case Message.T2_SCORE_PLUS:
+			md.games[md.cur.gameindex].score.t2++
+			update_ui()
+			break
+		case Message.T2_SCORE_MINUS:
+			if(md.games[md.cur.gameindex].score.t2 > 0){
+				md.games[md.cur.gameindex].score.t2--
+				update_ui()
+			}
+			break
+		case Message.GAME_NEXT:
+			if(md.cur.gameindex < md.games.length-1) {
+				md.cur.gameindex++;
+				//TODO should game prev/next also alter other stuff like time?
+				update_ui()
+			}
+			break
+		case Message.GAME_PREV:
+			if(md.cur.gameindex > 0) {
+				md.cur.gameindex--;
+				//TODO should game prev/next also alter other stuff like time?
+				update_ui()
+			}
+			break
+		case Message.GAME_SWITCH_SIDES:
+			md.cur.halftime = 1 - md.cur.halftime //TODO make compile like this
+			update_ui()
+			break
+		case Message.TIME_PLUS:
+			md.cur.time++; // TODO Disallow time changes this when we are not paused?
+			break
+		case Message.TIME_MINUS:
+			if(md.cur.time > 0)
+				md.cur.time--;
+			break
+		case Message.TIME_PLUS_20:
+			md.cur.time += 20;
+			break
+		case Message.TIME_MINUS_20:
+			if(md.cur.time > 19)
+				md.cur.time -= 20;
+			else
+				md.cur.time = 0;
+			break
+		case Message.TIME_TOGGLE_ON:
+			md.cur.pause = true
+			break
+		case Message.TIME_TOGGLE_OFF:
+			md.cur.pause = false
+			break
+		case Message.TIME_RESET:
+			md.cur.time = md.deftime
+			break
+		case Message.YELLOW_CARD:
+			card.style.display = "flex"
+			card.style.opacity = "0"
+			setTimeout(() => card.style.opacity = "1", 10)
+			write_card(view.getUint8(1), CardType.Yellow)
+			break
+		case Message.RED_CARD:
+			card.style.display = "flex"
+			card.style.opacity = "0"
+			setTimeout(() => card.style.opacity = "1", 10)
+			write_card(view.getUint8(1), CardType.Red)
+			break
+		case Message.JSON:
+			console.log("Parsing JSON now");
+			md = parse_json(buffer)
+			console.log("JSON parsed. Here it is:", md);
+			break
+		case WidgetMessage.SCOREBOARD_SET_TIMER:
+			//TODO This is actually useful, implement in rentnerend
+			scoreboard_set_timer(view)
 			break
 	}
 }
