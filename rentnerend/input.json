@@ -1,96 +1,96 @@
 {
-    "teams": {
-        "GIFHORN": {
-            "logo": "assets/gifhorn.jpg",
-            "keeper": {
-                "name": "Corvin Rowold"
-            },
-            "field": {
-                "name": "Christian Kramer"
-            },
-	    "color_light": "#234521",
-	    "color_dark": "#544521"
-        },
-        "NAUROD 1": {
-            "logo": "assets/naurod.jpg",
-            "keeper": {
-                "name": "Marco Wagner"
-            },
-            "field": {
-                "name": "Till Wehner"
-            },
-	    "color_light": "#234521",
-	    "color_dark": "#544521"
-        },
-        "NAUROD 2": {
-            "logo": "assets/naurod.jpg",
-            "keeper": {
-                "name": "Timo Wagner"
-            },
-            "field": {
-                "name": "Pascal van Klev"
-            },
-	    "color_light": "#234521",
-	    "color_dark": "#544521"
-        },
-        "LUDWIGSFELDE": {
-            "logo": "assets/ludwigsfelde.svg",
-            "keeper": {
-                "name": "Matthias Dunkel"
-            },
-            "field": {
-                "name": "Felix Stege"
-            },
-	    "color_light": "#234521",
-	    "color_dark": "#544521"
-        }
-    },
-    "games": {
-        "1": {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2"
-        },
-        "2": {
-            "team1": "GIFHORN",
-            "team2": "NAUROD 2"
-        },
-        "3": {
-            "team1": "NAUROD 1",
-            "team2": "LUDWIGSFELDE"
-        },
-        "4": {
-            "team1": "LUDWIGSFELDE",
-            "team2": "NAUROD 2"
-        },
-        "5": {
-            "team1": "NAUROD 1",
-            "team2": "GIFHORN"
-        },
-        "6": {
-            "team1": "LUDWIGSFELDE",
-            "team2": "GIFHORN"
-        },
-        "experimental": {
-            "team1": "NAUROD 1",
-            "team2": "NAUROD 2",
-            "halftimescore": {
-                "team1": "0",
-                "team2": "3"
-            },
-            "score": {
-                "team1": "4",
-                "team2": "4"
-            },
-            "cards": {
-                "card1": {
-                    "player": "Christian Kramer",
-                    "type": "Y"
-                },
-                "card2": {
-                    "player": "Marco Wagner",
-                    "type": "R"
-                }
-            }
-        }
-    }
+	"teams": {
+		"GIFHORN": {
+			"logo": "assets/gifhorn.jpg",
+			"keeper": {
+				"name": "Corvin Rowold"
+			},
+			"field": {
+				"name": "Christian Kramer"
+			},
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		},
+		"NAUROD 1": {
+			"logo": "assets/naurod.jpg",
+			"keeper": {
+				"name": "Marco Wagner"
+			},
+			"field": {
+				"name": "Till Wehner"
+			},
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		},
+		"NAUROD 2": {
+			"logo": "assets/naurod.jpg",
+			"keeper": {
+				"name": "Timo Wagner"
+			},
+			"field": {
+				"name": "Pascal van Klev"
+			},
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		},
+		"LUDWIGSFELDE": {
+			"logo": "assets/ludwigsfelde.svg",
+			"keeper": {
+				"name": "Matthias Dunkel"
+			},
+			"field": {
+				"name": "Felix Stege"
+			},
+			"color_light": "#234521",
+			"color_dark": "#544521"
+		}
+	},
+	"games": {
+		"1": {
+			"team1": "NAUROD 1",
+			"team2": "NAUROD 2"
+		},
+		"2": {
+			"team1": "GIFHORN",
+			"team2": "NAUROD 2"
+		},
+		"3": {
+			"team1": "NAUROD 1",
+			"team2": "LUDWIGSFELDE"
+		},
+		"4": {
+			"team1": "LUDWIGSFELDE",
+			"team2": "NAUROD 2"
+		},
+		"5": {
+			"team1": "NAUROD 1",
+			"team2": "GIFHORN"
+		},
+		"6": {
+			"team1": "LUDWIGSFELDE",
+			"team2": "GIFHORN"
+		},
+		"experimental": {
+			"team1": "NAUROD 1",
+			"team2": "NAUROD 2",
+			"halftimescore": {
+				"team1": "0",
+				"team2": "3"
+			},
+			"score": {
+				"team1": "4",
+				"team2": "4"
+			},
+			"cards": {
+				"card1": {
+					"player": "Christian Kramer",
+					"type": "Y"
+				},
+				"card2": {
+					"player": "Marco Wagner",
+					"type": "R"
+				}
+			}
+		}
+	}
 }

@@ -124,7 +124,7 @@ char* json_generate() {
 	}
 	json_object_object_add(root, "teams", teams);
 	json_object_object_add(root, "games", games);
-	char *str = json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
+	char *str = (char *) json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY);
 	return str;
 }
 
@@ -190,7 +190,7 @@ void json_load(const char *s) {
 		strcpy(md.teams[i].color_dark, json_object_get_string(color));
 	}
 	//Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
-	md.teams[md.teams_count].name = malloc(5 * sizeof(char));
+	md.teams[md.teams_count].name = (char *) malloc(5 * sizeof(char));
 	strcpy(md.teams[md.teams_count].name, "ENDE");
 	md.teams[md.teams_count].color_dark = md.teams[0].color_dark;
 	md.teams[md.teams_count].color_light = md.teams[0].color_light;

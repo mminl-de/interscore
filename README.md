@@ -39,6 +39,11 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL^2 assets folder in seperate repo (only logos)
 
 ## frontend
+- URGENT Farb-Gradient automatisch generieren vom Logo/von einer Farbe
+- URGENT Logos im Spielwidget
+- URGENT widget pipelines:
+	- 5s this widget, 5s that
+	- absolute cinema
 - fix time bugs
 - refresh green balken every time the time changes, ont only when time is not paused
 - team logos for gamestart
@@ -48,38 +53,66 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
-- FINAL IDEA Time estimates
-- FINAL IDEA Fullscreen Endscore with Team Badge (maybe only winning) (Could have false positives when referee calls "letzter Schlag" or wants more time)
+- FINAL IDEA Time estimates:
+	- time key in json
+	- sending signal to frontend to calculate all estimates
+	- frontend calculates difference between promised and actual game lengths
+	- schedule delayed by this difference
+	- calculations done only when calling the gameplan
+- FINAL IDEA Fullscreen Endscore with Team Badge (maybe only winning) (Could have false positives when referee calls "letzter Schlag" or wants more time):
+	- post-tournament stats (game data, nothing fancy)
+- FINAL Wenn z.B. mind. 3 Tore hintereinander von einem Team innerhalb von 2 min passieren ohne Gegentore, ist Team "on fire" (siehe CS):
+	- integer for streak (0 by default)
+	- fixed size timer for streak
+	- if a team scores, timer resets and streak increments
+	- if timer runs out of opponents scores, streak gets reset
+- FINAL Kartengrund unterstützen:
+	- second dropdown in the rentnerend
+	- with default values ("refusing to elaborate") or a custom one
+- FINAL Widget: Aktuelle Livetabelle der gesamten Liga (cycleball.eu):
+	- part of the pipeline???
+- FINAL Widget: Aktuelle Spielliste des Parallel-Spieltags (cycleball.eu):
+	- part of the pipeline???
+- FINAL Seite: Ads unten (or Vollbild/Seite)
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
-- FINAL Wenn z.B. mind. 3 Tore hintereinander von einem Team innerhalb von 2 min passieren ohne Gegentore, ist Team "on fire" (siehe CS)
-- FINAL Kartengrund unterstützen
-- FINAL Logos im Spielwidget
-- FINAL Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
-- FINAL Widget: Aktuelle Livetabelle der gesamten Liga (cycleball.eu)
-- FINAL Widget: Aktuelle Spielliste des Parralel-Spieltags (cycleball.eu)
-- FINAL Farb-Gradient automatisch generieren vom Logo/von einer Farbe
-- FINAL Seite: Adds Vollbild/Seite/Unten
-- FINAL Widget: Feedback/Suggestions
+- FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
 
 ## rentnerend
-- additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts)
-- Halbzeituhr
-- see and pardon in the justice system UI
-- Add possibility of teams missing
+- URGENT change all icons to nice looking icons
 - JSON-Creator GUI for non-technical users
-- Import tournaments from cycleball.eu (and Radball.at when library is ready)
-- FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
-- FINAL Support more tournament modi, support leagues
-- FINAL Add cycleball.eu push support
+- prohibit changing games while the clock runs
+- Halbzeituhr
+- Add possibility of teams missing:
+	- start screen in the rentnerend
+- @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
+- FINAL additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts):
+	- visual guides
+- @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
+- FINAL Support more tournament modes, support leagues:
+	- group games are built different because of unknown game order
+	- abstract "normal tournaments" away by putting their games into one group
+	- group games will use multiple game
+	- thus we add a logic to handle multiple groups that wont get used in "normal tournaments"
+- FINAL Add cycleball.eu push support:
+	- radball.at writing key written into json
+	- (push button in rentnerend start screen and gear icon)
 - FINAL make the Justice UI not suck
-- FINAL Cards for Coaches
-- FINAL Add referees
-- FINAL Ads in public window
-- FINAL Next Game in public window
-- FINAL FINAL change all icons to nice looking icons
+- FINAL Cards for Coaches:
+	- "Coach von Gifhorn 1 bekommt eine gelbe Karte"
+- FINAL Ads in public window:
+	- fullscreen video during a pause
+- FINAL Next Game in public window:
+	- before the fullscreen ad during a pause
 - FINAL FINAL port to windows/mac
-- FINAL FINAL add export to Spielplan-pdf
+- FINAL FINAL add export to Spielplan-pdf:
+	- we define a standard for what formular keys we expect
+	- users can upload their template only if their matches our standard:
+		- otherwise error dialog ig
+	- we export the results as a writable formular
 - FINAL³ Idee: Ansagen durch KI bei der Hälfte
+- FINAL delte cards
+- FINAL² Add referees
+- FINAL ENSURE assets are always found by the executable
 
 ## backend
 - OBS Replays sind noch bisschen buggy irgendwie
