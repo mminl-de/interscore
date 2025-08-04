@@ -751,8 +751,11 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			if(((char *)m->data.buf)[0] == '{'){
 				json_load((char *)m->data.buf);
 				resend_widgets();
-			} else
+			} else {
 				handle_rentnerend_btn_press((u8 *)m->data.buf);
+				if(con_front)
+					mg_ws_send(con_front, m->data.buf, m->data.len, WEBSOCKET_OP_TEXT);
+			}
 			break;
 		}
 		// Signals not worth logging

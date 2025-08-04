@@ -47,11 +47,11 @@ const TEAM_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
 const SCROLL_DURATION = 7_000
 
-const WIDGET_SCOREBOARD_SHOWN = false
-const WIDGET_GAMEPLAN = false
-const WIDGET_LIVEPLAN_SHOWN = false
-const WIDGET_GAMESTART_SHOWN = false
-const WIDGET_AD_SHOWN = false
+let WIDGET_SCOREBOARD_SHOWN = false
+let WIDGET_GAMEPLAN_SHOWN = false
+let WIDGET_LIVEPLAN_SHOWN = false
+let WIDGET_GAMESTART_SHOWN = false
+let WIDGET_AD_SHOWN = false
 
 enum CardType { Yellow, Red }
 // enum PlayerRole { Keeper, Field} TODO String?
@@ -400,10 +400,9 @@ function write_gamestart(m: Matchday) {
 // TODO refactor as handler function for receiving a card, also adding it to Matchday m
 function write_card(player_index: number, type: CardType) {
 	let offset = 1
-	const player_index =
 	const display_length = 7_000
 
-	card_receiver.innerHTML = md.player[player_index].name.toString() //TODO do we need toString?
+	card_receiver.innerHTML = md.players[player_index].name.toString() //TODO do we need toString?
 	if (type === CardType.Yellow) {
 		card_graphic.style.backgroundColor = "#ff0000"
 		card_message.innerHTML = "bekommt eine rote Karte"
@@ -571,11 +570,10 @@ function write_livetable(m: Matchday) {
 let countdown = 0 //TODO ASK what is this?
 
 // Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
-function scoreboard_set_timer(view: DataView) {
+function scoreboard_set_timer(time_in_s: number) {
 	clearInterval(countdown)
 
 	let offset = 1
-	const time_in_s = view.getUint16(offset)
 	md.cur.time = time_in_s
 
 	update_timer_html()
@@ -599,11 +597,11 @@ function update_timer_html() {
 }
 
 function update_ui() {
-	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard()
-	if(WIDGET_GAMEPLAN) write_gameplan()
-	if(WIDGET_LIVEPLAN_SHOWN) write_liveplan()
-	if(WIDGET_GAMESTART_SHOWN) write_gamestart()
-	if(WIDGET_AD_SHOWN) write_ad() //TODO This does not exist, right?
+	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard(md)
+	if(WIDGET_GAMEPLAN_SHOWN) write_gameplan(md)
+	if(WIDGET_LIVEPLAN_SHOWN) write_livetable(md)
+	if(WIDGET_GAMESTART_SHOWN) write_gamestart(md)
+	if(WIDGET_AD_SHOWN) return//write_ad() //TODO This does not exist, right?
 }
 
 socket.onopen = () => {
@@ -620,13 +618,14 @@ enum Message {
 	WIDGET_LIVEPLAN_HIDE,
 	WIDGET_GAMESTART_SHOW,
 	WIDGET_GAMESTART_HIDE,
-	WIDGET_AD_TOGGLE,
+	WIDGET_AD_SHOW,
+	WIDGET_AD_HIDE,
 	OBS_STREAM_START,
 	OBS_STREAM_STOP,
 	OBS_REPLAY_START,
 	OBS_REPLAY_STOP,
 	T1_SCORE_PLUS,
-	T1_SCORE_MINUS0,
+	T1_SCORE_MINUS,
 	T2_SCORE_PLUS,
 	T2_SCORE_MINUS,
 	GAME_NEXT,
@@ -641,6 +640,7 @@ enum Message {
 	TIME_RESET,
 	YELLOW_CARD,
 	RED_CARD,
+	SCOREBOARD_SET_TIMER,
 	UPDATE_JSON = 123, // ASCII of: {
 }
 
@@ -751,7 +751,7 @@ socket.onmessage = (event: MessageEvent) => {
 			}
 			break
 		case Message.GAME_SWITCH_SIDES:
-			md.cur.halftime = 1 - md.cur.halftime //TODO make compile like this
+			md.cur.halftime = !md.cur.halftime
 			update_ui()
 			break
 		case Message.TIME_PLUS:
@@ -783,22 +783,23 @@ socket.onmessage = (event: MessageEvent) => {
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(view.getUint8(1), CardType.Yellow)
+			write_card(buffer.charCodeAt(1), CardType.Yellow)
 			break
 		case Message.RED_CARD:
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(view.getUint8(1), CardType.Red)
+			write_card(buffer.charCodeAt(1), CardType.Red)
 			break
-		case Message.JSON:
+		case Message.UPDATE_JSON:
 			console.log("Parsing JSON now");
 			md = parse_json(buffer)
 			console.log("JSON parsed. Here it is:", md);
 			break
-		case WidgetMessage.SCOREBOARD_SET_TIMER:
-			//TODO This is actually useful, implement in rentnerend
-			scoreboard_set_timer(view)
+		case Message.SCOREBOARD_SET_TIMER:
+			// TODO This is actually useful, implement in rentnerend
+			// TODO make this work
+			//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
 			break
 	}
 }
