@@ -1,15 +1,14 @@
 #include <QAudioOutput>
 #include <QMediaPlayer>
 
+#include "audio.hpp"
 #include "constants.hpp"
-
-namespace audio {
 
 QMediaPlayer player = QMediaPlayer();
 QAudioOutput audio_output = QAudioOutput();
 
 void
-init(void) {
+audio::init(void) {
 	player.setAudioOutput(&audio_output);
 	player.setSource(QUrl::fromLocalFile(CONSTANTS__SOUND_GAME_END));
 	audio_output.setVolume(1);
@@ -18,8 +17,6 @@ init(void) {
 
 // TODO CONSIDER
 void
-play(void) {
+audio::play(void) {
 	player.play();
 }
-
-} // namespace audio
