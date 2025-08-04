@@ -1,5 +1,6 @@
 .vscode/
 frontend/script.js
+new-frontend/script.js
 rentnerend/interscore-rentnerend
 rentnerend/interscore-server
 interscore
