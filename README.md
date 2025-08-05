@@ -33,6 +33,12 @@ This project was made for our personal use prior to a Cycleball tournament under
 
 # TODO
 
+## top features
+- "gorgeous" UI
+- replay support
+- mobile app
+- PDF export
+
 ## meta
 - rediscuss backend, frontend, rentnerend tasks
 - FINAL Checkliste for streams
@@ -113,6 +119,11 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL delte cards
 - FINAL² Add referees
 - FINAL ENSURE assets are always found by the executable
+
+### design
+- gray-black colorscheme
+- primary colors for accents
+- flat design language
 
 ## backend
 - OBS Replays sind noch bisschen buggy irgendwie
