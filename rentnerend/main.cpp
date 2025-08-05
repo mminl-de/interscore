@@ -16,7 +16,7 @@ main(int argc, char *argv[]) {
 	//audio::play(); // TODO
 
 	// Changing font to "Kanit" globally
-	const int32_t font_id = QFontDatabase::addApplicationFont(CONSTANTS__FONT_FILE);
+	const int32_t font_id = QFontDatabase::addApplicationFont(constants__FONT_FILE);
 	const QStringList font_families = QFontDatabase::applicationFontFamilies(font_id);
 	if (!font_families.isEmpty()) {
 		const QFont app_font(font_families.at(0));

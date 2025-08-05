@@ -26,6 +26,7 @@ struct LaunchWindow {
 	} buttons;
 
 	LaunchWindow();
+	void add_json(const char *name, const char *addr);
 };
 
 } // namespace launchwindow
