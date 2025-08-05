@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QHBoxLayout>
+#include <QSettings>
 
 #include "audio.hpp"
 #include "constants.hpp"
@@ -26,7 +27,9 @@ main(int argc, char *argv[]) {
 	// TODO PLAN
 	// matchday
 
-	launchwindow::LaunchWindow lw; // constructor call
+	QSettings settings("mminl.de", "Interscore");
+
+	launchwindow::LaunchWindow lw(&settings); // constructor call
 	lw.window.show();
 
 	//displaywindow::DisplayWindow dw; // constructor call

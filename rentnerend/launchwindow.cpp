@@ -2,42 +2,19 @@
 #include <QListWidget>
 #include <QPainter>
 #include <QPushButton>
+#include <QSettings>
 #include <QVBoxLayout>
 
 #include "constants.hpp"
 #include "launchwindow.hpp"
 
-// Returns a heap-allocated instance of the JSON list for the launch window.
-// The caller doesn't have to free the result if it's passed as a child to a
-// Qt widget.
-QListWidgetItem *json_list_item(const char *name, const char *address) {
-	QListWidgetItem *const result = new QListWidgetItem;
-	QWidget *const card = new QWidget;
-	QVBoxLayout *const layout = new QVBoxLayout(card);
-
-	QLabel *const big_label = new QLabel(name);
-	QLabel *const smol_label = new QLabel(address);
-
-	layout->addWidget(big_label);
-	layout->addWidget(smol_label);
-	card->setLayout(layout);
-
-	result->setSizeHint(card->sizeHint());
-	return result;
-}
-
-launchwindow::LaunchWindow::LaunchWindow() {
+launchwindow::LaunchWindow::LaunchWindow(QSettings *const settings) {
+	this->settings = settings;
 	this->window.setWindowTitle("Interscore v" constants__VERSION);
 	this->window.setLayout(&this->layouts.main);
 
-	// TODO NOW DEBUG
-	// TODO TEST
-	for (int i = 0; i < 10; ++i) {
-		add_json("Gifhorn", "~/downloads/gifhorn.json");
-	}
-
-	this->layouts.main.addWidget(&this->json_list);
 	this->layouts.main.addLayout(&this->layouts.buttons);
+	this->layouts.main.addWidget(&this->json_list);
 
 	this->layouts.buttons.addWidget(&this->buttons.new_json);
 	this->layouts.buttons.addWidget(&this->buttons.import_from_cycleballeu);
@@ -45,7 +22,15 @@ launchwindow::LaunchWindow::LaunchWindow() {
 	// TODO FINAL TRANSLATE
 	this->labels.title.setText("Interscore");
 	this->buttons.new_json.setText("Create new tournament");
+	this->buttons.import_json.setText("Import from file");
 	this->buttons.import_from_cycleballeu.setText("Import from cycleball.eu");
+
+	// TODO PLAN
+	// loading list from datapath
+	// reload_list function
+	//     checks for every json list item, whether the file still exists
+	//     if not, removes it from the list
+	this->load_list();
 }
 
 void
@@ -54,14 +39,39 @@ launchwindow::LaunchWindow::add_json(const char *name, const char *addr) {
 	QWidget *const card = new QWidget;
 	QVBoxLayout *const layout = new QVBoxLayout(card);
 
-	QLabel *const big_label = new QLabel(name);
-	QLabel *const smol_label = new QLabel(addr);
+	QLabel *const name_label = new QLabel(name);
+	QLabel *const addr_label = new QLabel(addr);
 
-	layout->addWidget(big_label);
-	layout->addWidget(smol_label);
+	layout->addWidget(name_label);
+	layout->addWidget(addr_label);
 	card->setLayout(layout);
 
 	result->setSizeHint(card->sizeHint());
 	this->json_list.addItem(result);
 	this->json_list.setItemWidget(result, card);
+}
+
+void
+launchwindow::LaunchWindow::load_list(void) {
+	const uint16_t size = this->settings->beginReadArray("json_list");
+	for (int i = 0; i < size; ++i) {
+		this->settings->setArrayIndex(i);
+		const QString name = this->settings->value("name").toString();
+		const QString addr = this->settings->value("addr").toString();
+		this->add_json(name.toUtf8().constData(), addr.toUtf8().constData());
+	}
+	this->settings->endArray();
+
+}
+
+void
+launchwindow::LaunchWindow::save_to_history(const char* name, const char *addr) {
+	// TODO
+}
+
+void
+launchwindow::LaunchWindow::select_item(const uint16_t n) {
+	this->json_list.setCurrentRow(n);
+	this->json_list.item(n)->setSelected(true);
+	this->json_list.setFocus();
 }
