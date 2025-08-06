@@ -5,7 +5,7 @@
 
 #define ORANGE "#f60" // TODO NOW
 
-displaywindow::DisplayWindow::DisplayWindow() {
+displaywindow::DisplayWindow::DisplayWindow(void) {
 	this->window.setWindowTitle("Interscore: Scoreboard Display");
 
 	// Setting colors

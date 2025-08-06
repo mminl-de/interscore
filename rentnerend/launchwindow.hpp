@@ -8,10 +8,13 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "editorwindow.hpp"
+
 namespace launchwindow {
 
 struct LaunchWindow {
 	QSettings *settings;
+
 	QWidget window;
 	QListWidget json_list;
 
@@ -28,7 +31,7 @@ struct LaunchWindow {
 		QPushButton import_from_cycleballeu;
 	} buttons;
 
-	LaunchWindow(QSettings *const settings);
+	LaunchWindow(QSettings *settings, editorwindow::EditorWindow *ew);
 
 	// Add an entry describing a JSON file containing tournament data to the list
 	// in the launch window.

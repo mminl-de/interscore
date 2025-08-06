@@ -7,6 +7,7 @@
 #include "audio.hpp"
 #include "constants.hpp"
 #include "displaywindow.hpp"
+#include "editorwindow.hpp"
 #include "launchwindow.hpp"
 
 int
@@ -29,7 +30,8 @@ main(int argc, char *argv[]) {
 
 	QSettings settings("mminl.de", "Interscore");
 
-	launchwindow::LaunchWindow lw(&settings); // constructor call
+	editorwindow::EditorWindow ew;
+	launchwindow::LaunchWindow lw(&settings, &ew); // constructor call
 	lw.window.show();
 
 	//displaywindow::DisplayWindow dw; // constructor call

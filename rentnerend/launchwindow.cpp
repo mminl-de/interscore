@@ -1,6 +1,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QPainter>
+#include <QObject>
 #include <QPushButton>
 #include <QSettings>
 #include <QVBoxLayout>
@@ -8,7 +9,10 @@
 #include "constants.hpp"
 #include "launchwindow.hpp"
 
-launchwindow::LaunchWindow::LaunchWindow(QSettings *const settings) {
+launchwindow::LaunchWindow::LaunchWindow(
+	QSettings *settings,
+	editorwindow::EditorWindow *ew
+) {
 	this->settings = settings;
 	this->window.setWindowTitle("Interscore v" constants__VERSION);
 	this->window.setLayout(&this->layouts.main);
@@ -17,6 +21,7 @@ launchwindow::LaunchWindow::LaunchWindow(QSettings *const settings) {
 	this->layouts.main.addWidget(&this->json_list);
 
 	this->layouts.buttons.addWidget(&this->buttons.new_json);
+	this->layouts.buttons.addWidget(&this->buttons.import_json);
 	this->layouts.buttons.addWidget(&this->buttons.import_from_cycleballeu);
 
 	// TODO FINAL TRANSLATE
@@ -24,6 +29,12 @@ launchwindow::LaunchWindow::LaunchWindow(QSettings *const settings) {
 	this->buttons.new_json.setText("Create new tournament");
 	this->buttons.import_json.setText("Import from file");
 	this->buttons.import_from_cycleballeu.setText("Import from cycleball.eu");
+
+	QObject::connect(
+		&this->buttons.new_json,
+		&QPushButton::clicked,
+		[ew]() { ew->dialog.show(); }
+	);
 
 	// TODO PLAN
 	// loading list from datapath
