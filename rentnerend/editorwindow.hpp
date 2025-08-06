@@ -2,6 +2,10 @@
 
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -13,18 +17,25 @@ struct EditorWindow {
 
 	struct {
 		QVBoxLayout main;
+		QHBoxLayout json_address;
 	} layouts;
+	struct {
+		QLabel tournament_name;
+		QLabel json_address;
+		QLabel role_list;
+	} labels;
+	struct {
+		QPushButton json_address;
+	} buttons;
+
+	QLineEdit tournament_name;
+	QLineEdit json_address;
+	QListWidget role_list;
 
 	EditorWindow(void);
 
-	// TODO PLAN
-	// name (textfield)
-	// groups (picker)
-	// address (textfield)
-	// roles (list)
-	// players (list)
-	// games (list)
-	// colors (color picker)
+	// Add a new empty `QLineEdit` to a role to the role list.
+	void add_role_line(void);
 };
 
 } // namespace editorwindow

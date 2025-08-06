@@ -1,6 +1,6 @@
 #include <QLabel>
+#include <QKeySequence>
 #include <QListWidget>
-#include <QPainter>
 #include <QObject>
 #include <QPushButton>
 #include <QSettings>
@@ -29,6 +29,8 @@ launchwindow::LaunchWindow::LaunchWindow(
 	this->buttons.new_json.setText("Create new tournament");
 	this->buttons.import_json.setText("Import from file");
 	this->buttons.import_from_cycleballeu.setText("Import from cycleball.eu");
+
+	this->buttons.new_json.setShortcut(QKeySequence("Ctrl+N")); // TODO NOW
 
 	QObject::connect(
 		&this->buttons.new_json,

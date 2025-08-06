@@ -14,21 +14,39 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		QDialogButtonBox::Apply |
 		QDialogButtonBox::Cancel
 	);
+
+	this->layouts.json_address.addWidget(&this->json_address);
+	this->layouts.json_address.addWidget(&this->buttons.json_address);
+
+	this->layouts.main.addWidget(&this->labels.tournament_name);
+	this->layouts.main.addWidget(&this->tournament_name);
+	this->layouts.main.addWidget(&this->labels.json_address);
+	this->layouts.main.addLayout(&this->layouts.json_address);
+	this->layouts.main.addWidget(&this->labels.role_list);
+	this->layouts.main.addWidget(&this->role_list);
+	this->layouts.main.addWidget(&this->dialog_buttons);
+
+	this->labels.tournament_name.setText("Tournament name"); // TODO TRANSLATE
+	this->labels.tournament_name.setBuddy(&this->tournament_name);
+
+	this->labels.json_address.setText("Path to store tournament in"); // TODO TRANSLATE
+	this->labels.json_address.setBuddy(&this->json_address);
+	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
+
+	this->labels.role_list.setText("Player roles"); // TODO TRANSLATE
+
 	QPushButton *save_and_return = this->dialog_buttons.button(QDialogButtonBox::Ok);
 	QPushButton *save_and_start = this->dialog_buttons.button(QDialogButtonBox::Apply);
 	QPushButton *abort = this->dialog_buttons.button(QDialogButtonBox::Cancel);
-
-	this->layouts.main.addWidget(new QPushButton("TODO"));
-	this->layouts.main.addWidget(&this->dialog_buttons);
-
 	save_and_return->setText("Save and Return"); // TODO TRANSLATE
 	QObject::connect(
 		save_and_return,
 		&QPushButton::clicked,
 		[this]() {
-			this->dialog.hide();
+			//this->dialog.hide();
 		}
 	);
+	// TODO DEBUG why does this button require two tabs to cycle through?
 	save_and_start->setText("Save and Start"); // TODO TRANSLATE
 	QObject::connect(
 		save_and_start,
@@ -42,14 +60,9 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		abort,
 		&QPushButton::clicked,
 		[this]() {
-			this->dialog.hide();
+			//this->dialog.hide();
 		}
 	);
-
-	// TODO PLAN
-	// abort
-	// save and return
-	// save and start
 
 	// TODO PLAN
 	// name (textfield)
@@ -59,4 +72,23 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// players (list)
 	// games (list)
 	// colors (color picker)
+	this->add_role_line();
+}
+
+void
+editorwindow::EditorWindow::add_role_line(void) {
+	QListWidgetItem *const result = new QListWidgetItem;
+
+	QLineEdit *line = new QLineEdit;
+	line->setPlaceholderText("New role..."); // TODO TRANSLATE
+
+	QObject::connect(
+		line,
+		&QLineEdit::returnPressed,
+		[this] () { this->add_role_line(); }
+	);
+
+	result->setSizeHint(line->sizeHint());
+	this->role_list.addItem(result);
+	this->role_list.setItemWidget(result, line);
 }
