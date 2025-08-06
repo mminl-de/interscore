@@ -33,6 +33,12 @@ This project was made for our personal use prior to a Cycleball tournament under
 
 # TODO
 
+## top features
+- "gorgeous" UI
+- replay support
+- mobile app
+- PDF export
+
 ## meta
 - rediscuss backend, frontend, rentnerend tasks
 - FINAL Checkliste for streams
@@ -78,6 +84,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
 
 ## rentnerend
+- bind Ctrl-N for create new tournament
 - URGENT change all icons to nice looking icons
 - JSON-Creator GUI for non-technical users
 - prohibit changing games while the clock runs
@@ -113,6 +120,11 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL delte cards
 - FINAL² Add referees
 - FINAL ENSURE assets are always found by the executable
+
+### design
+- gray-black colorscheme
+- primary colors for accents
+- flat design language
 
 ## backend
 - URGENT Add optional cur json elements so we can properly hot reload

@@ -2,10 +2,12 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QHBoxLayout>
+#include <QSettings>
 
 #include "audio.hpp"
 #include "constants.hpp"
 #include "displaywindow.hpp"
+#include "editorwindow.hpp"
 #include "launchwindow.hpp"
 
 int
@@ -26,7 +28,10 @@ main(int argc, char *argv[]) {
 	// TODO PLAN
 	// matchday
 
-	launchwindow::LaunchWindow lw; // constructor call
+	QSettings settings("mminl.de", "Interscore");
+
+	editorwindow::EditorWindow ew;
+	launchwindow::LaunchWindow lw(&settings, &ew); // constructor call
 	lw.window.show();
 
 	//displaywindow::DisplayWindow dw; // constructor call

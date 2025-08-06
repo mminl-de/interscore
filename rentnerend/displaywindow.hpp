@@ -20,7 +20,7 @@ struct DisplayWindow {
 		QLabel colon;
 	} labels;
 
-	DisplayWindow();
+	DisplayWindow(void);
 };
 
 } // namespace displaywindow
