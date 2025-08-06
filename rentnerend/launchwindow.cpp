@@ -35,7 +35,7 @@ launchwindow::LaunchWindow::LaunchWindow(
 	QObject::connect(
 		&this->buttons.new_json,
 		&QPushButton::clicked,
-		[ew]() { ew->dialog.show(); }
+		[ew]() { ew->window.show(); }
 	);
 
 	// TODO PLAN

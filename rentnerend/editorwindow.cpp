@@ -1,71 +1,99 @@
-#include <cstdio> // TODO NOW
 #include <QDialogButtonBox>
+#include <QKeySequence>
 #include <QObject>
 #include <QPushButton>
+#include <QShortcut>
 
 #include "editorwindow.hpp"
 
 editorwindow::EditorWindow::EditorWindow(void) {
-	// TODO TRANSLATE
-	this->dialog.setWindowTitle("Create new tournament");
-	this->dialog.setLayout(&this->layouts.main);
+	this->window.setWindowTitle("Create new tournament"); // TODO TRANSLATE
+	this->window.setLayout(&this->layouts.main);
+	this->window.setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
 
-	this->dialog_buttons.setStandardButtons(
-		QDialogButtonBox::Ok |
-		QDialogButtonBox::Apply |
-		QDialogButtonBox::Cancel
+	// Escape closes this window
+	QShortcut *esc = new QShortcut(QKeySequence(Qt::Key_Escape), &this->window);
+	esc->setContext(Qt::WidgetWithChildrenShortcut);
+	QObject::connect(esc, &QShortcut::activated, &this->window, &QWidget::close);
+
+	// Tournament name
+	this->labels.tournament_name.setText("Tournament name"); // TODO TRANSLATE
+	this->labels.tournament_name.setBuddy(&this->tournament_name);
+
+	// Tournament file location
+	this->labels.json_address.setText("Tournament file location"); // TODO TRANSLATE
+	this->labels.json_address.setBuddy(&this->json_address); // TODO TRANSLATE
+	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
+
+	// Role list
+	this->labels.role_list.setText("Player roles"); // TODO TRANSLATE
+	this->labels.role_list.setBuddy(&this->role_list);
+	this->buttons.remove_role.setText("Remove");
+	this->buttons.remove_role.setDisabled(true);
+	this->role_list_input.setPlaceholderText("Add new roles here..."); // TODO TRANSLATE
+
+	this->layouts.role_list.addWidget(&this->role_list_input);
+	this->layouts.role_list.addWidget(&this->buttons.remove_role);
+
+	QObject::connect(
+		&this->role_list_input,
+		&QLineEdit::returnPressed,
+		&this->role_list_input,
+		[this]() {
+			// TODO NOW
+			const QString input = this->role_list_input.text();
+			this->role_list_input.clear();
+			this->add_role(&input);
+		}
 	);
 
+	// Show the Remove button when selection changes
+	QObject::connect(
+		&this->role_list,
+		&QListWidget::itemSelectionChanged,
+		[this]() {
+			this->buttons.remove_role.setEnabled(
+				!this->role_list.selectedItems().isEmpty()
+			);
+		}
+	);
+	this->buttons.remove_role.setShortcut(QKeySequence("Delete"));
+
+	// Remove the selected item when button is clicked
+	QObject::connect(
+		&this->buttons.remove_role,
+		&QPushButton::clicked,
+		[this]() {
+			QList<QListWidgetItem *> selected = this->role_list.selectedItems();
+			for (QListWidgetItem *item : selected) {
+				int32_t row = this->role_list.row(item);
+				QListWidgetItem *removed = this->role_list.takeItem(row);
+				delete removed;  // also deletes associated widget
+			}
+		}
+	);
+
+	// Action buttons
+	this->buttons.abort.setText("Abort"); // TODO TRANSLATE
+	this->buttons.save_and_return.setText("Save and Return"); // TODO TRANSLATE
+	this->buttons.save_and_start.setText("Save and start"); // TODO TRANSLATE
+
+	// Side layouts
 	this->layouts.json_address.addWidget(&this->json_address);
 	this->layouts.json_address.addWidget(&this->buttons.json_address);
+	this->layouts.action_buttons.addWidget(&this->buttons.abort);
+	this->layouts.action_buttons.addWidget(&this->buttons.save_and_return);
+	this->layouts.action_buttons.addWidget(&this->buttons.save_and_start);
 
+	// Main layout
 	this->layouts.main.addWidget(&this->labels.tournament_name);
 	this->layouts.main.addWidget(&this->tournament_name);
 	this->layouts.main.addWidget(&this->labels.json_address);
 	this->layouts.main.addLayout(&this->layouts.json_address);
 	this->layouts.main.addWidget(&this->labels.role_list);
 	this->layouts.main.addWidget(&this->role_list);
-	this->layouts.main.addWidget(&this->dialog_buttons);
-
-	this->labels.tournament_name.setText("Tournament name"); // TODO TRANSLATE
-	this->labels.tournament_name.setBuddy(&this->tournament_name);
-
-	this->labels.json_address.setText("Path to store tournament in"); // TODO TRANSLATE
-	this->labels.json_address.setBuddy(&this->json_address);
-	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
-
-	this->labels.role_list.setText("Player roles"); // TODO TRANSLATE
-
-	QPushButton *save_and_return = this->dialog_buttons.button(QDialogButtonBox::Ok);
-	QPushButton *save_and_start = this->dialog_buttons.button(QDialogButtonBox::Apply);
-	QPushButton *abort = this->dialog_buttons.button(QDialogButtonBox::Cancel);
-	save_and_return->setText("Save and Return"); // TODO TRANSLATE
-	QObject::connect(
-		save_and_return,
-		&QPushButton::clicked,
-		[this]() {
-			printf("save and return\n");
-			//this->dialog.hide();
-		}
-	);
-	// TODO DEBUG why does this button require two tabs to cycle through?
-	save_and_start->setText("Save and Start"); // TODO TRANSLATE
-	QObject::connect(
-		save_and_start,
-		&QPushButton::clicked,
-		[]() {
-			// TODO
-		}
-	);
-	abort->setText("Abort"); // TODO TRANSLATE
-	QObject::connect(
-		abort,
-		&QPushButton::clicked,
-		[this]() {
-			printf("abort\n");
-			//this->dialog.hide();
-		}
-	);
+	this->layouts.main.addLayout(&this->layouts.role_list);
+	this->layouts.main.addLayout(&this->layouts.action_buttons);
 
 	// TODO PLAN
 	// name (textfield)
@@ -78,38 +106,14 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// colors (color picker)
 	//
 	// games (list)
-	this->add_role_line();
-	this->add_role_line();
-	this->add_role_line();
-	this->select_role(1);
-}
-
-uint16_t
-editorwindow::EditorWindow::add_role_line(void) {
-	const uint16_t result = this->role_list.count();
-	printf("the new line is at index %d\n", result);
-	QListWidgetItem *const item = new QListWidgetItem;
-
-	QLineEdit *line = new QLineEdit;
-	line->setPlaceholderText("New role..."); // TODO TRANSLATE
-
-	QObject::connect(
-		line,
-		&QLineEdit::returnPressed,
-		[this]() { this->select_role(this->add_role_line()); }
-	);
-
-	item->setSizeHint(line->sizeHint());
-	this->role_list.addItem(item);
-	this->role_list.setItemWidget(item, line);
-
-	return result;
 }
 
 void
-editorwindow::EditorWindow::select_role(const uint16_t n) {
-	this->role_list.setCurrentRow(n);
-	this->role_list.item(n)->setSelected(true);
-	this->role_list.setFocus();
-	printf("locking in\n");
+editorwindow::EditorWindow::add_role(const QString *input) {
+	QListWidgetItem *const item = new QListWidgetItem;
+	QLabel *const card = new QLabel(*input);
+
+	item->setSizeHint(card->sizeHint());
+	this->role_list.addItem(item);
+	this->role_list.setItemWidget(item, card);
 }
