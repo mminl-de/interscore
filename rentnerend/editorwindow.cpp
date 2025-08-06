@@ -32,8 +32,8 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.remove_role.setDisabled(true);
 	this->role_list_input.setPlaceholderText("Add new roles here..."); // TODO TRANSLATE
 
-	this->layouts.role_list.addWidget(&this->role_list_input);
-	this->layouts.role_list.addWidget(&this->buttons.remove_role);
+	this->layouts.role_list_input.addWidget(&this->role_list_input);
+	this->layouts.role_list_input.addWidget(&this->buttons.remove_role);
 
 	QObject::connect(
 		&this->role_list_input,
@@ -73,6 +73,26 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		}
 	);
 
+	// Team list
+	this->labels.team_list.setText("Participating teams"); // TODO TRANSLATE
+	this->labels.team_list.setBuddy(&this->team_list);
+	this->buttons.remove_team.setText("Remove");
+	this->buttons.remove_team.setDisabled(true);
+	this->role_list_input.setPlaceholderText("Add new teams here..."); // TODO TRANSLATE
+
+	this->layouts.team_list_input.addWidget(&this->team_list_input);
+	this->layouts.team_list_input.addWidget(&this->buttons.remove_team);
+
+	// Player list
+	this->labels.player_list.setText("Participating players"); // TODO TRANSLATE
+	this->labels.player_list.setBuddy(&this->player_list);
+	this->buttons.remove_player.setText("Remove");
+	this->buttons.remove_player.setDisabled(true);
+	this->role_list_input.setPlaceholderText("Add new players here..."); // TODO TRANSLATE
+
+	this->layouts.player_list_input.addWidget(&this->player_list_input);
+	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
+
 	// Action buttons
 	this->buttons.abort.setText("Abort"); // TODO TRANSLATE
 	this->buttons.save_and_return.setText("Save and Return"); // TODO TRANSLATE
@@ -81,6 +101,16 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// Side layouts
 	this->layouts.json_address.addWidget(&this->json_address);
 	this->layouts.json_address.addWidget(&this->buttons.json_address);
+
+	this->layouts.team_list.addWidget(&this->team_list);
+	this->layouts.team_list.addLayout(&this->layouts.team_list_input);
+
+	this->layouts.player_list.addWidget(&this->player_list);
+	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
+
+	this->layouts.team_player_lists.addLayout(&this->layouts.team_list);
+	this->layouts.team_player_lists.addLayout(&this->layouts.player_list);
+
 	this->layouts.action_buttons.addWidget(&this->buttons.abort);
 	this->layouts.action_buttons.addWidget(&this->buttons.save_and_return);
 	this->layouts.action_buttons.addWidget(&this->buttons.save_and_start);
@@ -92,7 +122,8 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.main.addLayout(&this->layouts.json_address);
 	this->layouts.main.addWidget(&this->labels.role_list);
 	this->layouts.main.addWidget(&this->role_list);
-	this->layouts.main.addLayout(&this->layouts.role_list);
+	this->layouts.main.addLayout(&this->layouts.role_list_input);
+	this->layouts.main.addLayout(&this->layouts.team_player_lists);
 	this->layouts.main.addLayout(&this->layouts.action_buttons);
 
 	// TODO PLAN

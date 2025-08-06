@@ -15,17 +15,26 @@ struct EditorWindow {
 	struct {
 		QVBoxLayout main;
 		QHBoxLayout json_address;
-		QHBoxLayout role_list;
+		QHBoxLayout role_list_input;
+		QVBoxLayout team_list;
+		QHBoxLayout team_list_input;
+		QVBoxLayout player_list;
+		QHBoxLayout player_list_input;
+		QHBoxLayout team_player_lists;
 		QHBoxLayout action_buttons;
 	} layouts;
 	struct {
 		QLabel tournament_name;
 		QLabel json_address;
 		QLabel role_list;
+		QLabel team_list;
+		QLabel player_list;
 	} labels;
 	struct {
 		QPushButton json_address;
 		QPushButton remove_role;
+		QPushButton remove_team;
+		QPushButton remove_player;
 		QPushButton abort;
 		QPushButton save_and_return;
 		QPushButton save_and_start;
@@ -33,8 +42,13 @@ struct EditorWindow {
 
 	QLineEdit tournament_name;
 	QLineEdit json_address;
+
 	QListWidget role_list;
 	QLineEdit role_list_input;
+	QListWidget team_list;
+	QLineEdit team_list_input;
+	QListWidget player_list;
+	QLineEdit player_list_input;
 
 	EditorWindow(void);
 
