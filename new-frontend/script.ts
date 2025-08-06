@@ -1,7 +1,16 @@
+import { MessageType } from "../MessageType.js"
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// MessageType.ts contains only the enum MessageType and is exported, so backend
+// and rentnerend can use it as well (through #define magic)
+
+
 // TODO NOTE dont ever hardcode styles :pray:
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
 // TODO rewrite string reading
+// TODO decide what to do when rentnerend goes to ENDE ENDE (add gameindex and handle it everywhere?)
+
+
 let socket = new WebSocket("ws://localhost:8081?client=frontend", "interscore")
 socket.binaryType = "arraybuffer"
 
@@ -46,6 +55,7 @@ const TEAMS_COUNT_MAX = 32
 const TEAM_NAME_MAX_LEN = 100
 const PLAYER_NAME_MAX_LEN = 100
 const SCROLL_DURATION = 7_000
+const TIME_UPDATE_INTERVAL_MS = 1_000
 
 let WIDGET_SCOREBOARD_SHOWN = false
 let WIDGET_GAMEPLAN_SHOWN = false
@@ -86,7 +96,7 @@ interface Matchday {
 		halftime: boolean,
 		pause: boolean,
 		time: number,
-		timestart: number // time_t
+		pausestart: number // time_t
 	},
 	deftime: number,
 	games: Game[],
@@ -94,28 +104,54 @@ interface Matchday {
 	players: Player[]
 }
 
-let md: Matchday
+let md: Matchday = {
+	cur: {
+		gameindex: 0,
+		halftime: false,
+		pause: true,
+		time: -1,
+		pausestart: -1
+	},
+	deftime: -1,
+	games: [],
+	teams: [],
+	players: []
+}
 
-function parse_json(json: string): Matchday {
+function capitalize(str: string): string {
+    if (!str) return str;
+    return str[0].toUpperCase() + str.slice(1);
+}
+
+function parse_json(json: string){
 	const p = JSON.parse(json);
-	const m: Partial<Matchday> = {};
 
-	m.deftime = p.time;
-	m.games = [];
-	m.teams = [];
-	m.players = [];
+	if(md.deftime === -1) {
+		console.log("First JSON Parse")
+		md.cur = {
+			gameindex: 0,
+			halftime: false,
+			pause: true,
+			time: p.time * (1000 / TIME_UPDATE_INTERVAL_MS),
+			pausestart: p.time * (1000 / TIME_UPDATE_INTERVAL_MS)
+		}
+	}
+	md.deftime = p.time * (1000 / TIME_UPDATE_INTERVAL_MS);
+	md.games = [];
+	md.teams = [];
+	md.players = [];
 	for (let i = 0; i < p.teams.length; i++) {
-		m.players[i*2] = {
+		md.players[i*2] = {
 			name: p.teams[i].players[0].name,
 			role: p.teams[i].players[0].position,
 			team_index: i
 		};
-		m.players[i*2 + 1] = {
+		md.players[i*2 + 1] = {
 				name: p.teams[i].players[1].name,
 				role: p.teams[i].players[1].position,
 				team_index: i
 		};
-		m.teams[i] = {
+		md.teams[i] = {
 			players_indices: [i*2, i*2 + 1],
 			name: p.teams[i].name,
 			logo_filename: p.teams[i].logo,
@@ -124,36 +160,34 @@ function parse_json(json: string): Matchday {
 		};
 	}
 	for (let i = 0; i < p.games.length; i++) {
-		m.games[i] = {
-			t1_index: m.teams.findIndex(temp => temp.name === p.games[i].team1),
-			t2_index: m.teams.findIndex(temp => temp.name === p.games[i].team2),
+		md.games[i] = {
+			t1_index: md.teams.findIndex(temp => temp.name === p.games[i].team1),
+			t2_index: md.teams.findIndex(temp => temp.name === p.games[i].team2),
 			halftimescore: {t1: 0, t2: 0},
 			score: {t1: 0, t2: 0},
 			cards: []
 		};
-		if(m.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${p.games[i].team1}`);
-		if(m.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${p.games[i].team2}`);
+		if(md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${p.games[i].team1}`);
+		if(md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${p.games[i].team2}`);
 		if (p.games[i].score !== undefined) {
-			m.games[i].score.t1 = p.games[i].score.team1;
-			m.games[i].score.t2 = p.games[i].score.team2;
+			md.games[i].score.t1 = p.games[i].score.team1;
+			md.games[i].score.t2 = p.games[i].score.team2;
 		}
 		if (p.games[i].halftimescore !== undefined) {
-			m.games[i].halftimescore.t1 = p.games[i].halftimescore.team1;
-			m.games[i].halftimescore.t2 = p.games[i].halftimescore.team2;
+			md.games[i].halftimescore.t1 = p.games[i].halftimescore.team1;
+			md.games[i].halftimescore.t2 = p.games[i].halftimescore.team2;
 		}
 		if (p.games[i].cards !== undefined) {
-			for(let j=0; j < p.games[j].cards.length; j++){
-				m.games[i].cards[j] = {
+			for(let j=0; j < p.games[i].cards.length; j++){
+				md.games[i].cards[j] = {
 					card_type: (p.games[i].cards[j].type === "Y") ? CardType.Yellow : CardType.Red,
-					player_index: m.players.indexOf(p.games[i].cards[j].player)
+					player_index: md.players.findIndex(temp => temp.name === capitalize(p.games[i].cards[j].player))
 				};
-				if(m.games[i].cards[j].player_index === -1)
+				if(md.games[i].cards[j].player_index === -1)
 					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${p.games[i].cards[i].player}`);
 			}
 		}
 	}
-
-	return m as Matchday;
 }
 
 interface Color { r: number, g: number, b: number }
@@ -217,6 +251,9 @@ function write_scoreboard(m: Matchday) {
 	scoreboard_t1.style.color = Color_font_contrast(t1_col_left)
 	scoreboard_t2.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
 	scoreboard_t2.style.color = Color_font_contrast(t2_col_left)
+
+	update_timer_html()
+	update_scoreboard_timer()
 }
 
 function write_gameplan(m: Matchday) {
@@ -279,12 +316,12 @@ function write_gameplan(m: Matchday) {
 	}
 
 	// TODO
-	function smoothScrollTo(targetY, duration = 2_000) {
+	function smoothScrollTo(targetY: number, duration: number = 2_000) {
 		const startY = scroller.scrollTop
 		const deltaY = targetY - startY
 		const startTime = performance.now()
 
-		function step(currentTime) {
+		function step(currentTime: number) {
 			const elapsed = currentTime - startTime
 			const progress = Math.min(elapsed / duration, 1)
 			const eased = progress < 0.5
@@ -399,7 +436,6 @@ function write_gamestart(m: Matchday) {
 
 // TODO refactor as handler function for receiving a card, also adding it to Matchday m
 function write_card(player_index: number, type: CardType) {
-	let offset = 1
 	const display_length = 7_000
 
 	card_receiver.innerHTML = md.players[player_index].name.toString() //TODO do we need toString?
@@ -570,33 +606,42 @@ function write_livetable(m: Matchday) {
 let countdown = 0 //TODO ASK what is this?
 
 // Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
-function scoreboard_set_timer(time_in_s: number) {
+function async_handle_time() {
 	clearInterval(countdown)
-
-	let offset = 1
-	md.cur.time = time_in_s
-
 	update_timer_html()
 	countdown = setInterval(() => {
-		if (md.cur.pause) return
+		update_scoreboard_timer()
+
+		if (md.cur.pause && (md.cur.pausestart == md.cur.time || md.cur.pausestart == -1)) return
+		if (md.cur.pause && md.cur.pausestart > md.cur.time){
+			update_timer_html()
+			md.cur.time = md.cur.pausestart
+			return
+		}
 		if (md.cur.time <= 1) clearInterval(countdown)
 
 		--md.cur.time
 
-		const bar_width = Math.max(0, (md.cur.time / md.deftime) * 100)
-		scoreboard_time_bar.style.width = bar_width + "%"
 		update_timer_html()
-	}, 1000)
+	}, TIME_UPDATE_INTERVAL_MS)
+}
+
+function update_scoreboard_timer() {
+	if (md.cur.time === -1 || md.deftime === -1) return
+	const bar_width = Math.min(100, Math.max(0, (md.cur.time / md.deftime) * 100))
+	scoreboard_time_bar.style.width = bar_width + "%"
 }
 
 function update_timer_html() {
 	const minutes = Math.floor(md.cur.time / 60).toString().padStart(2, "0")
 	const seconds = (md.cur.time % 60).toString().padStart(2, "0")
+	console.log("update timer: min: " +  minutes +  "sec: " + seconds);
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
 }
 
 function update_ui() {
+	console.log("updating ui")
 	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard(md)
 	if(WIDGET_GAMEPLAN_SHOWN) write_gameplan(md)
 	if(WIDGET_LIVEPLAN_SHOWN) write_livetable(md)
@@ -608,200 +653,198 @@ socket.onopen = () => {
 	console.log("Connected to WebSocket server!")
 }
 
-// This is 1-1 the InputType enum from common.h
-enum Message {
-	WIDGET_SCOREBOARD_SHOW,
-	WIDGET_SCOREBOARD_HIDE,
-	WIDGET_GAMEPLAN_SHOW,
-	WIDGET_GAMEPLAN_HIDE,
-	WIDGET_LIVEPLAN_SHOW, //TODO liveplan or livetable?
-	WIDGET_LIVEPLAN_HIDE,
-	WIDGET_GAMESTART_SHOW,
-	WIDGET_GAMESTART_HIDE,
-	WIDGET_AD_SHOW,
-	WIDGET_AD_HIDE,
-	OBS_STREAM_START,
-	OBS_STREAM_STOP,
-	OBS_REPLAY_START,
-	OBS_REPLAY_STOP,
-	T1_SCORE_PLUS,
-	T1_SCORE_MINUS,
-	T2_SCORE_PLUS,
-	T2_SCORE_MINUS,
-	GAME_NEXT,
-	GAME_PREV,
-	GAME_SWITCH_SIDES,
-	TIME_PLUS,
-	TIME_MINUS,
-	TIME_PLUS_20,
-	TIME_MINUS_20,
-	TIME_TOGGLE_ON,
-	TIME_TOGGLE_OFF,
-	TIME_RESET,
-	YELLOW_CARD,
-	RED_CARD,
-	SCOREBOARD_SET_TIMER,
-	UPDATE_JSON = 123, // ASCII of: {
-}
-
 socket.onmessage = (event: MessageEvent) => {
-	if (typeof event.data !== "string") {
-		console.error("Grrrrr, backend didnt sent a fucking string. Fuck off")
+	if (!(event.data instanceof ArrayBuffer)) {
+		console.error("Grrrrr, backend didnt senz Binary Data. Fuck off")
 		return;
 	}
 
-	let buffer: string = event.data
+	const data: DataView = new DataView(event.data as ArrayBuffer)
+	console.log("Buffer len: ", data.byteLength)
 
-	console.log("Received message: " + buffer)
-
-	const mode: number = buffer.charCodeAt(0)
+	const mode: number = data.getUint8(0)
 	console.log("mode: " + mode)
 	switch (mode) {
-		case Message.WIDGET_SCOREBOARD_SHOW:
+		case MessageType.WIDGET_SCOREBOARD_SHOW:
 			WIDGET_SCOREBOARD_SHOWN = true
 			scoreboard.style.display = "inline-flex"
 			scoreboard.style.opacity = "0"
 			setTimeout(() => scoreboard.style.opacity = "1", 10)
 			write_scoreboard(md)
 			break
-		case Message.WIDGET_SCOREBOARD_HIDE:
+		case MessageType.WIDGET_SCOREBOARD_HIDE:
 			WIDGET_SCOREBOARD_SHOWN = false
 			scoreboard.style.opacity = "0"
 			setTimeout(() => scoreboard.style.display = "none", 500)
 			break
-		case Message.WIDGET_GAMEPLAN_SHOW:
+		case MessageType.WIDGET_GAMEPLAN_SHOW:
 			WIDGET_GAMEPLAN_SHOWN = true
 			gameplan.style.display = "inline-flex"
 			gameplan.style.opacity = "0"
 			setTimeout(() => gameplan.style.opacity = "1", 10)
 			write_gameplan(md)
 			break
-		case Message.WIDGET_GAMEPLAN_HIDE:
+		case MessageType.WIDGET_GAMEPLAN_HIDE:
 			WIDGET_GAMEPLAN_SHOWN = false
 			gameplan.style.opacity = "0"
 			setTimeout(() => gameplan.style.display = "none", 500)
 			break
-		case Message.WIDGET_LIVEPLAN_SHOW:
+		case MessageType.WIDGET_LIVETABLE_SHOW:
 			WIDGET_LIVEPLAN_SHOWN = true
 			livetable.style.display = "inline-flex"
 			livetable.style.opacity = "0"
 			setTimeout(() => livetable.style.opacity = "1", 10)
 			write_livetable(md)
 			break
-		case Message.WIDGET_LIVEPLAN_HIDE:
+		case MessageType.WIDGET_LIVETABLE_HIDE:
 			WIDGET_LIVEPLAN_SHOWN = false
 			livetable.style.opacity = "0"
 			setTimeout(() => livetable.style.display = "none", 500)
 			break
-		case Message.WIDGET_GAMESTART_SHOW:
+		case MessageType.WIDGET_GAMESTART_SHOW:
 			WIDGET_GAMESTART_SHOWN = true
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.opacity = "1", 10)
 			write_gamestart(md)
 			break
-		case Message.WIDGET_GAMESTART_HIDE:
+		case MessageType.WIDGET_GAMESTART_HIDE:
 			WIDGET_GAMESTART_SHOWN = false
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.display = "none", 500)
 			break
-		case Message.WIDGET_AD_SHOW: // TODO does this work?
+		case MessageType.WIDGET_AD_SHOW: // TODO does this work?
 			WIDGET_AD_SHOWN = true
 			ad.style.display = "block"
 			ad.style.opacity = "0"
 			setTimeout(() => ad.style.opacity = "1", 10)
 			break
-		case Message.WIDGET_AD_HIDE:
+		case MessageType.WIDGET_AD_HIDE:
 			WIDGET_AD_SHOWN = false
 			ad.style.opacity = "0"
 			setTimeout(() => ad.style.display = "none", 500)
 			break
-		case Message.T1_SCORE_PLUS:
+		case MessageType.T1_SCORE_PLUS:
 			md.games[md.cur.gameindex].score.t1++
 			update_ui()
 			break
-		case Message.T1_SCORE_MINUS:
+		case MessageType.T1_SCORE_MINUS:
 			if(md.games[md.cur.gameindex].score.t1 > 0) {
 				md.games[md.cur.gameindex].score.t1--
 				update_ui()
 			}
 			break
-		case Message.T2_SCORE_PLUS:
+		case MessageType.T2_SCORE_PLUS:
 			md.games[md.cur.gameindex].score.t2++
 			update_ui()
 			break
-		case Message.T2_SCORE_MINUS:
+		case MessageType.T2_SCORE_MINUS:
 			if(md.games[md.cur.gameindex].score.t2 > 0){
 				md.games[md.cur.gameindex].score.t2--
 				update_ui()
 			}
 			break
-		case Message.GAME_NEXT:
+		case MessageType.GAME_NEXT:
 			if(md.cur.gameindex < md.games.length-1) {
 				md.cur.gameindex++;
 				//TODO should game prev/next also alter other stuff like time?
 				update_ui()
 			}
 			break
-		case Message.GAME_PREV:
+		case MessageType.GAME_PREV:
 			if(md.cur.gameindex > 0) {
 				md.cur.gameindex--;
 				//TODO should game prev/next also alter other stuff like time?
 				update_ui()
 			}
 			break
-		case Message.GAME_SWITCH_SIDES:
+		case MessageType.GAME_SWITCH_SIDES:
 			md.cur.halftime = !md.cur.halftime
 			update_ui()
 			break
-		case Message.TIME_PLUS:
-			md.cur.time++; // TODO Disallow time changes this when we are not paused?
+		case MessageType.TIME_PLUS_1:
+			// TODO Disallow time changes this when we are not paused?
+			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			md.cur.pausestart = -1
+			md.cur.time += (1000 / TIME_UPDATE_INTERVAL_MS);
+			update_ui()
 			break
-		case Message.TIME_MINUS:
-			if(md.cur.time > 0)
-				md.cur.time--;
+		case MessageType.TIME_MINUS_1:
+			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			md.cur.pausestart = -1
+			if(md.cur.time > 0) {
+				md.cur.time -= (1000 / TIME_UPDATE_INTERVAL_MS)
+				update_ui()
+			}
 			break
-		case Message.TIME_PLUS_20:
-			md.cur.time += 20;
+		case MessageType.TIME_PLUS_20:
+			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			md.cur.pausestart = -1
+			md.cur.time += 20 * (1000 / TIME_UPDATE_INTERVAL_MS)
+			update_ui()
 			break
-		case Message.TIME_MINUS_20:
-			if(md.cur.time > 19)
-				md.cur.time -= 20;
+		case MessageType.TIME_MINUS_20:
+			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			md.cur.pausestart = -1
+			if(md.cur.time >= 20 * (1000 / TIME_UPDATE_INTERVAL_MS))
+				md.cur.time -= 20 * (1000 / TIME_UPDATE_INTERVAL_MS);
 			else
 				md.cur.time = 0;
+			update_ui()
 			break
-		case Message.TIME_TOGGLE_ON:
+		case MessageType.TIME_TOGGLE_PAUSE:
+			console.log("Pausing now")
 			md.cur.pause = true
+			md.cur.pausestart = data.getUint16(1, true);
 			break
-		case Message.TIME_TOGGLE_OFF:
+		case MessageType.TIME_TOGGLE_UNPAUSE:
+			md.cur.pausestart = -1
 			md.cur.pause = false
 			break
-		case Message.TIME_RESET:
+		case MessageType.TIME_RESET:
 			md.cur.time = md.deftime
+			update_ui()
 			break
-		case Message.YELLOW_CARD:
+		case MessageType.YELLOW_CARD:
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(buffer.charCodeAt(1), CardType.Yellow)
+			write_card(data.getUint8(1), CardType.Yellow)
 			break
-		case Message.RED_CARD:
+		case MessageType.RED_CARD:
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(buffer.charCodeAt(1), CardType.Red)
+			write_card(data.getUint8(1), CardType.Red)
 			break
-		case Message.UPDATE_JSON:
-			console.log("Parsing JSON now");
-			md = parse_json(buffer)
+		case MessageType.DATA_TIME:
+			md.cur.time = data.getUint16(1, true)
+			update_ui()
+			break;
+		case MessageType.DATA_IS_PAUSE:
+			md.cur.pause = data.getUint8(1) === 1
+			break;
+		case MessageType.DATA_HALFTIME:
+			md.cur.halftime = data.getUint8(1) === 1
+			break;
+		case MessageType.DATA_GAMEINDEX:
+			md.cur.gameindex = data.getUint8(1)
+			break;
+		case MessageType.DATA_JSON:
+			const decoder = new TextDecoder("utf-8")
+			const str = decoder.decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
+			console.log("Parsing JSON. String: ", str)
+			parse_json(str)
 			console.log("JSON parsed. Here it is:", md);
+			update_ui()
 			break
-		case Message.SCOREBOARD_SET_TIMER:
+		//case MessageType.SCOREBOARD_SET_TIMER:
 			// TODO This is actually useful, implement in rentnerend
 			// TODO make this work
 			//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
-			break
+		//	break
 	}
+	console.log("Here is the Matchday again:", md)
 }
 
 socket.onerror = (error: Event) => {
@@ -813,6 +856,7 @@ socket.onclose = () => {
 }
 
 console.log("Client loaded!")
+async_handle_time()
 
 // For debugging
 //function hotReloadCSS() {

@@ -5,6 +5,7 @@
 #define TEAM_NAME_MAX_LEN 100
 #define TEAMS_COUNT_MAX 32
 #define GAMES_COUNT_MAX 64
+#define MAX_PATH_LEN 256
 
 // Default length of every halftime in sec
 #define JSON_PATH "input.json"

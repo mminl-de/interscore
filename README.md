@@ -115,8 +115,8 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL ENSURE assets are always found by the executable
 
 ## backend
+- URGENT Add optional cur json elements so we can properly hot reload
 - OBS Replays sind noch bisschen buggy irgendwie
-- Time is not send when hot reloading/sending json
 - FINAL make json_load resilient to bad input.json
 - FINAL FINAL graceful Ctrl-C handling
 - FINAL^4 add ability to count time up(+verlängerung) for other sports

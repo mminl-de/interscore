@@ -7,7 +7,6 @@
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 
-#include "config.h"
 #include "common.h"
 
 extern Matchday md;

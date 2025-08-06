@@ -1,4 +1,4 @@
-SRC ?= backend.c mongoose/mongoose.c common.c
+SRC ?= backend.c mongoose/mongoose.c
 OUT ?= interscore
 CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
 CC ?= cc
@@ -24,6 +24,12 @@ b-run:
 
 r-fast:
 	${MAKE} --no-print-directory -C rentnerend fast
+
+r-old:
+	${MAKE} --no-print-directory -C rentnerend old
+
+r-old-run:
+	rentnerend/interscore-old
 
 r-run:
 	rentnerend/interscore
