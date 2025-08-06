@@ -48,7 +48,7 @@ launchwindow::LaunchWindow::LaunchWindow(
 
 void
 launchwindow::LaunchWindow::add_json(const char *name, const char *addr) {
-	QListWidgetItem *const result = new QListWidgetItem;
+	QListWidgetItem *const item = new QListWidgetItem;
 	QWidget *const card = new QWidget;
 	QVBoxLayout *const layout = new QVBoxLayout(card);
 
@@ -59,9 +59,9 @@ launchwindow::LaunchWindow::add_json(const char *name, const char *addr) {
 	layout->addWidget(addr_label);
 	card->setLayout(layout);
 
-	result->setSizeHint(card->sizeHint());
-	this->json_list.addItem(result);
-	this->json_list.setItemWidget(result, card);
+	item->setSizeHint(card->sizeHint());
+	this->json_list.addItem(item);
+	this->json_list.setItemWidget(item, card);
 }
 
 void

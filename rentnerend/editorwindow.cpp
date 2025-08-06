@@ -1,3 +1,4 @@
+#include <cstdio> // TODO NOW
 #include <QDialogButtonBox>
 #include <QObject>
 #include <QPushButton>
@@ -43,6 +44,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		save_and_return,
 		&QPushButton::clicked,
 		[this]() {
+			printf("save and return\n");
 			//this->dialog.hide();
 		}
 	);
@@ -60,6 +62,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		abort,
 		&QPushButton::clicked,
 		[this]() {
+			printf("abort\n");
 			//this->dialog.hide();
 		}
 	);
@@ -69,15 +72,23 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// groups (picker)
 	// address (textfield)
 	// roles (list)
+	//
+	// teams(list)
 	// players (list)
-	// games (list)
 	// colors (color picker)
+	//
+	// games (list)
 	this->add_role_line();
+	this->add_role_line();
+	this->add_role_line();
+	this->select_role(1);
 }
 
-void
+uint16_t
 editorwindow::EditorWindow::add_role_line(void) {
-	QListWidgetItem *const result = new QListWidgetItem;
+	const uint16_t result = this->role_list.count();
+	printf("the new line is at index %d\n", result);
+	QListWidgetItem *const item = new QListWidgetItem;
 
 	QLineEdit *line = new QLineEdit;
 	line->setPlaceholderText("New role..."); // TODO TRANSLATE
@@ -85,10 +96,20 @@ editorwindow::EditorWindow::add_role_line(void) {
 	QObject::connect(
 		line,
 		&QLineEdit::returnPressed,
-		[this] () { this->add_role_line(); }
+		[this]() { this->select_role(this->add_role_line()); }
 	);
 
-	result->setSizeHint(line->sizeHint());
-	this->role_list.addItem(result);
-	this->role_list.setItemWidget(result, line);
+	item->setSizeHint(line->sizeHint());
+	this->role_list.addItem(item);
+	this->role_list.setItemWidget(item, line);
+
+	return result;
+}
+
+void
+editorwindow::EditorWindow::select_role(const uint16_t n) {
+	this->role_list.setCurrentRow(n);
+	this->role_list.item(n)->setSelected(true);
+	this->role_list.setFocus();
+	printf("locking in\n");
 }

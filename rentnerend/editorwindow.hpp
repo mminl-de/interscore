@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QDialog>
-#include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -12,12 +10,13 @@
 namespace editorwindow {
 
 struct EditorWindow {
-	QDialog dialog;
-	QDialogButtonBox dialog_buttons;
+	QWidget window;
 
 	struct {
 		QVBoxLayout main;
 		QHBoxLayout json_address;
+		QHBoxLayout role_list_buttons;
+		QHBoxLayout action_buttons;
 	} layouts;
 	struct {
 		QLabel tournament_name;
@@ -33,9 +32,6 @@ struct EditorWindow {
 	QListWidget role_list;
 
 	EditorWindow(void);
-
-	// Add a new empty `QLineEdit` to a role to the role list.
-	void add_role_line(void);
 };
 
 } // namespace editorwindow
