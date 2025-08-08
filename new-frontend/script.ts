@@ -229,17 +229,15 @@ function read_color(view: DataView, offset: number): Color {
 	}
 }
 
-function write_scoreboard(m: Matchday) {
-	console.log("Writing data to scoreboard:\n", m)
-
-	const gamei = m.cur.gameindex
-	const team1 = m.teams[m.games[gamei].t1_index]
-	const team2 = m.teams[m.games[gamei].t2_index]
+function write_scoreboard() {
+	const game = md.games[md.cur.gameindex]
+	const team1 = md.cur.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
+	const team2 = md.cur.halftime ? md.teams[game.t1_index] : md.teams[game.t2_index]
 	scoreboard_t1.innerHTML = team1.name
 	scoreboard_t2.innerHTML = team2.name
 
-	scoreboard_score_1.innerHTML = m.games[gamei].score.t1.toString()
-	scoreboard_score_2.innerHTML = m.games[gamei].score.t2.toString()
+	scoreboard_score_1.innerHTML = md.cur.halftime ? game.score.t2.toString() : game.score.t1.toString()
+	scoreboard_score_2.innerHTML = md.cur.halftime ? game.score.t1.toString() : game.score.t2.toString()
 
 	const t1_col_right = team1.color_right
 	const t1_col_left = team1.color_left
@@ -256,29 +254,29 @@ function write_scoreboard(m: Matchday) {
 	update_scoreboard_timer()
 }
 
-function write_gameplan(m: Matchday) {
+function write_gameplan() {
 	while (gameplan.children.length > 1)
 		gameplan.removeChild(gameplan.lastChild!)
 
-	const game_n = m.games.length
-	const cur = m.cur.gameindex //TODO Index ab 0 so richtig?
+	const game_n = md.games.length
+	const cur = md.cur.gameindex //TODO Index ab 0 so richtig?
 
 	for (let game_i = 0; game_i < game_n; ++game_i) {
-		const teams_1 = m.teams[m.games[game_i].t1_index].name
-		const teams_2 = m.teams[m.games[game_i].t1_index].name
-		const goals_1 = m.games[game_i].score.t1
-		const goals_2 = m.games[game_i].score.t2
-		const col_1_right = m.teams[m.games[game_i].t1_index].color_right
-		const col_1_left = m.teams[m.games[game_i].t1_index].color_left
-		const col_2_right = m.teams[m.games[game_i].t2_index].color_right
-		const col_2_left = m.teams[m.games[game_i].t2_index].color_left
+		const teams_1 = md.teams[md.games[game_i].t1_index].name
+		const teams_2 = md.teams[md.games[game_i].t2_index].name
+		const goals_1 = md.games[game_i].score.t1
+		const goals_2 = md.games[game_i].score.t2
+		const col_1_right = md.teams[md.games[game_i].t1_index].color_right
+		const col_1_left = md.teams[md.games[game_i].t1_index].color_left
+		const col_2_right = md.teams[md.games[game_i].t2_index].color_right
+		const col_2_left = md.teams[md.games[game_i].t2_index].color_left
 
 		let line = document.createElement("div")
 		line.classList.add("line")
 
 		let t1 = document.createElement("div")
 		t1.classList.add("bordered", "t1")
-		t1.innerHTML = teams_1[game_i].toString()
+		t1.innerHTML = teams_1.toString()
 		t1.style.background = Color_gradient_to_string(col_1_right, col_1_left)
 		t1.style.color = Color_font_contrast(col_1_right)
 		line.appendChild(t1)
@@ -350,32 +348,32 @@ function write_gameplan(m: Matchday) {
 	}
 }
 
-function write_gamestart(m: Matchday) {
+function write_gamestart() {
 	gamestart_t1.innerHTML = ""
 	gamestart_t2.innerHTML = ""
 
-	const gamei = m.cur.gameindex
+	const gamei = md.cur.gameindex
 
-	const t1_name = m.teams[m.games[gamei].t1_index].name
-	const t2_name = m.teams[m.games[gamei].t2_index].name
+	const t1_name = md.teams[md.games[gamei].t1_index].name
+	const t2_name = md.teams[md.games[gamei].t2_index].name
 
 	// TODO WIP
-	const t1_keeper = m.players[m.teams[m.games[gamei].t1_index].players_indices[0]].name
-	const t1_field = m.players[m.teams[m.games[gamei].t1_index].players_indices[1]].name
-	const t2_keeper = m.players[m.teams[m.games[gamei].t2_index].players_indices[0]].name
-	const t2_field = m.players[m.teams[m.games[gamei].t2_index].players_indices[1]].name
+	const t1_keeper = md.players[md.teams[md.games[gamei].t1_index].players_indices[0]].name
+	const t1_field = md.players[md.teams[md.games[gamei].t1_index].players_indices[1]].name
+	const t2_keeper = md.players[md.teams[md.games[gamei].t2_index].players_indices[0]].name
+	const t2_field = md.players[md.teams[md.games[gamei].t2_index].players_indices[1]].name
 
-	const t1_col_left = m.teams[m.games[gamei].t1_index].color_left
-	const t1_col_right = m.teams[m.games[gamei].t1_index].color_right
-	const t2_col_left = m.teams[m.games[gamei].t2_index].color_left
-	const t2_col_right = m.teams[m.games[gamei].t2_index].color_right
+	const t1_col_left = md.teams[md.games[gamei].t1_index].color_left
+	const t1_col_right = md.teams[md.games[gamei].t1_index].color_right
+	const t2_col_left = md.teams[md.games[gamei].t2_index].color_left
+	const t2_col_right = md.teams[md.games[gamei].t2_index].color_right
 
-	const next_t1_name = m.teams[m.games[gamei+1].t1_index].name
-	const next_t2_name = m.teams[m.games[gamei+1].t2_index].name
-	const next_t1_color_left = m.teams[m.games[gamei+1].t1_index].color_left
-	const next_t1_color_right = m.teams[m.games[gamei+1].t1_index].color_right
-	const next_t2_color_left = m.teams[m.games[gamei+1].t2_index].color_left
-	const next_t2_color_right = m.teams[m.games[gamei+1].t2_index].color_right
+	const next_t1_name = md.teams[md.games[gamei+1].t1_index].name
+	const next_t2_name = md.teams[md.games[gamei+1].t2_index].name
+	const next_t1_color_left = md.teams[md.games[gamei+1].t1_index].color_left
+	const next_t1_color_right = md.teams[md.games[gamei+1].t1_index].color_right
+	const next_t2_color_left = md.teams[md.games[gamei+1].t2_index].color_left
+	const next_t2_color_right = md.teams[md.games[gamei+1].t2_index].color_right
 
 	const t1_el = document.createElement("div")
 	t1_el.classList.add("team")
@@ -463,95 +461,108 @@ function write_card(player_index: number, type: CardType) {
 
 // TODO Does this need to be ?
 interface LivetableLine {
-	name?: string,
-	points?: number,
-	played?: number,
-	won?: number,
-	tied?: number,
-	lost?: number,
-	goals?: number,
-	goals_taken?: number,
-	color_right?: number,
-	color_left?: number
+	name: string,
+	points: number,
+	played: number,
+	won: number,
+	tied: number,
+	lost: number,
+	goals: number,
+	goals_taken: number,
+	color_right: number,
+	color_left: number
 }
 
-function write_livetable(m: Matchday) {
+function write_livetable() {
 	while (livetable.children.length > 2)
 		livetable.removeChild(livetable.lastChild!)
 
-	const team_n = m.teams.length
+	const team_n = md.teams.length
 	let teams: LivetableLine[] = []
 
 	for (let i = 0; i < team_n; ++i) {
-		teams[i].name = m.teams[i].name;
-		teams[i].points = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) { // TODO Count the game right now?
-				if (m.games[j].t1_index === i) {
-					p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 3 : 0
-					p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
-				} else if (m.games[j].t2_index === i) {
-					p += (m.games[j].score.t1 - m.games[j].score.t2 < 0) ? 3 : 0
-					p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
+		console.log("Name: ", md.teams[i].name)
+		teams[i] = {
+			name: md.teams[i].name.toString(),
+			points: ((i, m) => {
+				let p: number = 0
+				for (let j=0; j <= m.cur.gameindex; j++) { // TODO Count the game right now?
+					if (m.games[j].t1_index === i) {
+						p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 3 : 0
+						p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
+					} else if (m.games[j].t2_index === i) {
+						p += (m.games[j].score.t1 - m.games[j].score.t2 < 0) ? 3 : 0
+						p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
+					}
 				}
-			}
-			return p
-		}) (i, m)
-		teams[i].played = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++)
-				if(m.games[j].t1_index === i || m.games[j].t2_index === i) p++
-			return p
-		}) (i, m)
-		teams[i].won = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) {
-				if (m.games[j].t1_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 1 : 0
-				else if (m.games[j].t2_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 < 0) ? 1 : 0
-			}
-			return p
-		}) (i, m)
-		teams[i].tied = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) {
-				if (m.games[j].t1_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
-				else if (m.games[j].t2_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
-			}
-			return p
-		}) (i, m)
-		teams[i].lost = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) {
-				if (m.games[j].t1_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 0 : 1
-				else if (m.games[j].t2_index === i)
-					p += (m.games[j].score.t1 - m.games[j].score.t2 < 0) ? 0 : 1
-			}
-			return p
-		}) (i, m)
-		teams[i].goals = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) {
-				if (m.games[j].t1_index === i) p += m.games[j].score.t1
-				else if (m.games[j].t2_index === i) p += m.games[j].score.t2
-			}
-			return p
-		}) (i, m)
-		teams[i].goals_taken = ((i, m) => {
-			let p: number = 0
-			for (let j=0; j < m.cur.gameindex; j++) {
-				if (m.games[j].t1_index === i) p += m.games[j].score.t2
-				else if (m.games[j].t2_index === i) p += m.games[j].score.t1
-			}
-			return p
-		}) (i, m)
-		teams[i].color_right = m.teams[i].color_right
-		teams[i].color_left = m.teams[i].color_left
+				return p
+			}) (i, md),
+			played: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++)
+					if(md.games[j].t1_index === i || md.games[j].t2_index === i) p++
+				return p
+			}) (i),
+			won: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++) {
+					if (md.games[j].t1_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 1 : 0
+					else if (md.games[j].t2_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 1 : 0
+				}
+				return p
+			}) (i),
+			tied: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++) {
+					if (md.games[j].t1_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
+					else if (md.games[j].t2_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
+				}
+				return p
+			}) (i),
+			lost: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++) {
+					if (md.games[j].t1_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 0 : 1
+					else if (md.games[j].t2_index === i)
+						p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 0 : 1
+				}
+				return p
+			}) (i),
+			goals: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++) {
+					if (md.games[j].t1_index === i) p += md.games[j].score.t1
+					else if (md.games[j].t2_index === i) p += md.games[j].score.t2
+				}
+				return p
+			}) (i),
+			goals_taken: (i => {
+				let p: number = 0
+				for (let j=0; j <= md.cur.gameindex; j++) {
+					if (md.games[j].t1_index === i) p += md.games[j].score.t2
+					else if (md.games[j].t2_index === i) p += md.games[j].score.t1
+				}
+				return p
+			}) (i),
+			color_right: md.teams[i].color_right,
+			color_left: md.teams[i].color_left,
+		}
 	}
+
+	teams.sort((a, b) => {
+		if (b.points !== a.points) return b.points-a.points;
+		if (b.goals-b.goals_taken !== a.goals-a.goals_taken)
+			return (b.goals-b.goals_taken) - (a.goals-a.goals_taken)
+		if (b.goals !== a.goals) return b.goals-a.goals
+		if (b.won !== a.won) return b.won-a.won
+		if (b.played !== a.played) return b.played-a.played
+		return a.name.localeCompare(b.name)
+	});
 
 	for (let team_i = 0; team_i < team_n; ++team_i) {
 		const line = document.createElement("div")
@@ -612,14 +623,17 @@ function async_handle_time() {
 	countdown = setInterval(() => {
 		update_scoreboard_timer()
 
+		console.log("ASYNC Yeah")
 		if (md.cur.pause && (md.cur.pausestart == md.cur.time || md.cur.pausestart == -1)) return
+		console.log("still ticking down")
 		if (md.cur.pause && md.cur.pausestart > md.cur.time){
-			update_timer_html()
 			md.cur.time = md.cur.pausestart
+			update_timer_html()
 			return
 		}
 		if (md.cur.time <= 1) clearInterval(countdown)
 
+		console.log("tick one down now: ", md.cur.time)
 		--md.cur.time
 
 		update_timer_html()
@@ -642,10 +656,10 @@ function update_timer_html() {
 
 function update_ui() {
 	console.log("updating ui")
-	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard(md)
-	if(WIDGET_GAMEPLAN_SHOWN) write_gameplan(md)
-	if(WIDGET_LIVEPLAN_SHOWN) write_livetable(md)
-	if(WIDGET_GAMESTART_SHOWN) write_gamestart(md)
+	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard()
+	if(WIDGET_GAMEPLAN_SHOWN) write_gameplan()
+	if(WIDGET_LIVEPLAN_SHOWN) write_livetable()
+	if(WIDGET_GAMESTART_SHOWN) write_gamestart()
 	if(WIDGET_AD_SHOWN) return//write_ad() //TODO This does not exist, right?
 }
 
@@ -670,7 +684,7 @@ socket.onmessage = (event: MessageEvent) => {
 			scoreboard.style.display = "inline-flex"
 			scoreboard.style.opacity = "0"
 			setTimeout(() => scoreboard.style.opacity = "1", 10)
-			write_scoreboard(md)
+			write_scoreboard()
 			break
 		case MessageType.WIDGET_SCOREBOARD_HIDE:
 			WIDGET_SCOREBOARD_SHOWN = false
@@ -682,7 +696,7 @@ socket.onmessage = (event: MessageEvent) => {
 			gameplan.style.display = "inline-flex"
 			gameplan.style.opacity = "0"
 			setTimeout(() => gameplan.style.opacity = "1", 10)
-			write_gameplan(md)
+			write_gameplan()
 			break
 		case MessageType.WIDGET_GAMEPLAN_HIDE:
 			WIDGET_GAMEPLAN_SHOWN = false
@@ -694,7 +708,7 @@ socket.onmessage = (event: MessageEvent) => {
 			livetable.style.display = "inline-flex"
 			livetable.style.opacity = "0"
 			setTimeout(() => livetable.style.opacity = "1", 10)
-			write_livetable(md)
+			write_livetable()
 			break
 		case MessageType.WIDGET_LIVETABLE_HIDE:
 			WIDGET_LIVEPLAN_SHOWN = false
@@ -706,7 +720,7 @@ socket.onmessage = (event: MessageEvent) => {
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
 			setTimeout(() => gamestart.style.opacity = "1", 10)
-			write_gamestart(md)
+			write_gamestart()
 			break
 		case MessageType.WIDGET_GAMESTART_HIDE:
 			WIDGET_GAMESTART_SHOWN = false
@@ -747,14 +761,12 @@ socket.onmessage = (event: MessageEvent) => {
 		case MessageType.GAME_NEXT:
 			if(md.cur.gameindex < md.games.length-1) {
 				md.cur.gameindex++;
-				//TODO should game prev/next also alter other stuff like time?
 				update_ui()
 			}
 			break
 		case MessageType.GAME_PREV:
 			if(md.cur.gameindex > 0) {
 				md.cur.gameindex--;
-				//TODO should game prev/next also alter other stuff like time?
 				update_ui()
 			}
 			break
@@ -818,24 +830,31 @@ socket.onmessage = (event: MessageEvent) => {
 			write_card(data.getUint8(1), CardType.Red)
 			break
 		case MessageType.DATA_TIME:
+			md.cur.pausestart = -1
+			console.log("Received DATA time: ", data.getUint16(1, true))
 			md.cur.time = data.getUint16(1, true)
+			console.log("Written Time: ", md.cur.time)
+			console.log(md)
+			console.log("Written Time: ", md.cur.time)
 			update_ui()
 			break;
 		case MessageType.DATA_IS_PAUSE:
+			console.log("Received DATA is_pause: ", data.getUint8(1) === 1)
 			md.cur.pause = data.getUint8(1) === 1
 			break;
 		case MessageType.DATA_HALFTIME:
+			console.log("Received DATA Halftime: ", data.getUint8(1) === 1)
 			md.cur.halftime = data.getUint8(1) === 1
 			break;
 		case MessageType.DATA_GAMEINDEX:
+			console.log("Received DATA Gameindex: ", data.getUint8(1))
 			md.cur.gameindex = data.getUint8(1)
 			break;
 		case MessageType.DATA_JSON:
+			console.log("Received DATA Gameindex")
 			const decoder = new TextDecoder("utf-8")
 			const str = decoder.decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
-			console.log("Parsing JSON. String: ", str)
 			parse_json(str)
-			console.log("JSON parsed. Here it is:", md);
 			update_ui()
 			break
 		//case MessageType.SCOREBOARD_SET_TIMER:

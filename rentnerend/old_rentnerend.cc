@@ -229,15 +229,12 @@ void btn_cb_time_toggle_pause() {
 	update_input_window();
 	update_display_window();
 	if(md.cur.pause) {
-		if(!server_con){
-			printf("WARNING: Couldnt send pause signal to server! This is pretty bad\n");
-			return;
-		}
 		char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
 		str[0] = TIME_TOGGLE_PAUSE;
 		*((u16 *)(str+1)) = md.cur.time;
-		mg_ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
-	} else websocket_send_button_signal(TIME_TOGGLE_UNPAUSE);
+		ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
+	} else
+		websocket_send_button_signal(TIME_TOGGLE_UNPAUSE);
 }
 void btn_cb_time_reset() {
 	md.cur.time = md.deftime;
@@ -245,6 +242,10 @@ void btn_cb_time_reset() {
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_RESET);
+	char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
+	str[0] = TIME_TOGGLE_PAUSE;
+	*((u16 *)(str+1)) = md.cur.time;
+	ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 }
 
 void btn_cb_red_card() {
@@ -305,9 +306,6 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		server_con = c;
 		server_connected = true;
 		update_input_window();
-		char* s = json_generate();
-		websocket_send_json(s);
-		free(s);
 		break;
 	}
 	case MG_EV_WS_MSG: {
@@ -323,7 +321,8 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		}
 		case PLS_SEND_CUR_GAMEINDEX: {
 			str[0] = DATA_GAMEINDEX;
-			str[1] = md.cur.gameindex;
+			// We need the check, because the frontend does not count gameindex + 1 at the end
+			str[1] = md.cur.gameindex == md.games_count ? md.cur.gameindex-1 : md.cur.gameindex;
 			ws_send(server_con, str, sizeof(u8) * 2, WEBSOCKET_OP_TEXT);
 			break;
 		}
@@ -764,8 +763,13 @@ void update_timer() {
 		update_display_window();
 		update_input_window();
 	}
-	if (md.cur.time == 0)
+	if (md.cur.time == 0 && !md.cur.pause) {
 		md.cur.pause = true;
+		char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
+		str[0] = TIME_TOGGLE_PAUSE;
+		*((u16 *)(str+1)) = md.cur.time;
+		ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
+	}
 }
 
 void websocket_poll() {

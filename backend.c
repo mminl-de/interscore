@@ -105,7 +105,7 @@ int make_directory(const char *path) {
 	#endif
 }
 
-void handle_message(enum MessageType *input_type, struct mg_connection * con){
+void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con){
 	printf("received a Input: %d\n", *input_type);
 	switch (*input_type) {
 		// All of these cases should be forwarded to frontend
@@ -136,6 +136,7 @@ void handle_message(enum MessageType *input_type, struct mg_connection * con){
 			break;
 		}
 		case DATA_TIME: // Same syntax as TIME_TOGGLE_PAUSE as it also ships time as u16 after the MessageType
+			printf("Received DATA: Time\n");
 		case TIME_TOGGLE_PAUSE: {
 			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
 			break;
@@ -146,12 +147,17 @@ void handle_message(enum MessageType *input_type, struct mg_connection * con){
 			break;
 		}
 		case DATA_GAMEINDEX: {
+			printf("Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
 			gameindex = ((char *)input_type)[1];
 			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case DATA_IS_PAUSE:
+		case DATA_IS_PAUSE: // TODO MERGE TO ONE AGAIN
+			printf("Received DATA: IS_PAUSE\n");
+			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
+			break;
 		case DATA_HALFTIME: {
+			printf("Received DATA: DATA_HALFTIME\n");
 			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
@@ -164,8 +170,8 @@ void handle_message(enum MessageType *input_type, struct mg_connection * con){
 			break;
 		}
 		case DATA_JSON: {
-			printf("Sending JSON with len: %d\n", strlen((char *)input_type));
-			ws_send(con_front, (char *)input_type, strlen((char *)input_type), WEBSOCKET_OP_BINARY);
+			printf("Received DATA: JSON\n");
+			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case OBS_STREAM_START: {
@@ -294,6 +300,8 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
 			message_type = PLS_SEND_CUR_TIME;
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			message_type = PLS_SEND_CUR_GAMEINDEX;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case MG_EV_WS_OPEN:
@@ -304,8 +312,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
-			printf("REAL data received len: %d", m->data.len);
-			handle_message((enum MessageType *) m->data.buf, con);
+			handle_message((enum MessageType *) m->data.buf, m->data.len, con);
 			break;
 		}
 		// Signals not worth logging
