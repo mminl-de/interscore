@@ -64,7 +64,7 @@ let WIDGET_GAMESTART_SHOWN = false
 let WIDGET_AD_SHOWN = false
 
 enum CardType { Yellow, Red }
-// enum PlayerRole { Keeper, Field} TODO String?
+interface Color { r: number, g: number, b: number }
 
 interface Score { t1: number, t2: number }
 interface Card {
@@ -80,8 +80,8 @@ interface Team {
 	players_indices: number[],
 	name: string,
 	logo_filename: string, // logo als Bild direkt?
-	color_left: number //Dark
-	color_right: number, //Light
+	color_left: Color, //Dark
+	color_right: Color, //Light
 }
 interface Game {
 	t1_index: number,
@@ -155,8 +155,8 @@ function parse_json(json: string){
 			players_indices: [i*2, i*2 + 1],
 			name: p.teams[i].name,
 			logo_filename: p.teams[i].logo,
-			color_right: p.teams[i].color_light,
-			color_left: p.teams[i].color_dark
+			color_right: color_string_to_color(p.teams[i].color_light),
+			color_left: color_string_to_color(p.teams[i].color_dark)
 		};
 	}
 	for (let i = 0; i < p.games.length; i++) {
@@ -190,42 +190,26 @@ function parse_json(json: string){
 	}
 }
 
-interface Color { r: number, g: number, b: number }
-
-function Color_to_string(input: Color): string {
-	return `rgb(${input.r}, ${input.g}, ${input.b})`
+function color_to_string(c: Color): string {
+	return `rgb(${c.r}, ${c.g}, ${c.b})`
 }
 
-function Color_gradient_to_string(l: number, r: number): string {
-	const lr = (l >> 16) & 0xFF;
-	const lg = (l >> 8) & 0xFF;
-	const lb = l & 0xFF;
-	const rr = (r >> 16) & 0xFF;
-	const rg = (r >> 8) & 0xFF;
-	const rb = r & 0xFF;
-	return `linear-gradient(90deg, rgb(${lr}, ${lg}, ${lb}) 0%,` +
-		`rgb(${rr}, ${rg}, ${rb}) 50%)`
+function color_gradient_to_string(l: Color, r: Color): string {
+	return `linear-gradient(90deg, rgb(${l.r}, ${l.g}, ${l.b}) 0%,` +
+		`rgb(${r.r}, ${r.g}, ${r.b}) 50%)`
 }
 
-function Color_font_contrast(i: number): string {
-	const r = (i >> 16) & 0xFF;
-	const g = (i >> 8) & 0xFF;
-	const b = i & 0xFF;
-	return (Math.max(r, g, b) > 191) ? "black" : "white"
+function Color_font_contrast(c: Color): string {
+	return (Math.max(c.r, c.g, c.b) > 191) ? "black" : "white"
 }
 
-function read_string(view: DataView, offset: number): string {
-	str_len = 0
-	while (view.getUint8(offset + str_len) !== 0) ++str_len
-	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
-	return decoder.decode(u8_array)
-}
-
-function read_color(view: DataView, offset: number): Color {
+//String is formated like this: #2F8AB0
+function color_string_to_color(buffer: string): Color {
 	return {
-		r: view.getUint8(offset),
-		g: view.getUint8(offset + 1),
-		b: view.getUint8(offset + 2),
+		// TODO How to parse char to hexa
+		r: parseInt(buffer[1], 16) * 16 + buffer[2],
+		g: parseInt(buffer[3], 16) * 16 + buffer[4],
+		b: parseInt(buffer[5], 16) * 16 + buffer[6]
 	}
 }
 
@@ -571,7 +555,7 @@ function write_livetable() {
 		const name = document.createElement("div")
 		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("bordered", "name")
-		name.style.background = Color_gradient_to_string(teams[team_i].color_right!, teams[team_i].color_left!)
+		name.style.background = Color_gradient_to_string(teams[team_i].color_right, teams[team_i].color_left)
 		name.style.color = Color_font_contrast(teams[team_i].color_right!)
 		line.appendChild(name)
 
