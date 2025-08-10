@@ -57,6 +57,11 @@ struct EditorWindow {
 
 	EditorWindow(void);
 
+protected:
+	// Open a file dialog to select a single JSON file, starting from the CWD.
+	// Write the selected file, if any, into the `json_address` text field.
+	void select_address(void);
+
 	// Add the name of a role to the role list.
 	void add_role(const QString *input);
 

@@ -1,9 +1,10 @@
+#include <QComboBox>
 #include <QDialogButtonBox>
+#include <QFileDialog>
 #include <QKeySequence>
 #include <QObject>
 #include <QPushButton>
 #include <QShortcut>
-#include <QButtonGroup> // TODO
 
 #include "editorwindow.hpp"
 
@@ -25,13 +26,22 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// Tournament file location
 	this->labels.json_address.setText("Tournament file location"); // TODO TRANSLATE
 	this->labels.json_address.setBuddy(&this->json_address); // TODO TRANSLATE
+	this->buttons.json_address.setAutoDefault(true);
 	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
+
+	QObject::connect(
+		&this->buttons.json_address,
+		&QPushButton::clicked,
+		[this]() { this->select_address(); }
+	);
 
 	// Role list
 	this->labels.role_list.setText("Player roles"); // TODO TRANSLATE
 	this->labels.role_list.setBuddy(&this->role_list);
+	this->buttons.remove_role.setAutoDefault(true);
 	this->buttons.remove_role.setText("Remove");
 	this->buttons.remove_role.setDisabled(true);
+	this->buttons.remove_role.setShortcut(QKeySequence("Delete"));
 	this->role_list_input.setPlaceholderText("Add new roles here..."); // TODO TRANSLATE
 
 	this->layouts.role_list_input.addWidget(&this->role_list_input);
@@ -40,9 +50,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	QObject::connect(
 		&this->role_list_input,
 		&QLineEdit::returnPressed,
-		&this->role_list_input,
 		[this]() {
-			// TODO NOW
 			const QString input = this->role_list_input.text();
 			this->role_list_input.clear();
 			this->add_role(&input);
@@ -59,7 +67,6 @@ editorwindow::EditorWindow::EditorWindow(void) {
 			);
 		}
 	);
-	this->buttons.remove_role.setShortcut(QKeySequence("Delete"));
 
 	// Remove the selected item when button is clicked
 	QObject::connect(
@@ -78,6 +85,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// Team list
 	this->labels.team_list.setText("Participating teams"); // TODO TRANSLATE
 	this->labels.team_list.setBuddy(&this->team_list);
+	this->buttons.remove_team.setAutoDefault(true);
 	this->buttons.remove_team.setText("Remove");
 	this->buttons.remove_team.setDisabled(true);
 	this->role_list_input.setPlaceholderText("Add new teams here..."); // TODO TRANSLATE
@@ -88,6 +96,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	// Player list
 	this->labels.player_list.setText("Participating players"); // TODO TRANSLATE
 	this->labels.player_list.setBuddy(&this->player_list);
+	this->buttons.remove_player.setAutoDefault(true);
 	this->buttons.remove_player.setText("Remove");
 	this->buttons.remove_player.setDisabled(true);
 	this->role_list_input.setPlaceholderText("Add new players here..."); // TODO TRANSLATE
@@ -97,12 +106,24 @@ editorwindow::EditorWindow::EditorWindow(void) {
 
 	// Game list
 	this->labels.game_list.setText("Games"); // TODO TRANSLATE
+	this->buttons.add_game.setAutoDefault(true);
 	this->buttons.add_game.setText("+"); // TODO TRANSLATE
+	this->buttons.remove_game.setAutoDefault(true);
 	this->buttons.remove_game.setText("-"); // TODO TRANSLATE
 
+	// Left game list adds a new game
+	QObject::connect(
+		&this->buttons.add_game,
+		&QPushButton::clicked,
+		[this]() { this->add_game(); }
+	);
+
 	// Action buttons
+	this->buttons.abort.setAutoDefault(true);
 	this->buttons.abort.setText("Abort"); // TODO TRANSLATE
+	this->buttons.save_and_return.setAutoDefault(true);
 	this->buttons.save_and_return.setText("Save and Return"); // TODO TRANSLATE
+	this->buttons.save_and_start.setAutoDefault(true);
 	this->buttons.save_and_start.setText("Save and start"); // TODO TRANSLATE
 
 	// Side layouts
@@ -141,6 +162,8 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.main.addLayout(&this->layouts.game_list);
 	this->layouts.main.addLayout(&this->layouts.action_buttons);
 
+	// TODO NOW
+
 	// TODO PLAN
 	// name (textfield)
 	// groups (picker)
@@ -161,6 +184,17 @@ editorwindow::EditorWindow::EditorWindow(void) {
 }
 
 void
+editorwindow::EditorWindow::select_address(void) {
+	const QString filter = "JSON Files (*.json)";
+	QFileDialog dialog(nullptr, "Select tournament", nullptr, filter);
+	dialog.setNameFilter(filter);
+	dialog.setOption(QFileDialog::DontUseNativeDialog, false);
+
+	if (dialog.exec() != QDialog::Accepted) return;
+	this->json_address.setText(dialog.selectedFiles().first());
+}
+
+void
 editorwindow::EditorWindow::add_role(const QString *input) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QLabel *const card = new QLabel(*input);
@@ -174,14 +208,18 @@ void
 editorwindow::EditorWindow::add_game(void) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QWidget *const card = new QWidget;
-	QVBoxLayout *const layout = new QVBoxLayout(card);
+	QHBoxLayout *const layout = new QHBoxLayout(card);
 
-	QLabel *const name_label = new QLabel(name);
-	QLabel *const addr_label = new QLabel(addr);
-	// TODO NOW
+	QComboBox *const left_team = new QComboBox;
+	QLabel *const vs = new QLabel("vs.");
+	QComboBox *const right_team = new QComboBox;
 
-	layout->addWidget(name_label);
-	layout->addWidget(addr_label);
+	left_team->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	right_team->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+	layout->addWidget(left_team);
+	layout->addWidget(vs);
+	layout->addWidget(right_team);
 	card->setLayout(layout);
 
 	item->setSizeHint(card->sizeHint());

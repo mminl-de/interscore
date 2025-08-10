@@ -26,11 +26,13 @@ launchwindow::LaunchWindow::LaunchWindow(
 
 	// TODO FINAL TRANSLATE
 	this->labels.title.setText("Interscore");
+	this->buttons.new_json.setAutoDefault(true);
 	this->buttons.new_json.setText("Create new tournament");
-	this->buttons.import_json.setText("Import from file");
-	this->buttons.import_from_cycleballeu.setText("Import from cycleball.eu");
-
 	this->buttons.new_json.setShortcut(QKeySequence("Ctrl+N")); // TODO NOW
+	this->buttons.import_json.setAutoDefault(true);
+	this->buttons.import_json.setText("Import from file");
+	this->buttons.import_from_cycleballeu.setAutoDefault(true);
+	this->buttons.import_from_cycleballeu.setText("Import from cycleball.eu");
 
 	QObject::connect(
 		&this->buttons.new_json,

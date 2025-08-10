@@ -33,6 +33,7 @@ struct LaunchWindow {
 
 	LaunchWindow(QSettings *settings, editorwindow::EditorWindow *ew);
 
+protected:
 	// Add an entry describing a JSON file containing tournament data to the list
 	// in the launch window.
 	void add_json(const char *name, const char *addr);
