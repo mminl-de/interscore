@@ -12,5 +12,8 @@ debug:
 fast:
 	$(CXX) -o $(OUT) $(SRC) -fpermissive -fPIC $(LD_FLAGS)
 
+old:
+	$(CXX) -o $(OUT)-old old_rentnerend.cc ../mongoose/mongoose.c ../common.c -fpermissive -fPIC $(LD_FLAGS)
+
 run:
 	./$(OUT)

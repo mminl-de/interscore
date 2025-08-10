@@ -10,32 +10,13 @@ typedef unsigned int u32;
 
 enum CardType { YELLOW, RED };
 enum PlayerRole { KEEPER, FIELD };
-enum InputType {
-	WIDGET_SCOREBOARD_TOGGLE,
-	WIDGET_GAMEPLAN_TOGGLE,
-	WIDGET_LIVEPLAN_TOGGLE,
-	WIDGET_GAMESTART_TOGGLE,
-	WIDGET_AD_TOGGLE,
-	OBS_STREAM_START,
-	OBS_STREAM_STOP,
-	OBS_REPLAY_START,
-	OBS_REPLAY_STOP,
-	T1_SCORE_PLUS,
-	T1_SCORE_MINUS,
-	T2_SCORE_PLUS,
-	T2_SCORE_MINUS,
-	GAME_NEXT,
-	GAME_PREV,
-	GAME_SWITCH_SIDES,
-	TIME_PLUS,
-	TIME_MINUS,
-	TIME_PLUS_20,
-	TIME_MINUS_20,
-	TIME_TOGGLE_PAUSE,
-	TIME_RESET,
-	YELLOW_CARD,
-	RED_CARD
-};
+
+// This define just wipes the export making the num definition c and c++ legal
+// while typescript can just use the file. This way we only have to keep track
+// of one enum definition instead of 3
+#define export
+#include "MessageType.ts"
+#undef export
 
 #pragma pack(push, 1)
 typedef struct {

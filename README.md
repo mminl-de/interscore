@@ -40,18 +40,16 @@ This project was made for our personal use prior to a Cycleball tournament under
 - PDF export
 
 ## meta
-- rediscuss backend, frontend, rentnerend tasks
 - FINAL Checkliste for streams
 - FINAL^2 assets folder in seperate repo (only logos)
 
 ## frontend
+- URGENT Reversing der anzeige, je nach Kameraposition
 - URGENT Farb-Gradient automatisch generieren vom Logo/von einer Farbe
 - URGENT Logos im Spielwidget
 - URGENT widget pipelines:
 	- 5s this widget, 5s that
 	- absolute cinema
-- fix time bugs
-- refresh green balken every time the time changes, ont only when time is not paused
 - team logos for gamestart
 - Fix Font Problems wth Umlaute in Cards section
 - Widget spawn animation fixen(manchmal kaputt)
@@ -84,8 +82,9 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
 
 ## rentnerend
-- bind Ctrl-N for create new tournament
+- URGENT Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers
 - URGENT change all icons to nice looking icons
+- bind Ctrl-N for create new tournament
 - JSON-Creator GUI for non-technical users
 - prohibit changing games while the clock runs
 - Halbzeituhr
@@ -95,6 +94,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts):
 	- visual guides
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
+- Pause Button färben/Icon ändern, je nach Pause/Nicht Pause
 - FINAL Support more tournament modes, support leagues:
 	- group games are built different because of unknown game order
 	- abstract "normal tournaments" away by putting their games into one group
@@ -128,7 +128,6 @@ This project was made for our personal use prior to a Cycleball tournament under
 
 ## backend
 - OBS Replays sind noch bisschen buggy irgendwie
-- Time is not send when hot reloading/sending json
 - FINAL make json_load resilient to bad input.json
 - FINAL FINAL graceful Ctrl-C handling
 - FINAL^4 add ability to count time up(+verlängerung) for other sports

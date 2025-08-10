@@ -1,125 +1,42 @@
+// TODO rewrite in zig :(
 #include <pthread.h>
 #include <stdbool.h>
-#include <time.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include "mongoose/mongoose.h"
 
+#if defined(_WIN32)
+    #include <direct.h>
+    #define mkdir(path, mode) _mkdir(path)
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+#endif
+
 #include "config.h"
-#include "common.h"
 
-// Each WIDGET_* elements except WIDGET_CARD_SHOW means disable,
-// the successor means enable/update.
-// This widget is mirrored in frontend/script.ts.
-enum WidgetMessage {
-	WIDGET_SCOREBOARD = 1,
-	WIDGET_LIVETABLE = 3,
-	WIDGET_GAMEPLAN = 5,
-	WIDGET_GAMESTART = 7,
-	WIDGET_CARD_SHOW = 9,
-	WIDGET_AD = 10,
-	SCOREBOARD_SET_TIMER = 12,
-	SCOREBOARD_PAUSE_TIMER = 13
-};
+// This define just wipes the export making the num definition c and c++ legal
+// while typescript can just use the file. This way we only have to keep track
+// of one enum definition instead of 3
+#define export
+#include "MessageType.ts"
+#undef export
 
-#pragma pack(push, 1)
-typedef struct { u8 r, g, b; } Color;
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
 
-typedef struct {
-	u8 widget_num;
-	char t1[TEAM_NAME_MAX_LEN];
-	char t2[TEAM_NAME_MAX_LEN];
-	u8 score_t1;
-	u8 score_t2;
-	bool is_halftime;
-	Color t1_color_left;
-	Color t1_color_right;
-	Color t2_color_left;
-	Color t2_color_right;
-} WidgetScoreboard;
-
-typedef struct {
-	u8 widget_num;
-	// TODO NOW add t1 and t2 to the ._create function
-	char t1[TEAM_NAME_MAX_LEN];
-	char t2[TEAM_NAME_MAX_LEN];
-	char t1_keeper[PLAYER_NAME_MAX_LEN];
-	char t1_field[PLAYER_NAME_MAX_LEN];
-	char t2_keeper[PLAYER_NAME_MAX_LEN];
-	char t2_field[PLAYER_NAME_MAX_LEN];
-	Color t1_color_left;
-	Color t1_color_right;
-	Color t2_color_left;
-	Color t2_color_right;
-	char next_t1[TEAM_NAME_MAX_LEN];
-	char next_t2[TEAM_NAME_MAX_LEN];
-	Color next_t1_color_left;
-	Color next_t1_color_right;
-	Color next_t2_color_left;
-	Color next_t2_color_right;
-} WidgetGamestart;
-
-typedef struct {
-	u8 widget_num;
-	u8 len; // amount of teams total
-	char teams[TEAMS_COUNT_MAX][TEAM_NAME_MAX_LEN]; // sorted
-	u8 points[TEAMS_COUNT_MAX];
-	u8 games_played[TEAMS_COUNT_MAX];
-	u8 games_won[TEAMS_COUNT_MAX];
-	u8 games_tied[TEAMS_COUNT_MAX];
-	u8 games_lost[TEAMS_COUNT_MAX];
-	u16 goals[TEAMS_COUNT_MAX];
-	u16 goals_taken[TEAMS_COUNT_MAX];
-	Color color_light[TEAMS_COUNT_MAX];
-	Color color_dark[TEAMS_COUNT_MAX];
-} WidgetLivetable;
-
-typedef struct {
-	u8 widget_num;
-	u8 len; // total amount of games
-	u8 cur; // current game
-	char teams_1[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
-	char teams_2[GAMES_COUNT_MAX][TEAM_NAME_MAX_LEN];
-	u8 goals_t1[GAMES_COUNT_MAX];
-	u8 goals_t2[GAMES_COUNT_MAX];
-	Color t1_color_left[GAMES_COUNT_MAX];
-	Color t1_color_right[GAMES_COUNT_MAX];
-	Color t2_color_left[GAMES_COUNT_MAX];
-	Color t2_color_right[GAMES_COUNT_MAX];
-} WidgetGameplan;
-
-typedef struct {
-	u8 widget_num;
-	enum CardType type;
-	char name[PLAYER_NAME_MAX_LEN];
-} WidgetCard;
-
-typedef struct {
-	u8 widget_num;
-} WidgetAd;
-#pragma pack(pop)
-
-// Justice system
-#define DEAL_YELLOW_CARD 'y'
-#define DEAL_RED_CARD 'r'
-#define DELETE_CARD 'd'
-
-// Widget toggling
-#define TOGGLE_WIDGET_SCOREBOARD 'i'
-#define TOGGLE_WIDGET_LIVETABLE 'l'
-#define TOGGLE_WIDGET_GAMEPLAN 'g'
-#define TOGGLE_WIDGET_GAMESTART 's'
-#define RESEND_CURRENT_WIDGETS 'w'
-
-// OBS
-#define OBS_START_STREAMING 'S'
-#define OBS_STOP_STREAMING 'P'
-#define OBS_REPLAY 'R'
+// Widgets
+#define WIDGET_SCOREBOARD_TOGGLE 's'
+#define WIDGET_GAMEPLAN_TOGGLE 'p'
+#define WIDGET_LIVETABLE_TOGGLE 'l'
+#define WIDGET_GAMESTART_TOGGLE 'g'
+#define WIDGET_AD_TOGGLE 'a'
 
 // Meta
 #define EXIT 'q'
 #define RELOAD_RENTNERJSON 'j'
-#define RELOAD_FRONTJSON 'x'
+#define RELOAD_RENTNER_GAMEINDEX 'r'
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
@@ -127,287 +44,24 @@ typedef struct {
 #define OBS_URL "http://0.0.0.0:4444"
 const char *REPLAY_PATH  = "/home/flame/prg/interscore/replays";
 
-//TODO put all function definitions here
-u16 team_calc_points(u8 index);
-u8 team_calc_games_played(u8 index);
-u8 team_calc_games_won(u8 index);
-u8 team_calc_games_tied(u8 index);
-u16 team_calc_goals(u8 index);
-u16 team_calc_goals_taken(u8 index);
 void obs_switch_scene(void *scene_name);
 
-Matchday md;
+u8 gameindex = 0;
+u8 replays_count[1]; //TODO find out length efficiently
+
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 struct mg_connection *con_front = NULL;
 struct mg_connection *con_rentner = NULL;
+struct mg_connection *con_remote = NULL;
 struct mg_connection *con_obs = NULL;
 struct mg_mgr mgr_svr, mgr_obs;
 
-bool WidgetScoreboard_enabled = false;
-bool WidgetGamestart_enabled = false;
-bool WidgetLivetable_enabled = false;
-bool WidgetGameplan_enabled = false;
-bool WidgetAd_enabled = false;
-
-int max(int x, int y) {
-	return x < y ? y : x;
-}
-
-// Converts '0'-'9', 'a'-'f', 'A'-'F' to 0-15.
-u8 hex_char_to_int(const char c) {
-    return (c & 0xF) + (c >> 6) * 9;
-}
-
-// Converts color as hexcode to rgb.
-Color Color_from_hex(const char *hex) {
-    return (Color) {
-        (hex_char_to_int(hex[0]) << 4) | hex_char_to_int(hex[1]),
-        (hex_char_to_int(hex[2]) << 4) | hex_char_to_int(hex[3]),
-        (hex_char_to_int(hex[4]) << 4) | hex_char_to_int(hex[5])
-    };
-}
-
-int qsort_helper_u8(const void *p1, const void *p2) {
-	return *(int*)p1 - *(int*)p2;
-}
-
-int teams_sort_after_name(const void *p1, const void *p2){
-	return strcmp(((Team *)p1)->name, ((Team *)p2)->name);
-}
-
-int teams_sort_after_goals(const void *p1, const void *p2){
-	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
-	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
-	//reverse it, because bigger is better
-	return t2_goals - t1_goals;
-}
-
-int teams_sort_after_goalratio(const void *p1, const void *p2){
-	u8 t1_goals = team_calc_goals(md.players[((Team *)p1)->keeper_index].team_index);
-	u8 t2_goals = team_calc_goals(md.players[((Team *)p2)->keeper_index].team_index);
-	u8 t1_goals_taken = team_calc_goals_taken(md.players[((Team *)p1)->keeper_index].team_index);
-	u8 t2_goals_taken = team_calc_goals_taken(md.players[((Team *)p2)->keeper_index].team_index);
-	//reverse it, because bigger is better
-	return (t2_goals-t2_goals_taken) - (t1_goals-t1_goals_taken);
-}
-
-int teams_sort_after_points(const void *p1, const void *p2){
-	u8 t1_points = team_calc_points(md.players[((Team *)p1)->keeper_index].team_index);
-	u8 t2_points = team_calc_points(md.players[((Team *)p2)->keeper_index].team_index);
-	//reverse it, because bigger is better
-	return t2_points - t1_points;
-}
-
-void send_widget(void *w, size_t size) {
-	if (con_front == NULL){
-		fprintf(stderr, "ERROR: Client not connected, couldn't send widget!\n");
-		return;
-	}
-	mg_ws_send(con_front, (char *) w, size, WEBSOCKET_OP_BINARY);
-}
-
-WidgetScoreboard WidgetScoreboard_create() {
-	const u8 cur = md.cur.gameindex;
-
-	WidgetScoreboard w;
-	w.widget_num = WIDGET_SCOREBOARD + WidgetScoreboard_enabled;
-
-	if (md.cur.halftime) {
-		strcpy(w.t1, md.teams[md.games[cur].t1_index].name);
-		strcpy(w.t2, md.teams[md.games[cur].t2_index].name);
-		w.score_t1 = md.games[cur].score.t1;
-		w.score_t2 = md.games[cur].score.t2;
-
-		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
-		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
-		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
-		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
-	} else {
-		strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
-		strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
-		w.score_t1 = md.games[cur].score.t2;
-		w.score_t2 = md.games[cur].score.t1;
-
-		w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
-		w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
-		w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
-		w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
-	}
-
-	w.is_halftime = md.cur.halftime;
-	return w;
-}
-
-WidgetGamestart WidgetGamestart_create() {
-	const u8 cur = md.cur.gameindex;
-
-	WidgetGamestart w;
-	w.widget_num = WIDGET_GAMESTART + WidgetGamestart_enabled;
-	// TODO FINAL whyyyy?!
-	strcpy(w.t1, md.teams[md.games[cur].t2_index].name);
-	strcpy(w.t2, md.teams[md.games[cur].t1_index].name);
-	strcpy(w.t1_keeper, md.players[md.teams[md.games[cur].t2_index].keeper_index].name);
-	strcpy(w.t1_field, md.players[md.teams[md.games[cur].t2_index].field_index].name);
-	strcpy(w.t2_keeper, md.players[md.teams[md.games[cur].t1_index].keeper_index].name);
-	strcpy(w.t2_field, md.players[md.teams[md.games[cur].t1_index].field_index].name);
-
-	w.t1_color_left = Color_from_hex(md.teams[md.games[cur].t2_index].color_light);
-	w.t2_color_left = Color_from_hex(md.teams[md.games[cur].t1_index].color_light);
-	w.t1_color_right = Color_from_hex(md.teams[md.games[cur].t2_index].color_dark);
-	w.t2_color_right = Color_from_hex(md.teams[md.games[cur].t1_index].color_dark);
-
-	if (cur + 1 == md.games_count) {
-		strcpy(w.next_t1, "");
-		strcpy(w.next_t2, "");
-	} else {
-		strcpy(w.next_t1, md.teams[md.games[cur + 1].t2_index].name);
-		strcpy(w.next_t2, md.teams[md.games[cur + 1].t1_index].name);
-		w.next_t1_color_left = Color_from_hex(md.teams[md.games[cur + 1].t2_index].color_light);
-		w.next_t1_color_right = Color_from_hex(md.teams[md.games[cur + 1].t2_index].color_dark);
-		w.next_t2_color_left = Color_from_hex(md.teams[md.games[cur + 1].t1_index].color_light);
-		w.next_t2_color_right = Color_from_hex(md.teams[md.games[cur + 1].t1_index].color_dark);
-	}
-
-	return w;
-}
-
-WidgetLivetable WidgetLivetable_create() {
-	WidgetLivetable w;
-	w.widget_num = WIDGET_LIVETABLE + WidgetLivetable_enabled;
-	w.len = md.teams_count;
-	Team teams[md.teams_count];
-	memcpy(teams, md.teams, sizeof(Team) * md.teams_count);
-	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_name);
-	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goals);
-	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_goalratio);
-	merge_sort(teams, md.teams_count, sizeof(Team), teams_sort_after_points);
-
-	for(u8 i = 0; i < md.teams_count; i++) {
-		u8 teamindex = md.players[teams[i].keeper_index].team_index;
-		strcpy(w.teams[i], md.teams[teamindex].name);
-		w.points[i] = team_calc_points(teamindex);
-		w.games_played[i] = team_calc_games_played(teamindex);
-		w.games_won[i] = team_calc_games_won(teamindex);
-		w.games_tied[i] = team_calc_games_tied(teamindex);
-		w.games_lost[i] = w.games_played[i] - (w.games_won[i] + w.games_tied[i]);
-		w.goals[i] = team_calc_goals(teamindex);
-		w.goals_taken[i] = team_calc_goals_taken(teamindex);
-		w.color_light[i] = Color_from_hex(teams[i].color_light);
-		w.color_dark[i] = Color_from_hex(teams[i].color_dark);
-	}
-
-	return w;
-}
-
-WidgetGameplan WidgetGameplan_create() {
-	WidgetGameplan w;
-	w.widget_num = WIDGET_GAMEPLAN + WidgetGameplan_enabled;
-	w.len = md.games_count;
-	w.cur = md.cur.gameindex;
-	if(md.cur.gameindex == md.games_count)
-		w.cur--;
-	for (u8 i = 0; i < md.games_count; i++){
-		strcpy(w.teams_1[i], md.teams[md.games[i].t2_index].name);
-		strcpy(w.teams_2[i], md.teams[md.games[i].t1_index].name);
-		w.goals_t1[i] = md.games[i].score.t2;
-		w.goals_t2[i] = md.games[i].score.t1;
-
-		w.t1_color_left[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_light);
-		w.t1_color_right[i] = Color_from_hex(md.teams[md.games[i].t2_index].color_dark);
-		w.t2_color_left[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_dark);
-		w.t2_color_right[i] = Color_from_hex(md.teams[md.games[i].t1_index].color_light);
-	}
-
-	return w;
-}
-
-// TODO remove type bc it's redundant
-WidgetCard WidgetCard_create(const u8 card_i) {
-	const u8 cur = md.cur.gameindex;
-
-	WidgetCard w;
-	// TODO NOW when to despawn cards?
-	w.widget_num = WIDGET_CARD_SHOW;
-	strcpy(w.name, md.players[md.games[cur].cards[card_i].player_index].name);
-	w.type = md.games[cur].cards[card_i].card_type;
-	return w;
-}
-
-WidgetAd WidgetAd_create() {
-	return (WidgetAd) { .widget_num = WIDGET_AD + WidgetAd_enabled };
-}
-
-// Calculate the points of all games played so far of the team with index index.
-u16 team_calc_points(u8 index) {
-	u16 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++) {
-		if (md.games[i].t1_index == index) {
-			if (md.games[i].score.t1 > md.games[i].score.t2)
-				p += 3;
-			else if (md.games[i].score.t1 == md.games[i].score.t2)
-				p++;
-		} else if (md.games[i].t2_index == index) {
-			if (md.games[i].score.t2 > md.games[i].score.t1)
-				p += 3;
-			else if (md.games[i].score.t2 == md.games[i].score.t1)
-				p++;
-		}
-	}
-	return p;
-}
-
-u8 team_calc_games_played(u8 index){
-	u8 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++)
-		if (md.games[i].t1_index == index || md.games[i].t2_index == index)
-			p++;
-	return p;
-}
-
-u8 team_calc_games_won(u8 index){
-	u8 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++) {
-		if (md.games[i].t1_index == index && md.games[i].score.t1 > md.games[i].score.t2)
-			p++;
-		else if (md.games[i].t2_index == index && md.games[i].score.t2 > md.games[i].score.t1)
-			p++;
-	}
-	return p;
-}
-
-u8 team_calc_games_tied(u8 index){
-	u8 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++) {
-		if (md.games[i].t1_index == index && md.games[i].score.t1 == md.games[i].score.t2)
-			p++;
-		else if (md.games[i].t2_index == index && md.games[i].score.t2 == md.games[i].score.t1)
-			p++;
-	}
-	return p;
-}
-
-u16 team_calc_goals(u8 index){
-	u16 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++) {
-		if (md.games[i].t1_index == index)
-			p += md.games[i].score.t1;
-		else if (md.games[i].t2_index == index)
-			p += md.games[i].score.t2;
-	}
-	return p;
-}
-
-u16 team_calc_goals_taken(u8 index){
-	u16 p = 0;
-	for (u8 i = 0; i < md.cur.gameindex; i++) {
-		if (md.games[i].t1_index == index)
-			p += md.games[i].score.t2;
-		else if (md.games[i].t2_index == index)
-			p += md.games[i].score.t1;
-	}
-	return p;
-}
+bool scoreboard_on = false;
+bool gameplan_on = false;
+bool livetable_on = false;
+bool gamestart_on = false;
+bool ad_on = false;
 
 void obs_send_cmd(const char *s){
 	if(con_obs == NULL){
@@ -417,117 +71,114 @@ void obs_send_cmd(const char *s){
 	mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
 }
 
-void send_message_to_site(char *message) {
-	if (con_front == NULL) {
-		printf("client is not connected, couldnt send Message: '%s'\n", message);
-		return;
+//message is allowed to be non null-terminated. Therefor the len as arg
+bool ws_send(struct mg_connection *con, char *message, int len, int op) {
+	if (con == NULL) {
+		printf("WARNING: client is not connected, couldnt send Message: '%*s'\n", len, message);
+		return false;
 	}
-	mg_ws_send(con_front, message, strlen(message), WEBSOCKET_OP_TEXT);
+	return mg_ws_send(con, message, len, op) == len;
 }
 
-void send_time(u16 t){
-	if(con_front == NULL){
-		printf("client is not connected, couldnt send time\n");
-		return;
-	}
-	u8 buffer[3];
-	buffer[0] = SCOREBOARD_SET_TIMER;
-	u16 time = htons(t);
-	memcpy(&buffer[1], &time, sizeof(time));
-	mg_ws_send(con_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
-}
-
-void send_time_pause(bool pause) {
-	if(con_front == NULL){
-		printf("client is not connected, couldnt send time\n");
-		return;
-	}
-	u8 buffer[2];
-	buffer[0] = SCOREBOARD_PAUSE_TIMER;
-	buffer[1] = pause;
-	mg_ws_send(con_front, &buffer, sizeof(u8)*2, WEBSOCKET_OP_BINARY);
-}
-
-void resend_widgets() {
-	printf("Start resending widgets: %s\n", gettimems());
-	WidgetScoreboard w_scoreboard = WidgetScoreboard_create();
-	WidgetGamestart w_gamestart = WidgetGamestart_create();
-	WidgetLivetable w_livetable = WidgetLivetable_create();
-	WidgetGameplan w_gameplan = WidgetGameplan_create();
-	WidgetAd w_ad = WidgetAd_create();
-
-	send_widget(&w_scoreboard, sizeof(WidgetScoreboard));
-	send_widget(&w_gamestart, sizeof(WidgetGamestart));
-	send_widget(&w_livetable, sizeof(WidgetLivetable));
-	send_widget(&w_gameplan, sizeof(WidgetGameplan));
-	send_widget(&w_ad, sizeof(WidgetAd));
-
-	if(md.cur.pause){
-		printf("pause pause: %d\n", md.cur.time);
-		send_time(md.cur.time);
-	} else {
-		send_time(md.cur.time - (time(NULL) - md.cur.timestart));
-		printf("pause nicht pause: %ld\n", md.cur.time - (time(NULL) - md.cur.timestart));
-	}
-	//if(md.cur.time == md.deftime)
-//		send_time(md.deftime);
-	send_time_pause(md.cur.pause);
-	printf("End resending widgets: %s\n", gettimems());
-}
+//void send_time(u16 t){
+//	if(con_front == NULL){
+//		printf("client is not connected, couldnt send time\n");
+//		return;
+//	}
+//	u8 buffer[3];
+//	buffer[0] = SCOREBOARD_SET_TIMER;
+//	u16 time = htons(t);
+//	memcpy(&buffer[1], &time, sizeof(time));
+//	mg_ws_send(con_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
+//}
 
 void run_system(void *s){
 	printf("RUNNING: %s\n", (char*)s);
 	printf("RET CODE: %d", system((char*)s));
 }
 
-void handle_rentnerend_btn_press(u8 *signal){
-	printf("Start handling btn press: %s\n", gettimems());
-	printf("received a signal: %d\n", *signal);
-	switch (*signal) {
-		case WIDGET_SCOREBOARD_TOGGLE: {
-			WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
-			if(md.cur.gameindex == md.games_count)
-				WidgetScoreboard_enabled = false;
-			resend_widgets();
+int make_directory(const char *path) {
+	#if defined(_WIN32)
+		return _mkdir(path);
+	#else
+		return mkdir(path, 0755);  // or 0755 for more restrictive perms
+	#endif
+}
+
+void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con){
+	printf("received a Input: %d\n", *input_type);
+	switch (*input_type) {
+		// All of these cases should be forwarded to frontend
+		case WIDGET_SCOREBOARD_SHOW:
+		case WIDGET_SCOREBOARD_HIDE:
+		case WIDGET_GAMEPLAN_SHOW:
+		case WIDGET_GAMEPLAN_HIDE:
+		case WIDGET_LIVETABLE_SHOW:
+		case WIDGET_LIVETABLE_HIDE:
+		case WIDGET_GAMESTART_SHOW:
+		case WIDGET_GAMESTART_HIDE:
+		case WIDGET_AD_SHOW:
+		case WIDGET_AD_HIDE:
+		case T1_SCORE_PLUS:
+		case T1_SCORE_MINUS:
+		case T2_SCORE_PLUS:
+		case T2_SCORE_MINUS:
+		case GAME_NEXT:
+		case GAME_PREV:
+		case GAME_SWITCH_SIDES:
+		case TIME_PLUS_1:
+		case TIME_MINUS_1:
+		case TIME_PLUS_20:
+		case TIME_MINUS_20:
+		case TIME_TOGGLE_UNPAUSE:
+		case TIME_RESET: {
+			ws_send(con_front, (char *)input_type, sizeof(enum MessageType), WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case WIDGET_GAMEPLAN_TOGGLE: {
-			WidgetGameplan_enabled = !WidgetGameplan_enabled;
-			WidgetGamestart_enabled = false;
-			WidgetLivetable_enabled = false;
-			resend_widgets();
+		case DATA_TIME: // Same syntax as TIME_TOGGLE_PAUSE as it also ships time as u16 after the MessageType
+			printf("Received DATA: Time\n");
+		case TIME_TOGGLE_PAUSE: {
+			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case WIDGET_LIVEPLAN_TOGGLE: {
-			WidgetLivetable_enabled = !WidgetLivetable_enabled;
-			WidgetGameplan_enabled = false;
-			WidgetGamestart_enabled = false;
-			resend_widgets();
+		case YELLOW_CARD:
+		case RED_CARD: {
+			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case WIDGET_GAMESTART_TOGGLE: {
-			WidgetGamestart_enabled = !WidgetGamestart_enabled;
-			if(md.cur.gameindex == md.games_count)
-				WidgetGamestart_enabled = false;
-			else{
-				WidgetLivetable_enabled = false;
-				WidgetGameplan_enabled = false;
-			}
-			resend_widgets();
+		case DATA_GAMEINDEX: {
+			printf("Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
+			gameindex = ((char *)input_type)[1];
+			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case WIDGET_AD_TOGGLE: {
-			WidgetAd_enabled = !WidgetAd_enabled;
-			resend_widgets();
+		case DATA_IS_PAUSE: // TODO MERGE TO ONE AGAIN
+			printf("Received DATA: IS_PAUSE\n");
+			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
+			break;
+		case DATA_HALFTIME: {
+			printf("Received DATA: DATA_HALFTIME\n");
+			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
+			break;
+		}
+		case PLS_SEND_CUR_GAMEINDEX:
+		case PLS_SEND_CUR_HALFTIME:
+		case PLS_SEND_CUR_IS_PAUSE:
+		case PLS_SEND_CUR_TIME:
+		case PLS_SEND_JSON: {
+			ws_send(con_rentner, (char *)input_type, sizeof(enum MessageType), WEBSOCKET_OP_TEXT);
+			break;
+		}
+		case DATA_JSON: {
+			printf("Received DATA: JSON\n");
+			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case OBS_STREAM_START: {
-			//const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}";
 			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
 			break;
 		}
 		case OBS_STREAM_STOP: {
-			//const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}";
 			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
 			break;
 		}
@@ -543,8 +194,14 @@ void handle_rentnerend_btn_press(u8 *signal){
 			//We wait to save the replay 0.5s because thats circa the delay we have on stream
 			mg_timer_add(&mgr_obs, base_delay, 0, run_system, s);
 
+			//Create path (even if already existent bc its easier)
+			char path[200];
+			sprintf(path, "%s/game_%02d", REPLAY_PATH, gameindex);
+			make_directory(path);
+
 			//After we save the replay we copy it to the games directory
-			sprintf(s2, "cp -r '%s/instant-replay.mkv' '%s/game_%02d/replay-%05d.mkv'", REPLAY_PATH, REPLAY_PATH, md.cur.gameindex, md.games[md.cur.gameindex].replays_count++);
+			sprintf(s2, "cp -r '%s/instant-replay.mkv' '%s/game_%02d/replay-%05d.mkv'",
+			        REPLAY_PATH, REPLAY_PATH, gameindex, replays_count[gameindex]);
 			printf("s2: %s\n", s2);
 			mg_timer_add(&mgr_obs, base_delay+400, 0, run_system, s2);
 			break;
@@ -553,114 +210,9 @@ void handle_rentnerend_btn_press(u8 *signal){
 			obs_switch_scene("live");
 			break;
 		}
-		case T1_SCORE_PLUS: {
-			md.games[md.cur.gameindex].score.t1++;
-			printf("New T1 score (+1): %d\n", md.games[md.cur.gameindex].score.t1);
+		default:
 			break;
-		}
-		case T1_SCORE_MINUS: {
-			if(md.games[md.cur.gameindex].score.t1 > 0)
-				md.games[md.cur.gameindex].score.t1--;
-			printf("New T1 score (-1): %d\n", md.games[md.cur.gameindex].score.t1);
-			break;
-		}
-		case T2_SCORE_PLUS: {
-			md.games[md.cur.gameindex].score.t2++;
-			printf("New T2 score (+1): %d\n", md.games[md.cur.gameindex].score.t2);
-			break;
-		}
-		case T2_SCORE_MINUS: {
-			if(md.games[md.cur.gameindex].score.t2 > 0)
-				md.games[md.cur.gameindex].score.t2--;
-			printf("New T2 score (-1): %d\n", md.games[md.cur.gameindex].score.t2);
-			break;
-		}
-		case GAME_NEXT: {
-			if(md.cur.gameindex < md.games_count){
-				md.cur.gameindex++;
-				char str[200];
-				sprintf(str, "cp -r %s/game_%02d/* %s/last-game/", REPLAY_PATH, md.cur.gameindex-1, REPLAY_PATH);
-				system(str);
-			}
-			if(md.cur.gameindex == md.games_count)
-				WidgetScoreboard_enabled = false;
-			break;
-		}
-		case GAME_PREV: {
-			if(md.cur.gameindex > 0) {
-				md.cur.gameindex--;
-				char str[200];
-				sprintf(str, "cp -r %s/game_%02d/* %s/last-game/", REPLAY_PATH, max(0, md.cur.gameindex-1), REPLAY_PATH);
-				system(str);
-			}
-			break;
-		}
-		case GAME_SWITCH_SIDES: {
-			md.cur.halftime = !md.cur.halftime;
-			printf("New Half %d: %s : %s\n", md.cur.halftime,
-			        md.teams[md.games[md.cur.gameindex].t1_index].name,
-			        md.teams[md.games[md.cur.gameindex].t2_index].name);
-			break;
-		}
-		case TIME_PLUS: {
-			md.cur.time++;
-			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case TIME_MINUS: {
-			if(md.cur.time > 0)
-				md.cur.time--;
-			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case TIME_PLUS_20: {
-			md.cur.time += 20;
-			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case TIME_MINUS_20: {
-			if(md.cur.time > 19)
-				md.cur.time -= 20;
-			printf("New Time (-1): %d:%02d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case TIME_TOGGLE_PAUSE: {
-			if(md.cur.time == 0)
-				return;
-			if(!md.cur.pause){
-				md.cur.time -= time(NULL) - md.cur.timestart;
-			} else {
-				md.cur.timestart = time(NULL);
-			}
-			md.cur.pause = !md.cur.pause;
-			printf("Toggling time to %d: %d:%02d\n", md.cur.pause, md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case TIME_RESET: {
-			md.cur.time = md.deftime;
-			md.cur.pause = true;
-			printf("Reseting Time to: %d:%02d\n", md.cur.time/60, md.cur.time%60);
-			break;
-		}
-		case RED_CARD: {
-			WidgetCard wc = WidgetCard_create(add_card(RED, signal[1]));
-			send_widget(&wc, sizeof(WidgetCard));
-			printf("Added Red Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
-			break;
-		}
-		case YELLOW_CARD: {
-			WidgetCard wc = WidgetCard_create(add_card(YELLOW, signal[1]));
-			send_widget(&wc, sizeof(WidgetCard));
-			printf("Added Yellow Card for player: %d: %s\n", signal[1], md.players[signal[1]].name);
-			break;
-		}
-		default: {
-			printf("WARNING: Received unknown button press from rentnerend\n");
-			break;
-		}
 	}
-	printf("Stop handling btn press: %s\n", gettimems());
-	resend_widgets();
 }
 
 void obs_switch_scene(void *scene_name){
@@ -678,7 +230,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
         printf("WebSocket handshake completed\n");
         con_obs = con;  // Save the connection
 	    const char *identify_msg = "{\"op\": 1, \"d\": {\"rpcVersion\": 1, \"eventSubscriptions\": 255}}";
-    mg_ws_send(con_obs, identify_msg, strlen(identify_msg), WEBSOCKET_OP_TEXT);
+    	mg_ws_send(con_obs, identify_msg, strlen(identify_msg), WEBSOCKET_OP_TEXT);
 		break;
 	case MG_EV_WS_MSG: {
         struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
@@ -711,7 +263,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			break;
 		case MG_EV_CLOSE:
 			printf("Client disconnected!\n");
-			con_front = NULL;
+			con_front = NULL; // TODO wtf is this, why does it always disconnect front
 			break;
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
@@ -719,6 +271,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			//Therefor we extract the query parameter as seen below.
 			//FRONTEND URL: http://0.0.0.0:8081?client=frontend
 			//RENTNEREND URL: http://0.0.0.0:8081
+			//REMOTEEND URL: http://0.0.0.0:8081 // TODO make this work properly
 			//TODO FINAL make this not suck
 			char client_type[20];
     		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
@@ -732,11 +285,23 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 				con->is_closing = true;
 				break;
 			}
+
 			//TODO check if upgrade is successfull
 			mg_ws_upgrade(con, hm, NULL);
 			printf("Client upgraded to WebSocket connection!\n");
-			if(con_front != NULL)
-				resend_widgets();
+
+			// Get latest and greatest information from rentnerend
+			sleep(1); // TODO NOW we cant send requests this rapidly. Destroys json and everything else
+			char message_type = PLS_SEND_JSON;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			message_type = PLS_SEND_CUR_HALFTIME;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			message_type = PLS_SEND_CUR_IS_PAUSE;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			message_type = PLS_SEND_CUR_TIME;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			message_type = PLS_SEND_CUR_GAMEINDEX;
+			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case MG_EV_WS_OPEN:
@@ -747,15 +312,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
-			printf("received message: %s\n", (char *)m->data.buf);
-			if(((char *)m->data.buf)[0] == '{'){
-				json_load((char *)m->data.buf);
-				resend_widgets();
-			} else {
-				handle_rentnerend_btn_press((u8 *)m->data.buf);
-				if(con_front)
-					mg_ws_send(con_front, m->data.buf, m->data.len, WEBSOCKET_OP_TEXT);
-			}
+			handle_message((enum MessageType *) m->data.buf, m->data.len, con);
 			break;
 		}
 		// Signals not worth logging
@@ -791,160 +348,87 @@ int main(void) {
 	mg_mgr_init(&mgr_obs);
 
 
-	// User data stuff
-	struct mg_fs *fs = &mg_fs_posix;
-	struct mg_str data = mg_file_read(fs, JSON_PATH);
-	char *json = malloc(data.len + 1);
-	strncpy(json, data.buf, data.len);
-	json[data.len] = '\0';
-	json_load(json);
-	free(json);
-	md.cur.pause = true;
-	md.cur.time = md.deftime;
-	for(int i=0; i < md.games_count; i++){
-		char str[200];
-		sprintf(str, "mkdir -p %s/game_%02d", REPLAY_PATH, i);
-		printf("making dir: %s\n", str);
-		system(str);
-		md.games[i].replays_count = 0;
-	}
-	char str[200];
+	char str[MAX_PATH_LEN];
 	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
 	printf("making dir: %s\n", str);
 	system(str);
-	//matchday_init();
 
 	printf("Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
 
 	while (running) {
+		char temp = 0;
 		char c = getchar();
 		switch (c) {
+			// TODO actually implement getting gameindex etc
 			case '+':
-				md.cur.gameindex++;
+				gameindex++;
 				break;
 			case '-':
-				md.cur.gameindex--;
-			case '0':
-				md.cur.halftime = !md.cur.halftime;
-			case '1':
-				md.games[md.cur.gameindex].score.t1++;
-			case '2':
-				md.games[md.cur.gameindex].score.t2++;
-			case DELETE_CARD: {
-				if(md.cur.gameindex == md.games_count)
-					break;
-				u32 cur_i = md.cur.gameindex;
-				if(md.games[cur_i].cards_count == 0){
-					printf("No Cards to delete!\n");
-					break;
+				gameindex--;
+			case '=':
+				printf("INFO: Gameindex == %d\n", gameindex);
+			case WIDGET_SCOREBOARD_TOGGLE:
+				if(scoreboard_on) {
+					temp = WIDGET_SCOREBOARD_HIDE;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				} else {
+					temp = WIDGET_SCOREBOARD_SHOW;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
 				}
-				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
-					printf("%d. ", i + 1);
-					if (md.games[cur_i].cards[i].card_type == 0)
-						printf("Y ");
-					else
-						printf("R ");
-					printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
-			md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
-					if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
-						printf("(Keeper)\n");
-					else
-						printf("(field)\n");
+				scoreboard_on = !scoreboard_on;
+				break;
+			case WIDGET_GAMEPLAN_TOGGLE:
+				if(gameplan_on) {
+					temp = WIDGET_GAMEPLAN_HIDE;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				} else {
+					temp = WIDGET_GAMEPLAN_SHOW;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
 				}
-				printf("Select a card to delete: ");
-				u32 c = md.games[cur_i].cards_count+1;
-				while(c > md.games[cur_i].cards_count || c <= 0)
-					scanf("%ud", &c);
-				// Overwrite c with the last element
-				md.games[cur_i].cards[c-1] = md.games[cur_i].cards[--md.games[cur_i].cards_count];
-				printf("Cards remaining:\n");
-				for (u32 i = 0; i < md.games[cur_i].cards_count; i++) {
-					printf("%d. ", i + 1);
-					if (md.games[cur_i].cards[i].card_type == 0)
-						printf("Y ");
-					else
-						printf("R ");
-					printf("%s , %s ", md.players[md.games[cur_i].cards[i].player_index].name,
-			md.teams[md.players[md.games[cur_i].cards[i].player_index].team_index].name);
-					if (md.players[md.games[cur_i].cards[i].player_index].role == 0)
-						printf("(Keeper)\n");
-					else
-						printf("(field)\n");
+				gameplan_on = !gameplan_on;
+				break;
+			case WIDGET_LIVETABLE_TOGGLE:
+				if(livetable_on) {
+					temp = WIDGET_LIVETABLE_HIDE;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				} else {
+					temp = WIDGET_LIVETABLE_SHOW;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
 				}
+				livetable_on = !livetable_on;
+				break;
+			case WIDGET_GAMESTART_TOGGLE:
+				if(gamestart_on) {
+					temp = WIDGET_GAMESTART_HIDE;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				} else {
+					temp = WIDGET_GAMESTART_SHOW;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				}
+				gamestart_on = !gamestart_on;
+				break;
+			case WIDGET_AD_TOGGLE:
+				if(ad_on) {
+					temp = WIDGET_AD_HIDE;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				} else {
+					temp = WIDGET_AD_SHOW;
+					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
+				}
+				ad_on = !ad_on;
+				break;
+			case RELOAD_RENTNERJSON: {
+				char w1 = PLS_SEND_JSON;
+				if(!ws_send(con_rentner, &w1, sizeof(char), WEBSOCKET_OP_BINARY))
+					fprintf(stderr, "ERROR: Could not send request to Rentnerend!\n");
 				break;
 			}
-			// #### UI STUFF
-			case TOGGLE_WIDGET_SCOREBOARD:
-				WidgetScoreboard_enabled = !WidgetScoreboard_enabled;
-				if(md.cur.gameindex == md.games_count)
-					WidgetScoreboard_enabled = false;
-				resend_widgets();
-				break;
-			/*
-			case TOGGLE_WIDGET_HALFTIME:
-				widget_halftime_enabled = !widget_halftime_enabled;
-				send_widget_halftime(widget_halftime_create());
-				break;
-			*/
-			case TOGGLE_WIDGET_LIVETABLE:
-				WidgetLivetable_enabled = !WidgetLivetable_enabled;
-				WidgetGameplan_enabled = false;
-				WidgetGamestart_enabled = false;
-				resend_widgets();
-				break;
-			case TOGGLE_WIDGET_GAMEPLAN:
-				WidgetGameplan_enabled = !WidgetGameplan_enabled;
-				WidgetGamestart_enabled = false;
-				WidgetLivetable_enabled = false;
-				resend_widgets();
-				break;
-			case TOGGLE_WIDGET_GAMESTART:
-				WidgetGamestart_enabled = !WidgetGamestart_enabled;
-				if(md.cur.gameindex == md.games_count)
-					WidgetGamestart_enabled = false;
-				else{
-					WidgetLivetable_enabled = false;
-					WidgetGameplan_enabled = false;
-				}
-				resend_widgets();
-				break;
-			case RESEND_CURRENT_WIDGETS:
-				resend_widgets();
-				break;
-			case OBS_START_STREAMING: {
-				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StartRecord\", \"requestId\": \"1\"}}";
-				obs_send_cmd(s);
+			case RELOAD_RENTNER_GAMEINDEX: {
+				char w2 = PLS_SEND_CUR_GAMEINDEX;
+				if(!ws_send(con_rentner, &w2, sizeof(char), WEBSOCKET_OP_BINARY))
+					fprintf(stderr, "ERROR: Could not send request to Rentnerend!\n");
 				break;
 			}
-			case OBS_STOP_STREAMING: {
-				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"StopRecord\", \"requestId\": \"2\"}}";
-				obs_send_cmd(s);
-				break;
-			}
-			case OBS_REPLAY: {
-				const char *s = "{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"3\"}}";
-				obs_send_cmd(s);
-				//The scene switching etc is done in ev_handler_client
-				break;
-			}
-			case RELOAD_RENTNERJSON:
-				if (con_rentner == NULL){
-					fprintf(stderr, "ERROR: Rentnerend not connected, cant reload JSON!\n");
-					break;
-				}
-				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
-				char w = 0;
-				mg_ws_send(con_rentner, &w, sizeof(char), WEBSOCKET_OP_BINARY);
-				break;
-			case RELOAD_FRONTJSON:
-				if (con_front == NULL){
-					fprintf(stderr, "ERROR: Frontend not connected, cant reload JSON!\n");
-					break;
-				}
-				//We only send this signal to Rentnerend, there are no other, therefor we just use 0
-				char *ww = json_generate();
-				mg_ws_send(con_front, ww, strlen(ww), WEBSOCKET_OP_TEXT);
-				break;
 			case CONNECT_OBS:
 				mg_ws_connect(&mgr_obs, OBS_URL, ev_handler_client, NULL, NULL);
 				printf("Trying to connect to OBS...\n");
@@ -952,23 +436,20 @@ int main(void) {
 			case PRINT_HELP:
 				printf(
 					"======= Keyboard options =======\n"
-					"y  yellow card\n"
-					"r  red card\n"
-					"d  delete card\n"
+					"s  Scoreboard Toggle\n"
+					"p  Gameplan Toggle\n"
+					"l  Livetabelle Toggle\n"
+					"g  Gamestart Toggle\n"
+					"a  Ad Toggle\n"
 					"\n"
-					"i  toggle scoreboard widget\n"
-					"l  toggle livetable widget\n"
-					"g  toggle gameplan widget\n"
-					"s  toggle gamestart widget\n"
-					"w  resend current widgets\n"
+					"+  Next Game\n"
+					"-  Prev Game\n"
+					"=  Gameindex right now\n"
 					"\n"
-					"S  Start Stream/Recording\n"
-					"P  Stop Stream/Recording\n"
-					"R  Replay\n"
-					"\n"
-					"j  Reload rentnerend json\n"
-					"x  Reload frontend json\n"
+					"j  Send rentnerend json to Frontend\n"
+					"r  Send rentnerend gameindex to Backend\n"
 					"o  connect to obs\n"
+					"\n"
 					"?  print help\n"
 					"q  quit\n"
 					"================================\n"
