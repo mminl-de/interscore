@@ -1,6 +1,8 @@
+#include <QColorDialog>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QFrame>
 #include <QKeySequence>
 #include <QObject>
 #include <QPushButton>
@@ -29,6 +31,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.json_address.setAutoDefault(true);
 	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
 
+	// Open a file dialog when pressing the Browse button
 	QObject::connect(
 		&this->buttons.json_address,
 		&QPushButton::clicked,
@@ -47,6 +50,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.role_list_input.addWidget(&this->role_list_input);
 	this->layouts.role_list_input.addWidget(&this->buttons.remove_role);
 
+	// Add string to role list when pressing Return/Enter in the role text field
 	QObject::connect(
 		&this->role_list_input,
 		&QLineEdit::returnPressed,
@@ -57,7 +61,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		}
 	);
 
-	// Show the Remove button when selection changes
+	// Make the Remove button usable when a role is selected
 	QObject::connect(
 		&this->role_list,
 		&QListWidget::itemSelectionChanged,
@@ -88,21 +92,65 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.remove_team.setAutoDefault(true);
 	this->buttons.remove_team.setText("Remove");
 	this->buttons.remove_team.setDisabled(true);
-	this->role_list_input.setPlaceholderText("Add new teams here..."); // TODO TRANSLATE
+	// TODO DEBUG it's not good if there multiple such buttons
+	this->buttons.remove_team.setShortcut(QKeySequence("Delete"));
+	this->team_list_input.setPlaceholderText("Team name..."); // TODO TRANSLATE
 
 	this->layouts.team_list_input.addWidget(&this->team_list_input);
 	this->layouts.team_list_input.addWidget(&this->buttons.remove_team);
 
+	// Add string to team list when pressing Return/Enter in the team text field
+	QObject::connect(
+		&this->team_list_input,
+		&QLineEdit::returnPressed,
+		[this]() {
+			const QString input = this->team_list_input.text();
+			this->team_list_input.clear();
+			this->add_team(&input);
+		}
+	);
+
+	// Show the Remove button when selection changes
+	QObject::connect(
+		&this->team_list,
+		&QListWidget::itemSelectionChanged,
+		[this]() {
+			this->buttons.remove_team.setEnabled(
+				!this->team_list.selectedItems().isEmpty()
+			);
+		}
+	);
+
+	// Remove the selected item when button is clicked
+	QObject::connect(
+		&this->buttons.remove_team,
+		&QPushButton::clicked,
+		[this]() {
+			QList<QListWidgetItem *> selected = this->team_list.selectedItems();
+			for (QListWidgetItem *item : selected) {
+				int32_t row = this->team_list.row(item);
+				QListWidgetItem *removed = this->team_list.takeItem(row);
+				delete removed;  // also deletes associated widget
+			}
+		}
+	);
+
 	// Player list
-	this->labels.player_list.setText("Participating players"); // TODO TRANSLATE
+	this->labels.player_list.setText("Players of"); // TODO TRANSLATE
 	this->labels.player_list.setBuddy(&this->player_list);
 	this->buttons.remove_player.setAutoDefault(true);
 	this->buttons.remove_player.setText("Remove");
 	this->buttons.remove_player.setDisabled(true);
-	this->role_list_input.setPlaceholderText("Add new players here..."); // TODO TRANSLATE
+	this->player_list_input.setPlaceholderText("Player name..."); // TODO TRANSLATE
 
 	this->layouts.player_list_input.addWidget(&this->player_list_input);
 	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
+
+	this->player_list_frame.setLayout(&this->layouts.player_list);
+	this->player_list_frame.setFrameShape(QFrame::Box);
+	this->player_list_frame.setFrameShadow(QFrame::Plain);
+	this->player_list_frame.setLineWidth(1);
+	this->player_list_frame.setEnabled(false);
 
 	// Game list
 	this->labels.game_list.setText("Games"); // TODO TRANSLATE
@@ -116,6 +164,39 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		&this->buttons.add_game,
 		&QPushButton::clicked,
 		[this]() { this->add_game(); }
+	);
+
+	// TODO NOW CHECK
+	// Make the player list usable only when a team is selected
+	QObject::connect(
+		&this->team_list,
+		&QListWidget::itemSelectionChanged,
+		[this]() {
+			const QList<QListWidgetItem *> selected_items =
+				this->team_list.selectedItems();
+
+			if (selected_items.isEmpty()) {
+				this->labels.player_list.setText("Players of"); // TODO TRANSLATE
+				this->player_list_frame.setEnabled(false);
+				return;
+			} else {
+				this->player_list_frame.setEnabled(true);
+			}
+
+			// TODO NOW
+			QListWidgetItem *item = selected_items.first();
+			if (!item) return;
+
+			const QWidget *card = this->team_list.itemWidget(item);
+			const QHBoxLayout *layout = qobject_cast<QHBoxLayout *>(card->layout());
+			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
+
+			if (!label) {
+				printf("NOOOOOOOOOOOOOO\n");
+				return;
+			}
+			this->labels.player_list.setText("Players of " + label->text()); // TODO TRANSLATE
+		}
 	);
 
 	// Action buttons
@@ -139,7 +220,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
 
 	this->layouts.team_player_lists.addLayout(&this->layouts.team_list);
-	this->layouts.team_player_lists.addLayout(&this->layouts.player_list);
+	this->layouts.team_player_lists.addWidget(&this->player_list_frame);
 
 	this->layouts.game_list.addWidget(&this->buttons.add_game);
 	this->layouts.game_list.addWidget(&this->buttons.remove_game);
@@ -161,8 +242,6 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.main.addWidget(&this->game_list);
 	this->layouts.main.addLayout(&this->layouts.game_list);
 	this->layouts.main.addLayout(&this->layouts.action_buttons);
-
-	// TODO NOW
 
 	// TODO PLAN
 	// name (textfield)
@@ -202,6 +281,40 @@ editorwindow::EditorWindow::add_role(const QString *input) {
 	item->setSizeHint(card->sizeHint());
 	this->role_list.addItem(item);
 	this->role_list.setItemWidget(item, card);
+}
+
+void
+editorwindow::EditorWindow::add_team(const QString *input) {
+	QListWidgetItem *const item = new QListWidgetItem;
+	QWidget *const card = new QWidget;
+	QHBoxLayout *const layout = new QHBoxLayout(card);
+
+	QLabel *const label = new QLabel(*input);
+	QPushButton *const color = new QPushButton;
+	color->setText("#ff0000");
+	color->setStyleSheet("background-color: #ff0000;");
+
+	QObject::connect(
+		color,
+		&QPushButton::clicked,
+		[color]() {
+			const QColor current_color(color->text());
+			const QColor selection =
+				QColorDialog::getColor(current_color, nullptr, "Choose team color"); // TODO TRANSLATE
+			if (!selection.isValid()) return;
+			const QString hexcode = selection.name();
+			color->setText(hexcode);
+			color->setStyleSheet(QString("background-color: %1;").arg(hexcode));
+		}
+	);
+
+	layout->addWidget(label);
+	layout->addWidget(color);
+	card->setLayout(layout);
+
+	item->setSizeHint(card->sizeHint());
+	this->team_list.addItem(item);
+	this->team_list.setItemWidget(item, card);
 }
 
 void

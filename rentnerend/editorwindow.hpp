@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -47,6 +48,8 @@ struct EditorWindow {
 	QLineEdit tournament_name;
 	QLineEdit json_address;
 
+	QFrame player_list_frame;
+
 	QListWidget role_list;
 	QLineEdit role_list_input;
 	QListWidget team_list;
@@ -64,6 +67,9 @@ protected:
 
 	// Add the name of a role to the role list.
 	void add_role(const QString *input);
+
+	// Add the naem of a team to the team list, accompanied by a sample hex color button.
+	void add_team(const QString *input);
 
 	// Add a widget for a new game to the game list.
 	void add_game(void);
