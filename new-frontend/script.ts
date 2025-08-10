@@ -205,11 +205,15 @@ function Color_font_contrast(c: Color): string {
 
 //String is formated like this: #2F8AB0
 function color_string_to_color(buffer: string): Color {
+	console.log("Color as string: ", buffer)
+	console.log("r: ", parseInt(buffer[0], 16) * 16, parseInt(buffer[1], 16))
+	console.log("g: ", parseInt(buffer[2], 16) * 16, parseInt(buffer[3], 16))
+	console.log("b: ", parseInt(buffer[4], 16) * 16, parseInt(buffer[5], 16))
 	return {
 		// TODO How to parse char to hexa
-		r: parseInt(buffer[1], 16) * 16 + buffer[2],
-		g: parseInt(buffer[3], 16) * 16 + buffer[4],
-		b: parseInt(buffer[5], 16) * 16 + buffer[6]
+		r: parseInt(buffer[0], 16) * 16 + parseInt(buffer[1], 16),
+		g: parseInt(buffer[2], 16) * 16 + parseInt(buffer[3], 16),
+		b: parseInt(buffer[4], 16) * 16 + parseInt(buffer[5], 16)
 	}
 }
 
@@ -229,9 +233,9 @@ function write_scoreboard() {
 	const t2_col_left = team2.color_left
 
 	//TODO colors
-	scoreboard_t1.style.background = Color_gradient_to_string(t1_col_right, t1_col_left)
+	scoreboard_t1.style.background = color_gradient_to_string(t1_col_right, t1_col_left)
 	scoreboard_t1.style.color = Color_font_contrast(t1_col_left)
-	scoreboard_t2.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
+	scoreboard_t2.style.background = color_gradient_to_string(t2_col_left, t2_col_right)
 	scoreboard_t2.style.color = Color_font_contrast(t2_col_left)
 
 	update_timer_html()
@@ -261,7 +265,7 @@ function write_gameplan() {
 		let t1 = document.createElement("div")
 		t1.classList.add("bordered", "t1")
 		t1.innerHTML = teams_1.toString()
-		t1.style.background = Color_gradient_to_string(col_1_right, col_1_left)
+		t1.style.background = color_gradient_to_string(col_1_right, col_1_left)
 		t1.style.color = Color_font_contrast(col_1_right)
 		line.appendChild(t1)
 
@@ -278,7 +282,7 @@ function write_gameplan() {
 		let t2 = document.createElement("div")
 		t2.classList.add("bordered", "t2")
 		t2.innerHTML = teams_2.toString()
-		t2.style.background = Color_gradient_to_string(col_2_right, col_2_left)
+		t2.style.background = color_gradient_to_string(col_2_right, col_2_left)
 		t1.style.color = Color_font_contrast(col_2_right)
 		line.appendChild(t2)
 
@@ -365,7 +369,7 @@ function write_gamestart() {
 	const t1_name_el = document.createElement("div")
 	t1_name_el.classList.add("bordered")
 	t1_name_el.style.fontSize = "60px";
-	t1_name_el.style.background = Color_gradient_to_string(t1_col_left, t1_col_right)
+	t1_name_el.style.background = color_gradient_to_string(t1_col_left, t1_col_right)
 	t1_name_el.style.color = Color_font_contrast(t1_col_right)
 	t1_name_el.innerHTML = t1_name.toString()
 
@@ -386,7 +390,7 @@ function write_gamestart() {
 	const t2_name_el = document.createElement("div")
 	t2_name_el.classList.add("bordered")
 	t2_name_el.style.fontSize = "60px";
-	t2_name_el.style.background = Color_gradient_to_string(t2_col_left, t2_col_right)
+	t2_name_el.style.background = color_gradient_to_string(t2_col_left, t2_col_right)
 	t2_name_el.style.color = Color_font_contrast(t2_col_left)
 	t2_name_el.innerHTML = t2_name.toString()
 
@@ -409,10 +413,10 @@ function write_gamestart() {
 		gamestart_next.style.display = "block"
 		gamestart_next_t1.innerHTML = next_t1_name
 		gamestart_next_t1.style.background =
-			Color_gradient_to_string(next_t1_color_left, next_t1_color_right)
+			color_gradient_to_string(next_t1_color_left, next_t1_color_right)
 		gamestart_next_t2.innerHTML = next_t2_name
 		gamestart_next_t2.style.background =
-			Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
+			color_gradient_to_string(next_t2_color_left, next_t2_color_right)
 	}
 }
 
@@ -453,8 +457,8 @@ interface LivetableLine {
 	lost: number,
 	goals: number,
 	goals_taken: number,
-	color_right: number,
-	color_left: number
+	color_right: Color,
+	color_left: Color
 }
 
 function write_livetable() {
@@ -555,7 +559,7 @@ function write_livetable() {
 		const name = document.createElement("div")
 		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("bordered", "name")
-		name.style.background = Color_gradient_to_string(teams[team_i].color_right, teams[team_i].color_left)
+		name.style.background = color_gradient_to_string(teams[team_i].color_right, teams[team_i].color_left)
 		name.style.color = Color_font_contrast(teams[team_i].color_right!)
 		line.appendChild(name)
 
