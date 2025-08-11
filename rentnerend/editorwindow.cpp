@@ -31,6 +31,9 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.json_address.setAutoDefault(true);
 	this->buttons.json_address.setText("Browse"); // TODO TRANSLATE
 
+	this->layouts.json_address.addWidget(&this->json_address);
+	this->layouts.json_address.addWidget(&this->buttons.json_address);
+
 	// Open a file dialog when pressing the Browse button
 	QObject::connect(
 		&this->buttons.json_address,
@@ -99,6 +102,10 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.team_list_input.addWidget(&this->team_list_input);
 	this->layouts.team_list_input.addWidget(&this->buttons.remove_team);
 
+	this->layouts.team_list.addWidget(&this->labels.team_list);
+	this->layouts.team_list.addWidget(&this->team_list);
+	this->layouts.team_list.addLayout(&this->layouts.team_list_input);
+
 	// Add string to team list when pressing Return/Enter in the team text field
 	QObject::connect(
 		&this->team_list_input,
@@ -110,13 +117,41 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		}
 	);
 
-	// Show the Remove button when selection changes
+	// Show the Remove button when selection changes and make the player list
+	// usable only when a team is selected
 	QObject::connect(
 		&this->team_list,
 		&QListWidget::itemSelectionChanged,
 		[this]() {
 			this->buttons.remove_team.setEnabled(
 				!this->team_list.selectedItems().isEmpty()
+			);
+
+			const QList<QListWidgetItem *> selected_items =
+				this->team_list.selectedItems();
+
+			if (selected_items.isEmpty()) {
+				this->labels.player_list.setText("Players of"); // TODO TRANSLATE
+				this->player_list_frame.setEnabled(false);
+				return;
+			} else {
+				this->player_list_frame.setEnabled(true);
+			}
+
+			QListWidgetItem *item = selected_items.first();
+			if (!item) return;
+
+			const QWidget *card = this->team_list.itemWidget(item);
+			const QHBoxLayout *layout = qobject_cast<QHBoxLayout *>(card->layout());
+			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
+
+			if (!label) return;
+			this->labels.player_list.setText("Players of " + label->text()); // TODO TRANSLATE
+
+			// TODO NOW
+			this->layouts.player_list.replaceWidget(
+				this->data.selected_team,
+				this->data.player_lists.find(label)
 			);
 		}
 	);
@@ -146,6 +181,10 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.player_list_input.addWidget(&this->player_list_input);
 	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
 
+	this->layouts.player_list.addWidget(&this->labels.player_list);
+	this->layouts.player_list.addWidget(&this->player_list);
+	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
+
 	this->player_list_frame.setLayout(&this->layouts.player_list);
 	this->player_list_frame.setFrameShape(QFrame::Box);
 	this->player_list_frame.setFrameShadow(QFrame::Plain);
@@ -159,44 +198,14 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.remove_game.setAutoDefault(true);
 	this->buttons.remove_game.setText("-"); // TODO TRANSLATE
 
+	this->layouts.game_list.addWidget(&this->buttons.add_game);
+	this->layouts.game_list.addWidget(&this->buttons.remove_game);
+
 	// Left game list adds a new game
 	QObject::connect(
 		&this->buttons.add_game,
 		&QPushButton::clicked,
 		[this]() { this->add_game(); }
-	);
-
-	// TODO NOW CHECK
-	// Make the player list usable only when a team is selected
-	QObject::connect(
-		&this->team_list,
-		&QListWidget::itemSelectionChanged,
-		[this]() {
-			const QList<QListWidgetItem *> selected_items =
-				this->team_list.selectedItems();
-
-			if (selected_items.isEmpty()) {
-				this->labels.player_list.setText("Players of"); // TODO TRANSLATE
-				this->player_list_frame.setEnabled(false);
-				return;
-			} else {
-				this->player_list_frame.setEnabled(true);
-			}
-
-			// TODO NOW
-			QListWidgetItem *item = selected_items.first();
-			if (!item) return;
-
-			const QWidget *card = this->team_list.itemWidget(item);
-			const QHBoxLayout *layout = qobject_cast<QHBoxLayout *>(card->layout());
-			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
-
-			if (!label) {
-				printf("NOOOOOOOOOOOOOO\n");
-				return;
-			}
-			this->labels.player_list.setText("Players of " + label->text()); // TODO TRANSLATE
-		}
 	);
 
 	// Action buttons
@@ -208,22 +217,8 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->buttons.save_and_start.setText("Save and start"); // TODO TRANSLATE
 
 	// Side layouts
-	this->layouts.json_address.addWidget(&this->json_address);
-	this->layouts.json_address.addWidget(&this->buttons.json_address);
-
-	this->layouts.team_list.addWidget(&this->labels.team_list);
-	this->layouts.team_list.addWidget(&this->team_list);
-	this->layouts.team_list.addLayout(&this->layouts.team_list_input);
-
-	this->layouts.player_list.addWidget(&this->labels.player_list);
-	this->layouts.player_list.addWidget(&this->player_list);
-	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
-
 	this->layouts.team_player_lists.addLayout(&this->layouts.team_list);
 	this->layouts.team_player_lists.addWidget(&this->player_list_frame);
-
-	this->layouts.game_list.addWidget(&this->buttons.add_game);
-	this->layouts.game_list.addWidget(&this->buttons.remove_game);
 
 	this->layouts.action_buttons.addWidget(&this->buttons.abort);
 	this->layouts.action_buttons.addWidget(&this->buttons.save_and_return);

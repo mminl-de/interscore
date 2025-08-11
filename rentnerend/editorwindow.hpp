@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QFrame>
+#include <QHash>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -44,6 +45,11 @@ struct EditorWindow {
 		QPushButton save_and_return;
 		QPushButton save_and_start;
 	} buttons;
+
+	struct {
+		QString *selected_team;
+		QHash<QString *, QListWidget *> player_lists;
+	} data;
 
 	QLineEdit tournament_name;
 	QLineEdit json_address;

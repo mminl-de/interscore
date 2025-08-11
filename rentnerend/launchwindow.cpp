@@ -76,7 +76,6 @@ launchwindow::LaunchWindow::load_list(void) {
 		this->add_json(name.toUtf8().constData(), addr.toUtf8().constData());
 	}
 	this->settings->endArray();
-
 }
 
 void
