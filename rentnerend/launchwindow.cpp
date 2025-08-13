@@ -9,7 +9,9 @@
 #include "constants.hpp"
 #include "launchwindow.hpp"
 
-launchwindow::LaunchWindow::LaunchWindow(
+using LaunchWindow = launchwindow::LaunchWindow;
+
+LaunchWindow::LaunchWindow(
 	QSettings *settings,
 	editorwindow::EditorWindow *ew
 ) {
@@ -49,7 +51,7 @@ launchwindow::LaunchWindow::LaunchWindow(
 }
 
 void
-launchwindow::LaunchWindow::add_json(const char *name, const char *addr) {
+LaunchWindow::add_json(const char *name, const char *addr) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QWidget *const card = new QWidget;
 	QVBoxLayout *const layout = new QVBoxLayout(card);
@@ -67,7 +69,7 @@ launchwindow::LaunchWindow::add_json(const char *name, const char *addr) {
 }
 
 void
-launchwindow::LaunchWindow::load_list(void) {
+LaunchWindow::load_list(void) {
 	const uint16_t size = this->settings->beginReadArray("json_list");
 	for (int i = 0; i < size; ++i) {
 		this->settings->setArrayIndex(i);
@@ -79,12 +81,12 @@ launchwindow::LaunchWindow::load_list(void) {
 }
 
 void
-launchwindow::LaunchWindow::save_to_history(const char* name, const char *addr) {
+LaunchWindow::save_to_history(const char* name, const char *addr) {
 	// TODO
 }
 
 void
-launchwindow::LaunchWindow::select_item(const uint16_t n) {
+LaunchWindow::select_item(const uint16_t n) {
 	this->json_list.setCurrentRow(n);
 	this->json_list.item(n)->setSelected(true);
 	this->json_list.setFocus();
