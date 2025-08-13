@@ -90,6 +90,9 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	);
 
 	// Team list
+	this->default_player_list.addItem("[No players]"); // TODO TRANSLATE
+	this->data.current_team = &this->default_player_list;
+
 	this->labels.team_list.setText("Participating teams"); // TODO TRANSLATE
 	this->labels.team_list.setBuddy(&this->team_list);
 	this->buttons.remove_team.setAutoDefault(true);
@@ -112,6 +115,10 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		&QLineEdit::returnPressed,
 		[this]() {
 			const QString input = this->team_list_input.text();
+			if (this->data.player_lists.contains(input))
+				return;
+
+			this->data.player_lists.insert(input, new QListWidget);
 			this->team_list_input.clear();
 			this->add_team(&input);
 		}
@@ -123,10 +130,12 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		&this->team_list,
 		&QListWidget::itemSelectionChanged,
 		[this]() {
+			// Hide/unhide Remove Team button.
 			this->buttons.remove_team.setEnabled(
 				!this->team_list.selectedItems().isEmpty()
 			);
 
+			// Determine new selected item. (1)
 			const QList<QListWidgetItem *> selected_items =
 				this->team_list.selectedItems();
 
@@ -138,21 +147,23 @@ editorwindow::EditorWindow::EditorWindow(void) {
 				this->player_list_frame.setEnabled(true);
 			}
 
+			// Determine new selected item. (2)
 			QListWidgetItem *item = selected_items.first();
 			if (!item) return;
 
+			// Deconstruct widget step by step to find the label of the selected item.
 			const QWidget *card = this->team_list.itemWidget(item);
 			const QHBoxLayout *layout = qobject_cast<QHBoxLayout *>(card->layout());
 			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
 
 			if (!label) return;
-			this->labels.player_list.setText("Players of " + label->text()); // TODO TRANSLATE
+			const QString text = label->text();
+			this->labels.player_list.setText("Players of " + text); // TODO TRANSLATE
 
-			// TODO NOW
-			this->layouts.player_list.replaceWidget(
-				this->data.selected_team,
-				this->data.player_lists.find(label)
-			);
+			// Replace player list with the one of the new team.
+			QListWidget *new_list = this->data.player_lists.value(text);
+			this->layouts.player_list.replaceWidget(this->data.current_team, new_list);
+			this->data.current_team = new_list;
 		}
 	);
 
@@ -165,14 +176,18 @@ editorwindow::EditorWindow::EditorWindow(void) {
 			for (QListWidgetItem *item : selected) {
 				int32_t row = this->team_list.row(item);
 				QListWidgetItem *removed = this->team_list.takeItem(row);
+				const QString text = removed->text();
 				delete removed;  // also deletes associated widget
+
+				delete this->data.player_lists.value(text);
+				this->data.player_lists.remove(text);
 			}
 		}
 	);
 
 	// Player list
 	this->labels.player_list.setText("Players of"); // TODO TRANSLATE
-	this->labels.player_list.setBuddy(&this->player_list);
+	this->labels.player_list.setBuddy(this->data.current_team);
 	this->buttons.remove_player.setAutoDefault(true);
 	this->buttons.remove_player.setText("Remove");
 	this->buttons.remove_player.setDisabled(true);
@@ -182,7 +197,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
 
 	this->layouts.player_list.addWidget(&this->labels.player_list);
-	this->layouts.player_list.addWidget(&this->player_list);
+	this->layouts.player_list.addWidget(this->data.current_team);
 	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
 
 	this->player_list_frame.setLayout(&this->layouts.player_list);
@@ -190,6 +205,31 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->player_list_frame.setFrameShadow(QFrame::Plain);
 	this->player_list_frame.setLineWidth(1);
 	this->player_list_frame.setEnabled(false);
+
+	// Add string to player list when pressing Return/Enter in the role text field
+	QObject::connect(
+		&this->player_list_input,
+		&QLineEdit::returnPressed,
+		[this]() {
+			const QString input = this->player_list_input.text();
+			this->player_list_input.clear();
+			this->add_player(&input);
+		}
+	);
+
+	// Remove the selected player when button is clicked
+	QObject::connect(
+		&this->buttons.remove_player,
+		&QPushButton::clicked,
+		[this]() {
+			QList<QListWidgetItem *> selected = this->data.current_team->selectedItems();
+			for (QListWidgetItem *item : selected) {
+				int32_t row = this->data.current_team->row(item);
+				QListWidgetItem *removed = this->data.current_team->takeItem(row);
+				delete removed;  // also deletes associated widget
+			}
+		}
+	);
 
 	// Game list
 	this->labels.game_list.setText("Games"); // TODO TRANSLATE
@@ -250,7 +290,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	//
 	// games (list)
 
-	// TODO PLAN NOW
+	// TODO PLAN
 	// add and remove games
 	// add and remove teams
 	// add and remove players
@@ -310,6 +350,16 @@ editorwindow::EditorWindow::add_team(const QString *input) {
 	item->setSizeHint(card->sizeHint());
 	this->team_list.addItem(item);
 	this->team_list.setItemWidget(item, card);
+}
+
+void
+editorwindow::EditorWindow::add_player(const QString *input) {
+	QListWidgetItem *const item = new QListWidgetItem;
+	QLabel *const card = new QLabel(*input);
+
+	item->setSizeHint(card->sizeHint());
+	this->data.current_team->addItem(item);
+	this->data.current_team->setItemWidget(item, card);
 }
 
 void
