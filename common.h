@@ -1,6 +1,10 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <time.h>
 
@@ -83,5 +87,10 @@ bool file_write(const char *path, const char *s);
 void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *));
 char *gettimems();
 u8 add_card(enum CardType type, u8 player_index);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _COMMON_H_

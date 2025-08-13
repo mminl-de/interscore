@@ -203,14 +203,9 @@ function Color_font_contrast(c: Color): string {
 	return (Math.max(c.r, c.g, c.b) > 191) ? "black" : "white"
 }
 
-//String is formated like this: #2F8AB0
+//String is formated like this: 2F8AB0
 function color_string_to_color(buffer: string): Color {
-	console.log("Color as string: ", buffer)
-	console.log("r: ", parseInt(buffer[0], 16) * 16, parseInt(buffer[1], 16))
-	console.log("g: ", parseInt(buffer[2], 16) * 16, parseInt(buffer[3], 16))
-	console.log("b: ", parseInt(buffer[4], 16) * 16, parseInt(buffer[5], 16))
 	return {
-		// TODO How to parse char to hexa
 		r: parseInt(buffer[0], 16) * 16 + parseInt(buffer[1], 16),
 		g: parseInt(buffer[2], 16) * 16 + parseInt(buffer[3], 16),
 		b: parseInt(buffer[4], 16) * 16 + parseInt(buffer[5], 16)

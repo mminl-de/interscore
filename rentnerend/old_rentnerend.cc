@@ -1,25 +1,28 @@
-#include <QApplication>
-#include <QAudioOutput>
-#include <QComboBox>
-#include <QDebug>
-#include <QFontDatabase>
-#include <QHBoxLayout>
-#include <QIcon>
-#include <QLabel>
-#include <QMediaPlayer>
-#include <QPushButton>
-#include <QTimer>
-#include <QVBoxLayout>
-#include <QWidget>
-#include <QShortcut>
+#ifndef _MSC_VER
+extern "C" {
+   void quick_exit(int);
+   void at_quick_exit(void (*func)(void));
+}
+#endif
 
-#include <json-c/json.h>
-#include <json-c/json_object.h>
+#include <QtWidgets/QApplication>
+#include <QtMultimedia/QAudioOutput>
+#include <QtWidgets/QComboBox>
+#include <QtCore/QDebug>
+#include <QtGui/QFontDatabase>
+#include <QtWidgets/QHBoxLayout>
+#include <QtGui/QIcon>
+#include <QtWidgets/QLabel>
+#include <QtMultimedia/QMediaPlayer>
+#include <QtWidgets/QPushButton>
+#include <QtCore/QTimer>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QWidget>
+#include <QtGui/QShortcut>
+
 #include "../mongoose/mongoose.h"
 
 #include "../config.h"
-#include "qaudiooutput.h"
-#include "qnamespace.h"
 #include "../common.h"
 
 #define TIME_UPDATE_INTERVAL_MS 1000
