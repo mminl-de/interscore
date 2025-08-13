@@ -47,7 +47,8 @@ struct EditorWindow {
 	} buttons;
 
 	struct {
-		QListWidget *current_team;
+		QString current_team;
+		QListWidget *current_players;
 		QHash<QString, QListWidget *> player_lists;
 	} data;
 
