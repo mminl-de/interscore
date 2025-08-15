@@ -1,5 +1,5 @@
 SRC ?= backend.c mongoose/mongoose.c
-OUT ?= interscore
+OUT ?= backend
 CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
 WIN_LIBS ?= -ljson-c -lwinpthread -lws2_32 -liphlpapi -luserenv
 CC ?= cc
@@ -65,11 +65,13 @@ js:
 js-new:
 	tsc --target es2017 new-frontend/script.ts
 
-backer-install:
+obs-install:
 	mkdir -p ~/.config/obs-studio/basic/profiles
 	mkdir -p ~/.config/obs-studio/basic/scenes
 	cp obs/scenes/radball.json ~/.config/obs-studio/basic/scenes/
 	cp -r obs/profiles/radball/ ~/.config/obs-studio/basic/profiles/
+
+nginx-install:
 	mkdir -p /etc/nginx/
 	cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old || true
 	cp nginx.conf /etc/nginx/nginx.conf

@@ -24,6 +24,7 @@ extern "C" {
 
 #include "../config.h"
 #include "../common.h"
+//#include "qaudiooutput.h"
 
 #define TIME_UPDATE_INTERVAL_MS 1000
 
@@ -105,8 +106,8 @@ struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
 // TODO CHECK if you can allocate in the stack
-QMediaPlayer *player = new QMediaPlayer;
-QAudioOutput *audio_output = new QAudioOutput;
+QMediaPlayer *player;
+QAudioOutput *audio_output;
 
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
@@ -794,6 +795,9 @@ void json_autosave() {
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
+
+	player = new QMediaPlayer;
+	audio_output = new QAudioOutput;
 
 	//Set up the Audio Source for the player
 	player->setAudioOutput(audio_output);

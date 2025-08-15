@@ -12,10 +12,12 @@ WIN_LD_FLAGS ?= -I/usr/x86_64-w64-mingw32/include/qt6 \
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0 \
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0/x86_64-w64-mingw32 \
 
-# Windows compilation on Arch Linux needs mingw-w64-crt, mingw-w64-headers, mingw-w64-gcc, clang
+# Windows compilation on Arch Linux needs mingw-w64-crt, mingw-w64-headers, mingw-w64-gcc
+# On other pacman config:
+# pacman -Syu --config win-pacman/p.conf mingw-w64-x86_64-qt6-base mingw-w64-x86_64-qt6-multimedia
 # It can be done without clang but i will not bother
 win64-old:
-	../win-pacman/copy_msys2_to_system.sh
+	../win-pacman/copy_msys2_to_system.sh || true
 	x86_64-w64-mingw32-gcc -c ../common.c -o common.o
 	x86_64-w64-mingw32-gcc -c ../mongoose/mongoose.c -o mongoose.o
 	x86_64-w64-mingw32-g++ -std=gnu++17 -static \
@@ -37,7 +39,7 @@ debug:
 	$(CXX) -o $(OUT) $(SRC) $(CXXFLAGS) $(LD_FLAGS) -g
 
 fast:
-	$(CXX) -o $(OUT) $(SRC) -fpermissive -fPIC $(LD_FLAGS)
+	$(CXX) -o $(OUT) $(SRC) -O0 -g0 -pipe -fpermissive -fPIC $(LD_FLAGS)
 
 old:
 	$(CXX) -o $(OUT)-old old_rentnerend.cc ../mongoose/mongoose.c ../common.c -fpermissive -fPIC $(LD_FLAGS)
