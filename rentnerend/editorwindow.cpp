@@ -4,7 +4,6 @@
 #include <QFileDialog>
 #include <QFrame>
 #include <QKeySequence>
-#include <QObject>
 #include <QPushButton>
 #include <QShortcut>
 
@@ -93,7 +92,8 @@ EditorWindow::EditorWindow(void) {
 
 	// Team list
 	this->default_player_list.addItem("[No players]"); // TODO TRANSLATE
-	this->data.current_team = &this->default_player_list;
+	this->data.current_players = &this->default_player_list;
+	this->data.current_team = nullptr;
 
 	this->labels.team_list.setText("Participating teams"); // TODO TRANSLATE
 	this->labels.team_list.setBuddy(&this->team_list);
@@ -120,12 +120,7 @@ EditorWindow::EditorWindow(void) {
 			if (this->data.player_lists.contains(input))
 				return;
 
-			// TODO BEGIN TEST
-			auto new_list = new QListWidget;
-			new_list->addItem(input);
-			// TODO END TEST
-
-			this->data.player_lists.insert(input, new_list);
+			this->data.player_lists.insert(input, new QListWidget);
 			this->team_list_input.clear();
 			this->add_team(&input);
 		}
@@ -141,7 +136,7 @@ EditorWindow::EditorWindow(void) {
 			const QList<QListWidgetItem *> selected_items =
 				this->team_list.selectedItems();
 
-			// Hide/unhide Remove Team button.
+			// Hide Remove Team button if there are no teams.
 			if (selected_items.isEmpty()) {
 				this->buttons.remove_team.setEnabled(false);
 				this->player_list_frame.setEnabled(false);
@@ -154,6 +149,7 @@ EditorWindow::EditorWindow(void) {
 				return;
 			}
 
+			// Unhide Remove Team button if there are yes teams.
 			this->buttons.remove_team.setEnabled(true);
 			this->player_list_frame.setEnabled(true);
 
@@ -167,13 +163,29 @@ EditorWindow::EditorWindow(void) {
 			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
 
 			if (!label) return;
-			const QString text = label->text();
-			this->labels.player_list.setText("Players of " + text); // TODO TRANSLATE
+			this->data.current_team = label->text();
+			this->labels.player_list.setText(
+				"Players of " + this->data.current_team
+			); // TODO TRANSLATE
 
 			// Replace player list with the one of the new team.
-			QListWidget *new_list = this->data.player_lists.value(text);
-			this->layouts.player_list.replaceWidget(this->data.current_team, new_list);
-			this->data.current_team = new_list;
+			QListWidget *new_list =
+				this->data.player_lists.value(this->data.current_team);
+			for(int i=0; i < new_list->count(); i++) { // TODO TEST
+				// TODO NOTE it is there but no text is home :(
+				QListWidgetItem *item = new_list->item(i);
+				QWidget *card = new_list->itemWidget(item);
+				QString text = qobject_cast<QLabel *>(card)->text();
+
+				printf("ITEM %d. %s\n", i, text.toStdString().c_str());
+			}
+			printf("---\n");
+			this->layouts.player_list.replaceWidget(this->data.current_players, new_list);
+			// TODO COMMENT
+			this->data.current_players->hide();
+			new_list->show();
+			this->layouts.player_list.invalidate();
+			this->data.current_players = new_list;
 		}
 	);
 
@@ -194,11 +206,17 @@ EditorWindow::EditorWindow(void) {
 				// ie there is a different type in the QHash
 				//
 				// maybe you should move this code too
-				if (this->data.player_lists.value(text) == this->data.current_team)
+				if (this->data.player_lists.value(text) == this->data.current_players) {
 					this->layouts.player_list.replaceWidget(
-						this->data.current_team,
+						this->data.current_players,
 						&this->default_player_list
 					);
+					// TODO COMMENT
+					this->data.current_players->hide();
+					this->default_player_list.show();
+					this->layouts.player_list.invalidate();
+					this->data.current_team = nullptr;
+				}
 
 				delete removed;  // also deletes associated widget
 				delete this->data.player_lists.value(text);
@@ -209,7 +227,7 @@ EditorWindow::EditorWindow(void) {
 
 	// Player list
 	this->labels.player_list.setText("Players of"); // TODO TRANSLATE
-	this->labels.player_list.setBuddy(this->data.current_team);
+	this->labels.player_list.setBuddy(this->data.current_players);
 	this->buttons.remove_player.setAutoDefault(true);
 	this->buttons.remove_player.setText("Remove");
 	this->buttons.remove_player.setDisabled(true);
@@ -219,7 +237,7 @@ EditorWindow::EditorWindow(void) {
 	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
 
 	this->layouts.player_list.addWidget(&this->labels.player_list);
-	this->layouts.player_list.addWidget(this->data.current_team);
+	this->layouts.player_list.addWidget(this->data.current_players);
 	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
 
 	this->player_list_frame.setLayout(&this->layouts.player_list);
@@ -236,6 +254,7 @@ EditorWindow::EditorWindow(void) {
 			const QString input = this->player_list_input.text();
 			this->player_list_input.clear();
 			this->add_player(&input);
+			// TODO NOW remove all useless occurences of this->data.current_team
 		}
 	);
 
@@ -244,10 +263,10 @@ EditorWindow::EditorWindow(void) {
 		&this->buttons.remove_player,
 		&QPushButton::clicked,
 		[this]() {
-			QList<QListWidgetItem *> selected = this->data.current_team->selectedItems();
+			QList<QListWidgetItem *> selected = this->data.current_players->selectedItems();
 			for (QListWidgetItem *item : selected) {
-				int32_t row = this->data.current_team->row(item);
-				QListWidgetItem *removed = this->data.current_team->takeItem(row);
+				int32_t row = this->data.current_players->row(item);
+				QListWidgetItem *removed = this->data.current_players->takeItem(row);
 				delete removed;  // also deletes associated widget
 			}
 		}
@@ -376,8 +395,8 @@ EditorWindow::add_player(const QString *input) {
 	QLabel *const card = new QLabel(*input);
 
 	item->setSizeHint(card->sizeHint());
-	this->data.current_team->addItem(item);
-	this->data.current_team->setItemWidget(item, card);
+	this->data.current_players->addItem(item);
+	this->data.current_players->setItemWidget(item, card);
 }
 
 void
