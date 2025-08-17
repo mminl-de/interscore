@@ -26,10 +26,7 @@ const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
 const gameplan = document.querySelector(".gameplan")! as HTMLElement
 const scroller = document.querySelector(".gameplan-container .scroller")! as HTMLElement
 
-// TODO CHECK if we still need this one
 const gamestart = document.querySelector(".gamestart")! as HTMLElement
-// TODO CHECK if we still need this one
-const gamestart_container = document.querySelector(".gamestart .container")! as HTMLElement
 const gamestart_t1 = gamestart.querySelector(".t1")! as HTMLElement
 const gamestart_t2 = gamestart.querySelector(".t2")! as HTMLElement
 const gamestart_next = gamestart.querySelector(".next")! as HTMLElement
@@ -45,23 +42,19 @@ const ad = document.querySelector(".ad")! as HTMLElement
 
 const livetable = document.querySelector(".livetable")! as HTMLElement
 
-const decoder = new TextDecoder("utf-8")
-let str_len: number // temporary variable for counting string lengths
-let u8_array: Uint8Array
-
-const BUFFER_LEN = 100
-const GAMES_COUNT_MAX = 64
-const TEAMS_COUNT_MAX = 32
-const TEAM_NAME_MAX_LEN = 100
-const PLAYER_NAME_MAX_LEN = 100
+const CARD_SHOW_LENGTH = 7_000
 const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
+const TIMEOUT_SHOW = 10
+const TIMEOUT_HIDE = 500
 
-let WIDGET_SCOREBOARD_SHOWN = false
-let WIDGET_GAMEPLAN_SHOWN = false
-let WIDGET_LIVEPLAN_SHOWN = false
-let WIDGET_GAMESTART_SHOWN = false
-let WIDGET_AD_SHOWN = false
+let shown = {
+	scoreboard: false,
+	gameplan: false,
+	liveplan: false,
+	gamestart: false,
+	ad: false
+}
 
 enum CardType { Yellow, Red }
 interface Color { r: number, g: number, b: number }
@@ -119,24 +112,24 @@ let md: Matchday = {
 }
 
 function capitalize(str: string): string {
-    if (!str) return str;
-    return str[0].toUpperCase() + str.slice(1);
+	if (!str) return str;
+	return str[0].toUpperCase() + str.slice(1);
 }
 
-function parse_json(json: string){
+function parse_json(json: string) {
 	const p = JSON.parse(json);
 
-	if(md.deftime === -1) {
+	if (md.deftime === -1) {
 		console.log("First JSON Parse")
 		md.cur = {
 			gameindex: 0,
 			halftime: false,
 			pause: true,
-			time: p.time * (1000 / TIME_UPDATE_INTERVAL_MS),
-			pausestart: p.time * (1000 / TIME_UPDATE_INTERVAL_MS)
+			time: p.time * (1_000 / TIME_UPDATE_INTERVAL_MS),
+			pausestart: p.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
 		}
 	}
-	md.deftime = p.time * (1000 / TIME_UPDATE_INTERVAL_MS);
+	md.deftime = p.time * (1_000 / TIME_UPDATE_INTERVAL_MS);
 	md.games = [];
 	md.teams = [];
 	md.players = [];
@@ -147,9 +140,9 @@ function parse_json(json: string){
 			team_index: i
 		};
 		md.players[i*2 + 1] = {
-				name: p.teams[i].players[1].name,
-				role: p.teams[i].players[1].position,
-				team_index: i
+			name: p.teams[i].players[1].name,
+			role: p.teams[i].players[1].position,
+			team_index: i
 		};
 		md.teams[i] = {
 			players_indices: [i*2, i*2 + 1],
@@ -167,8 +160,8 @@ function parse_json(json: string){
 			score: {t1: 0, t2: 0},
 			cards: []
 		};
-		if(md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${p.games[i].team1}`);
-		if(md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${p.games[i].team2}`);
+		if (md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${p.games[i].team1}`);
+		if (md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${p.games[i].team2}`);
 		if (p.games[i].score !== undefined) {
 			md.games[i].score.t1 = p.games[i].score.team1;
 			md.games[i].score.t2 = p.games[i].score.team2;
@@ -178,20 +171,16 @@ function parse_json(json: string){
 			md.games[i].halftimescore.t2 = p.games[i].halftimescore.team2;
 		}
 		if (p.games[i].cards !== undefined) {
-			for(let j=0; j < p.games[i].cards.length; j++){
+			for(let j=0; j < p.games[i].cards.length; j++) {
 				md.games[i].cards[j] = {
 					card_type: (p.games[i].cards[j].type === "Y") ? CardType.Yellow : CardType.Red,
 					player_index: md.players.findIndex(temp => temp.name === capitalize(p.games[i].cards[j].player))
 				};
-				if(md.games[i].cards[j].player_index === -1)
+				if (md.games[i].cards[j].player_index === -1)
 					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${p.games[i].cards[i].player}`);
 			}
 		}
 	}
-}
-
-function color_to_string(c: Color): string {
-	return `rgb(${c.r}, ${c.g}, ${c.b})`
 }
 
 function color_gradient_to_string(l: Color, r: Color): string {
@@ -203,8 +192,9 @@ function Color_font_contrast(c: Color): string {
 	return (Math.max(c.r, c.g, c.b) > 191) ? "black" : "white"
 }
 
-//String is formated like this: 2F8AB0
+// String is formated like this: 2F8AB0
 function color_string_to_color(buffer: string): Color {
+	// TODO
 	return {
 		r: parseInt(buffer[0], 16) * 16 + parseInt(buffer[1], 16),
 		g: parseInt(buffer[2], 16) * 16 + parseInt(buffer[3], 16),
@@ -239,7 +229,7 @@ function write_scoreboard() {
 
 function write_gameplan() {
 	while (gameplan.children.length > 1)
-		gameplan.removeChild(gameplan.lastChild!)
+	gameplan.removeChild(gameplan.lastChild!)
 
 	const game_n = md.games.length
 	const cur = md.cur.gameindex //TODO Index ab 0 so richtig?
@@ -326,8 +316,8 @@ function write_gameplan() {
 
 			setTimeout(() => {
 				smoothScrollTo(0, SCROLL_DURATION)
-			}, SCROLL_DURATION + 2000) // duration + delay
-		}, 2000)
+			}, SCROLL_DURATION + 2_000) // duration + delay
+		}, 2_000)
 	}
 }
 
@@ -404,31 +394,32 @@ function write_gamestart() {
 	gamestart_t2.appendChild(t2_field_el)
 
 	if (next_t1_name === "") gamestart_next.style.display = "none"
-	else {
-		gamestart_next.style.display = "block"
-		gamestart_next_t1.innerHTML = next_t1_name
-		gamestart_next_t1.style.background =
-			color_gradient_to_string(next_t1_color_left, next_t1_color_right)
-		gamestart_next_t2.innerHTML = next_t2_name
-		gamestart_next_t2.style.background =
-			color_gradient_to_string(next_t2_color_left, next_t2_color_right)
-	}
+		else {
+			gamestart_next.style.display = "block"
+			gamestart_next_t1.innerHTML = next_t1_name
+			gamestart_next_t1.style.background =
+				color_gradient_to_string(next_t1_color_left, next_t1_color_right)
+			gamestart_next_t2.innerHTML = next_t2_name
+			gamestart_next_t2.style.background =
+				color_gradient_to_string(next_t2_color_left, next_t2_color_right)
+		}
 }
 
-// TODO refactor as handler function for receiving a card, also adding it to Matchday m
+// TODO refactor as handler function for receiving a card, also adding it to the Matchday
 function write_card(player_index: number, type: CardType) {
-	const display_length = 7_000
-
 	card_receiver.innerHTML = md.players[player_index].name.toString() //TODO do we need toString?
-	if (type === CardType.Yellow) {
-		card_graphic.style.backgroundColor = "#ff0000"
-		card_message.innerHTML = "bekommt eine rote Karte"
-	} else if (type === CardType.Red) {
-		card_graphic.style.backgroundColor = "#ffff00"
-		card_message.innerHTML = "bekommt eine gelbe Karte"
-	} else {
-		console.log("Unknown CardType... exiting")
-		return //TODO can we do that and no UI appears?
+	switch (type) {
+		case CardType.Yellow:
+			card_graphic.style.backgroundColor = "#ff0000"
+			card_message.innerHTML = "bekommt eine rote Karte"
+			break
+		case CardType.Red:
+			card_graphic.style.backgroundColor = "#ffff00"
+			card_message.innerHTML = "bekommt eine gelbe Karte"
+			break
+		default:
+			console.error("Unknown CardType... exiting")
+			return // TODO can we do that and no UI appears?
 	}
 
 	md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards.length] = {
@@ -439,7 +430,7 @@ function write_card(player_index: number, type: CardType) {
 	setTimeout(() => {
 		card.style.opacity = "0"
 		setTimeout(() => card.style.display = "none", 500)
-	}, display_length)
+	}, CARD_SHOW_LENGTH)
 }
 
 // TODO Does this need to be ?
@@ -458,7 +449,7 @@ interface LivetableLine {
 
 function write_livetable() {
 	while (livetable.children.length > 2)
-		livetable.removeChild(livetable.lastChild!)
+	livetable.removeChild(livetable.lastChild!)
 
 	const team_n = md.teams.length
 	let teams: LivetableLine[] = []
@@ -483,7 +474,7 @@ function write_livetable() {
 			played: (i => {
 				let p: number = 0
 				for (let j=0; j <= md.cur.gameindex; j++)
-					if(md.games[j].t1_index === i || md.games[j].t2_index === i) p++
+				if (md.games[j].t1_index === i || md.games[j].t2_index === i) p++
 				return p
 			}) (i),
 			won: (i => {
@@ -491,8 +482,8 @@ function write_livetable() {
 				for (let j=0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 1 : 0
-					else if (md.games[j].t2_index === i)
-						p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 1 : 0
+						else if (md.games[j].t2_index === i)
+							p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 1 : 0
 				}
 				return p
 			}) (i),
@@ -501,8 +492,8 @@ function write_livetable() {
 				for (let j=0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
-					else if (md.games[j].t2_index === i)
-						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
+						else if (md.games[j].t2_index === i)
+							p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
 				}
 				return p
 			}) (i),
@@ -511,8 +502,8 @@ function write_livetable() {
 				for (let j=0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 0 : 1
-					else if (md.games[j].t2_index === i)
-						p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 0 : 1
+						else if (md.games[j].t2_index === i)
+							p += (md.games[j].score.t1 - md.games[j].score.t2 < 0) ? 0 : 1
 				}
 				return p
 			}) (i),
@@ -520,7 +511,7 @@ function write_livetable() {
 				let p: number = 0
 				for (let j=0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t1
-					else if (md.games[j].t2_index === i) p += md.games[j].score.t2
+						else if (md.games[j].t2_index === i) p += md.games[j].score.t2
 				}
 				return p
 			}) (i),
@@ -528,7 +519,7 @@ function write_livetable() {
 				let p: number = 0
 				for (let j=0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t2
-					else if (md.games[j].t2_index === i) p += md.games[j].score.t1
+						else if (md.games[j].t2_index === i) p += md.games[j].score.t1
 				}
 				return p
 			}) (i),
@@ -538,12 +529,12 @@ function write_livetable() {
 	}
 
 	teams.sort((a, b) => {
-		if (b.points !== a.points) return b.points-a.points;
-		if (b.goals-b.goals_taken !== a.goals-a.goals_taken)
-			return (b.goals-b.goals_taken) - (a.goals-a.goals_taken)
-		if (b.goals !== a.goals) return b.goals-a.goals
-		if (b.won !== a.won) return b.won-a.won
-		if (b.played !== a.played) return b.played-a.played
+		if (b.points !== a.points) return b.points - a.points;
+		if (b.goals - b.goals_taken !== a.goals - a.goals_taken)
+			return (b.goals - b.goals_taken) - (a.goals - a.goals_taken)
+		if (b.goals !== a.goals) return b.goals - a.goals
+		if (b.won !== a.won) return b.won - a.won
+		if (b.played !== a.played) return b.played - a.played
 		return a.name.localeCompare(b.name)
 	});
 
@@ -606,10 +597,8 @@ function async_handle_time() {
 	countdown = setInterval(() => {
 		update_scoreboard_timer()
 
-		console.log("ASYNC Yeah")
 		if (md.cur.pause && (md.cur.pausestart == md.cur.time || md.cur.pausestart == -1)) return
-		console.log("still ticking down")
-		if (md.cur.pause && md.cur.pausestart > md.cur.time){
+		if (md.cur.pause && md.cur.pausestart > md.cur.time) {
 			md.cur.time = md.cur.pausestart
 			update_timer_html()
 			return
@@ -639,94 +628,90 @@ function update_timer_html() {
 
 function update_ui() {
 	console.log("updating ui")
-	if(WIDGET_SCOREBOARD_SHOWN) write_scoreboard()
-	if(WIDGET_GAMEPLAN_SHOWN) write_gameplan()
-	if(WIDGET_LIVEPLAN_SHOWN) write_livetable()
-	if(WIDGET_GAMESTART_SHOWN) write_gamestart()
-	if(WIDGET_AD_SHOWN) return//write_ad() //TODO This does not exist, right?
+	if (shown.scoreboard) write_scoreboard()
+	if (shown.gameplan) write_gameplan()
+	if (shown.liveplan) write_livetable()
+	if (shown.gamestart) write_gamestart()
+	if (shown.ad) return //write_ad() //TODO This does not exist, right?
 }
 
-socket.onopen = () => {
-	console.log("Connected to WebSocket server!")
-}
+socket.onopen = () => console.log("Connected to WebSocket server!")
 
 socket.onmessage = (event: MessageEvent) => {
 	if (!(event.data instanceof ArrayBuffer)) {
-		console.error("Grrrrr, backend didnt senz Binary Data. Fuck off")
+		console.error("The backend didn't send proper binary data. There's nothing we can do...")
 		return;
 	}
 
 	const data: DataView = new DataView(event.data as ArrayBuffer)
-	console.log("Buffer len: ", data.byteLength)
-
 	const mode: number = data.getUint8(0)
-	console.log("mode: " + mode)
+
 	switch (mode) {
 		case MessageType.WIDGET_SCOREBOARD_SHOW:
-			WIDGET_SCOREBOARD_SHOWN = true
+			shown.scoreboard = true
 			scoreboard.style.display = "inline-flex"
-			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.opacity = "1", 10)
+			scoreboard.style.opacity = "0" // TODO READ why is this line present on both show and hide
+			setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW)
 			write_scoreboard()
 			break
 		case MessageType.WIDGET_SCOREBOARD_HIDE:
-			WIDGET_SCOREBOARD_SHOWN = false
+			shown.scoreboard = false
 			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.display = "none", 500)
+			setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE)
 			break
 		case MessageType.WIDGET_GAMEPLAN_SHOW:
-			WIDGET_GAMEPLAN_SHOWN = true
+			shown.gameplan = true
 			gameplan.style.display = "inline-flex"
 			gameplan.style.opacity = "0"
-			setTimeout(() => gameplan.style.opacity = "1", 10)
+			setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW)
 			write_gameplan()
 			break
 		case MessageType.WIDGET_GAMEPLAN_HIDE:
-			WIDGET_GAMEPLAN_SHOWN = false
+			shown.gameplan = false
 			gameplan.style.opacity = "0"
-			setTimeout(() => gameplan.style.display = "none", 500)
+			setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE)
 			break
 		case MessageType.WIDGET_LIVETABLE_SHOW:
-			WIDGET_LIVEPLAN_SHOWN = true
+			shown.liveplan = true
 			livetable.style.display = "inline-flex"
 			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.opacity = "1", 10)
+			setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW)
 			write_livetable()
 			break
 		case MessageType.WIDGET_LIVETABLE_HIDE:
-			WIDGET_LIVEPLAN_SHOWN = false
+			shown.liveplan = false
 			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.display = "none", 500)
+			setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE)
 			break
 		case MessageType.WIDGET_GAMESTART_SHOW:
-			WIDGET_GAMESTART_SHOWN = true
+			shown.gamestart = true
 			gamestart.style.display = "flex"
 			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.opacity = "1", 10)
+			setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW)
 			write_gamestart()
 			break
 		case MessageType.WIDGET_GAMESTART_HIDE:
-			WIDGET_GAMESTART_SHOWN = false
+			shown.gamestart = false
 			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.display = "none", 500)
+			setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE)
 			break
 		case MessageType.WIDGET_AD_SHOW: // TODO does this work?
-			WIDGET_AD_SHOWN = true
+			shown.ad = true
 			ad.style.display = "block"
 			ad.style.opacity = "0"
-			setTimeout(() => ad.style.opacity = "1", 10)
+			setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW)
 			break
 		case MessageType.WIDGET_AD_HIDE:
-			WIDGET_AD_SHOWN = false
+			shown.ad = false
 			ad.style.opacity = "0"
-			setTimeout(() => ad.style.display = "none", 500)
+			setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
 			break
 		case MessageType.T1_SCORE_PLUS:
 			md.games[md.cur.gameindex].score.t1++
 			update_ui()
 			break
 		case MessageType.T1_SCORE_MINUS:
-			if(md.games[md.cur.gameindex].score.t1 > 0) {
+			if (md.games[md.cur.gameindex].score.t1 > 0) {
 				md.games[md.cur.gameindex].score.t1--
 				update_ui()
 			}
@@ -736,19 +721,19 @@ socket.onmessage = (event: MessageEvent) => {
 			update_ui()
 			break
 		case MessageType.T2_SCORE_MINUS:
-			if(md.games[md.cur.gameindex].score.t2 > 0){
+			if (md.games[md.cur.gameindex].score.t2 > 0) {
 				md.games[md.cur.gameindex].score.t2--
 				update_ui()
 			}
 			break
 		case MessageType.GAME_NEXT:
-			if(md.cur.gameindex < md.games.length-1) {
+			if (md.cur.gameindex < md.games.length - 1) {
 				md.cur.gameindex++;
 				update_ui()
 			}
 			break
 		case MessageType.GAME_PREV:
-			if(md.cur.gameindex > 0) {
+			if (md.cur.gameindex > 0) {
 				md.cur.gameindex--;
 				update_ui()
 			}
@@ -759,31 +744,31 @@ socket.onmessage = (event: MessageEvent) => {
 			break
 		case MessageType.TIME_PLUS_1:
 			// TODO Disallow time changes this when we are not paused?
-			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
-			md.cur.time += (1000 / TIME_UPDATE_INTERVAL_MS);
+			md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS);
 			update_ui()
 			break
 		case MessageType.TIME_MINUS_1:
-			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
-			if(md.cur.time > 0) {
-				md.cur.time -= (1000 / TIME_UPDATE_INTERVAL_MS)
+			if (md.cur.time > 0) {
+				md.cur.time -= (1_000 / TIME_UPDATE_INTERVAL_MS)
 				update_ui()
 			}
 			break
 		case MessageType.TIME_PLUS_20:
-			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
-			md.cur.time += 20 * (1000 / TIME_UPDATE_INTERVAL_MS)
+			md.cur.time += 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
 			update_ui()
 			break
 		case MessageType.TIME_MINUS_20:
-			if(md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
-			if(md.cur.time >= 20 * (1000 / TIME_UPDATE_INTERVAL_MS))
-				md.cur.time -= 20 * (1000 / TIME_UPDATE_INTERVAL_MS);
-			else
+			if (md.cur.time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
+				md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS);
+				else
 				md.cur.time = 0;
 			update_ui()
 			break
@@ -820,19 +805,19 @@ socket.onmessage = (event: MessageEvent) => {
 			console.log(md)
 			console.log("Written Time: ", md.cur.time)
 			update_ui()
-			break;
+			break
 		case MessageType.DATA_IS_PAUSE:
 			console.log("Received DATA is_pause: ", data.getUint8(1) === 1)
 			md.cur.pause = data.getUint8(1) === 1
-			break;
+			break
 		case MessageType.DATA_HALFTIME:
 			console.log("Received DATA Halftime: ", data.getUint8(1) === 1)
 			md.cur.halftime = data.getUint8(1) === 1
-			break;
+			break
 		case MessageType.DATA_GAMEINDEX:
 			console.log("Received DATA Gameindex: ", data.getUint8(1))
 			md.cur.gameindex = data.getUint8(1)
-			break;
+			break
 		case MessageType.DATA_JSON:
 			console.log("Received DATA Gameindex")
 			const decoder = new TextDecoder("utf-8")
@@ -841,24 +826,19 @@ socket.onmessage = (event: MessageEvent) => {
 			update_ui()
 			break
 		//case MessageType.SCOREBOARD_SET_TIMER:
-			// TODO This is actually useful, implement in rentnerend
-			// TODO make this work
-			//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
+		// TODO This is actually useful, implement in rentnerend
+		// TODO make this work
+		//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
 		//	break
 	}
 	console.log("Here is the Matchday again:", md)
 }
 
-socket.onerror = (error: Event) => {
-	console.error("WebSocket Error: ", error)
-}
+socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
+socket.onclose = () => console.log("WebSocket connection closed!")
 
-socket.onclose = () => {
-	console.log("WebSocket connection closed!")
-}
-
-console.log("Client loaded!")
 async_handle_time()
+console.log("Client loaded!")
 
 // For debugging
 //function hotReloadCSS() {
