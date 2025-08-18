@@ -5,7 +5,7 @@
       "name":"GIFHORN",
       "logo":"assets\/gifhorn.jpg",
       "color_light":"c4545c",
-      "color_dark":"ab3b42",
+      "color_dark":"c4545c",
       "players":[
         {
           "name":"Erik Kramer",
@@ -21,7 +21,7 @@
       "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
       "color_light":"0058ab",
-      "color_dark":"0028ab",
+      "color_dark":"0058ab",
       "players":[
         {
           "name":"Ben Börngen",
@@ -37,7 +37,7 @@
       "name":"N.-SEIFERSDORF",
       "logo":"assets\/leeden.jpg",
       "color_light":"a1ae0c",
-      "color_dark":"bfad00",
+      "color_dark":"a1ae0c",
       "players":[
         {
           "name":"Alwin Großmann",
@@ -53,7 +53,7 @@
       "name":"BURGKUNSTADT",
       "logo":"assets\/velbert.svg",
       "color_light":"0f81e0",
-      "color_dark":"0046ff",
+      "color_dark":"0f81e0",
       "players":[
         {
           "name":"Benedikt Kohlmann",
@@ -69,7 +69,7 @@
       "name":"KIESELBRONN 1",
       "logo":"assets\/velbert.svg",
       "color_light":"2f3a64",
-      "color_dark":"1f2264",
+      "color_dark":"2f3a64",
       "players":[
         {
           "name":"Robin Häußermann",

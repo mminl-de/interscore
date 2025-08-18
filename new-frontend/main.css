@@ -1,10 +1,10 @@
 /* TODO FINAL COMMENT ALL */
 
 body {
-    font-family: "Kanit";   /* great font for the entire scoreboard */
-    font-size: 32px;
+	font-family: "Kanit";   /* great font for the entire scoreboard */
+	font-size: 32px;
 
-    margin: 32px;           /* space from the top and left edges */
+	margin: 32px;           /* space from the top and left edges */
 
 	/* TODO DEBUG background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%); */
 }
@@ -13,10 +13,10 @@ body {
 	font-size: 60px;
 	text-align: center;
 	text-shadow:
-		2px 2px 0 white,
-		-2px 2px 0 white,
-		2px -2px 0 white,
-		-2px -2px 0 white;
+	2px 2px 0 white,
+	-2px 2px 0 white,
+	2px -2px 0 white,
+	-2px -2px 0 white;
 }
 
 .bordered {
@@ -30,6 +30,6 @@ body {
 }
 
 @font-face {
-    font-family: "Kanit";
+	font-family: "Kanit";
 	src: url("../assets/Kanit-Regular.ttf") format("truetype");
 }

@@ -1,206 +1,206 @@
 {
-	"time":420,
-	"teams":[
+	"time": 360,
+	"teams": [
 		{
-			"name":"GIFHORN",
-			"logo":"assets\/gifhorn.jpg",
-			"color_light":"c4545c",
-			"color_dark":"ab3b42",
-			"players":[
+			"name": "GIFHORN",
+			"logo": "assets\/gifhorn.jpg",
+			"color_light": "c4545c",
+			"color_dark": "c4545c",
+			"players": [
 				{
-					"name":"Erik Kramer",
-					"position":"keeper"
+					"name": "Erik Kramer",
+					"position": "keeper"
 				},
 				{
-					"name":"Linus Kramer",
-					"position":"field"
+					"name": "Linus Kramer",
+					"position": "field"
 				}
 			]
 		},
 		{
-			"name":"EHRENBERG",
-			"logo":"assets\/schiefbahn.jpg",
-			"color_light":"0058ab",
-			"color_dark":"0028ab",
-			"players":[
+			"name": "EHRENBERG",
+			"logo": "assets\/schiefbahn.jpg",
+			"color_light": "0058ab",
+			"color_dark": "0058ab",
+			"players": [
 				{
-					"name":"Ben Börngen",
-					"position":"keeper"
+					"name": "Ben Börngen",
+					"position": "keeper"
 				},
 				{
-					"name":"Frederick Etzold",
-					"position":"field"
+					"name": "Frederick Etzold",
+					"position": "field"
 				}
 			]
 		},
 		{
-			"name":"N.-SEIFERSDORF",
-			"logo":"assets\/leeden.jpg",
-			"color_light":"a1ae0c",
-			"color_dark":"bfad00",
-			"players":[
+			"name": "N.-SEIFERSDORF",
+			"logo": "assets\/leeden.jpg",
+			"color_light": "a1ae0c",
+			"color_dark": "a1ae0c",
+			"players": [
 				{
-					"name":"Alwin Großmann",
-					"position":"keeper"
+					"name": "Alwin Großmann",
+					"position": "keeper"
 				},
 				{
-					"name":"Laurence Tschirch",
-					"position":"field"
+					"name": "Laurence Tschirch",
+					"position": "field"
 				}
 			]
 		},
 		{
-			"name":"BURGKUNSTADT",
-			"logo":"assets\/velbert.svg",
-			"color_light":"0f81e0",
-			"color_dark":"0046ff",
-			"players":[
+			"name": "BURGKUNSTADT",
+			"logo": "assets\/velbert.svg",
+			"color_light": "0f81e0",
+			"color_dark": "0f81e0",
+			"players": [
 				{
-					"name":"Benedikt Kohlmann",
-					"position":"keeper"
+					"name": "Benedikt Kohlmann",
+					"position": "keeper"
 				},
 				{
-					"name":"Lenny Eckert",
-					"position":"field"
+					"name": "Lenny Eckert",
+					"position": "field"
 				}
 			]
 		},
 		{
-			"name":"KIESELBRONN 1",
-			"logo":"assets\/velbert.svg",
-			"color_light":"2f3a64",
-			"color_dark":"1f2264",
-			"players":[
+			"name": "KIESELBRONN 1",
+			"logo": "assets\/velbert.svg",
+			"color_light": "2f3a64",
+			"color_dark": "2f3a64",
+			"players": [
 				{
-					"name":"Robin Häußermann",
-					"position":"keeper"
+					"name": "Robin Häußermann",
+					"position": "keeper"
 				},
 				{
-					"name":"Nico Scholl",
-					"position":"field"
+					"name": "Nico Scholl",
+					"position": "field"
 				}
 			]
 		}
 	],
-	"games":[
+	"games": [
 		{
-			"team1":"GIFHORN",
-			"team2":"KIESELBRONN 1",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "GIFHORN",
+			"team2": "KIESELBRONN 1",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":2,
-				"team2":1
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"EHRENBERG",
-			"team2":"BURGKUNSTADT",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "EHRENBERG",
+			"team2": "BURGKUNSTADT",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"GIFHORN",
-			"team2":"BURGKUNSTADT",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "N.-SEIFERSDORF",
+			"team2": "KIESELBRONN 1",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"N.-SEIFERSDORF",
-			"team2":"KIESELBRONN 1",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "GIFHORN",
+			"team2": "BURGKUNSTADT",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"BURGKUNSTADT",
-			"team2":"KIESELBRONN 1",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "EHRENBERG",
+			"team2": "N.-SEIFERSDORF",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"EHRENBERG",
-			"team2":"N.-SEIFERSDORF",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "BURGKUNSTADT",
+			"team2": "KIESELBRONN 1",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"EHRENBERG",
-			"team2":"KIESELBRONN 1",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "GIFHORN",
+			"team2": "N.-SEIFERSDORF",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"GIFHORN",
-			"team2":"N.-SEIFERSDORF",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "EHRENBERG",
+			"team2": "KIESELBRONN 1",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"N.-SEIFERSDORF",
-			"team2":"BURGKUNSTADT",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "N.-SEIFERSDORF",
+			"team2": "BURGKUNSTADT",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		},
 		{
-			"team1":"GIFHORN",
-			"team2":"EHRENBERG",
-			"halftimescore":{
-				"team1":0,
-				"team2":0
+			"team1": "GIFHORN",
+			"team2": "EHRENBERG",
+			"halftime_score": {
+				"team1": 0,
+				"team2": 0
 			},
-			"score":{
-				"team1":0,
-				"team2":0
+			"score": {
+				"team1": 0,
+				"team2": 0
 			}
 		}
 	]

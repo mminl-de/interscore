@@ -1,21 +1,21 @@
 /* TODO FINAL ALL make choice of absolute/relative sizes consistent */
 .scoreboard {
-    display: none;		    /* children should not stretch to entire width */
-    flex-direction: column; /* children should be packed horizontally */
-    gap: 10px;              /* children should have 10 pixels between each other */
+	display: none;		    /* children should not stretch to entire width */
+	flex-direction: column; /* children should be packed horizontally */
+	gap: 10px;              /* children should have 10 pixels between each other */
 
 	/* TODO WIP */
 	transition: opacity 0.5s ease-in-out;
 
-    position: absolute;
-    top: 3%;
-    left: 3%;
+	position: absolute;
+	top: 3%;
+	left: 3%;
 }
 
 .scoreboard .scoreboard-top {
-    display: flex;
-    align-items: flex-end;
-    gap: 10px;
+	display: flex;
+	align-items: flex-end;
+	gap: 10px;
 }
 
 .scoreboard .time-container {
@@ -52,22 +52,22 @@
 }
 
 .scoreboard .t1, .scoreboard .t2 {
-    width: 260px;
-    padding: 0 16px;
+	width: 260px;
+	padding: 0 16px;
 }
 
 .scoreboard .t1 {
-    text-align: right;
+	text-align: right;
 }
 
 .scoreboard .s1, .scoreboard .s2 {
-    color: black;
+	color: black;
 	background-color: #bebebe;
-    font-size: 40px;
+	font-size: 40px;
 	width: 30px;
 
 	display: flex;
 	justify-content: center;
 
-    padding: 10px 20px;
+	padding: 10px 20px;
 }

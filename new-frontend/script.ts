@@ -3,7 +3,6 @@ import { MessageType } from "../MessageType.js"
 // MessageType.ts contains only the enum MessageType and is exported, so backend
 // and rentnerend can use it as well (through #define magic)
 
-
 // TODO NOTE dont ever hardcode styles :pray:
 // TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
@@ -47,6 +46,8 @@ const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
 const TIMEOUT_SHOW = 10
 const TIMEOUT_HIDE = 500
+const DARKER_COLOR_BIAS: Color = { r: 10, g: 7, b: 3 } // TODO TEST
+const COLOR_CONTRAST_THRESHOLD = 191
 
 let shown = {
 	scoreboard: false,
@@ -70,16 +71,16 @@ interface Player {
 	role: string
 }
 interface Team {
-	players_indices: number[],
+	player_indices: number[],
 	name: string,
 	logo_filename: string, // logo als Bild direkt?
-	color_left: Color, //Dark
-	color_right: Color, //Light
+	color_main: Color,
+	color_darker: Color
 }
 interface Game {
 	t1_index: number,
 	t2_index: number,
-	halftimescore: Score,
+	halftime_score: Score,
 	score: Score,
 	cards: Card[]
 }
@@ -112,12 +113,12 @@ let md: Matchday = {
 }
 
 function capitalize(str: string): string {
-	if (!str) return str;
-	return str[0].toUpperCase() + str.slice(1);
+	if (!str) return str
+	return str[0].toUpperCase() + str.slice(1)
 }
 
-function parse_json(json: string) {
-	const p = JSON.parse(json);
+function parse_json(str: string) {
+	const json = JSON.parse(str)
 
 	if (md.deftime === -1) {
 		console.log("First JSON Parse")
@@ -125,59 +126,59 @@ function parse_json(json: string) {
 			gameindex: 0,
 			halftime: false,
 			pause: true,
-			time: p.time * (1_000 / TIME_UPDATE_INTERVAL_MS),
-			pausestart: p.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
+			time: json.time * (1_000 / TIME_UPDATE_INTERVAL_MS),
+			pausestart: json.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
 		}
 	}
-	md.deftime = p.time * (1_000 / TIME_UPDATE_INTERVAL_MS);
-	md.games = [];
-	md.teams = [];
-	md.players = [];
-	for (let i = 0; i < p.teams.length; i++) {
-		md.players[i*2] = {
-			name: p.teams[i].players[0].name,
-			role: p.teams[i].players[0].position,
+	md.deftime = json.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
+	md.games = []
+	md.teams = []
+	md.players = []
+	for (let i = 0; i < json.teams.length; i++) {
+		md.players[i * 2] = {
+			name: json.teams[i].players[0].name,
+			role: json.teams[i].players[0].position,
 			team_index: i
-		};
-		md.players[i*2 + 1] = {
-			name: p.teams[i].players[1].name,
-			role: p.teams[i].players[1].position,
+		}
+		md.players[i * 2 + 1] = {
+			name: json.teams[i].players[1].name,
+			role: json.teams[i].players[1].position,
 			team_index: i
-		};
+		}
 		md.teams[i] = {
-			players_indices: [i*2, i*2 + 1],
-			name: p.teams[i].name,
-			logo_filename: p.teams[i].logo,
-			color_right: color_string_to_color(p.teams[i].color_light),
-			color_left: color_string_to_color(p.teams[i].color_dark)
-		};
+			player_indices: [i * 2, i * 2 + 1],
+			name: json.teams[i].name,
+			logo_filename: json.teams[i].logo,
+			color_main: string_to_color(json.teams[i].color),
+			color_darker: string_to_darker_color(json.teams[i].color)
+		}
 	}
-	for (let i = 0; i < p.games.length; i++) {
+	for (let i = 0; i < json.games.length; i++) {
 		md.games[i] = {
-			t1_index: md.teams.findIndex(temp => temp.name === p.games[i].team1),
-			t2_index: md.teams.findIndex(temp => temp.name === p.games[i].team2),
-			halftimescore: {t1: 0, t2: 0},
+			t1_index: md.teams.findIndex(temp => temp.name === json.games[i].team_1),
+			t2_index: md.teams.findIndex(temp => temp.name === json.games[i].team_2),
+			halftime_score: {t1: 0, t2: 0},
 			score: {t1: 0, t2: 0},
 			cards: []
-		};
-		if (md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${p.games[i].team1}`);
-		if (md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${p.games[i].team2}`);
-		if (p.games[i].score !== undefined) {
-			md.games[i].score.t1 = p.games[i].score.team1;
-			md.games[i].score.t2 = p.games[i].score.team2;
 		}
-		if (p.games[i].halftimescore !== undefined) {
-			md.games[i].halftimescore.t1 = p.games[i].halftimescore.team1;
-			md.games[i].halftimescore.t2 = p.games[i].halftimescore.team2;
+		if (md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${json.games[i].team_1}`)
+		if (md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${json.games[i].team_2}`)
+		if (json.games[i].score !== undefined) {
+			md.games[i].score.t1 = json.games[i].score.team_1
+			md.games[i].score.t2 = json.games[i].score.team_2
 		}
-		if (p.games[i].cards !== undefined) {
-			for(let j=0; j < p.games[i].cards.length; j++) {
+		if (json.games[i].halftimescore !== undefined) {
+			md.games[i].halftime_score.t1 = json.games[i].halftimescore.team_1
+			md.games[i].halftime_score.t2 = json.games[i].halftimescore.team_2
+		}
+		if (json.games[i].cards !== undefined) {
+			for(let j = 0; j < json.games[i].cards.length; j++) {
 				md.games[i].cards[j] = {
-					card_type: (p.games[i].cards[j].type === "Y") ? CardType.Yellow : CardType.Red,
-					player_index: md.players.findIndex(temp => temp.name === capitalize(p.games[i].cards[j].player))
-				};
+					card_type: (json.games[i].cards[j].type === "Y") ? CardType.Yellow : CardType.Red,
+					player_index: md.players.findIndex(temp => temp.name === capitalize(json.games[i].cards[j].player))
+				}
 				if (md.games[i].cards[j].player_index === -1)
-					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${p.games[i].cards[i].player}`);
+					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${json.games[i].cards[i].player}`)
 			}
 		}
 	}
@@ -188,40 +189,49 @@ function color_gradient_to_string(l: Color, r: Color): string {
 		`rgb(${r.r}, ${r.g}, ${r.b}) 50%)`
 }
 
-function Color_font_contrast(c: Color): string {
-	return (Math.max(c.r, c.g, c.b) > 191) ? "black" : "white"
+function color_font_contrast(c: Color): string {
+	return (Math.max(c.r, c.g, c.b) > COLOR_CONTRAST_THRESHOLD) ? "black" : "white"
 }
 
-// String is formated like this: 2F8AB0
-function color_string_to_color(buffer: string): Color {
-	// TODO
+// Converts a hexcolor string formatted like #rrggbb into a `Color` instance.
+function string_to_color(hexcode: string): Color {
 	return {
-		r: parseInt(buffer[0], 16) * 16 + parseInt(buffer[1], 16),
-		g: parseInt(buffer[2], 16) * 16 + parseInt(buffer[3], 16),
-		b: parseInt(buffer[4], 16) * 16 + parseInt(buffer[5], 16)
+		r: parseInt(hexcode.slice(1, 3), 16),
+		g: parseInt(hexcode.slice(3, 5), 16),
+		b: parseInt(hexcode.slice(5, 7), 16)
+	}
+}
+
+// Computes a darker shade of the described color (#rrggbb) and formats it as a
+// `Color` instance.
+function string_to_darker_color(hexcode: string): Color {
+	return {
+		r: parseInt(hexcode.slice(1, 3), 16) - DARKER_COLOR_BIAS.r,
+		g: parseInt(hexcode.slice(3, 5), 16) - DARKER_COLOR_BIAS.g,
+		b: parseInt(hexcode.slice(5, 7), 16) - DARKER_COLOR_BIAS.b
 	}
 }
 
 function write_scoreboard() {
 	const game = md.games[md.cur.gameindex]
-	const team1 = md.cur.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
-	const team2 = md.cur.halftime ? md.teams[game.t1_index] : md.teams[game.t2_index]
-	scoreboard_t1.innerHTML = team1.name
-	scoreboard_t2.innerHTML = team2.name
+	const team_left = md.cur.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
+	const team_right = md.cur.halftime ? md.teams[game.t1_index] : md.teams[game.t2_index]
+	scoreboard_t1.innerHTML = team_left.name
+	scoreboard_t2.innerHTML = team_right.name
 
 	scoreboard_score_1.innerHTML = md.cur.halftime ? game.score.t2.toString() : game.score.t1.toString()
 	scoreboard_score_2.innerHTML = md.cur.halftime ? game.score.t1.toString() : game.score.t2.toString()
 
-	const t1_col_right = team1.color_right
-	const t1_col_left = team1.color_left
-	const t2_col_right = team2.color_right
-	const t2_col_left = team2.color_left
+	// TODO
+	const t1_col_main = team_left.color_main
+	const t1_col_darker = team_left.color_darker
+	const t2_col_main = team_right.color_main
+	const t2_col_darker = team_right.color_darker
 
-	//TODO colors
-	scoreboard_t1.style.background = color_gradient_to_string(t1_col_right, t1_col_left)
-	scoreboard_t1.style.color = Color_font_contrast(t1_col_left)
-	scoreboard_t2.style.background = color_gradient_to_string(t2_col_left, t2_col_right)
-	scoreboard_t2.style.color = Color_font_contrast(t2_col_left)
+	scoreboard_t1.style.background = color_gradient_to_string(t1_col_main, t1_col_darker)
+	scoreboard_t1.style.color = color_font_contrast(t1_col_darker)
+	scoreboard_t2.style.background = color_gradient_to_string(t2_col_darker, t2_col_main)
+	scoreboard_t2.style.color = color_font_contrast(t2_col_darker)
 
 	update_timer_html()
 	update_scoreboard_timer()
@@ -239,10 +249,10 @@ function write_gameplan() {
 		const teams_2 = md.teams[md.games[game_i].t2_index].name
 		const goals_1 = md.games[game_i].score.t1
 		const goals_2 = md.games[game_i].score.t2
-		const col_1_right = md.teams[md.games[game_i].t1_index].color_right
-		const col_1_left = md.teams[md.games[game_i].t1_index].color_left
-		const col_2_right = md.teams[md.games[game_i].t2_index].color_right
-		const col_2_left = md.teams[md.games[game_i].t2_index].color_left
+		const col_1_right = md.teams[md.games[game_i].t1_index].color_main
+		const col_1_left = md.teams[md.games[game_i].t1_index].color_darker
+		const col_2_right = md.teams[md.games[game_i].t2_index].color_main
+		const col_2_left = md.teams[md.games[game_i].t2_index].color_darker
 
 		let line = document.createElement("div")
 		line.classList.add("line")
@@ -251,7 +261,7 @@ function write_gameplan() {
 		t1.classList.add("bordered", "t1")
 		t1.innerHTML = teams_1.toString()
 		t1.style.background = color_gradient_to_string(col_1_right, col_1_left)
-		t1.style.color = Color_font_contrast(col_1_right)
+		t1.style.color = color_font_contrast(col_1_right)
 		line.appendChild(t1)
 
 		let s1 = document.createElement("div")
@@ -268,7 +278,7 @@ function write_gameplan() {
 		t2.classList.add("bordered", "t2")
 		t2.innerHTML = teams_2.toString()
 		t2.style.background = color_gradient_to_string(col_2_right, col_2_left)
-		t1.style.color = Color_font_contrast(col_2_right)
+		t1.style.color = color_font_contrast(col_2_right)
 		line.appendChild(t2)
 
 		if (cur < game_i) {
@@ -331,31 +341,31 @@ function write_gamestart() {
 	const t2_name = md.teams[md.games[gamei].t2_index].name
 
 	// TODO WIP
-	const t1_keeper = md.players[md.teams[md.games[gamei].t1_index].players_indices[0]].name
-	const t1_field = md.players[md.teams[md.games[gamei].t1_index].players_indices[1]].name
-	const t2_keeper = md.players[md.teams[md.games[gamei].t2_index].players_indices[0]].name
-	const t2_field = md.players[md.teams[md.games[gamei].t2_index].players_indices[1]].name
+	const t1_keeper = md.players[md.teams[md.games[gamei].t1_index].player_indices[0]].name
+	const t1_field = md.players[md.teams[md.games[gamei].t1_index].player_indices[1]].name
+	const t2_keeper = md.players[md.teams[md.games[gamei].t2_index].player_indices[0]].name
+	const t2_field = md.players[md.teams[md.games[gamei].t2_index].player_indices[1]].name
 
-	const t1_col_left = md.teams[md.games[gamei].t1_index].color_left
-	const t1_col_right = md.teams[md.games[gamei].t1_index].color_right
-	const t2_col_left = md.teams[md.games[gamei].t2_index].color_left
-	const t2_col_right = md.teams[md.games[gamei].t2_index].color_right
+	const t1_col_left = md.teams[md.games[gamei].t1_index].color_darker
+	const t1_col_right = md.teams[md.games[gamei].t1_index].color_main
+	const t2_col_left = md.teams[md.games[gamei].t2_index].color_darker
+	const t2_col_right = md.teams[md.games[gamei].t2_index].color_main
 
 	const next_t1_name = md.teams[md.games[gamei+1].t1_index].name
 	const next_t2_name = md.teams[md.games[gamei+1].t2_index].name
-	const next_t1_color_left = md.teams[md.games[gamei+1].t1_index].color_left
-	const next_t1_color_right = md.teams[md.games[gamei+1].t1_index].color_right
-	const next_t2_color_left = md.teams[md.games[gamei+1].t2_index].color_left
-	const next_t2_color_right = md.teams[md.games[gamei+1].t2_index].color_right
+	const next_t1_color_left = md.teams[md.games[gamei+1].t1_index].color_darker
+	const next_t1_color_right = md.teams[md.games[gamei+1].t1_index].color_main
+	const next_t2_color_left = md.teams[md.games[gamei+1].t2_index].color_darker
+	const next_t2_color_right = md.teams[md.games[gamei+1].t2_index].color_main
 
 	const t1_el = document.createElement("div")
 	t1_el.classList.add("team")
 
 	const t1_name_el = document.createElement("div")
 	t1_name_el.classList.add("bordered")
-	t1_name_el.style.fontSize = "60px";
+	t1_name_el.style.fontSize = "60px"
 	t1_name_el.style.background = color_gradient_to_string(t1_col_left, t1_col_right)
-	t1_name_el.style.color = Color_font_contrast(t1_col_right)
+	t1_name_el.style.color = color_font_contrast(t1_col_right)
 	t1_name_el.innerHTML = t1_name.toString()
 
 	const t1_keeper_el = document.createElement("div")
@@ -374,9 +384,9 @@ function write_gamestart() {
 
 	const t2_name_el = document.createElement("div")
 	t2_name_el.classList.add("bordered")
-	t2_name_el.style.fontSize = "60px";
+	t2_name_el.style.fontSize = "60px"
 	t2_name_el.style.background = color_gradient_to_string(t2_col_left, t2_col_right)
-	t2_name_el.style.color = Color_font_contrast(t2_col_left)
+	t2_name_el.style.color = color_font_contrast(t2_col_left)
 	t2_name_el.innerHTML = t2_name.toString()
 
 	const t2_keeper_el = document.createElement("div")
@@ -460,7 +470,7 @@ function write_livetable() {
 			name: md.teams[i].name.toString(),
 			points: ((i, m) => {
 				let p: number = 0
-				for (let j=0; j <= m.cur.gameindex; j++) { // TODO Count the game right now?
+				for (let j = 0; j <= m.cur.gameindex; j++) { // TODO Count the game right now?
 					if (m.games[j].t1_index === i) {
 						p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 3 : 0
 						p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
@@ -473,13 +483,13 @@ function write_livetable() {
 			}) (i, md),
 			played: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++)
+				for (let j = 0; j <= md.cur.gameindex; j++)
 				if (md.games[j].t1_index === i || md.games[j].t2_index === i) p++
 				return p
 			}) (i),
 			won: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 1 : 0
 						else if (md.games[j].t2_index === i)
@@ -489,7 +499,7 @@ function write_livetable() {
 			}) (i),
 			tied: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
 						else if (md.games[j].t2_index === i)
@@ -499,7 +509,7 @@ function write_livetable() {
 			}) (i),
 			lost: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 0 : 1
 						else if (md.games[j].t2_index === i)
@@ -509,7 +519,7 @@ function write_livetable() {
 			}) (i),
 			goals: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t1
 						else if (md.games[j].t2_index === i) p += md.games[j].score.t2
 				}
@@ -517,26 +527,26 @@ function write_livetable() {
 			}) (i),
 			goals_taken: (i => {
 				let p: number = 0
-				for (let j=0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.cur.gameindex; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t2
 						else if (md.games[j].t2_index === i) p += md.games[j].score.t1
 				}
 				return p
 			}) (i),
-			color_right: md.teams[i].color_right,
-			color_left: md.teams[i].color_left,
+			color_right: md.teams[i].color_main,
+			color_left: md.teams[i].color_darker,
 		}
 	}
 
 	teams.sort((a, b) => {
-		if (b.points !== a.points) return b.points - a.points;
+		if (b.points !== a.points) return b.points - a.points
 		if (b.goals - b.goals_taken !== a.goals - a.goals_taken)
 			return (b.goals - b.goals_taken) - (a.goals - a.goals_taken)
 		if (b.goals !== a.goals) return b.goals - a.goals
 		if (b.won !== a.won) return b.won - a.won
 		if (b.played !== a.played) return b.played - a.played
 		return a.name.localeCompare(b.name)
-	});
+	})
 
 	for (let team_i = 0; team_i < team_n; ++team_i) {
 		const line = document.createElement("div")
@@ -546,7 +556,7 @@ function write_livetable() {
 		name.innerHTML = teams[team_i].name!.toString()
 		name.classList.add("bordered", "name")
 		name.style.background = color_gradient_to_string(teams[team_i].color_right, teams[team_i].color_left)
-		name.style.color = Color_font_contrast(teams[team_i].color_right!)
+		name.style.color = color_font_contrast(teams[team_i].color_right!)
 		line.appendChild(name)
 
 		const points = document.createElement("div")
@@ -621,7 +631,7 @@ function update_scoreboard_timer() {
 function update_timer_html() {
 	const minutes = Math.floor(md.cur.time / 60).toString().padStart(2, "0")
 	const seconds = (md.cur.time % 60).toString().padStart(2, "0")
-	console.log("update timer: min: " +  minutes +  "sec: " + seconds);
+	console.log("update timer: min: " +  minutes +  "sec: " + seconds)
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
 }
@@ -640,11 +650,11 @@ socket.onopen = () => console.log("Connected to WebSocket server!")
 socket.onmessage = (event: MessageEvent) => {
 	if (!(event.data instanceof ArrayBuffer)) {
 		console.error("The backend didn't send proper binary data. There's nothing we can do...")
-		return;
+		return
 	}
 
-	const data: DataView = new DataView(event.data as ArrayBuffer)
-	const mode: number = data.getUint8(0)
+	const dv = new DataView(event.data as ArrayBuffer)
+	const mode = dv.getUint8(0)
 
 	switch (mode) {
 		case MessageType.WIDGET_SCOREBOARD_SHOW:
@@ -728,17 +738,18 @@ socket.onmessage = (event: MessageEvent) => {
 			break
 		case MessageType.GAME_NEXT:
 			if (md.cur.gameindex < md.games.length - 1) {
-				md.cur.gameindex++;
+				md.cur.gameindex++
 				update_ui()
 			}
 			break
 		case MessageType.GAME_PREV:
 			if (md.cur.gameindex > 0) {
-				md.cur.gameindex--;
+				md.cur.gameindex--
 				update_ui()
 			}
 			break
 		case MessageType.GAME_SWITCH_SIDES:
+			// TODO ASK should this signal be independent of the halftime signal?
 			md.cur.halftime = !md.cur.halftime
 			update_ui()
 			break
@@ -746,7 +757,7 @@ socket.onmessage = (event: MessageEvent) => {
 			// TODO Disallow time changes this when we are not paused?
 			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
-			md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS);
+			md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS)
 			update_ui()
 			break
 		case MessageType.TIME_MINUS_1:
@@ -767,17 +778,18 @@ socket.onmessage = (event: MessageEvent) => {
 			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
 			md.cur.pausestart = -1
 			if (md.cur.time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
-				md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS);
+				md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
 				else
-				md.cur.time = 0;
+				md.cur.time = 0
 			update_ui()
 			break
 		case MessageType.TIME_TOGGLE_PAUSE:
 			console.log("Pausing now")
 			md.cur.pause = true
-			md.cur.pausestart = data.getUint16(1, true);
+			md.cur.pausestart = dv.getUint16(1, true) // TODO ASK why offset 1
 			break
 		case MessageType.TIME_TOGGLE_UNPAUSE:
+			// ^ TODO ASK why
 			md.cur.pausestart = -1
 			md.cur.pause = false
 			break
@@ -789,39 +801,38 @@ socket.onmessage = (event: MessageEvent) => {
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(data.getUint8(1), CardType.Yellow)
+			write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
 			break
 		case MessageType.RED_CARD:
 			card.style.display = "flex"
 			card.style.opacity = "0"
 			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(data.getUint8(1), CardType.Red)
+			write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
 			break
 		case MessageType.DATA_TIME:
 			md.cur.pausestart = -1
-			console.log("Received DATA time: ", data.getUint16(1, true))
-			md.cur.time = data.getUint16(1, true)
-			console.log("Written Time: ", md.cur.time)
-			console.log(md)
-			console.log("Written Time: ", md.cur.time)
+			console.log("Received DATA time: ", dv.getUint16(1, true)) // TODO ASK why this offset
+			md.cur.time = dv.getUint16(1, true) // TODO ASK why this offset
 			update_ui()
 			break
 		case MessageType.DATA_IS_PAUSE:
-			console.log("Received DATA is_pause: ", data.getUint8(1) === 1)
-			md.cur.pause = data.getUint8(1) === 1
+			console.log("Received DATA is_pause: ", dv.getUint8(1) === 1) // TODO ASK just why this offset
+			md.cur.pause = dv.getUint8(1) === 1
 			break
 		case MessageType.DATA_HALFTIME:
-			console.log("Received DATA Halftime: ", data.getUint8(1) === 1)
-			md.cur.halftime = data.getUint8(1) === 1
+			console.log("Received DATA Halftime: ", dv.getUint8(1) === 1)
+			md.cur.halftime = dv.getUint8(1) === 1
 			break
 		case MessageType.DATA_GAMEINDEX:
-			console.log("Received DATA Gameindex: ", data.getUint8(1))
-			md.cur.gameindex = data.getUint8(1)
+			// ^ TODO CONSIDER RENAME
+			console.log("Received DATA Gameindex: ", dv.getUint8(1))
+			md.cur.gameindex = dv.getUint8(1)
 			break
 		case MessageType.DATA_JSON:
+			// ^ TODO CONSIDER RENAME
 			console.log("Received DATA Gameindex")
 			const decoder = new TextDecoder("utf-8")
-			const str = decoder.decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
+			const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
 			parse_json(str)
 			update_ui()
 			break
@@ -831,7 +842,6 @@ socket.onmessage = (event: MessageEvent) => {
 		//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
 		//	break
 	}
-	console.log("Here is the Matchday again:", md)
 }
 
 socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
