@@ -4,8 +4,7 @@
     {
       "name":"GIFHORN",
       "logo":"assets\/gifhorn.jpg",
-      "color_light":"c4545c",
-      "color_dark":"c4545c",
+      "color":"#ffff00c4545c",
       "players":[
         {
           "name":"Erik Kramer",
@@ -20,8 +19,7 @@
     {
       "name":"EHRENBERG",
       "logo":"assets\/schiefbahn.jpg",
-      "color_light":"0058ab",
-      "color_dark":"0058ab",
+      "color":"#0058ab",
       "players":[
         {
           "name":"Ben Börngen",
@@ -36,8 +34,7 @@
     {
       "name":"N.-SEIFERSDORF",
       "logo":"assets\/leeden.jpg",
-      "color_light":"a1ae0c",
-      "color_dark":"a1ae0c",
+      "color":"#a1ae0c",
       "players":[
         {
           "name":"Alwin Großmann",
@@ -52,8 +49,7 @@
     {
       "name":"BURGKUNSTADT",
       "logo":"assets\/velbert.svg",
-      "color_light":"0f81e0",
-      "color_dark":"0f81e0",
+      "color":"#0f81e0",
       "players":[
         {
           "name":"Benedikt Kohlmann",
@@ -68,8 +64,7 @@
     {
       "name":"KIESELBRONN 1",
       "logo":"assets\/velbert.svg",
-      "color_light":"2f3a64",
-      "color_dark":"2f3a64",
+      "color":"#2f3a64",
       "players":[
         {
           "name":"Robin Häußermann",
@@ -84,123 +79,123 @@
   ],
   "games":[
     {
-      "team1":"GIFHORN",
-      "team2":"KIESELBRONN 1",
+      "team_1":"GIFHORN",
+      "team_2":"KIESELBRONN 1",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"EHRENBERG",
-      "team2":"BURGKUNSTADT",
+      "team_1":"EHRENBERG",
+      "team_2":"BURGKUNSTADT",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"N.-SEIFERSDORF",
-      "team2":"KIESELBRONN 1",
+      "team_1":"N.-SEIFERSDORF",
+      "team_2":"KIESELBRONN 1",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"GIFHORN",
-      "team2":"BURGKUNSTADT",
+      "team_1":"GIFHORN",
+      "team_2":"BURGKUNSTADT",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"EHRENBERG",
-      "team2":"N.-SEIFERSDORF",
+      "team_1":"EHRENBERG",
+      "team_2":"N.-SEIFERSDORF",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"BURGKUNSTADT",
-      "team2":"KIESELBRONN 1",
+      "team_1":"BURGKUNSTADT",
+      "team_2":"KIESELBRONN 1",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"GIFHORN",
-      "team2":"N.-SEIFERSDORF",
+      "team_1":"GIFHORN",
+      "team_2":"N.-SEIFERSDORF",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"EHRENBERG",
-      "team2":"KIESELBRONN 1",
+      "team_1":"EHRENBERG",
+      "team_2":"KIESELBRONN 1",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"N.-SEIFERSDORF",
-      "team2":"BURGKUNSTADT",
+      "team_1":"N.-SEIFERSDORF",
+      "team_2":"BURGKUNSTADT",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     },
     {
-      "team1":"GIFHORN",
-      "team2":"EHRENBERG",
+      "team_1":"GIFHORN",
+      "team_2":"EHRENBERG",
       "halftimescore":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       },
       "score":{
-        "team1":0,
-        "team2":0
+        "team_1":0,
+        "team_2":0
       }
     }
   ]

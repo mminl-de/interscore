@@ -46,7 +46,7 @@ const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
 const TIMEOUT_SHOW = 10
 const TIMEOUT_HIDE = 500
-const DARKER_COLOR_BIAS: Color = { r: 10, g: 7, b: 3 } // TODO TEST
+const DARKER_COLOR_BIAS: Color = { r: 30, g: 70, b: 100 } // TODO TEST
 const COLOR_CONTRAST_THRESHOLD = 191
 
 let shown = {
@@ -152,6 +152,8 @@ function parse_json(str: string) {
 			color_main: string_to_color(json.teams[i].color),
 			color_darker: string_to_darker_color(json.teams[i].color)
 		}
+		console.log("TODO color lighter:", md.teams[i].color_main)
+		console.log("TODO color darker:", md.teams[i].color_darker)
 	}
 	for (let i = 0; i < json.games.length; i++) {
 		md.games[i] = {
@@ -206,9 +208,9 @@ function string_to_color(hexcode: string): Color {
 // `Color` instance.
 function string_to_darker_color(hexcode: string): Color {
 	return {
-		r: parseInt(hexcode.slice(1, 3), 16) - DARKER_COLOR_BIAS.r,
-		g: parseInt(hexcode.slice(3, 5), 16) - DARKER_COLOR_BIAS.g,
-		b: parseInt(hexcode.slice(5, 7), 16) - DARKER_COLOR_BIAS.b
+		r: Math.max(0, parseInt(hexcode.slice(1, 3), 16) - DARKER_COLOR_BIAS.r),
+		g: Math.max(0, parseInt(hexcode.slice(3, 5), 16) - DARKER_COLOR_BIAS.g),
+		b: Math.max(0, parseInt(hexcode.slice(5, 7), 16) - DARKER_COLOR_BIAS.b)
 	}
 }
 
@@ -249,6 +251,7 @@ function write_gameplan() {
 		const teams_2 = md.teams[md.games[game_i].t2_index].name
 		const goals_1 = md.games[game_i].score.t1
 		const goals_2 = md.games[game_i].score.t2
+
 		const col_1_right = md.teams[md.games[game_i].t1_index].color_main
 		const col_1_left = md.teams[md.games[game_i].t1_index].color_darker
 		const col_2_right = md.teams[md.games[game_i].t2_index].color_main

@@ -44,8 +44,7 @@ void matchday_free() {
 	for(int i=0; i < md.teams_count; i++){
 		free(md.teams[i].name);
 		free(md.teams[i].logo_filename);
-		free(md.teams[i].color_light);
-		free(md.teams[i].color_dark);
+		free(md.teams[i].color);
 	}
 	if(md.teams_count > 0)
 		free(md.teams);
@@ -79,8 +78,7 @@ char* json_generate() {
 		struct json_object *team = json_object_new_object();
 		json_object_object_add(team, "name", json_object_new_string(md.teams[i].name));
 		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_filename));
-		json_object_object_add(team, "color_light", json_object_new_string(md.teams[i].color_light));
-		json_object_object_add(team, "color_dark", json_object_new_string(md.teams[i].color_dark));
+		json_object_object_add(team, "color", json_object_new_string(md.teams[i].color));
 		struct json_object *players = json_object_new_array();
 		struct json_object *player1 = json_object_new_object();
 		json_object_object_add(player1, "name", json_object_new_string(md.players[md.teams[i].keeper_index].name));
@@ -95,15 +93,15 @@ char* json_generate() {
 	}
 	for(int i=0; i < md.games_count; i++){
 		struct json_object *game = json_object_new_object();
-		json_object_object_add(game, "team1", json_object_new_string(md.teams[md.games[i].t1_index].name));
-		json_object_object_add(game, "team2", json_object_new_string(md.teams[md.games[i].t2_index].name));
+		json_object_object_add(game, "team_1", json_object_new_string(md.teams[md.games[i].t1_index].name));
+		json_object_object_add(game, "team_2", json_object_new_string(md.teams[md.games[i].t2_index].name));
 		struct json_object *halftimescore = json_object_new_object();
-		json_object_object_add(halftimescore, "team1", json_object_new_int(md.games[i].halftimescore.t1));
-		json_object_object_add(halftimescore, "team2", json_object_new_int(md.games[i].halftimescore.t2));
+		json_object_object_add(halftimescore, "team_1", json_object_new_int(md.games[i].halftimescore.t1));
+		json_object_object_add(halftimescore, "team_2", json_object_new_int(md.games[i].halftimescore.t2));
 		json_object_object_add(game, "halftimescore", halftimescore);
 		struct json_object *score = json_object_new_object();
-		json_object_object_add(score, "team1", json_object_new_int(md.games[i].score.t1));
-		json_object_object_add(score, "team2", json_object_new_int(md.games[i].score.t2));
+		json_object_object_add(score, "team_1", json_object_new_int(md.games[i].score.t1));
+		json_object_object_add(score, "team_2", json_object_new_int(md.games[i].score.t2));
 		json_object_object_add(game, "score", score);
 
 		if(md.games[i].cards_count > 0){
@@ -180,19 +178,14 @@ void json_load(const char *s) {
 			}
 		}
 
-		json_object_object_get_ex(team, "color_light", &color);
-		md.teams[i].color_light = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
-		strcpy(md.teams[i].color_light, json_object_get_string(color));
-
-		json_object_object_get_ex(team, "color_dark", &color);
-		md.teams[i].color_dark = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
-		strcpy(md.teams[i].color_dark, json_object_get_string(color));
+		json_object_object_get_ex(team, "color", &color);
+		md.teams[i].color = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
+		strcpy(md.teams[i].color, json_object_get_string(color));
 	}
 	//Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
 	md.teams[md.teams_count].name = (char *) malloc(5 * sizeof(char));
 	strcpy(md.teams[md.teams_count].name, "ENDE");
-	md.teams[md.teams_count].color_dark = md.teams[0].color_dark;
-	md.teams[md.teams_count].color_light = md.teams[0].color_light;
+	md.teams[md.teams_count].color = md.teams[0].color;
 	md.teams[md.teams_count].field_index = md.teams[0].field_index;
 	md.teams[md.teams_count].keeper_index = md.teams[0].keeper_index;
 	md.teams[md.teams_count].logo_filename = md.teams[0].logo_filename;
@@ -204,14 +197,14 @@ void json_load(const char *s) {
 	for(int i=0; i < md.games_count; i++){
 		json_object *team, *game;
 		game = json_object_array_get_idx(games, i);
-		json_object_object_get_ex(game, "team1", &team);
+		json_object_object_get_ex(game, "team_1", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
 		}
 		md.games[i].t1_index = team_index(json_object_get_string(team));
 
-		json_object_object_get_ex(game, "team2", &team);
+		json_object_object_get_ex(game, "team_2", &team);
 		if (team_index(json_object_get_string(team)) == -1) {
 			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
 			exit(EXIT_FAILURE);
@@ -220,15 +213,15 @@ void json_load(const char *s) {
 
 		json_object *halftimescore, *score, *cards, *var;
 		if (json_object_object_get_ex(game, "halftimescore", &halftimescore)) {
-			json_object_object_get_ex(halftimescore, "team1", &var);
+			json_object_object_get_ex(halftimescore, "team_1", &var);
 			md.games[i].halftimescore.t1 = json_object_get_int(var);
-			json_object_object_get_ex(halftimescore, "team2", &var);
+			json_object_object_get_ex(halftimescore, "team_2", &var);
 			md.games[i].halftimescore.t2 = json_object_get_int(var);
 		}
 		if (json_object_object_get_ex(game, "score", &score)) {
-			json_object_object_get_ex(score, "team1", &var);
+			json_object_object_get_ex(score, "team_1", &var);
 			md.games[i].score.t1 = json_object_get_int(var);
-			json_object_object_get_ex(score, "team2", &var);
+			json_object_object_get_ex(score, "team_2", &var);
 			md.games[i].score.t2 = json_object_get_int(var);
 		}
 
