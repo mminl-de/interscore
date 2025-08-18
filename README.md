@@ -51,6 +51,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 ## meta
 - FINAL Checkliste for streams
 - FINAL^2 assets folder in seperate repo (only logos)
+- Anleitung um docker aufzusetzen und nginx ws weiterleitung usw für die domain
 
 ## frontend
 - URGENT Reversing der anzeige, je nach Kameraposition
