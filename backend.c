@@ -281,7 +281,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			} else if(client_type[0] == '\0'){
 				con_rentner = con;
 			} else{
-				printf("ERROR: Unknown Client is trying to connect!");
+				printf("ERROR: Unknown Client is trying to connect!\n");
 				con->is_closing = true;
 				break;
 			}
