@@ -1,8 +1,8 @@
-/* TODO FINAL ALL make choice of absolute/relative sizes consistent */
 .scoreboard {
-	display: none;		    /* children should not stretch to entire width */
-	flex-direction: column; /* children should be packed horizontally */
-	gap: 10px;              /* children should have 10 pixels between each other */
+	display: none;          /* children should not stretch to entire width */
+	flex-direction: row;
+	align-items: stretch;   /* TODO children's height match the tallest element */
+	gap: 10px;
 
 	/* TODO WIP */
 	transition: opacity 0.5s ease-in-out;
@@ -12,19 +12,32 @@
 	left: 3%;
 }
 
-.scoreboard .scoreboard-top {
+.scoreboard img {
+	height: 129px;
+	max-height: 100%;
+	width: auto;
+}
+
+/* TODO FINAL ALL make choice of absolute/relative sizes consistent */
+.scoreboard-content {
+	display: flex;
+	flex-direction: column; /* children should be packed horizontally */
+	gap: 10px;              /* children should have 10 pixels between each other */
+}
+
+.scoreboard-content .scoreboard-top {
 	display: flex;
 	align-items: flex-end;
 	gap: 10px;
 }
 
-.scoreboard .time-container {
+.scoreboard-content .time-container {
 	background-color: gray;
 	position: relative;
 	height: 30px;
 }
 
-.scoreboard .bar {
+.scoreboard-content .bar {
 	background: linear-gradient(90deg, #0b8e44 0%, #42f08d 95%);
 	position: absolute;
 	top: 0;
@@ -40,7 +53,7 @@
 	transition: width 0.5s ease-in-out;
 }
 
-.scoreboard .time {
+.scoreboard-content .time {
 	font-size: 24px;
 	position: absolute;
 	display: flex;
@@ -51,16 +64,16 @@
 	text-align: center;
 }
 
-.scoreboard .t1, .scoreboard .t2 {
+.scoreboard-content .t1, .scoreboard-content .t2 {
 	width: 260px;
 	padding: 0 16px;
 }
 
-.scoreboard .t1 {
+.scoreboard-content .t1 {
 	text-align: right;
 }
 
-.scoreboard .s1, .scoreboard .s2 {
+.scoreboard-content .s1, .scoreboard-content .s2 {
 	color: black;
 	background-color: #bebebe;
 	font-size: 40px;

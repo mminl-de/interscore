@@ -142,11 +142,11 @@ void json_load(const char *s) {
 	//Add decoy team for the decoy game at the end
 	md.teams = (Team *) malloc((md.teams_count+1) * sizeof(Team));
 
-	md.players_count = md.teams_count*2;
+	md.players_count = md.teams_count * 2;
 	md.players = (Player *) malloc(md.players_count * sizeof(Player));
 
 	// Read all the teams
-	for(int i=0; i < md.teams_count; i++){
+	for (int i=0; i < md.teams_count; i++) {
 		json_object *team, *logo, *players, *name, *color, *position;
 		team = json_object_array_get_idx(teams, i);
 		json_object_object_get_ex(team, "name", &name);
@@ -161,17 +161,16 @@ void json_load(const char *s) {
 		for(int j=0; j < json_object_array_length(players); j++){
 			json_object *player = json_object_array_get_idx(players, j);
 			json_object_object_get_ex(player, "name", &name);
-			md.players[i*2+j].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-			strcpy(md.players[i*2+j].name, json_object_get_string(name));
-			md.players[i*2+j].team_index = i;
+			md.players[i * 2+j].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
+			strcpy(md.players[i * 2+j].name, json_object_get_string(name));
+			md.players[i * 2+j].team_index = i;
 			json_object_object_get_ex(player, "position", &position);
 			if(!strcmp(json_object_get_string(position), "keeper")){
-				md.players[i*2+j].role = KEEPER;
-				md.teams[i].keeper_index = i*2+j;
-
+				md.players[i * 2+j].role = KEEPER;
+				md.teams[i].keeper_index = i * 2+j;
 			} else if(!strcmp(json_object_get_string(position), "field")){
-				md.players[i*2+j].role = FIELD;
-				md.teams[i].field_index = i*2+j;
+				md.players[i * 2+j].role = FIELD;
+				md.teams[i].field_index = i * 2+j;
 			} else {
 				printf("ERROR parsing JSON: Unknown Position: %s. Exiting...", json_object_get_string(position));
 				exit(EXIT_FAILURE);

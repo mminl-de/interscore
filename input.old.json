@@ -3,8 +3,8 @@
   "teams":[
     {
       "name":"GIFHORN",
-      "logo":"assets\/gifhorn.jpg",
-      "color":"#c4545c",
+      "logo":"assets\/gifhorn.png",
+      "color":"#ffff00c4545c",
       "players":[
         {
           "name":"Erik Kramer",
@@ -18,7 +18,7 @@
     },
     {
       "name":"EHRENBERG",
-      "logo":"assets\/schiefbahn.jpg",
+      "logo":"assets\/grosskoschen.png",
       "color":"#0058ab",
       "players":[
         {
@@ -33,7 +33,7 @@
     },
     {
       "name":"N.-SEIFERSDORF",
-      "logo":"assets\/leeden.jpg",
+      "logo":"assets\/qr.png",
       "color":"#a1ae0c",
       "players":[
         {
@@ -48,7 +48,7 @@
     },
     {
       "name":"BURGKUNSTADT",
-      "logo":"assets\/velbert.svg",
+      "logo":"assets\/logo.svg",
       "color":"#0f81e0",
       "players":[
         {
@@ -63,7 +63,7 @@
     },
     {
       "name":"KIESELBRONN 1",
-      "logo":"assets\/velbert.svg",
+      "logo":"assets\/naurod.png",
       "color":"#2f3a64",
       "players":[
         {

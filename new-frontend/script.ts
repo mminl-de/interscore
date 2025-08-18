@@ -16,8 +16,10 @@ socket.binaryType = "arraybuffer"
 const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
 const scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
 const scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
-const scoreboard_score_1 = scoreboard.querySelector(".s1")!
-const scoreboard_score_2 = scoreboard.querySelector(".s2")!
+const scoreboard_s1 = scoreboard.querySelector(".s1")!
+const scoreboard_s2 = scoreboard.querySelector(".s2")!
+const scoreboard_logo_1 = scoreboard.querySelector(".logo-1")! as HTMLImageElement
+const scoreboard_logo_2 = scoreboard.querySelector(".logo-2")! as HTMLImageElement
 const scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
 const scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
 const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
@@ -73,6 +75,7 @@ interface Player {
 interface Team {
 	player_indices: number[],
 	name: string,
+	// TODO handle fallback
 	logo_filename: string, // logo als Bild direkt?
 	color_main: Color,
 	color_darker: Color
@@ -214,6 +217,15 @@ function string_to_darker_color(hexcode: string): Color {
 	}
 }
 
+async function file_exists(url: string): Promise<boolean> {
+	try {
+		const response = await fetch(url, { method: "HEAD" })
+		return response.ok
+	} catch (err) {
+		return false
+	}
+}
+
 function write_scoreboard() {
 	const game = md.games[md.cur.gameindex]
 	const team_left = md.cur.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
@@ -221,8 +233,18 @@ function write_scoreboard() {
 	scoreboard_t1.innerHTML = team_left.name
 	scoreboard_t2.innerHTML = team_right.name
 
-	scoreboard_score_1.innerHTML = md.cur.halftime ? game.score.t2.toString() : game.score.t1.toString()
-	scoreboard_score_2.innerHTML = md.cur.halftime ? game.score.t1.toString() : game.score.t2.toString()
+	// TODO NOW
+	file_exists("../" + team_left.logo_filename).then((exists: boolean) => {
+		if (exists) scoreboard_logo_1.src = "../" + team_left.logo_filename
+		else scoreboard_logo_1.src = "../assets/fallback.png"
+	})
+	file_exists("../" + team_right.logo_filename).then((exists: boolean) => {
+		if (exists) scoreboard_logo_2.src = "../" + team_right.logo_filename
+		else scoreboard_logo_2.src = "../assets/fallback.png"
+	})
+
+	scoreboard_s1.innerHTML = md.cur.halftime ? game.score.t2.toString() : game.score.t1.toString()
+	scoreboard_s2.innerHTML = md.cur.halftime ? game.score.t1.toString() : game.score.t2.toString()
 
 	// TODO
 	const t1_col_main = team_left.color_main
