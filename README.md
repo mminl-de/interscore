@@ -90,6 +90,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL Seite: Ads unten (or Vollbild/Seite)
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
+- FINAL i18n
 
 ## rentnerend
 - URGENT Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers

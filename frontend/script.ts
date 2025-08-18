@@ -139,7 +139,7 @@ function write_scoreboard(view: DataView) {
 
 function write_gameplan(view: DataView) {
 	while (gameplan.children.length > 1)
-		gameplan.removeChild(gameplan.lastChild!)
+	gameplan.removeChild(gameplan.lastChild!)
 
 	let offset = 1
 	const game_n = view.getUint8(offset)
@@ -420,15 +420,15 @@ function write_gamestart(view: DataView) {
 	gamestart_t2.appendChild(t2_field_el)
 
 	if (next_t1 === "") gamestart_next.style.display = "none"
-	else {
-		gamestart_next.style.display = "block"
-		gamestart_next_t1.innerHTML = next_t1
-		gamestart_next_t1.style.background =
-			Color_gradient_to_string(next_t1_color_left, next_t1_color_right)
-		gamestart_next_t2.innerHTML = next_t2
-		gamestart_next_t2.style.background =
-			Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
-	}
+		else {
+			gamestart_next.style.display = "block"
+			gamestart_next_t1.innerHTML = next_t1
+			gamestart_next_t1.style.background =
+				Color_gradient_to_string(next_t1_color_left, next_t1_color_right)
+			gamestart_next_t2.innerHTML = next_t2
+			gamestart_next_t2.style.background =
+				Color_gradient_to_string(next_t2_color_left, next_t2_color_right)
+		}
 }
 
 function write_card(view: DataView) {
@@ -479,7 +479,7 @@ interface LivetableLine {
 // TODO FINAL OPTIMIZE
 function write_livetable(view: DataView) {
 	while (livetable.children.length > 2)
-		livetable.removeChild(livetable.lastChild!)
+	livetable.removeChild(livetable.lastChild!)
 
 	let offset = 1
 

@@ -44,8 +44,7 @@ typedef struct {
 	u8 field_index;
 	char *name;
 	char *logo_filename;
-	char *color_light;
-	char *color_dark;
+	char *color;
 } Team;
 
 typedef struct {

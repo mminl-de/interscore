@@ -1,9 +1,9 @@
-#ifndef _MSC_VER
-extern "C" {
-   void quick_exit(int);
-   void at_quick_exit(void (*func)(void));
-}
-#endif
+// #ifndef _MSC_VER
+// extern "C" {
+//    void quick_exit(int);
+//    void at_quick_exit(void (*func)(void));
+// }
+// #endif
 
 #include <QtWidgets/QApplication>
 #include <QtMultimedia/QAudioOutput>
