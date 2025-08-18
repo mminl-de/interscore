@@ -6,8 +6,9 @@ LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
 WIN_LD_FLAGS ?= -I/usr/x86_64-w64-mingw32/include/qt6 \
 	-L/usr/x86_64-w64-mingw32/lib -lQt6Widgets.dll -lQt6Gui.dll -lQt6Core.dll \
 	-lQt6Multimedia.dll -lQt6MultimediaWidgets.dll \
-	-luser32 -lgdi32 -lshell32 -lws2_32 \
-	-lole32 -loleaut32 -luuid -ljson-c
+	-lole32 -loleaut32 -luuid -ljson-c \
+	-lssl -lcrypto \
+	-luser32 -lgdi32 -lshell32 -lws2_32 -lcrypt32
 
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0 \
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0/x86_64-w64-mingw32 \
@@ -19,7 +20,7 @@ WIN_LD_FLAGS ?= -I/usr/x86_64-w64-mingw32/include/qt6 \
 win64-old:
 	../win-pacman/copy_msys2_to_system.sh || true
 	x86_64-w64-mingw32-gcc -c ../common.c -o common.o
-	x86_64-w64-mingw32-gcc -c ../mongoose/mongoose.c -o mongoose.o
+	x86_64-w64-mingw32-gcc -c ../mongoose/mongoose.c -o mongoose.o -D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto
 	x86_64-w64-mingw32-g++ -std=gnu++17 -static \
 		-static-libgcc \
 		-o interscore.exe $(OLD_SRC) \
