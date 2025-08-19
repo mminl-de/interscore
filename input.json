@@ -2,76 +2,76 @@
   "time":360,
   "teams":[
     {
-      "name":"GIFHORN",
-      "logo":"assets\/gifhorn.png",
-      "color":"#ffff00c4545c",
+      "name":"STEIN 1",
+      "logo":"assets\/stein.png",
+      "color":"#ffffff",
       "players":[
         {
-          "name":"Erik Kramer",
+          "name":"Bernd Mlady",
+          "position":"field"
+        },
+        {
+          "name":"Raphael Kopp",
+          "position":"keeper"
+        }
+      ]
+    },
+    {
+      "name":"GROẞKOSCHEN",
+      "logo":"assets\/grosskoschen.png",
+      "color":"#ffffff",
+      "players":[
+        {
+          "name":"Tim Lehmann",
           "position":"keeper"
         },
         {
-          "name":"Linus Kramer",
+          "name":"Eric Lehmann",
           "position":"field"
         }
       ]
     },
     {
-      "name":"EHRENBERG",
-      "logo":"TODO NOW assets\/grosskoschen.png",
-      "color":"#0058ab",
+      "name":"WALDREMS",
+      "logo":"assets\/waldrems.png",
+      "color":"#ffffff",
       "players":[
         {
-          "name":"Ben Börngen",
+          "name":"Björn Bootsmann",
+          "position":"field"
+        },
+        {
+          "name":"Marcel Schule",
+          "position":"keeper"
+        }
+      ]
+    },
+    {
+      "name":"DENKENDORF",
+      "logo":"assets\/denkendorf.svg",
+      "color":"#ffffff",
+      "players":[
+        {
+          "name":"Valentin Notheis",
           "position":"keeper"
         },
         {
-          "name":"Frederick Etzold",
+          "name":"Felix Weinert",
           "position":"field"
         }
       ]
     },
     {
-      "name":"N.-SEIFERSDORF",
-      "logo":"assets\/qr.png",
-      "color":"#a1ae0c",
-      "players":[
-        {
-          "name":"Alwin Großmann",
-          "position":"keeper"
-        },
-        {
-          "name":"Laurence Tschirch",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"BURGKUNSTADT",
-      "logo":"assets\/logo.svg",
-      "color":"#0f81e0",
-      "players":[
-        {
-          "name":"Benedikt Kohlmann",
-          "position":"keeper"
-        },
-        {
-          "name":"Lenny Eckert",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"KIESELBRONN 1",
-      "logo":"assets\/naurod.png",
+      "name":"STEIN 2",
+      "logo":"assets\/stein.png",
       "color":"#2f3a64",
       "players":[
         {
-          "name":"Robin Häußermann",
+          "name":"Robert Mlady",
           "position":"keeper"
         },
         {
-          "name":"Nico Scholl",
+          "name":"Michael Birkner",
           "position":"field"
         }
       ]
@@ -79,8 +79,8 @@
   ],
   "games":[
     {
-      "team_1":"GIFHORN",
-      "team_2":"KIESELBRONN 1",
+      "team_1":"STEIN 1",
+      "team_2":"STEIN 2",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -91,8 +91,8 @@
       }
     },
     {
-      "team_1":"EHRENBERG",
-      "team_2":"BURGKUNSTADT",
+      "team_1":"GROẞKOSCHEN",
+      "team_2":"WALDREMS",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -103,8 +103,8 @@
       }
     },
     {
-      "team_1":"N.-SEIFERSDORF",
-      "team_2":"KIESELBRONN 1",
+      "team_1":"DENKENDORF",
+      "team_2":"STEIN 2",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -115,8 +115,8 @@
       }
     },
     {
-      "team_1":"GIFHORN",
-      "team_2":"BURGKUNSTADT",
+      "team_1":"STEIN 1",
+      "team_2":"WALDREMS",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -127,8 +127,8 @@
       }
     },
     {
-      "team_1":"EHRENBERG",
-      "team_2":"N.-SEIFERSDORF",
+      "team_1":"GROẞKOSCHEN",
+      "team_2":"DENKENDORF",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -139,8 +139,8 @@
       }
     },
     {
-      "team_1":"BURGKUNSTADT",
-      "team_2":"KIESELBRONN 1",
+      "team_1":"WALDREMS",
+      "team_2":"STEIN 2",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -151,8 +151,8 @@
       }
     },
     {
-      "team_1":"GIFHORN",
-      "team_2":"N.-SEIFERSDORF",
+      "team_1":"STEIN 1",
+      "team_2":"DENKENDORF",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -163,8 +163,8 @@
       }
     },
     {
-      "team_1":"EHRENBERG",
-      "team_2":"KIESELBRONN 1",
+      "team_1":"GROẞKOSCHEN",
+      "team_2":"STEIN 2",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -175,8 +175,8 @@
       }
     },
     {
-      "team_1":"N.-SEIFERSDORF",
-      "team_2":"BURGKUNSTADT",
+      "team_1":"WALDREMS",
+      "team_2":"DENKENDORF",
       "halftimescore":{
         "team_1":0,
         "team_2":0
@@ -187,8 +187,8 @@
       }
     },
     {
-      "team_1":"GIFHORN",
-      "team_2":"EHRENBERG",
+      "team_1":"STEIN 1",
+      "team_2":"GROẞKOSCHEN",
       "halftimescore":{
         "team_1":0,
         "team_2":0
