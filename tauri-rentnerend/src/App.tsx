@@ -14,7 +14,7 @@ function import_tournament() {}
 
 export default function App() {
 	const [jsonList, _] = createSignal<StartListItemData[]>([
-		{ name: "Ludwigsfelde", path: "/home/me/downloads/ludwigsf.json" }
+		{ name: "Gifhorn", path: "/home/me/downloads/gifhoen.json" }
 	]);
 
 	return (
@@ -23,9 +23,9 @@ export default function App() {
 
 			<div class="content">
 				<div class="buttons">
-					<StartButton id="b-new-tournament" text="Neues Turnier" callback={new_tournament}/>
-					<StartButton id="b-open-tournament" text="Turnier laden" callback={open_tournament}/>
-					<StartButton id="b-import-tournament" text="Aus cycleball.eu importieren" callback={import_tournament}/>
+					<StartButton text="Neues Turnier" callback={new_tournament}/>
+					<StartButton text="Turnier laden" callback={open_tournament}/>
+					<StartButton text="Aus cycleball.eu importieren" callback={import_tournament}/>
 				</div>
 				<ul class="list">
 					{jsonList().map(item => (<StartListItem name={item.name} path={item.path}/>))}
