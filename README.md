@@ -54,8 +54,6 @@ This project was made for our personal use prior to a Cycleball tournament under
 
 ## frontend
 - URGENT Reversing der anzeige, je nach Kameraposition
-- URGENT Farb-Gradient automatisch generieren vom Logo/von einer Farbe
-- URGENT Logos im Spielwidget
 - URGENT widget pipelines:
 	- 5s this widget, 5s that
 	- absolute cinema
