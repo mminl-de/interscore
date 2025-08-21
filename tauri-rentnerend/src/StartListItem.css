@@ -1,0 +1,8 @@
+.start-list-item {
+	display: block;
+	margin: var(--margin-std);
+}
+
+.start-list-item .name {
+	font-size: var(--fsize-mid);
+}
