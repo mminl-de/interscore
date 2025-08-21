@@ -5,23 +5,24 @@ CXXFLAGS ?= -Wall -Wextra -Wpedantic -fpermissive -fPIC
 LD_FLAGS ?= `pkg-config Qt6Widgets Qt6Multimedia --cflags --libs` -ljson-c
 WIN_LD_FLAGS ?= -I/usr/x86_64-w64-mingw32/include/qt6 \
 	-L/usr/x86_64-w64-mingw32/lib -lQt6Widgets.dll -lQt6Gui.dll -lQt6Core.dll \
-	-lQt6Multimedia.dll -lQt6MultimediaWidgets.dll -lwinmm \
-	-luser32 -lgdi32 -lshell32 -lws2_32 \
-	-lole32 -loleaut32 -luuid -ljson-c
+	-lQt6Multimedia.dll -lQt6MultimediaWidgets.dll \
+	-lole32 -loleaut32 -luuid -ljson-c \
+	-lssl -lcrypto \
+	-luser32 -lgdi32 -lshell32 -lws2_32 -lcrypt32
 
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0 \
 	#-I/usr/x86_64-w64-mingw32/include/c++/15.1.0/x86_64-w64-mingw32 \
 
 # Windows compilation on Arch Linux needs mingw-w64-crt, mingw-w64-headers, mingw-w64-gcc
 # On other pacman config:
-# pacman -Syu --config win-pacman/p.conf mingw-w64-x86_64-qt6-base mingw-w64-x86_64-qt6-multimedia
+# pacman -Syu --config win-pacman/p.conf mingw-w64-x86_64-qt6-base mingw-w64-x86_64-qt6-multimedia mingw-w64-x86_64-json-c
 # It can be done without clang but i will not bother
 win64-old:
 	../win-pacman/copy_msys2_to_system.sh || true
 	x86_64-w64-mingw32-gcc -c ../common.c -o common.o
-	x86_64-w64-mingw32-gcc -c ../mongoose/mongoose.c -o mongoose.o
+	x86_64-w64-mingw32-gcc -c ../mongoose/mongoose.c -o mongoose.o -D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto
 	x86_64-w64-mingw32-g++ -std=gnu++17 -static \
-		-static-libgcc -static-libstdc++ \
+		-static-libgcc \
 		-o interscore.exe $(OLD_SRC) \
 		$(CXXFLAGS) $(WIN_LD_FLAGS) \
 
@@ -42,7 +43,7 @@ fast:
 	$(CXX) -o $(OUT) $(SRC) -O0 -g0 -pipe -fpermissive -fPIC $(LD_FLAGS)
 
 old:
-	$(CXX) -o $(OUT)-old old_rentnerend.cc ../mongoose/mongoose.c ../common.c -fpermissive -fPIC $(LD_FLAGS)
+	$(CXX) -o $(OUT)-old old_rentnerend.cc ../mongoose/mongoose.c ../common.c -D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto -fpermissive -fPIC $(LD_FLAGS)
 
 run:
 	./$(OUT)

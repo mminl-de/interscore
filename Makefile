@@ -27,16 +27,19 @@ b-install:
 	$(CC) -o $(OUT) $(SRC) \
 	-Oz $(CFLAGS) -s \
 	-ljson-c \
+	cp backend docker-new/backend
 
 b-debug:
 	$(CC) -o $(OUT) $(SRC) \
 	$(CFLAGS) -g \
 	-ljson-c
+	cp backend docker-new/backend
 
 b-fast:
 	$(CC) -o $(OUT) $(SRC) \
 	-fshort-enums \
 	-lm -ljson-c
+	cp backend docker-new/backend
 
 b-run:
 	./$(OUT)

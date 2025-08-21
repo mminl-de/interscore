@@ -90,7 +90,7 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
-#define URL "ws://localhost:8081?client=rentner"
+#define URL "wss://mminl.de/ws/"
 
 void update_input_window();
 void update_display_window();
@@ -305,6 +305,11 @@ void websocket_send_json(const char *s) {
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
 	switch(ev) {
+	case MG_EV_CONNECT: {
+		printf("DOING TLS\n");
+		struct mg_tls_opts opts = {.ca = mg_unpacked("/etc/ssl/certs/ca-certificates.crt")};
+		mg_tls_init(c, &opts);
+	}
 	case MG_EV_WS_OPEN: {
 		printf("WebSocket conenction established!\n");
 		server_con = c;
