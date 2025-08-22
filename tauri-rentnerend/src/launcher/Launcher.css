@@ -3,10 +3,6 @@ body {
 	background-color: brown;
 }
 
-h1 {
-	margin: var(--margin-std);
-}
-
 #launcher {
 	background-color: blue;
 	display: flex;

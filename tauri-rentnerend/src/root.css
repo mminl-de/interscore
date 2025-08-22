@@ -32,6 +32,10 @@ html, body, #root {
 	margin: 0;
 }
 
+h1, h2 {
+	margin: var(--margin-std);
+}
+
 /* TODO FINAL TEST */
 @media (prefers-color-scheme: light) {
 	:root {

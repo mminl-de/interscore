@@ -3,11 +3,11 @@ import "./Button.css";
 type ButtonProps = {
 	text: string,
 	onclick: () => void
-};
+}
 
 export default function Button(props: ButtonProps) {
 	return (
-		<div class="launcher-button" onclick={props.onclick}>
+		<div class="editor-button" onclick={props.onclick}>
 			{props.text}
 		</div>
 	);

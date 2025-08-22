@@ -1,12 +1,12 @@
 import "../root.css";
 import "./ListItem.css";
 
-export type ListItemData = {
+export type ListItemProps = {
 	name: string,
 	path: string
 };
 
-export function ListItem(props: ListItemData) {
+export function ListItem(props: ListItemProps) {
 	return (
 		<li class="start-list-item">
 			<div class="name">{props.name}</div>

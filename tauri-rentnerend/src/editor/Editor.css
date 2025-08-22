@@ -1,1 +1,33 @@
-/* TODO */
+#editor {
+	background-color: darkorange;
+	display: flex;
+	flex-direction: column;
+
+	height: 100%;
+}
+
+#editor .content {
+	margin: var(--margin-std);
+	flex: 1;
+}
+
+#editor .team-division {
+	display: flex;
+	gap: var(--margin-std);
+}
+#editor .team-division > * { flex: 1; }
+
+#editor .team-list {
+	background-color: green;
+}
+
+#editor .team-list .list {
+	padding: 0;
+}
+
+#editor .navigation {
+	display: flex;
+	gap: var(--margin-std);
+
+	margin: var(--margin-std);
+}
