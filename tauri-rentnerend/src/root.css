@@ -24,17 +24,11 @@
 	--margin-std: 10px;
 }
 
-html, body, #root {
-	height: 100%;
-}
+html, body, #root { height: 100%; }
 
-* {
-	margin: 0;
-}
+* { margin: 0; }
 
-h1, h2 {
-	margin: var(--margin-std);
-}
+h1, h2 { margin: var(--margin-std); }
 
 /* TODO FINAL TEST */
 @media (prefers-color-scheme: light) {

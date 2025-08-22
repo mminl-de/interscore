@@ -7,6 +7,10 @@
 }
 
 #editor .content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin-std);
+
 	margin: var(--margin-std);
 	flex: 1;
 }
@@ -17,11 +21,24 @@
 }
 #editor .team-division > * { flex: 1; }
 
-#editor .team-list {
-	background-color: green;
+#editor .player-division {
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin-std);
 }
 
+#editor .team-list { background-color: green; }
 #editor .team-list .list {
+	padding: 0;
+}
+
+#editor .role-list { background-color: gray; }
+#editor .role-list .list {
+	padding: 0;
+}
+
+#editor .player-list { background-color: purple; }
+#editor .player-list .list {
 	padding: 0;
 }
 

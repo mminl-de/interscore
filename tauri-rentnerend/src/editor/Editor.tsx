@@ -11,7 +11,7 @@ export default function Editor() {
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
 	const [teams, _] = createSignal<TeamProps[]>([
 		// TODO TEST
-		{ name: "Gifhorn", color: "brown" },
+		{ name: "Gifhorn", color: "#562323" },
 		{ name: "Ludwigsf", color: "#bedbed" }
 	]);
 	const navigate = useNavigate()
@@ -52,21 +52,38 @@ export default function Editor() {
 
 				<div class="team-division">
 					<div class="team-list">
-						<div>Teilnehmenden Teams</div>
+						<p>Teilnehmenden Teams</p>
 						<ul class="list">{
 							teams().map(team =>
 								(<Team name={team.name} color={team.color}/>)
 							)
 						}</ul>
-						<input placeholder="Teamname eintragen"/>
+						<input placeholder="Teamnamen eintragen"/>
 					</div>
 
 					<div class="player-division">
-						<div>Spielerrollen</div>
-						<div>Spieler des Teams</div>
+						<div class="role-list">
+							<p>Spielerrollen</p>
+							<ul class="list">{
+								teams().map(team =>
+									(<Team name={team.name} color={team.color}/>)
+								)
+							}</ul>
+							<input placeholder="Rollennamen eintragen"/>
+						</div>
+
+						<div class="player-list">
+							<p>Spieler des Teams</p>
+							<ul class="list">{
+								teams().map(team => (
+									<Team name={team.name} color={team.color}/>
+								))
+							}</ul>
+						</div>
 					</div>
 				</div>
-				<div>Turnierverlauf</div>
+				<p>Turnierverlauf</p>
+				<input type="color"/>
 			</div>
 			<div class="navigation">
 				<Button text="Abbrechen" onclick={() => navigate("/")}/>
