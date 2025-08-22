@@ -26,6 +26,14 @@
 
 html, body, #root { height: 100%; }
 
+/* Mind the notch and navigation bar on mobile. */
+body {
+	padding-top: env(safe-area-inset-top);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
 * { margin: 0; }
 
 h1, h2 { margin: var(--margin-std); }

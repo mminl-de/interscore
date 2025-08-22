@@ -7,9 +7,18 @@ import { Team, TeamProps } from "./Team";
 import "../root.css";
 import "./Editor.css";
 
+// Truncates and converts casing of `input` into snake_case.
+function generate_basename(input: string): string {
+	// TODO make it handle input present in tourn_path
+	if (input === "") return "tournament.json";
+	if (input.length > 20) input = input.slice(0, 20);
+	return "/" + input.toLowerCase().replace(/\s|\./g, "_") + ".json";
+}
+
 export default function Editor() {
+	const [tourn_name, set_tourn_name] = createSignal<string>("");
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
-	const [teams, _] = createSignal<TeamProps[]>([
+	const [teams] = createSignal<TeamProps[]>([
 		// TODO TEST
 		{ name: "Gifhorn", color: "#562323" },
 		{ name: "Ludwigsf", color: "#bedbed" }
@@ -32,22 +41,31 @@ export default function Editor() {
 			<div class="content">
 				<form onsubmit={(e: SubmitEvent) => e.preventDefault()}>
 					<label>Turniername</label><br/>
-					<input/>
+					<input
+						value={tourn_name()}
+						onchange={(e) => set_tourn_name(e.currentTarget.value)}
+					/>
 				</form>
 
 				<form onsubmit={(e: SubmitEvent) => e.preventDefault()}>
 					<label>Ort der Turnier-Datei</label><br/>
-					<input value={tourn_path()}/>
+					<input
+						value={tourn_path()}
+						onchange={(e) => {
+							let input = e.currentTarget.value
+							if (!input.endsWith(".json")) input = input + ".json"
+							set_tourn_path(input)
+						}}
+					/>
 					<button type="button" onclick={async () => {
 						const selected = await open({
-							title: "Öffne Turnier-Datei",
-							filters: [{
-								name: "JSON",
-								extensions: ["json"]
-							}]
+							title: "Ordner für die Turnier-Datei auswählen",
+							directory: true,
+							canCreateDirectories: true
 						})
-						if (selected !== null) set_tourn_path(selected)
-					}}>Datei auswählen</button>
+						if (selected !== null)
+							set_tourn_path(selected + generate_basename(tourn_name()))
+					}}>Ordner auswählen</button>
 				</form>
 
 				<div class="team-division">

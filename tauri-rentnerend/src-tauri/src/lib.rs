@@ -1,10 +1,10 @@
 use tauri::{
 	Builder,
 	generate_context,
-	generate_handler
+	generate_handler,
 };
 
-#[cfg_attr(mobile, mobile_entry_point)]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	Builder::default()
 		.plugin(tauri_plugin_opener::init())
