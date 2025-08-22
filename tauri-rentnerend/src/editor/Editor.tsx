@@ -1,7 +1,7 @@
 import "../root.css";
-import "./App.css";
+import "./Editor.css";
 
-export default function App() {
+export default function Editor() {
 	return (
 		<main id="root">
 			<div>Turniername</div>

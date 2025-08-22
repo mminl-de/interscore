@@ -1,12 +1,12 @@
-import "./root.css";
-import "./StartListItem.css";
+import "../root.css";
+import "./ListItem.css";
 
-export type StartListItemData = {
+export type ListItemData = {
 	name: string,
 	path: string
 };
 
-export function StartListItem(props: StartListItemData) {
+export function ListItem(props: ListItemData) {
 	return (
 		<li class="start-list-item">
 			<div class="name">{props.name}</div>

@@ -1,0 +1,43 @@
+body {
+	/* TODO TEST */
+	background-color: brown;
+}
+
+h1 {
+	margin: var(--margin-std);
+}
+
+#launcher {
+	background-color: blue;
+	display: flex;
+	flex-direction: column;
+
+	height: 100%;
+}
+
+#launcher .content {
+	/* TODO TEST */
+	background-color: green;
+	flex: 1;
+
+	display: flex;
+}
+
+#launcher .content > * {
+	margin: var(--margin-std);
+}
+
+#launcher .content .buttons {
+	flex: 1;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin-std);
+}
+
+#launcher .content .list {
+	background-color: gray;
+	flex: 2;
+
+	padding: 0;
+}

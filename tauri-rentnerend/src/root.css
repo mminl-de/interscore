@@ -23,3 +23,19 @@
 
 	--margin-std: 10px;
 }
+
+html, body, #root {
+	height: 100%;
+}
+
+* {
+	margin: 0;
+}
+
+/* TODO FINAL TEST */
+@media (prefers-color-scheme: light) {
+	:root {
+		color: var(--col-fg-light);
+		background-color: var(--col-bg-light);
+	}
+}
