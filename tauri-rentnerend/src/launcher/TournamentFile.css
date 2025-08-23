@@ -1,8 +1,8 @@
-.start-list-item {
+.launcher-tournament-file {
 	display: block;
 	margin: var(--margin-std);
 }
 
-.start-list-item .name {
+.launcher-tournament-file .name {
 	font-size: var(--fsize-mid);
 }

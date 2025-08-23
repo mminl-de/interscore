@@ -28,19 +28,18 @@
 }
 
 #editor .team-list { background-color: green; }
-#editor .team-list .list {
-	padding: 0;
-}
-
 #editor .role-list { background-color: gray; }
-#editor .role-list .list {
-	padding: 0;
+#editor .player-list { background-color: purple; }
+#editor .game-list { background-color: maroon; }
+
+#editor .game-list .buttons {
+	display: flex;
+	gap: var(--margin-std);
+
+	margin-top: var(--margin-std);
 }
 
-#editor .player-list { background-color: purple; }
-#editor .player-list .list {
-	padding: 0;
-}
+#editor ul { padding: 0; }
 
 #editor .navigation {
 	display: flex;

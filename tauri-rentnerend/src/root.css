@@ -21,7 +21,7 @@
 	--fsize-std: 16px;
 	--fsize-mid: 20px;
 
-	--margin-std: 10px;
+	--margin-std: 15px;
 }
 
 html, body, #root { height: 100%; }
@@ -37,6 +37,23 @@ body {
 * { margin: 0; }
 
 h1, h2 { margin: var(--margin-std); }
+
+button, select { cursor: pointer; }
+
+button {
+	flex: 1;
+	text-align: center;
+}
+
+input[type="color"] {
+	border: none;
+	padding: 0;
+	background: none;
+	appearance: none;
+	-webkit-appearance: none;
+
+	cursor: pointer;
+}
 
 /* TODO FINAL TEST */
 @media (prefers-color-scheme: light) {

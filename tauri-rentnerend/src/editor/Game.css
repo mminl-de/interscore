@@ -1,0 +1,9 @@
+.editor-game {
+	background-color: red;
+	display: flex;
+	justify-content: space-between;
+}
+
+.editor-game select { flex: 1; }
+
+.editor-game p { padding: var(--margin-std); }

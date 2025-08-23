@@ -1,12 +1,13 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import Button from "./Button";
+import Form from "./Form";
+import { Game, GameProps } from "./Game";
 import { Player } from "./Player";
 import { Team, TeamProps } from "./Team";
 
 import "../root.css";
-import "./Editor.css";
+import "./Event.css";
 
 // Truncates and converts casing of `input` into snake_case to generate a
 // possible basename for a tournament file path.
@@ -17,29 +18,21 @@ function generate_basename(input: string): string {
 	return "/" + input.toLowerCase().replace(/\s|\./g, "_") + ".json";
 }
 
+// TODO handle: deleting a team resets affected games
 // TODO handle: deleting a role resets the roles of those players
-export const [roles] = createSignal<string[]>([
-	// TODO TEST
-	"Keeper",
-	"Fan"
-]);
+// TODO CHECK there is a dummy role with index 0 in the role list
+
+export const [roles, set_roles] = createSignal<string[]>([]);
+export const [teams, set_teams] = createSignal<TeamProps[]>([]);
 
 export default function Editor() {
 	const [tourn_name, set_tourn_name] = createSignal<string>("");
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
-	const [teams] = createSignal<TeamProps[]>([
-		// TODO TEST
-		{
-			name: "Gifhorn",
-			color: "#562323",
-			players: [
-				{ name: "Linux Kramer", role: 1 },
-				{ name: "Felix Kramer", role: 0 }
-			]
-		},
-		{ name: "Ludwigsf", color: "#bedbed", players: [] }
+	const [selected_team, set_selected_team] = createSignal<number | null>(null);
+	const [games] = createSignal<GameProps[]>([
+		{ left: 0, right: 1}
 	]);
-	const [team_i] = createSignal<number | null>(0); // TODO FINAL should be null by default
+
 	const navigate = useNavigate()
 
 	const keydown_handler = (e: KeyboardEvent) => {
@@ -52,23 +45,26 @@ export default function Editor() {
 	onCleanup(() => window.removeEventListener("keydown", keydown_handler));
 
 	// TODO make team list scrolling
+	// TODO CONSIDER margin between lists and forms
+	// TODO NOW the selected_team (type number) strategy aint it, chief
+	//     we need a more reliable way to store selected list items
 	return (
 		<div id="editor">
 			<h2>Neues Turnier erstellen</h2>
 			<div class="content">
-				<form onsubmit={(e: SubmitEvent) => e.preventDefault()}>
+				<form onsubmit={e => e.preventDefault()}>
 					<label>Turniername</label><br/>
 					<input
 						value={tourn_name()}
-						onchange={(e) => set_tourn_name(e.currentTarget.value)}
+						onchange={e => set_tourn_name(e.currentTarget.value)}
 					/>
 				</form>
 
-				<form onsubmit={(e: SubmitEvent) => e.preventDefault()}>
+				<form onsubmit={e => e.preventDefault()}>
 					<label>Ort der Turnier-Datei</label><br/>
 					<input
 						value={tourn_path()}
-						onchange={(e) => {
+						onchange={e => {
 							let input = e.currentTarget.value
 							if (!input.endsWith(".json")) input = input + ".json"
 							set_tourn_path(input)
@@ -88,50 +84,86 @@ export default function Editor() {
 				<div class="team-division">
 					<div class="team-list">
 						<p>Teilnehmenden Teams</p>
-						<ul class="list">{
-							teams().map(team => (
+						<ul>{
+							teams().map((team, i) => (
 								<Team
 									name={team.name}
 									color={team.color}
 									players={team.players}
+									selected={selected_team() === i}
+									onclick={() => set_selected_team(i)}
 								/>
 							))
 						}</ul>
-						<input placeholder="Teamnamen eintragen"/>
+						<Form
+							name="team-name"
+							placeholder="Teamnamen eintragen"
+							callback={input => set_teams([
+								...teams(),
+								{
+									name: input,
+									color: "#ff0000",
+									players: [],
+									selected: selected_team() === teams().length,
+									onclick: () => set_selected_team(teams().length)
+								}
+							])}
+						/>
 					</div>
 
 					<div class="player-division">
 						<div class="role-list">
 							<p>Spielerrollen</p>
-							<ul class="list">{
+							<ul>{
 								roles().map(role => (
 									<div>{role}</div>
 								))
 							}</ul>
-							<input placeholder="Rollennamen eintragen"/>
+							<Form
+								name="role-name"
+								placeholder="Rollennamen eintragen"
+								callback={input => set_roles([...roles(), input])}
+							/>
 						</div>
 
 						<div class="player-list">
 							<p>Spieler des Teams</p>
-							<ul class="list">{(() => {
-								const i = team_i()
-								if (i === null) return <></>
+							<ul>{(() => {
+								const sel = selected_team()
+								if (sel === null) return <></>
 								// TODO NOW
-								return teams()[i].players.map(player => (
+								return teams()[sel].players.map(player => (
 									<Player name={player.name} role={player.role}/>
 								))
 							})()
 							}</ul>
-							<input placeholder="Vor- und Nachnamen eintragen"/>
+							<Form
+								name="player-list"
+								placeholder="Vor- und Nachnamen eintragen"
+								callback={input => teams()[selected_team()!].players
+									.push({ name: input, role: 0 })
+								}
+							/>
 						</div>
 					</div>
 				</div>
-				<p>Turnierverlauf</p>
+				<div class="game-list">
+					<p>Turnierverlauf</p>
+					<ul>{
+						games().map(game => (
+							<Game left={game.left} right={game.right}/>
+						))
+					}</ul>
+					<div class="buttons">
+						<button>Add game</button>
+						<button>Remove game</button>
+					</div>
+				</div>
 			</div>
 			<div class="navigation">
-				<Button text="Abbrechen" onclick={() => navigate("/")}/>
-				<Button text="Speichern und Zurück" onclick={() => navigate("/")}/>
-				<Button text="Speichern und Starten" onclick={() => navigate("/input")}/>
+				<button onclick={() => navigate("/")}>Abbrechen</button>
+				<button onclick={() => navigate("/")}>Speichern und Zurück</button>
+				<button onclick={() => navigate("/input")}>Speichern und Starten</button>
 			</div>
 		</div>
 	);

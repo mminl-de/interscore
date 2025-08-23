@@ -1,7 +1,6 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import Button from "./Button";
-import { ListItem, ListItemProps } from "./ListItem";
+import { TournamentFile, TournamentFileProps } from "./TournamentFile";
 
 import "../root.css";
 import "./Launcher.css";
@@ -12,7 +11,7 @@ function import_tournament() {}
 
 export default function Launcher() {
 	const navigate = useNavigate()
-	const [tourn_list, _] = createSignal<ListItemProps[]>([
+	const [tourn_list, _] = createSignal<TournamentFileProps[]>([
 		// TODO TEST
 		{ name: "Gifhorn", path: "/home/me/downloads/gifhoen.json" }
 	]);
@@ -20,7 +19,7 @@ export default function Launcher() {
 	const keydown_handler = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === "n") {
 			e.preventDefault();
-			navigate("/editor")
+			navigate("/editor/event")
 		}
 		if (e.ctrlKey && e.key === "o") {
 			e.preventDefault();
@@ -36,12 +35,14 @@ export default function Launcher() {
 
 			<div class="content">
 				<div class="buttons">
-					<Button text="Neues Turnier" onclick={() => navigate("/editor")}/>
-					<Button text="Turnier laden" onclick={open_tournament}/>
-					<Button text="Aus cycleball.eu importieren" onclick={import_tournament}/>
+					<button onclick={() => navigate("/editor/event")}>Neues Turnier</button>
+					<button onclick={open_tournament}>Turnier laden</button>
+					<button onclick={import_tournament}>
+						Aus cycleball.eu importieren
+					</button>
 				</div>
 				<ul class="list">
-					{tourn_list().map(item => (<ListItem name={item.name} path={item.path}/>))}
+					{tourn_list().map(item => (<TournamentFile name={item.name} path={item.path}/>))}
 				</ul>
 			</div>
 		</div>

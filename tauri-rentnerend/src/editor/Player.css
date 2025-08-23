@@ -1,3 +1,7 @@
 .editor-player {
+	background-color: violet;
 	display: flex;
+	justify-content: space-between;
+
+	padding: var(--margin-std);
 }
