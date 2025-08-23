@@ -4,7 +4,3 @@
 	justify-content: space-between;
 	padding: var(--margin-std);
 }
-
-.editor-team .color {
-	padding: var(--margin-std);
-}

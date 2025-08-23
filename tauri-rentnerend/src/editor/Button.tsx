@@ -3,7 +3,7 @@ import "./Button.css";
 type ButtonProps = {
 	text: string,
 	onclick: () => void
-}
+};
 
 export default function Button(props: ButtonProps) {
 	return (
