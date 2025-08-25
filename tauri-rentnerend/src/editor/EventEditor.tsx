@@ -4,9 +4,10 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useNavigate } from "@solidjs/router";
 
 import Form from "./Form";
-import { Game, GameProps } from "./Game";
+import { Role, role_id } from "./Role";
 import { Player } from "./Player";
-import { Team, TeamProps, id_of } from "./Team";
+import { Team, TeamProps, team_id } from "./Team";
+import { Game, GameProps } from "./Game";
 
 import "../root.css";
 import "./EventEditor.css";
@@ -16,16 +17,20 @@ import "./EventEditor.css";
 function generate_basename(input: string): string {
 	// TODO make it handle input present in tourn_path
 	if (input === "") return "tournament.json";
-	if (input.length > 20) input = input.slice(0, 20);
+	if (input.length > 32) input = input.slice(0, 32);
 	return "/" + input.toLowerCase().replace(/\s|\./g, "_") + ".json";
 }
 
 // TODO handle: deleting a team resets affected games
 // TODO handle: deleting a role resets the roles of those players
 // TODO CHECK there is a dummy role with index 0 in the role list
+// TODO FINAL HANDLE checking if all input are correct:
+//     all players have roles
+//     all entries distinct (collisions should be forbidden either way)
 
-export const [roles, set_roles] = createSignal<string[]>([]);
+export const [roles, set_roles] = createStore<Record<string, true>>({});
 export const [teams, set_teams] = createStore<Record<string, TeamProps>>({});
+export const [selected_role, set_selected_role] = createSignal<string | null>(null);
 export const [selected_team, set_selected_team] = createSignal<string | null>(null);
 
 export default function Editor() {
@@ -48,8 +53,6 @@ export default function Editor() {
 
 	// TODO make team list scrolling
 	// TODO CONSIDER margin between lists and forms
-	// TODO NOW the selected_team (type number) strategy aint it, chief
-	//     we need a more reliable way to store selected list items
 	return (
 		<div id="editor">
 			<h2>Neues Turnier erstellen</h2>
@@ -98,7 +101,7 @@ export default function Editor() {
 						<Form
 							name="team-name"
 							placeholder="Teamnamen eintragen"
-							callback={input => set_teams(id_of(input), {
+							callback={input => set_teams(team_id(input), {
 								name: input,
 								color: "#ff0000",
 								players: []
@@ -109,15 +112,16 @@ export default function Editor() {
 					<div class="player-division">
 						<div class="role-list">
 							<p>Spielerrollen</p>
-							<ul>{
-								roles().map(role => (
-									<div>{role}</div>
+							<ul role="listbox">{
+								// TODO NOW
+								Object.keys(roles).map(role => (
+									<Role name={role}/>
 								))
 							}</ul>
 							<Form
 								name="role-name"
 								placeholder="Rollennamen eintragen"
-								callback={input => set_roles([...roles(), input])}
+								callback={input => set_roles(role_id(input), true)}
 							/>
 						</div>
 

@@ -40,6 +40,10 @@
 }
 
 #editor ul { padding: 0; }
+#editor li {
+	display: flex;
+	padding: var(--margin-smol) var(--margin-std);
+}
 
 #editor .navigation {
 	display: flex;

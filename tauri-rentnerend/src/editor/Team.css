@@ -1,4 +1,4 @@
-.editor-team {
+#editor .team-list li {
 	background-color: darkgreen;
 	display: flex;
 	justify-content: space-between;
@@ -6,6 +6,6 @@
 	padding: var(--margin-std);
 }
 
-.editor-team.selected {
+#editor .team-list li.selected {
 	background-color: cyan;
 }

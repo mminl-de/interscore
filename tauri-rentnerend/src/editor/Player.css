@@ -1,4 +1,4 @@
-.editor-player {
+#editor .player-list li {
 	background-color: violet;
 	display: flex;
 	justify-content: space-between;

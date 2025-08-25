@@ -22,6 +22,7 @@
 	--fsize-mid: 20px;
 
 	--margin-std: 15px;
+	--margin-smol: 5px;
 }
 
 html, body, #root { height: 100%; }

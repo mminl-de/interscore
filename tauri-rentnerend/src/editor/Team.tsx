@@ -11,12 +11,12 @@ export type TeamProps = {
 	players: PlayerProps[]
 };
 
-export function id_of(name: string): string {
+export function team_id(name: string): string {
 	return TEAM_ID_PREFIX + name.replace(/\s/g, "")
 }
 
 export function Team(props: TeamProps) {
-	const id = id_of(props.name)
+	const id = team_id(props.name)
 	const is_selected = () => selected_team() === id;
 	return (
 		<li
@@ -24,18 +24,21 @@ export function Team(props: TeamProps) {
 			role="option"
 			tabindex="0"
 			aria-selected={is_selected()}
-			class={"editor-team" + (is_selected() ? " selected" : "")}
+			class={is_selected() ? " selected" : ""}
 			onclick={() => set_selected_team(id)}
-			onKeyDown={e => {
-				if (e.key === "Enter") {
-					set_selected_team(id);
-				} else if (e.key === "ArrowUp") {
-					console.log("pressing up TODO")
-					e.preventDefault();
-					focus_next_team(id, -1);
-				} else if (e.key === "ArrowDown") {
-					e.preventDefault();
-					focus_next_team(id, 1);
+			onkeydown={e => {
+				switch (e.key) {
+					case "Enter":
+						set_selected_team(id);
+						break;
+					case "ArrowUp":
+						e.preventDefault();
+						focus_next_team(id, -1);
+						break;
+					case "ArrowDown":
+						e.preventDefault();
+						focus_next_team(id, 1);
+						break;
 				}
 			}}
 		>
@@ -47,6 +50,7 @@ export function Team(props: TeamProps) {
 
 function focus_next_team(cur_id: string, direction: 1 | -1) {
 	const ids = Object.keys(teams);
+	console.log(ids) // TODO
 	const idx = ids.indexOf(cur_id);
 	if (idx === -1) return;
 	const next_idx = (idx + direction + ids.length) % ids.length;

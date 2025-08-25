@@ -13,10 +13,10 @@ export function Game(props: GameProps) {
 	));
 
 	return (
-		<div class="editor-game">
+		<li>
 			<select value={props.left}>{options()}</select>
 			<p>vs.</p>
 			<select value={props.right}>{options()}</select>
-		</div>
+		</li>
 	);
 }

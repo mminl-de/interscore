@@ -1,9 +1,9 @@
-.editor-game {
+#editor .game-list li {
 	background-color: red;
 	display: flex;
 	justify-content: space-between;
 }
 
-.editor-game select { flex: 1; }
+#editor .game-list li select { flex: 1; }
 
-.editor-game p { padding: var(--margin-std); }
+#editor .game-list li p { padding: var(--margin-std); }
