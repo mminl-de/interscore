@@ -4,10 +4,10 @@ import { useNavigate } from "@solidjs/router";
 import Form from "./Form";
 import { Game, GameProps } from "./Game";
 import { Player } from "./Player";
-import { Team, TeamProps } from "./Team";
+import { Team, TeamProps, id_of } from "./Team";
 
 import "../root.css";
-import "./Event.css";
+import "./EventEditor.css";
 
 // Truncates and converts casing of `input` into snake_case to generate a
 // possible basename for a tournament file path.
@@ -23,12 +23,12 @@ function generate_basename(input: string): string {
 // TODO CHECK there is a dummy role with index 0 in the role list
 
 export const [roles, set_roles] = createSignal<string[]>([]);
-export const [teams, set_teams] = createSignal<TeamProps[]>([]);
+export const [teams, set_teams] = createSignal<Record<string, TeamProps>>({});
+export const [selected_team, set_selected_team] = createSignal<string | null>(null);
 
 export default function Editor() {
 	const [tourn_name, set_tourn_name] = createSignal<string>("");
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
-	const [selected_team, set_selected_team] = createSignal<number | null>(null);
 	const [games] = createSignal<GameProps[]>([
 		{ left: 0, right: 1}
 	]);
@@ -84,30 +84,26 @@ export default function Editor() {
 				<div class="team-division">
 					<div class="team-list">
 						<p>Teilnehmenden Teams</p>
-						<ul>{
-							teams().map((team, i) => (
+						<ul role="listbox">{
+							Object.values(teams()).map(team => (
 								<Team
 									name={team.name}
 									color={team.color}
 									players={team.players}
-									selected={selected_team() === i}
-									onclick={() => set_selected_team(i)}
 								/>
 							))
 						}</ul>
 						<Form
 							name="team-name"
 							placeholder="Teamnamen eintragen"
-							callback={input => set_teams([
+							callback={input => set_teams({
 								...teams(),
-								{
+								[id_of(input)]: {
 									name: input,
 									color: "#ff0000",
-									players: [],
-									selected: selected_team() === teams().length,
-									onclick: () => set_selected_team(teams().length)
+									players: []
 								}
-							])}
+							})}
 						/>
 					</div>
 

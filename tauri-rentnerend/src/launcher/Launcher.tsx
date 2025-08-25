@@ -16,7 +16,7 @@ export default function Launcher() {
 		{ name: "Gifhorn", path: "/home/me/downloads/gifhoen.json" }
 	]);
 
-	const keydown_handler = (e: KeyboardEvent) => {
+	const keydown_handler = (e: KeyboardEventEditor) => {
 		if (e.ctrlKey && e.key === "n") {
 			e.preventDefault();
 			navigate("/editor/event")

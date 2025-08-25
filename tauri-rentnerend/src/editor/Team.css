@@ -6,6 +6,6 @@
 	padding: var(--margin-std);
 }
 
-.editor-team + .selected {
+.editor-team.selected {
 	background-color: cyan;
 }

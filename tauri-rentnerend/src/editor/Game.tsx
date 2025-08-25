@@ -1,4 +1,4 @@
-import { teams } from "./Event";
+import { teams } from "./EventEditor";
 
 import "./Game.css";
 
@@ -8,7 +8,7 @@ export type GameProps = {
 };
 
 export function Game(props: GameProps) {
-	const options = () => teams().map(team => (
+	const options = () => Object.values(teams()).map(team => (
 		<option value={team.name}>{team.name}</option>
 	));
 

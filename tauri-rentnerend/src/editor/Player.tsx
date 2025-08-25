@@ -1,4 +1,4 @@
-import { roles } from "./Event";
+import { roles } from "./EventEditor";
 
 import "./Player.css";
 
