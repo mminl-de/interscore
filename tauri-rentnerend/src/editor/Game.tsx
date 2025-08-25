@@ -8,7 +8,7 @@ export type GameProps = {
 };
 
 export function Game(props: GameProps) {
-	const options = () => Object.values(teams()).map(team => (
+	const options = () => Object.values(teams).map(team => (
 		<option value={team.name}>{team.name}</option>
 	));
 

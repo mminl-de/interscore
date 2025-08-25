@@ -46,7 +46,7 @@ export function Team(props: TeamProps) {
 }
 
 function focus_next_team(cur_id: string, direction: 1 | -1) {
-	const ids = Object.keys(teams());
+	const ids = Object.keys(teams);
 	const idx = ids.indexOf(cur_id);
 	if (idx === -1) return;
 	const next_idx = (idx + direction + ids.length) % ids.length;

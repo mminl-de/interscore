@@ -1,6 +1,8 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { createSignal, onCleanup, onMount } from "solid-js";
+import { createStore } from "solid-js/store";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useNavigate } from "@solidjs/router";
+
 import Form from "./Form";
 import { Game, GameProps } from "./Game";
 import { Player } from "./Player";
@@ -23,7 +25,7 @@ function generate_basename(input: string): string {
 // TODO CHECK there is a dummy role with index 0 in the role list
 
 export const [roles, set_roles] = createSignal<string[]>([]);
-export const [teams, set_teams] = createSignal<Record<string, TeamProps>>({});
+export const [teams, set_teams] = createStore<Record<string, TeamProps>>({});
 export const [selected_team, set_selected_team] = createSignal<string | null>(null);
 
 export default function Editor() {
@@ -85,7 +87,7 @@ export default function Editor() {
 					<div class="team-list">
 						<p>Teilnehmenden Teams</p>
 						<ul role="listbox">{
-							Object.values(teams()).map(team => (
+							Object.values(teams).map(team => (
 								<Team
 									name={team.name}
 									color={team.color}
@@ -96,13 +98,10 @@ export default function Editor() {
 						<Form
 							name="team-name"
 							placeholder="Teamnamen eintragen"
-							callback={input => set_teams({
-								...teams(),
-								[id_of(input)]: {
-									name: input,
-									color: "#ff0000",
-									players: []
-								}
+							callback={input => set_teams(id_of(input), {
+								name: input,
+								color: "#ff0000",
+								players: []
 							})}
 						/>
 					</div>
@@ -128,7 +127,7 @@ export default function Editor() {
 								const sel = selected_team()
 								if (sel === null) return <></>
 								// TODO NOW
-								return teams()[sel].players.map(player => (
+								return teams[sel].players.map(player => (
 									<Player name={player.name} role={player.role}/>
 								))
 							})()
@@ -136,9 +135,11 @@ export default function Editor() {
 							<Form
 								name="player-list"
 								placeholder="Vor- und Nachnamen eintragen"
-								callback={input => teams()[selected_team()!].players
-									.push({ name: input, role: 0 })
-								}
+								callback={input => set_teams(
+									selected_team()!,
+									"players",
+									prev => [...prev, { name: input, role: 0 }]
+								)}
 							/>
 						</div>
 					</div>
