@@ -12,7 +12,7 @@ export type TeamProps = {
 };
 
 export function team_id(name: string): string {
-	return TEAM_ID_PREFIX + name.replace(/\s/g, "")
+	return TEAM_ID_PREFIX + name.replace(/\s/g, "");
 }
 
 export function Team(props: TeamProps) {
@@ -24,7 +24,7 @@ export function Team(props: TeamProps) {
 			role="option"
 			tabindex="0"
 			aria-selected={is_selected()}
-			class={is_selected() ? " selected" : ""}
+			class={is_selected() ? "selected" : ""}
 			onclick={() => set_selected_team(id)}
 			onkeydown={e => {
 				switch (e.key) {

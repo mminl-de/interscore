@@ -18,7 +18,7 @@ function generate_basename(input: string): string {
 	// TODO make it handle input present in tourn_path
 	if (input === "") return "tournament.json";
 	if (input.length > 32) input = input.slice(0, 32);
-	return "/" + input.toLowerCase().replace(/\s|\./g, "_") + ".json";
+	return input.toLowerCase().replace(/\s|\./g, "_") + ".json";
 }
 
 // TODO handle: deleting a team resets affected games
@@ -28,17 +28,16 @@ function generate_basename(input: string): string {
 //     all players have roles
 //     all entries distinct (collisions should be forbidden either way)
 
-export const [roles, set_roles] = createStore<Record<string, true>>({});
+export const [roles, set_roles] = createStore<Record<string, string>>({});
 export const [teams, set_teams] = createStore<Record<string, TeamProps>>({});
 export const [selected_role, set_selected_role] = createSignal<string | null>(null);
 export const [selected_team, set_selected_team] = createSignal<string | null>(null);
+export const [selected_game, set_selected_game] = createSignal<GameProps | null>(null);
 
 export default function Editor() {
 	const [tourn_name, set_tourn_name] = createSignal<string>("");
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
-	const [games] = createSignal<GameProps[]>([
-		{ left: 0, right: 1}
-	]);
+	const [games, set_games] = createSignal<GameProps[]>([]);
 
 	const navigate = useNavigate()
 
@@ -82,7 +81,7 @@ export default function Editor() {
 							canCreateDirectories: true
 						})
 						if (selected !== null)
-							set_tourn_path(selected + generate_basename(tourn_name()))
+							set_tourn_path(selected + "/" + generate_basename(tourn_name()))
 					}}>Ordner auswählen</button>
 				</form>
 
@@ -114,20 +113,20 @@ export default function Editor() {
 							<p>Spielerrollen</p>
 							<ul role="listbox">{
 								// TODO NOW
-								Object.keys(roles).map(role => (
+								Object.values(roles).map(role => (
 									<Role name={role}/>
 								))
 							}</ul>
 							<Form
 								name="role-name"
 								placeholder="Rollennamen eintragen"
-								callback={input => set_roles(role_id(input), true)}
+								callback={input => set_roles(role_id(input), input)}
 							/>
 						</div>
 
 						<div class="player-list">
 							<p>Spieler des Teams</p>
-							<ul>{(() => {
+							<ul role="listbox">{(() => {
 								const sel = selected_team()
 								if (sel === null) return <></>
 								// TODO NOW
@@ -150,13 +149,16 @@ export default function Editor() {
 				</div>
 				<div class="game-list">
 					<p>Turnierverlauf</p>
-					<ul>{
+					<ul role="listbox">{
 						games().map(game => (
 							<Game left={game.left} right={game.right}/>
 						))
 					}</ul>
 					<div class="buttons">
-						<button>Add game</button>
+						<button onclick={() => set_games([
+							...games(),
+							{ left: 0, right: 0}
+						])}>Add game</button>
 						<button>Remove game</button>
 					</div>
 				</div>
