@@ -28,16 +28,17 @@ function generate_basename(input: string): string {
 //     all players have roles
 //     all entries distinct (collisions should be forbidden either way)
 
+// TODO MOVE to their respective files
 export const [roles, set_roles] = createStore<Record<string, string>>({});
 export const [teams, set_teams] = createStore<Record<string, TeamProps>>({});
 export const [selected_role, set_selected_role] = createSignal<string | null>(null);
+const [games, set_games] = createSignal<GameProps[]>([]);
 export const [selected_team, set_selected_team] = createSignal<string | null>(null);
 export const [selected_game, set_selected_game] = createSignal<GameProps | null>(null);
 
 export default function Editor() {
 	const [tourn_name, set_tourn_name] = createSignal<string>("");
 	const [tourn_path, set_tourn_path] = createSignal<string>("");
-	const [games, set_games] = createSignal<GameProps[]>([]);
 
 	const navigate = useNavigate()
 

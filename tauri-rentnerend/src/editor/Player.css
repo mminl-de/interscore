@@ -5,3 +5,7 @@
 
 	padding: var(--margin-std);
 }
+
+#editor .player-list li.selected {
+	background-color: cyan;
+}

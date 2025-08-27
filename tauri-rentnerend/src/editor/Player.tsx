@@ -1,3 +1,4 @@
+import { createSignal } from "solid-js";
 import { roles } from "./EventEditor";
 
 import "./Player.css";
@@ -7,11 +8,43 @@ export type PlayerProps = {
 	role: number
 };
 
+export const [selected_player, set_selected_player] = createSignal<string | null>(null);
+
 export function Player(props: PlayerProps) {
-	// TODO handle changing role
+	const is_selected = () => selected_player() === props.name;
+
 	// We're adding an empty option as a dummy option.
 	return (
-		<li>
+		<li
+			role="option"
+			tabindex="0"
+			aria-selected={is_selected()}
+			// TODO REMOVE ALL in favor of selecting for aria-selected="true" in CSS
+			class={is_selected() ? "selected" : ""}
+			onclick={() => set_selected_player(props.name)}
+			onkeydown={e => {
+				switch (e.key) {
+					case "Enter":
+						set_selected_player(props.name);
+						break;
+					case "ArrowUp":
+						e.preventDefault();
+						const prev = e.currentTarget.previousSibling as HTMLElement;
+						if (prev === null) break;
+						const name = prev.querySelector("div")!.innerText;
+						set_selected_player(name);
+						break;
+					case "ArrowDown": {
+						e.preventDefault();
+						const next = e.currentTarget.nextSibling as HTMLElement;
+						if (next === null) break;
+						const name = next.querySelector("div")!.innerText;
+						set_selected_player(name);
+						break;
+					}
+				}
+			}}
+		>
 			<div>{props.name}</div>
 			<select value={props.role}>
 				<option></option>
