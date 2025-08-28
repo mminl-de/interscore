@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
 import { teams } from "./Team";
 
 import "./Game.css";
@@ -8,11 +9,11 @@ const GAME_ID_PREFIX = "game-list-i-";
 type GameId = string;
 type GameProps = {
 	id: GameId,
-	left: number,
-	right: number
+	left: string,
+	right: string
 };
 
-export const [games, set_games] = createSignal<GameProps[]>([]);
+export const [games, set_games] = createStore<Record<GameId, GameProps>>({});
 export const [selected_game, set_selected_game] = createSignal<GameId | null>(null);
 
 export function game_id(): string {
@@ -51,16 +52,26 @@ export function Game(props: GameProps) {
 					set_selected_game(next.id);
 					break;
 				}
+				case "Delete":
+					set_games(props.id, undefined as any);
+					set_selected_game(null);
+					break;
 			}
 		}}
 	>
-		<select value={props.left}>
-			<option></option>
+		<select
+			value={games[props.id]?.left ?? ""}
+			oninput={e => set_games(props.id, "left", e.currentTarget.value)}
+		>
+			<option value=""></option>
 			{options()}
 		</select>
 		<p>vs.</p>
-		<select value={props.right}>
-			<option></option>
+		<select
+			value={games[props.id]?.right ?? ""}
+			oninput={e => set_games(props.id, "right", e.currentTarget.value)}
+		>
+			<option value=""></option>
 			{options()}
 		</select>
 	</li>;

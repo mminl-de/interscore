@@ -137,24 +137,23 @@ export default function Editor() {
 			<div class="game-list">
 				<p>Turnierverlauf</p>
 				<ul role="listbox">{
-					games().map(game => <Game
-						id={game.id}
-						left={game.left}
-						right={game.right}
-					/>)
+					Object.values(games).map(game => <Game {...game}/>)
 				}</ul>
 				<div class="buttons">
-					<button onclick={() => set_games([
-						...games(),
-						{ id: game_id(), left: 0, right: 0}
-					])}>Add game</button>
 					<button onclick={() => {
-						const sel = selected_game();
-						if (sel === null) return;
-						set_selected_game(null);
-						set_games(games().filter(game => game.id !== sel));
-						console.log(games()); // TODO
-					}}>Remove game</button>
+						const id = game_id();
+						set_games(id, { id, left: "", right: "" });
+					}}>
+						Add game
+					</button>
+					<button
+						onclick={() => {
+							const sel: string = selected_game()!;
+							set_selected_game(null);
+							set_games(sel, undefined as any);
+						}}
+						disabled={selected_game() === null}
+					>Remove game</button>
 				</div>
 			</div>
 		</div>
