@@ -6,7 +6,7 @@ import Form from "./Form";
 import { Role, role_id, roles, set_roles } from "./Role";
 import { Player } from "./Player";
 import { Team, teams, set_teams, selected_team, team_id } from "./Team";
-import { Game, games, set_games } from "./Game";
+import { Game, game_id, games, set_games } from "./Game";
 
 import "../root.css";
 import "./EventEditor.css";
@@ -137,12 +137,16 @@ export default function Editor() {
 			<div class="game-list">
 				<p>Turnierverlauf</p>
 				<ul role="listbox">{
-					games().map(game => <Game left={game.left} right={game.right}/>)
+					games().map(game => <Game
+						id={game.id}
+						left={game.left}
+						right={game.right}
+					/>)
 				}</ul>
 				<div class="buttons">
 					<button onclick={() => set_games([
 						...games(),
-						{ left: 0, right: 0}
+						{ id: game_id(), left: 0, right: 0}
 					])}>Add game</button>
 					<button>Remove game</button>
 				</div>

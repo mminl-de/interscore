@@ -27,7 +27,6 @@ export function Team(props: TeamProps) {
 		role="option"
 		tabindex="0"
 		aria-selected={is_selected()}
-		class={is_selected() ? "selected" : ""}
 		onclick={() => set_selected_team(id)}
 		onkeydown={e => {
 			switch (e.key) {

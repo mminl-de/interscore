@@ -19,7 +19,6 @@ export function Player(props: PlayerProps) {
 		tabindex="0"
 		aria-selected={is_selected()}
 		// TODO REMOVE ALL in favor of selecting for aria-selected="true" in CSS
-		class={is_selected() ? "selected" : ""}
 		onclick={() => set_selected_player(props.name)}
 		onkeydown={e => {
 			switch (e.key) {

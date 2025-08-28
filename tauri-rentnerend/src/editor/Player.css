@@ -3,9 +3,9 @@
 	display: flex;
 	justify-content: space-between;
 
-	padding: var(--margin-std);
+	padding: var(--margin-smol);
 }
 
-#editor .player-list li.selected {
+#editor .player-list li[aria-selected="true"] {
 	background-color: cyan;
 }

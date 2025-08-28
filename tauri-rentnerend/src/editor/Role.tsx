@@ -20,7 +20,6 @@ export function Role(props: { name: string }) {
 		role="option"
 		tabindex="0"
 		aria-selected={is_selected()}
-		class={is_selected() ? "selected" : ""}
 		onclick={() => set_selected_role(id)}
 		onkeydown={e => {
 			switch (e.key) {

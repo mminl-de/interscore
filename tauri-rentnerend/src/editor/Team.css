@@ -6,6 +6,6 @@
 	padding: var(--margin-std);
 }
 
-#editor .team-list li.selected {
+#editor .team-list li[aria-selected="true"] {
 	background-color: cyan;
 }
