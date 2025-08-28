@@ -5,8 +5,8 @@ import { useNavigate } from "@solidjs/router";
 import Form from "./Form";
 import { Role, role_id, roles, set_roles } from "./Role";
 import { Player } from "./Player";
-import { Team, teams, set_teams, selected_team, team_id } from "./Team";
-import { Game, game_id, games, set_games } from "./Game";
+import { Team, team_id, teams, selected_team, set_teams } from "./Team";
+import { Game, game_id, games, selected_game, set_games, set_selected_game } from "./Game";
 
 import "../root.css";
 import "./EventEditor.css";
@@ -148,7 +148,13 @@ export default function Editor() {
 						...games(),
 						{ id: game_id(), left: 0, right: 0}
 					])}>Add game</button>
-					<button>Remove game</button>
+					<button onclick={() => {
+						const sel = selected_game();
+						if (sel === null) return;
+						set_selected_game(null);
+						set_games(games().filter(game => game.id !== sel));
+						console.log(games()); // TODO
+					}}>Remove game</button>
 				</div>
 			</div>
 		</div>

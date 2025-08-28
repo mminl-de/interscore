@@ -3,7 +3,7 @@ import { teams } from "./Team";
 
 import "./Game.css";
 
-const GAME_ID_PREFIX = "game-list-i";
+const GAME_ID_PREFIX = "game-list-i-";
 
 type GameId = string;
 type GameProps = {
