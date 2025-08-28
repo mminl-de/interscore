@@ -1,8 +1,12 @@
-import { roles, selected_role, set_selected_role } from "./EventEditor";
+import { createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
 
 import "./Role.css";
 
 const ROLE_ID_PREFIX = "role-list-i-";
+
+export const [roles, set_roles] = createStore<Record<string, string>>({});
+export const [selected_role, set_selected_role] = createSignal<string | null>(null);
 
 export function role_id(name: string): string {
 	return ROLE_ID_PREFIX + name.replace(/\s/g, "")
@@ -11,33 +15,31 @@ export function role_id(name: string): string {
 export function Role(props: { name: string }) {
 	const id = role_id(props.name)
 	const is_selected = () => selected_role() === id;
-	return (
-		<li
-			id={id}
-			role="option"
-			tabindex="0"
-			aria-selected={is_selected()}
-			class={is_selected() ? "selected" : ""}
-			onclick={() => set_selected_role(id)}
-			onkeydown={e => {
-				switch (e.key) {
-					case "Enter":
-						set_selected_role(id);
-						break;
-					case "ArrowUp":
-						e.preventDefault();
-						focus_next_role(id, -1);
-						break;
-					case "ArrowDown":
-						e.preventDefault();
-						focus_next_role(id, 1);
-						break;
-				}
-			}}
-		>
-			{props.name}
-		</li>
-	);
+	return <li
+		id={id}
+		role="option"
+		tabindex="0"
+		aria-selected={is_selected()}
+		class={is_selected() ? "selected" : ""}
+		onclick={() => set_selected_role(id)}
+		onkeydown={e => {
+			switch (e.key) {
+				case "Enter":
+					set_selected_role(id);
+					break;
+				case "ArrowUp":
+					e.preventDefault();
+					focus_next_role(id, -1);
+					break;
+				case "ArrowDown":
+					e.preventDefault();
+					focus_next_role(id, 1);
+					break;
+			}
+		}}
+	>
+		{props.name}
+	</li>;
 }
 
 function focus_next_role(cur_id: string, direction: 1 | -1) {

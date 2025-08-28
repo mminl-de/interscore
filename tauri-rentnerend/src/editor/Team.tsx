@@ -1,11 +1,15 @@
-import { teams, selected_team, set_selected_team } from "./EventEditor";
+import { createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
 import { PlayerProps } from "./Player";
 
 import "./Team.css";
 
 const TEAM_ID_PREFIX = "team-list-i-";
 
-export type TeamProps = {
+export const [teams, set_teams] = createStore<Record<string, TeamProps>>({});
+export const [selected_team, set_selected_team] = createSignal<string | null>(null);
+
+type TeamProps = {
 	name: string,
 	color: string,
 	players: PlayerProps[]
@@ -18,34 +22,32 @@ export function team_id(name: string): string {
 export function Team(props: TeamProps) {
 	const id = team_id(props.name)
 	const is_selected = () => selected_team() === id;
-	return (
-		<li
-			id={id}
-			role="option"
-			tabindex="0"
-			aria-selected={is_selected()}
-			class={is_selected() ? "selected" : ""}
-			onclick={() => set_selected_team(id)}
-			onkeydown={e => {
-				switch (e.key) {
-					case "Enter":
-						set_selected_team(id);
-						break;
-					case "ArrowUp":
-						e.preventDefault();
-						focus_next_team(id, -1);
-						break;
-					case "ArrowDown":
-						e.preventDefault();
-						focus_next_team(id, 1);
-						break;
-				}
-			}}
-		>
-			<div>{props.name}</div>
-			<input type="color" value={props.color}/>
-		</li>
-	);
+	return <li
+		id={id}
+		role="option"
+		tabindex="0"
+		aria-selected={is_selected()}
+		class={is_selected() ? "selected" : ""}
+		onclick={() => set_selected_team(id)}
+		onkeydown={e => {
+			switch (e.key) {
+				case "Enter":
+					set_selected_team(id);
+					break;
+				case "ArrowUp":
+					e.preventDefault();
+					focus_next_team(id, -1);
+					break;
+				case "ArrowDown":
+					e.preventDefault();
+					focus_next_team(id, 1);
+					break;
+			}
+		}}
+	>
+		<div>{props.name}</div>
+		<input type="color" value={props.color}/>
+	</li>;
 }
 
 function focus_next_team(cur_id: string, direction: 1 | -1) {
