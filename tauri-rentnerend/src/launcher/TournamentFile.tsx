@@ -7,10 +7,8 @@ export type TournamentFileProps = {
 };
 
 export function TournamentFile(props: TournamentFileProps) {
-	return (
-		<li class="launcher-tournament-file">
-			<div class="name">{props.name}</div>
-			<div class="path">{props.path}</div>
-		</li>
-	);
+	return <li class="launcher-tournament-file">
+		<div class="name">{props.name}</div>
+		<div class="path">{props.path}</div>
+	</li>;
 }

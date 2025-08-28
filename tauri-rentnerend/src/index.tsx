@@ -5,11 +5,9 @@ import Launcher from "./launcher/Launcher";
 import EventEditor from "./editor/EventEditor";
 
 render(
-	() => (
-		<Router>
-			<Route path="/" component={Launcher}/>
-			<Route path="/editor/event" component={EventEditor}/>
-		</Router>
-	),
+	() => <Router>
+		<Route path="/" component={Launcher}/>
+		<Route path="/editor/event" component={EventEditor}/>
+	</Router>,
 	document.getElementById("root") as HTMLElement
 )

@@ -1,7 +1,6 @@
 use tauri::{
 	Builder,
-	generate_context,
-	generate_handler,
+	generate_context
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
