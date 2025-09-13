@@ -44,7 +44,7 @@ export default function Editor() {
 
 	// TODO make team list scrolling
 	// TODO CONSIDER margin between lists and forms
-	return <div id="editor">
+	return <div id="event-editor">
 		<h2>Neues Turnier erstellen</h2>
 		<div class="content">
 			<form onsubmit={e => e.preventDefault()}>
@@ -159,7 +159,8 @@ export default function Editor() {
 		</div>
 		<div class="navigation">
 			<button onclick={() => navigate("/")}>Abbrechen</button>
-			<button onclick={() => navigate("/")}>Speichern und Zurück</button>
+			<button onclick={() => navigate("/editor/meta")}>Zurück</button>
+			<button onclick={() => navigate("/")}>Speichern</button>
 			<button onclick={() => navigate("/input")}>Speichern und Starten</button>
 		</div>
 	</div>;

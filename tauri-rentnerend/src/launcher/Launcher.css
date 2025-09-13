@@ -1,10 +1,12 @@
+/* TODO FINAL light mode */
+
 body {
 	/* TODO TEST */
-	background-color: brown;
+	background-color: green;
 }
 
 #launcher {
-	background-color: blue;
+	background-color: var(--col-bg);
 	display: flex;
 	flex-direction: column;
 
@@ -12,8 +14,7 @@ body {
 }
 
 #launcher .content {
-	/* TODO TEST */
-	background-color: green;
+	background-color: var(--col-bg);
 	flex: 1;
 
 	display: flex;
@@ -36,4 +37,5 @@ body {
 	flex: 2;
 
 	padding: 0;
+	border-radius: var(--brad-std);
 }

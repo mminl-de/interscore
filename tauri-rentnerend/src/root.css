@@ -13,16 +13,18 @@
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
 
-	--col-bg: #161616;
+	--col-bg: #202020;
 	--col-fg: #dedede;
 	--col-bg-light: #d7d3d0;
 	--col-fg-light: var(--col-bg);
 
 	--fsize-std: 16px;
-	--fsize-mid: 20px;
+	--fsize-mid: 24px;
 
 	--margin-std: 15px;
 	--margin-smol: 5px;
+
+	--brad-std: 5px;
 }
 
 html, body, #root { height: 100%; }
@@ -44,6 +46,9 @@ button, select { cursor: pointer; }
 button {
 	flex: 1;
 	text-align: center;
+
+	border-radius: var(--brad-std);
+	border: none; /* TODO find alternative */
 }
 
 input[type="color"] {

@@ -1,4 +1,4 @@
-#editor .player-list li {
+#event-editor .player-list li {
 	background-color: violet;
 	display: flex;
 	justify-content: space-between;
@@ -6,6 +6,6 @@
 	padding: var(--margin-smol);
 }
 
-#editor .player-list li[aria-selected="true"] {
+#event-editor .player-list li[aria-selected="true"] {
 	background-color: cyan;
 }

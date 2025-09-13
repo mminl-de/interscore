@@ -1,4 +1,4 @@
-#editor {
+#event-editor {
 	background-color: darkorange;
 	display: flex;
 	flex-direction: column;
@@ -6,7 +6,7 @@
 	height: 100%;
 }
 
-#editor .content {
+#event-editor .content {
 	display: flex;
 	flex-direction: column;
 	gap: var(--margin-std);
@@ -15,37 +15,37 @@
 	flex: 1;
 }
 
-#editor .team-division {
+#event-editor .team-division {
 	display: flex;
 	gap: var(--margin-std);
 }
-#editor .team-division > * { flex: 1; }
+#event-editor .team-division > * { flex: 1; }
 
-#editor .player-division {
+#event-editor .player-division {
 	display: flex;
 	flex-direction: column;
 	gap: var(--margin-std);
 }
 
-#editor .team-list { background-color: green; }
-#editor .role-list { background-color: gray; }
-#editor .player-list { background-color: purple; }
-#editor .game-list { background-color: maroon; }
+#event-editor .team-list { background-color: green; }
+#event-editor .role-list { background-color: gray; }
+#event-editor .player-list { background-color: purple; }
+#event-editor .game-list { background-color: maroon; }
 
-#editor .game-list .buttons {
+#event-editor .game-list .buttons {
 	display: flex;
 	gap: var(--margin-std);
 
 	margin-top: var(--margin-std);
 }
 
-#editor ul { padding: 0; }
-#editor li {
+#event-editor ul { padding: 0; }
+#event-editor li {
 	display: flex;
 	padding: var(--margin-smol) var(--margin-std);
 }
 
-#editor .navigation {
+#event-editor .navigation {
 	display: flex;
 	gap: var(--margin-std);
 

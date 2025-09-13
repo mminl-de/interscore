@@ -1,13 +1,13 @@
-#editor .game-list li {
+#event-editor .game-list li {
 	background-color: red;
 	display: flex;
 	justify-content: space-between;
 }
 
-#editor .game-list li[aria-selected="true"] {
+#event-editor .game-list li[aria-selected="true"] {
 	background-color: cyan;
 }
 
-#editor .game-list li select { flex: 1; }
+#event-editor .game-list li select { flex: 1; }
 
-#editor .game-list li p { padding: var(--margin-std); }
+#event-editor .game-list li p { padding: var(--margin-std); }

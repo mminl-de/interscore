@@ -5,10 +5,6 @@ import { TournamentFile, TournamentFileProps } from "./TournamentFile";
 import "../root.css";
 import "./Launcher.css";
 
-function open_tournament() {}
-
-function import_tournament() {}
-
 export default function Launcher() {
 	const navigate = useNavigate()
 	const [tourn_list] = createSignal<TournamentFileProps[]>([
@@ -19,7 +15,7 @@ export default function Launcher() {
 	const keydown_handler = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === "n") {
 			e.preventDefault();
-			navigate("/editor/event")
+			navigate("/editor/meta");
 		}
 		if (e.ctrlKey && e.key === "o") {
 			e.preventDefault();
@@ -34,9 +30,9 @@ export default function Launcher() {
 
 		<div class="content">
 			<div class="buttons">
-				<button onclick={() => navigate("/editor/event")}>Neues Turnier</button>
-				<button onclick={open_tournament}>Turnier laden</button>
-				<button onclick={import_tournament}>
+				<button onclick={() => navigate("/editor/meta")}>Neues Turnier</button>
+				<button onclick={() => {}}>Turnier laden</button>
+				<button onclick={() => {}}>
 					Aus cycleball.eu importieren
 				</button>
 			</div>

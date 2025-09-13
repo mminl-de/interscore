@@ -1,4 +1,4 @@
-#editor .team-list li {
+#event-editor .team-list li {
 	background-color: darkgreen;
 	display: flex;
 	justify-content: space-between;
@@ -6,6 +6,6 @@
 	padding: var(--margin-std);
 }
 
-#editor .team-list li[aria-selected="true"] {
+#event-editor .team-list li[aria-selected="true"] {
 	background-color: cyan;
 }

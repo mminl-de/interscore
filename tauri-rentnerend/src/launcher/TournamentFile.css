@@ -1,8 +1,12 @@
-.launcher-tournament-file {
+/* TODO NOW corner cutting should also cut the list items */
+#launcher .content .list li {
+	/* TODO TEST */
+	background-color: white;
+
 	display: block;
-	margin: var(--margin-std);
+	padding: var(--margin-std);
 }
 
-.launcher-tournament-file .name {
+#launcher .content .list li .name {
 	font-size: var(--fsize-mid);
 }
