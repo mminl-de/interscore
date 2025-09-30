@@ -19,15 +19,24 @@ This project was made for our personal use prior to a Cycleball tournament under
 - cycleball.eu library: https://github.com/mminl-de/cycleu
 
 ## Usage (legacy)
+### Linux:
 1. `git clone --recursive https://github.com/hiimsergey/interscore && cd interscore`
-2. Ensure your OBS edition supports Browser Source.
-3. Compile the frontend script and the binaries with `make js b-install r-install`.
-4. Fill out `input.json` given the template at `input.template.json`.
-5. Open `frontnend/index.html` in OBS Studio and set appropriate dimensions.
-6. Launch the `interscore` binary.
-7. Give the `interscore-rentnerend` binary to your nearest referee.
-8. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
-9. Press `?` (followed by Enter/Return) in the backend terminal to see possible actions.
+2. Compile the frontend script and the binaries with `make js b-install r-old`.
+3. Fill out `input.json` given the template at `input.template.json`.
+4. Ensure your OBS edition supports Browser Source.
+5. Configure OBS profile with `make obs-install`
+6. Change the OBS profile to your liking and configure path to `frontend/index.html`
+7. Either connect a camera through cable or whatever to obs and skip to 11. or when using RTMP follow the next steps
+8. Download nginx with rtmp patch.
+9. Use `make nginx-install` to configure
+10. Start nginx and in your camera put the IP of your nginx machine with Port 1935
+11. Launch the `backend` binary. (Or use `make b-run`)
+12. Give the `interscore` binary to your nearest referee and set up the correct IP/URL in `rentnerend/old_rentnerend.cc`
+13. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
+14. Press `?` (followed by Enter/Return) in the backend terminal to see possible actions.
+15. Download apk and install it on an android device
+16. Set up the correct IP in the app
+17. connect and now you can toggle all widgets and replays
 
 ## Demonstrations
 - https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)
@@ -43,11 +52,10 @@ This project was made for our personal use prior to a Cycleball tournament under
 ## meta
 - FINAL Checkliste for streams
 - FINAL^2 assets folder in seperate repo (only logos)
+- Anleitung um docker aufzusetzen und nginx ws weiterleitung usw für die domain
 
 ## frontend
 - URGENT Reversing der anzeige, je nach Kameraposition
-- URGENT Farb-Gradient automatisch generieren vom Logo/von einer Farbe
-- URGENT Logos im Spielwidget
 - URGENT widget pipelines:
 	- 5s this widget, 5s that
 	- absolute cinema
@@ -81,6 +89,7 @@ This project was made for our personal use prior to a Cycleball tournament under
 - FINAL Seite: Ads unten (or Vollbild/Seite)
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
+- FINAL i18n
 
 ## rentnerend
 - URGENT Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers

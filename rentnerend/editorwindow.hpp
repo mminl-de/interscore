@@ -47,8 +47,9 @@ struct EditorWindow {
 	} buttons;
 
 	struct {
-		QString *selected_team;
-		QHash<QString *, QListWidget *> player_lists;
+		QString current_team;
+		QListWidget *current_players;
+		QHash<QString, QListWidget *> player_lists;
 	} data;
 
 	QLineEdit tournament_name;
@@ -60,9 +61,9 @@ struct EditorWindow {
 	QLineEdit role_list_input;
 	QListWidget team_list;
 	QLineEdit team_list_input;
-	QListWidget player_list;
 	QLineEdit player_list_input;
 	QListWidget game_list;
+	QListWidget default_player_list;
 
 	EditorWindow(void);
 
@@ -74,8 +75,11 @@ protected:
 	// Add the name of a role to the role list.
 	void add_role(const QString *input);
 
-	// Add the naem of a team to the team list, accompanied by a sample hex color button.
+	// Add the name of a team to the team list, accompanied by a sample hex color button.
 	void add_team(const QString *input);
+
+	// Add the naem of a player to the player list.
+	void add_player(const QString *input);
 
 	// Add a widget for a new game to the game list.
 	void add_game(void);

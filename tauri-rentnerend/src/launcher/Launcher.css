@@ -1,0 +1,41 @@
+/* TODO FINAL light mode */
+
+body {
+	/* TODO TEST */
+	background-color: green;
+}
+
+#launcher {
+	background-color: var(--col-bg);
+	display: flex;
+	flex-direction: column;
+
+	height: 100%;
+}
+
+#launcher .content {
+	background-color: var(--col-bg);
+	flex: 1;
+
+	display: flex;
+}
+
+#launcher .content > * {
+	margin: var(--margin-std);
+}
+
+#launcher .content .buttons {
+	flex: 1;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin-std);
+}
+
+#launcher .content .list {
+	background-color: gray;
+	flex: 2;
+
+	padding: 0;
+	border-radius: var(--brad-std);
+}

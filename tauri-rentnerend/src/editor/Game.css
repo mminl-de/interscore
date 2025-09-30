@@ -1,0 +1,13 @@
+#event-editor .game-list li {
+	background-color: red;
+	display: flex;
+	justify-content: space-between;
+}
+
+#event-editor .game-list li[aria-selected="true"] {
+	background-color: cyan;
+}
+
+#event-editor .game-list li select { flex: 1; }
+
+#event-editor .game-list li p { padding: var(--margin-std); }

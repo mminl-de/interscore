@@ -1,0 +1,3 @@
+#event-editor .role-list li[aria-selected="true"] {
+	background-color: cyan;
+}

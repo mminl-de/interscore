@@ -4,14 +4,15 @@
 #include <QFileDialog>
 #include <QFrame>
 #include <QKeySequence>
-#include <QObject>
 #include <QPushButton>
 #include <QShortcut>
 
 #include "editorwindow.hpp"
 
+using EditorWindow = editorwindow::EditorWindow;
+
 // TODO DEBUG MEMORY free(): invalid pointer
-editorwindow::EditorWindow::EditorWindow(void) {
+EditorWindow::EditorWindow(void) {
 	this->window.setWindowTitle("Create new tournament"); // TODO TRANSLATE
 	this->window.setLayout(&this->layouts.main);
 	this->window.setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
@@ -90,6 +91,10 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	);
 
 	// Team list
+	this->default_player_list.addItem("[No players]"); // TODO TRANSLATE
+	this->data.current_players = &this->default_player_list;
+	this->data.current_team = nullptr;
+
 	this->labels.team_list.setText("Participating teams"); // TODO TRANSLATE
 	this->labels.team_list.setBuddy(&this->team_list);
 	this->buttons.remove_team.setAutoDefault(true);
@@ -112,6 +117,10 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		&QLineEdit::returnPressed,
 		[this]() {
 			const QString input = this->team_list_input.text();
+			if (this->data.player_lists.contains(input))
+				return;
+
+			this->data.player_lists.insert(input, new QListWidget);
 			this->team_list_input.clear();
 			this->add_team(&input);
 		}
@@ -123,36 +132,60 @@ editorwindow::EditorWindow::EditorWindow(void) {
 		&this->team_list,
 		&QListWidget::itemSelectionChanged,
 		[this]() {
-			this->buttons.remove_team.setEnabled(
-				!this->team_list.selectedItems().isEmpty()
-			);
-
+			// Determine new selected item. (1)
 			const QList<QListWidgetItem *> selected_items =
 				this->team_list.selectedItems();
 
+			// Hide Remove Team button if there are no teams.
 			if (selected_items.isEmpty()) {
-				this->labels.player_list.setText("Players of"); // TODO TRANSLATE
+				this->buttons.remove_team.setEnabled(false);
 				this->player_list_frame.setEnabled(false);
+				this->labels.player_list.setText("Players of"); // TODO TRANSLATE
+				// TODO NOW
+				//this->layouts.player_list.replaceWidget(
+				//	this->data.current_team,
+				//	&this->default_player_list
+				//);
 				return;
-			} else {
-				this->player_list_frame.setEnabled(true);
 			}
 
+			// Unhide Remove Team button if there are yes teams.
+			this->buttons.remove_team.setEnabled(true);
+			this->player_list_frame.setEnabled(true);
+
+			// Determine new selected item. (2)
 			QListWidgetItem *item = selected_items.first();
 			if (!item) return;
 
+			// Deconstruct widget step by step to find the label of the selected item.
 			const QWidget *card = this->team_list.itemWidget(item);
 			const QHBoxLayout *layout = qobject_cast<QHBoxLayout *>(card->layout());
 			const QLabel *label = qobject_cast<QLabel *>(layout->itemAt(0)->widget());
 
 			if (!label) return;
-			this->labels.player_list.setText("Players of " + label->text()); // TODO TRANSLATE
+			this->data.current_team = label->text();
+			this->labels.player_list.setText(
+				"Players of " + this->data.current_team
+			); // TODO TRANSLATE
 
-			// TODO NOW
-			this->layouts.player_list.replaceWidget(
-				this->data.selected_team,
-				this->data.player_lists.find(label)
-			);
+			// Replace player list with the one of the new team.
+			QListWidget *new_list =
+				this->data.player_lists.value(this->data.current_team);
+			for(int i=0; i < new_list->count(); i++) { // TODO TEST
+				// TODO NOTE it is there but no text is home :(
+				QListWidgetItem *item = new_list->item(i);
+				QWidget *card = new_list->itemWidget(item);
+				QString text = qobject_cast<QLabel *>(card)->text();
+
+				printf("ITEM %d. %s\n", i, text.toStdString().c_str());
+			}
+			printf("---\n");
+			this->layouts.player_list.replaceWidget(this->data.current_players, new_list);
+			// TODO COMMENT
+			this->data.current_players->hide();
+			new_list->show();
+			this->layouts.player_list.invalidate();
+			this->data.current_players = new_list;
 		}
 	);
 
@@ -165,14 +198,36 @@ editorwindow::EditorWindow::EditorWindow(void) {
 			for (QListWidgetItem *item : selected) {
 				int32_t row = this->team_list.row(item);
 				QListWidgetItem *removed = this->team_list.takeItem(row);
+
+				const QString text = removed->text();
+
+				// TODO NOW
+				// i have a fundamental logical flaw in how i reference list items
+				// ie there is a different type in the QHash
+				//
+				// maybe you should move this code too
+				if (this->data.player_lists.value(text) == this->data.current_players) {
+					this->layouts.player_list.replaceWidget(
+						this->data.current_players,
+						&this->default_player_list
+					);
+					// TODO COMMENT
+					this->data.current_players->hide();
+					this->default_player_list.show();
+					this->layouts.player_list.invalidate();
+					this->data.current_team = nullptr;
+				}
+
 				delete removed;  // also deletes associated widget
+				delete this->data.player_lists.value(text);
+				this->data.player_lists.remove(text);
 			}
 		}
 	);
 
 	// Player list
 	this->labels.player_list.setText("Players of"); // TODO TRANSLATE
-	this->labels.player_list.setBuddy(&this->player_list);
+	this->labels.player_list.setBuddy(this->data.current_players);
 	this->buttons.remove_player.setAutoDefault(true);
 	this->buttons.remove_player.setText("Remove");
 	this->buttons.remove_player.setDisabled(true);
@@ -182,7 +237,7 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->layouts.player_list_input.addWidget(&this->buttons.remove_player);
 
 	this->layouts.player_list.addWidget(&this->labels.player_list);
-	this->layouts.player_list.addWidget(&this->player_list);
+	this->layouts.player_list.addWidget(this->data.current_players);
 	this->layouts.player_list.addLayout(&this->layouts.player_list_input);
 
 	this->player_list_frame.setLayout(&this->layouts.player_list);
@@ -190,6 +245,32 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	this->player_list_frame.setFrameShadow(QFrame::Plain);
 	this->player_list_frame.setLineWidth(1);
 	this->player_list_frame.setEnabled(false);
+
+	// Add string to player list when pressing Return/Enter in the role text field
+	QObject::connect(
+		&this->player_list_input,
+		&QLineEdit::returnPressed,
+		[this]() {
+			const QString input = this->player_list_input.text();
+			this->player_list_input.clear();
+			this->add_player(&input);
+			// TODO NOW remove all useless occurences of this->data.current_team
+		}
+	);
+
+	// Remove the selected player when button is clicked
+	QObject::connect(
+		&this->buttons.remove_player,
+		&QPushButton::clicked,
+		[this]() {
+			QList<QListWidgetItem *> selected = this->data.current_players->selectedItems();
+			for (QListWidgetItem *item : selected) {
+				int32_t row = this->data.current_players->row(item);
+				QListWidgetItem *removed = this->data.current_players->takeItem(row);
+				delete removed;  // also deletes associated widget
+			}
+		}
+	);
 
 	// Game list
 	this->labels.game_list.setText("Games"); // TODO TRANSLATE
@@ -250,15 +331,11 @@ editorwindow::EditorWindow::EditorWindow(void) {
 	//
 	// games (list)
 
-	// TODO PLAN NOW
-	// add and remove games
-	// add and remove teams
-	// add and remove players
-	// proceed
+	// TODO ADD check whether given json address doesnt point to an existing file
 }
 
 void
-editorwindow::EditorWindow::select_address(void) {
+EditorWindow::select_address(void) {
 	const QString filter = "JSON Files (*.json)";
 	QFileDialog dialog(nullptr, "Select tournament", nullptr, filter);
 	dialog.setNameFilter(filter);
@@ -269,7 +346,7 @@ editorwindow::EditorWindow::select_address(void) {
 }
 
 void
-editorwindow::EditorWindow::add_role(const QString *input) {
+EditorWindow::add_role(const QString *input) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QLabel *const card = new QLabel(*input);
 
@@ -279,7 +356,7 @@ editorwindow::EditorWindow::add_role(const QString *input) {
 }
 
 void
-editorwindow::EditorWindow::add_team(const QString *input) {
+EditorWindow::add_team(const QString *input) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QWidget *const card = new QWidget;
 	QHBoxLayout *const layout = new QHBoxLayout(card);
@@ -313,7 +390,17 @@ editorwindow::EditorWindow::add_team(const QString *input) {
 }
 
 void
-editorwindow::EditorWindow::add_game(void) {
+EditorWindow::add_player(const QString *input) {
+	QListWidgetItem *const item = new QListWidgetItem;
+	QLabel *const card = new QLabel(*input);
+
+	item->setSizeHint(card->sizeHint());
+	this->data.current_players->addItem(item);
+	this->data.current_players->setItemWidget(item, card);
+}
+
+void
+EditorWindow::add_game(void) {
 	QListWidgetItem *const item = new QListWidgetItem;
 	QWidget *const card = new QWidget;
 	QHBoxLayout *const layout = new QHBoxLayout(card);

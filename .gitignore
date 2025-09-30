@@ -10,3 +10,5 @@ interscore
 project.seer
 replays/
 *.o
+win-pacman/msys2-root/
+backend

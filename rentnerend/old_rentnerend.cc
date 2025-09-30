@@ -1,9 +1,9 @@
-#ifndef _MSC_VER
-extern "C" {
-   void quick_exit(int);
-   void at_quick_exit(void (*func)(void));
-}
-#endif
+// #ifndef _MSC_VER
+// extern "C" {
+//    void quick_exit(int);
+//    void at_quick_exit(void (*func)(void));
+// }
+// #endif
 
 #include <QtWidgets/QApplication>
 #include <QtMultimedia/QAudioOutput>
@@ -24,6 +24,7 @@ extern "C" {
 
 #include "../config.h"
 #include "../common.h"
+//#include "qaudiooutput.h"
 
 #define TIME_UPDATE_INTERVAL_MS 1000
 
@@ -89,7 +90,7 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
-#define URL "ws://localhost:8081?client=rentner"
+#define URL "wss://mminl.de/ws/"
 
 void update_input_window();
 void update_display_window();
@@ -105,8 +106,8 @@ struct mg_connection *server_con = NULL;
 bool server_connected = false;
 struct mg_mgr mgr;
 // TODO CHECK if you can allocate in the stack
-QMediaPlayer *player = new QMediaPlayer;
-QAudioOutput *audio_output = new QAudioOutput;
+QMediaPlayer *player;
+QAudioOutput *audio_output;
 
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
@@ -304,6 +305,11 @@ void websocket_send_json(const char *s) {
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
 	switch(ev) {
+	case MG_EV_CONNECT: {
+		printf("DOING TLS\n");
+		struct mg_tls_opts opts = {.ca = mg_unpacked("/etc/ssl/certs/ca-certificates.crt")};
+		mg_tls_init(c, &opts);
+	}
 	case MG_EV_WS_OPEN: {
 		printf("WebSocket conenction established!\n");
 		server_con = c;
@@ -794,6 +800,9 @@ void json_autosave() {
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
+
+	player = new QMediaPlayer;
+	audio_output = new QAudioOutput;
 
 	//Set up the Audio Source for the player
 	player->setAudioOutput(audio_output);
