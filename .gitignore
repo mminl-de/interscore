@@ -9,3 +9,4 @@ rentnerend/interscore
 interscore
 project.seer
 replays/
+*.o
