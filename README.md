@@ -6,6 +6,7 @@ A livestream system for Cycleball that includes an OBS overlay, software for the
 The OBS overlay is a single HTML file launched via the Browser source.
 The DOM contents are controlled via the WebSocket protocol using a CLI server program, meant for admins.
 Another client uses Qt6 and is meant for the referees and the public display in the hall. The can change the HTML contents by using the server as the middleman.
+Another client is a android app, which controls the contents or "widgets" of the Stream/HTML file. It also has the ability to trigger replays.
 
 Tournament metadata (competing teams, timer lengths, game plan) is fed using a JSON file.
 
