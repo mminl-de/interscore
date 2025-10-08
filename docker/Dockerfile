@@ -19,13 +19,14 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libxtst6 \
     libgtk-3-0 \
+	python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Arbeitsverzeichnis
 WORKDIR /app
 
 # Backend reinkopieren
-COPY backend .
+COPY ./backend .
 RUN chmod +x /app/backend
 
 #OBS User erstellen
@@ -34,7 +35,7 @@ RUN useradd -m obsuser && \
 
 # OBS reinkopieren
 WORKDIR /home/obsuser
-COPY obs /home/obsuser/
+COPY docker/obs /home/obsuser/
 RUN chmod +x /home/obsuser/obs && \
 	chown obsuser:obsuser /home/obsuser/obs
 USER obsuser
@@ -44,12 +45,20 @@ RUN	ln -s /home/obsuser/squashfs-root/AppRun /usr/bin/obs
 
 
 # OBS config reinkopieren
-COPY obs-config/ /home/obsuser/.config/obs-studio/
+COPY docker/obs-config/ /home/obsuser/.config/obs-studio/
 RUN	chown -R obsuser:obsuser /home/obsuser/.config/ && \
 	chmod -R 700 /home/obsuser/.config/
 
+# frontend reinkopieren
+RUN mkdir -p /home/obsuser/frontend/
+COPY new-frontend/ /home/obsuser/frontend/frontend/
+COPY assets/ /home/obsuser/frontend/assets/
+COPY MessageType.js /home/obsuser/frontend/MessageType.js
+RUN	chown -R obsuser:obsuser /home/obsuser/frontend/ && \
+	chmod -R 700 /home/obsuser/frontend/
+
 # Supervisor-Config reinkopieren
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Standard-Command
 CMD ["/usr/bin/supervisord", "-n"]

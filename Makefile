@@ -27,19 +27,17 @@ b-install:
 	$(CC) -o $(OUT) $(SRC) \
 	-Oz $(CFLAGS) -s \
 	-ljson-c \
-	cp backend docker-new/backend
 
 b-debug:
 	$(CC) -o $(OUT) $(SRC) \
 	$(CFLAGS) -g \
 	-ljson-c
-	cp backend docker-new/backend
 
 b-fast:
 	$(CC) -o $(OUT) $(SRC) \
 	-fshort-enums \
-	-lm -ljson-c
-	cp backend docker-new/backend
+	-lm -ljson-c \
+	-D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto
 
 b-run:
 	./$(OUT)
@@ -68,12 +66,14 @@ js:
 js-new:
 	tsc --target es2017 new-frontend/script.ts
 
+# DEPRECATED
 obs-install:
 	mkdir -p ~/.config/obs-studio/basic/profiles
 	mkdir -p ~/.config/obs-studio/basic/scenes
 	cp obs/scenes/radball.json ~/.config/obs-studio/basic/scenes/
 	cp -r obs/profiles/radball/ ~/.config/obs-studio/basic/profiles/
 
+# DEPRECATED
 nginx-install:
 	mkdir -p /etc/nginx/
 	cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.old || true
@@ -81,4 +81,4 @@ nginx-install:
 
 clean:
 	[ -f input.old.json ] && mv input.old.json input.json
-	rm -f rentnerend/interscore-rentnerend interscore frontend/script.js input.old.json
+	rm -f backend rentnerend/interscore-rentnerend interscore frontend/script.js input.old.json

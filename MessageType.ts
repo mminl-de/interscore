@@ -1,3 +1,5 @@
+// Also dont forget to edit MessageType enum class in remoteend!
+
 export enum MessageType {
 	WIDGET_SCOREBOARD_SHOW,
 	WIDGET_SCOREBOARD_HIDE,

@@ -18,8 +18,8 @@ This project was made for our personal use prior to a Cycleball tournament under
 - Android App: https://github.com/mminl-de/interscore-remoteend
 - cycleball.eu library: https://github.com/mminl-de/cycleu
 
-## Usage (legacy)
-### Linux:
+## Usage
+### Linux (legacy):
 1. `git clone --recursive https://github.com/hiimsergey/interscore && cd interscore`
 2. Compile the frontend script and the binaries with `make js b-install r-old`.
 3. Fill out `input.json` given the template at `input.template.json`.
@@ -38,6 +38,17 @@ This project was made for our personal use prior to a Cycleball tournament under
 16. Set up the correct IP in the app
 17. connect and now you can toggle all widgets and replays
 
+### Docker-Hosten
+The current version is tailord to my server setup. A vps for static IP, connection to a dommainname. OBS hosted on a PC with dynamic IP and enough CPU/GPU Power to run obs and stream. This will be abstracted/automated in the future to be more flexible and easy to setup.
+0. The VPS needs a user (interscore-tunnel) for which the Host-PC has a ssh-key.
+1. make sure all ports are open on the VPS (8081, 4444)
+2. `make b-install js-new`
+3. cd docker/
+4. Download obs binary with WebSocket support into ./ as obs
+5. Change the path to the .ssh folder in the Makefile (default /home/mrmine/.ssh/) for yours
+6. make build run
+Also you'll need an nginx server somewhere with an rtmp config (see docker/nginx.conf rtmp section). Be aware that you need an nginx version with rtmp-module activated! It can be run anywhere, on the Docker-PC on the VPS or even on a third machine. Hosting on the VPS has the nice effect that the rtmp link is static. Then you need to edit the rtmp links both in docker/obs-config/basic/scenes/radball.json and on the device you stream from(Phone/GoPro)
+
 ## Demonstrations
 - https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)
 
@@ -52,7 +63,6 @@ This project was made for our personal use prior to a Cycleball tournament under
 ## meta
 - FINAL Checkliste for streams
 - FINAL^2 assets folder in seperate repo (only logos)
-- Anleitung um docker aufzusetzen und nginx ws weiterleitung usw für die domain
 
 ## frontend
 - URGENT Reversing der anzeige, je nach Kameraposition
@@ -137,22 +147,23 @@ This project was made for our personal use prior to a Cycleball tournament under
 - flat design language
 
 ## backend
-- OBS Replays sind noch bisschen buggy irgendwie
 - FINAL make json_load resilient to bad input.json
-- FINAL FINAL graceful Ctrl-C handling
 - FINAL^4 add ability to count time up(+verlängerung) for other sports
 - FINAL^4 abstract program so it's applicable for other games
 
-## OBS
+## Docker
+### Misc
+- Check if we cant extract the appimage before building the docker image...
+### OBS
 - Make replay System work properly, test it throughly
 - Find a robust solution to combat delay (like blinking square)
-- Make docker image and let remoteend/rentnerend remotely start a stream-session
+- Let remoteend/rentnerend remotely start a stream-session
 - Better UI for replays
 - Better Transition-Animations
+- Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
 
 ## Remoteend
 - Add Ability to start and end replay of a game
-- FINAL Look into possibility of preview
 - FINAL Waterboard remoteend (dont kill websocket connection)
 - FINAL server sends widgets status (on/off)
 - FINAL Display Gamerelated information:
@@ -160,7 +171,6 @@ This project was made for our personal use prior to a Cycleball tournament under
 	- Connection Status of all Clients (backend, rentnerend, frontend)
 	- OBS Scene / replay situation
 - FINAL FINAL Add different replay possibilities (?? make setting for: speed of replay, length of replay)
-- FINAL FINAL hybrid auto search for server/hardcoded ip (autosearch with popup and ability to ignore)(later autoconnect to server-urls)
 - FINAL FINAL Allow changing/select Streaming Service
 - FINAL FINAL basically clone capabilities of rentnerend, so we dont actually need rentnerend if not wanted
 	- Change input.json (e.g. Gameplan order, later create whole input.json with remoteend, import from cycleball.eu)

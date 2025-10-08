@@ -40,7 +40,7 @@ typedef unsigned int u32;
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
-#define URL "http://0.0.0.0:8081"
+#define URL "ws://0.0.0.0:8081"
 #define OBS_URL "http://0.0.0.0:4444"
 const char *REPLAY_PATH  = "/home/flame/prg/interscore/replays";
 
@@ -65,7 +65,7 @@ bool ad_on = false;
 
 void obs_send_cmd(const char *s){
 	if(con_obs == NULL){
-		printf("WARNING: Cant send command, OBS is not connected!\n");
+		printf("WARN: Cant send command, OBS is not connected!\n");
 		return;
 	}
 	mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
@@ -74,7 +74,7 @@ void obs_send_cmd(const char *s){
 //message is allowed to be non null-terminated. Therefor the len as arg
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
-		printf("WARNING: client is not connected, couldnt send Message: '%*s'\n", len, message);
+		printf("WARN: client is not connected, couldnt send Message: '%*s'\n", len, message);
 		return false;
 	}
 	return mg_ws_send(con, message, len, op) == len;
@@ -93,8 +93,8 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 //}
 
 void run_system(void *s){
-	printf("RUNNING: %s\n", (char*)s);
-	printf("RET CODE: %d", system((char*)s));
+	printf("INFO: Running System CMD: %s\n", (char*)s);
+	printf("INFO: CMD Return Value: %d", system((char*)s));
 }
 
 int make_directory(const char *path) {
@@ -106,7 +106,11 @@ int make_directory(const char *path) {
 }
 
 void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con){
-	printf("received a Input: %d\n", *input_type);
+	char con_name[20];
+	if(con==con_rentner) strcpy(con_name, "rentnerend");
+	else if(con==con_front) strcpy(con_name, "frontend");
+	else if(con==con_remote) strcpy(con_name, "remoteend");
+	printf("INFO: Received a Input from %s: %d\n", con_name, *input_type);
 	switch (*input_type) {
 		// All of these cases should be forwarded to frontend
 		case WIDGET_SCOREBOARD_SHOW:
@@ -136,7 +140,7 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			break;
 		}
 		case DATA_TIME: // Same syntax as TIME_TOGGLE_PAUSE as it also ships time as u16 after the MessageType
-			printf("Received DATA: Time\n");
+			printf("INFO: Received DATA: Time\n");
 		case TIME_TOGGLE_PAUSE: {
 			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
 			break;
@@ -147,17 +151,17 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			break;
 		}
 		case DATA_GAMEINDEX: {
-			printf("Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
+			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
 			gameindex = ((char *)input_type)[1];
 			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
 		case DATA_IS_PAUSE: // TODO MERGE TO ONE AGAIN
-			printf("Received DATA: IS_PAUSE\n");
+			printf("INFO: Received DATA: IS_PAUSE\n");
 			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		case DATA_HALFTIME: {
-			printf("Received DATA: DATA_HALFTIME\n");
+			printf("INFO: Received DATA: DATA_HALFTIME\n");
 			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
 			break;
 		}
@@ -170,7 +174,7 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			break;
 		}
 		case DATA_JSON: {
-			printf("Received DATA: JSON\n");
+			printf("INFO: Received DATA: JSON\n");
 			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
 			break;
 		}
@@ -202,7 +206,7 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			//After we save the replay we copy it to the games directory
 			sprintf(s2, "cp -r '%s/instant-replay.mkv' '%s/game_%02d/replay-%05d.mkv'",
 			        REPLAY_PATH, REPLAY_PATH, gameindex, replays_count[gameindex]);
-			printf("s2: %s\n", s2);
+			printf("INFO: Replay cp Command: %s\n", s2);
 			mg_timer_add(&mgr_obs, base_delay+400, 0, run_system, s2);
 			break;
 		}
@@ -224,10 +228,10 @@ void obs_switch_scene(void *scene_name){
 void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	switch(ev) {
 	case MG_EV_CONNECT:
-        printf("Connected to OBS WebSocket server\n");
+        printf("INFO: Connected to OBS WebSocket server\n");
 		break;
 	case MG_EV_WS_OPEN:
-        printf("WebSocket handshake completed\n");
+        printf("INFO: OBS WebSocket handshake completed\n");
         con_obs = con;  // Save the connection
 	    const char *identify_msg = "{\"op\": 1, \"d\": {\"rpcVersion\": 1, \"eventSubscriptions\": 255}}";
     	mg_ws_send(con_obs, identify_msg, strlen(identify_msg), WEBSOCKET_OP_TEXT);
@@ -237,7 +241,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		break;
 	}
 	case MG_EV_CLOSE:
-        printf("WebSocket connection closed\n");
+        printf("INFO: OBS WebSocket connection closed\n");
 		con_obs = NULL;
 		break;
 	// Signals not worth logging
@@ -248,7 +252,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	case MG_EV_HTTP_HDRS:
 		break;
 	default:
-		printf("Ignoring unknown signal (client) %d ...\n", ev);
+		printf("WARN: Ignoring unknown signal from OBS: %d \n", ev);
 	}
 }
 
@@ -256,39 +260,55 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	// TODO FINAL CONSIDER keeping these cases
 	switch (ev) {
 		case MG_EV_CONNECT:
-			printf("New client connected!\n");
+			printf("INFO: New client connecting...\n");
 			break;
 		case MG_EV_ACCEPT:
-			printf("Connection accepted!\n");
+			printf("INFO: New client connected!\n");
 			break;
-		case MG_EV_CLOSE:
-			printf("Client disconnected!\n");
-			con_front = NULL; // TODO wtf is this, why does it always disconnect front
+		case MG_EV_CLOSE: {
+			char con_name[20];
+			if(con==con_rentner) {
+				strcpy(con_name, "rentnerend");
+				con_rentner = NULL;
+			} else if(con==con_front) {
+				strcpy(con_name, "frontend");
+				con_front = NULL;
+			} else if(con==con_remote) {
+				strcpy(con_name, "remoteend");
+				con_remote = NULL;
+			}
+			printf("WARN: Client %s disconnected!\n", con_name);
 			break;
+		}
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
 			//We have to know which client is connecting (frontend/rentnerend)
 			//Therefor we extract the query parameter as seen below.
 			//FRONTEND URL: http://0.0.0.0:8081?client=frontend
 			//RENTNEREND URL: http://0.0.0.0:8081
-			//REMOTEEND URL: http://0.0.0.0:8081 // TODO make this work properly
+			//REMOTEEND URL: http://0.0.0.0:8081?client=remoteend // TODO make this work properly
 			//TODO FINAL make this not suck
 			char client_type[20];
     		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
-			printf("Clienttype: %s\n", client_type);
+			printf("INFO: Clienttype: %s\n", client_type);
 			if(!strcmp(client_type, "frontend")){
+				printf("INFO: New Client is frontend!\n");
 				con_front = con;
+			} else if(!strcmp(client_type, "remoteend")){
+				printf("INFO: New Client is remoteend!\n");
+				con_remote = con;
 			} else if(client_type[0] == '\0'){
+				printf("INFO: New Client is rentnerend!\n");
 				con_rentner = con;
 			} else{
-				printf("ERROR: Unknown Client is trying to connect!\n");
+				printf("WARN: Unknown Client is trying to connect! Closing Connection\n");
 				con->is_closing = true;
 				break;
 			}
 
 			//TODO check if upgrade is successfull
 			mg_ws_upgrade(con, hm, NULL);
-			printf("Client upgraded to WebSocket connection!\n");
+			printf("INFO: Client upgraded to WebSocket connection!\n");
 
 			// Get latest and greatest information from rentnerend
 			sleep(1); // TODO NOW we cant send requests this rapidly. Destroys json and everything else
@@ -305,7 +325,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			break;
 		}
 		case MG_EV_WS_OPEN:
-			printf("Connection opened!\n");
+			printf("INFO: New connection opened!\n");
 			//con_front = con;
 			break;
 		case MG_EV_WS_MSG: {
@@ -323,7 +343,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		case MG_EV_HTTP_HDRS:
 			break;
 		default:
-			printf("Ignoring unknown signal (server) %d ...\n", ev);
+			printf("WARN: Ignoring unknown WS_Signal from client: %d\n", ev);
 	}
 }
 
@@ -350,10 +370,10 @@ int main(void) {
 
 	char str[MAX_PATH_LEN];
 	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
-	printf("making dir: %s\n", str);
+	printf("INFO: Creating dir: %s\n", str);
 	system(str);
 
-	printf("Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
+	printf("INFO: Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
 
 	while (running) {
 		char temp = 0;
@@ -431,7 +451,7 @@ int main(void) {
 			}
 			case CONNECT_OBS:
 				mg_ws_connect(&mgr_obs, OBS_URL, ev_handler_client, NULL, NULL);
-				printf("Trying to connect to OBS...\n");
+				printf("INFO: Trying to connect to OBS...\n");
 				break;
 			case PRINT_HELP:
 				printf(
@@ -460,7 +480,7 @@ int main(void) {
 				break;
 			case '\n': break;
 			default:
-				printf("Invalid input!\n");
+				printf("WARN: Invalid input!\n");
 		}
 	}
 

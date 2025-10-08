@@ -1,5 +1,5 @@
 build:
-	docker build -t obs-ws .
+	docker buildx build -t obs-ws -f Dockerfile ../
 run:
 	docker run -it -v /home/mrmine/.ssh:/root/.ssh:ro obs-ws
 debug:

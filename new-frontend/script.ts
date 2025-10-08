@@ -10,8 +10,8 @@ import { MessageType } from "../MessageType.js"
 // TODO decide what to do when rentnerend goes to ENDE ENDE (add gameindex and handle it everywhere?)
 
 
-let socket = new WebSocket("ws://localhost:8081?client=frontend", "interscore")
-socket.binaryType = "arraybuffer"
+let socket: WebSocket
+let reconnect_timer: number | null = null;
 
 const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
 const scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
@@ -670,208 +670,217 @@ function update_ui() {
 	if (shown.ad) return //write_ad() //TODO This does not exist, right?
 }
 
-socket.onopen = () => console.log("Connected to WebSocket server!")
+function connect() {
+	socket = new WebSocket("ws://0.0.0.0:8081?client=frontend", "interscore")
+	socket.binaryType = "arraybuffer"
 
-socket.onmessage = (event: MessageEvent) => {
-	if (!(event.data instanceof ArrayBuffer)) {
-		console.error("The backend didn't send proper binary data. There's nothing we can do...")
-		return
+	socket.onopen = () => console.log("Connected to WebSocket server!")
+
+	socket.onmessage = (event: MessageEvent) => {
+		if (!(event.data instanceof ArrayBuffer)) {
+			console.error("The backend didn't send proper binary data. There's nothing we can do...")
+			return
+		}
+
+		const dv = new DataView(event.data as ArrayBuffer)
+		const mode = dv.getUint8(0)
+
+		switch (mode) {
+			case MessageType.WIDGET_SCOREBOARD_SHOW:
+				shown.scoreboard = true
+				scoreboard.style.display = "inline-flex"
+				scoreboard.style.opacity = "0" // TODO READ why is this line present on both show and hide
+				setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW)
+				write_scoreboard()
+				break
+			case MessageType.WIDGET_SCOREBOARD_HIDE:
+				shown.scoreboard = false
+				scoreboard.style.opacity = "0"
+				setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE)
+				break
+			case MessageType.WIDGET_GAMEPLAN_SHOW:
+				shown.gameplan = true
+				gameplan.style.display = "inline-flex"
+				gameplan.style.opacity = "0"
+				setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW)
+				write_gameplan()
+				break
+			case MessageType.WIDGET_GAMEPLAN_HIDE:
+				shown.gameplan = false
+				gameplan.style.opacity = "0"
+				setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE)
+				break
+			case MessageType.WIDGET_LIVETABLE_SHOW:
+				shown.liveplan = true
+				livetable.style.display = "inline-flex"
+				livetable.style.opacity = "0"
+				setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW)
+				write_livetable()
+				break
+			case MessageType.WIDGET_LIVETABLE_HIDE:
+				shown.liveplan = false
+				livetable.style.opacity = "0"
+				setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE)
+				break
+			case MessageType.WIDGET_GAMESTART_SHOW:
+				shown.gamestart = true
+				gamestart.style.display = "flex"
+				gamestart.style.opacity = "0"
+				setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW)
+				write_gamestart()
+				break
+			case MessageType.WIDGET_GAMESTART_HIDE:
+				shown.gamestart = false
+				gamestart.style.opacity = "0"
+				setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE)
+				break
+			case MessageType.WIDGET_AD_SHOW: // TODO does this work?
+				shown.ad = true
+				ad.style.display = "block"
+				ad.style.opacity = "0"
+				setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW)
+				break
+			case MessageType.WIDGET_AD_HIDE:
+				shown.ad = false
+				ad.style.opacity = "0"
+				setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
+				break
+			case MessageType.T1_SCORE_PLUS:
+				md.games[md.cur.gameindex].score.t1++
+				update_ui()
+				break
+			case MessageType.T1_SCORE_MINUS:
+				if (md.games[md.cur.gameindex].score.t1 > 0) {
+					md.games[md.cur.gameindex].score.t1--
+					update_ui()
+				}
+				break
+			case MessageType.T2_SCORE_PLUS:
+				md.games[md.cur.gameindex].score.t2++
+				update_ui()
+				break
+			case MessageType.T2_SCORE_MINUS:
+				if (md.games[md.cur.gameindex].score.t2 > 0) {
+					md.games[md.cur.gameindex].score.t2--
+					update_ui()
+				}
+				break
+			case MessageType.GAME_NEXT:
+				if (md.cur.gameindex < md.games.length - 1) {
+					md.cur.gameindex++
+					update_ui()
+				}
+				break
+			case MessageType.GAME_PREV:
+				if (md.cur.gameindex > 0) {
+					md.cur.gameindex--
+					update_ui()
+				}
+				break
+			case MessageType.GAME_SWITCH_SIDES:
+				// TODO ASK should this signal be independent of the halftime signal?
+				md.cur.halftime = !md.cur.halftime
+				update_ui()
+				break
+			case MessageType.TIME_PLUS_1:
+				// TODO Disallow time changes this when we are not paused?
+				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+				md.cur.pausestart = -1
+				md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS)
+				update_ui()
+				break
+			case MessageType.TIME_MINUS_1:
+				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+				md.cur.pausestart = -1
+				if (md.cur.time > 0) {
+					md.cur.time -= (1_000 / TIME_UPDATE_INTERVAL_MS)
+					update_ui()
+				}
+				break
+			case MessageType.TIME_PLUS_20:
+				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+				md.cur.pausestart = -1
+				md.cur.time += 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
+				update_ui()
+				break
+			case MessageType.TIME_MINUS_20:
+				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
+				md.cur.pausestart = -1
+				if (md.cur.time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
+					md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
+					else
+					md.cur.time = 0
+				update_ui()
+				break
+			case MessageType.TIME_TOGGLE_PAUSE:
+				console.log("Pausing now")
+				md.cur.pause = true
+				md.cur.pausestart = dv.getUint16(1, true) // TODO ASK why offset 1
+				break
+			case MessageType.TIME_TOGGLE_UNPAUSE:
+				// ^ TODO ASK why
+				md.cur.pausestart = -1
+				md.cur.pause = false
+				break
+			case MessageType.TIME_RESET:
+				md.cur.time = md.deftime
+				update_ui()
+				break
+			case MessageType.YELLOW_CARD:
+				card.style.display = "flex"
+				card.style.opacity = "0"
+				setTimeout(() => card.style.opacity = "1", 10)
+				write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
+				break
+			case MessageType.RED_CARD:
+				card.style.display = "flex"
+				card.style.opacity = "0"
+				setTimeout(() => card.style.opacity = "1", 10)
+				write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
+				break
+			case MessageType.DATA_TIME:
+				md.cur.pausestart = -1
+				console.log("Received DATA time: ", dv.getUint16(1, true)) // TODO ASK why this offset
+				md.cur.time = dv.getUint16(1, true) // TODO ASK why this offset
+				update_ui()
+				break
+			case MessageType.DATA_IS_PAUSE:
+				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1) // TODO ASK just why this offset
+				md.cur.pause = dv.getUint8(1) === 1
+				break
+			case MessageType.DATA_HALFTIME:
+				console.log("Received DATA Halftime: ", dv.getUint8(1) === 1)
+				md.cur.halftime = dv.getUint8(1) === 1
+				break
+			case MessageType.DATA_GAMEINDEX:
+				// ^ TODO CONSIDER RENAME
+				console.log("Received DATA Gameindex: ", dv.getUint8(1))
+				md.cur.gameindex = dv.getUint8(1)
+				break
+			case MessageType.DATA_JSON:
+				// ^ TODO CONSIDER RENAME
+				console.log("Received DATA Gameindex")
+				const decoder = new TextDecoder("utf-8")
+				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
+				parse_json(str)
+				update_ui()
+				break
+			//case MessageType.SCOREBOARD_SET_TIMER:
+			// TODO This is actually useful, implement in rentnerend
+			// TODO make this work
+			//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
+			//	break
+		}
 	}
 
-	const dv = new DataView(event.data as ArrayBuffer)
-	const mode = dv.getUint8(0)
-
-	switch (mode) {
-		case MessageType.WIDGET_SCOREBOARD_SHOW:
-			shown.scoreboard = true
-			scoreboard.style.display = "inline-flex"
-			scoreboard.style.opacity = "0" // TODO READ why is this line present on both show and hide
-			setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW)
-			write_scoreboard()
-			break
-		case MessageType.WIDGET_SCOREBOARD_HIDE:
-			shown.scoreboard = false
-			scoreboard.style.opacity = "0"
-			setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE)
-			break
-		case MessageType.WIDGET_GAMEPLAN_SHOW:
-			shown.gameplan = true
-			gameplan.style.display = "inline-flex"
-			gameplan.style.opacity = "0"
-			setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW)
-			write_gameplan()
-			break
-		case MessageType.WIDGET_GAMEPLAN_HIDE:
-			shown.gameplan = false
-			gameplan.style.opacity = "0"
-			setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE)
-			break
-		case MessageType.WIDGET_LIVETABLE_SHOW:
-			shown.liveplan = true
-			livetable.style.display = "inline-flex"
-			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW)
-			write_livetable()
-			break
-		case MessageType.WIDGET_LIVETABLE_HIDE:
-			shown.liveplan = false
-			livetable.style.opacity = "0"
-			setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE)
-			break
-		case MessageType.WIDGET_GAMESTART_SHOW:
-			shown.gamestart = true
-			gamestart.style.display = "flex"
-			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW)
-			write_gamestart()
-			break
-		case MessageType.WIDGET_GAMESTART_HIDE:
-			shown.gamestart = false
-			gamestart.style.opacity = "0"
-			setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE)
-			break
-		case MessageType.WIDGET_AD_SHOW: // TODO does this work?
-			shown.ad = true
-			ad.style.display = "block"
-			ad.style.opacity = "0"
-			setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW)
-			break
-		case MessageType.WIDGET_AD_HIDE:
-			shown.ad = false
-			ad.style.opacity = "0"
-			setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
-			break
-		case MessageType.T1_SCORE_PLUS:
-			md.games[md.cur.gameindex].score.t1++
-			update_ui()
-			break
-		case MessageType.T1_SCORE_MINUS:
-			if (md.games[md.cur.gameindex].score.t1 > 0) {
-				md.games[md.cur.gameindex].score.t1--
-				update_ui()
-			}
-			break
-		case MessageType.T2_SCORE_PLUS:
-			md.games[md.cur.gameindex].score.t2++
-			update_ui()
-			break
-		case MessageType.T2_SCORE_MINUS:
-			if (md.games[md.cur.gameindex].score.t2 > 0) {
-				md.games[md.cur.gameindex].score.t2--
-				update_ui()
-			}
-			break
-		case MessageType.GAME_NEXT:
-			if (md.cur.gameindex < md.games.length - 1) {
-				md.cur.gameindex++
-				update_ui()
-			}
-			break
-		case MessageType.GAME_PREV:
-			if (md.cur.gameindex > 0) {
-				md.cur.gameindex--
-				update_ui()
-			}
-			break
-		case MessageType.GAME_SWITCH_SIDES:
-			// TODO ASK should this signal be independent of the halftime signal?
-			md.cur.halftime = !md.cur.halftime
-			update_ui()
-			break
-		case MessageType.TIME_PLUS_1:
-			// TODO Disallow time changes this when we are not paused?
-			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-			md.cur.pausestart = -1
-			md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS)
-			update_ui()
-			break
-		case MessageType.TIME_MINUS_1:
-			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-			md.cur.pausestart = -1
-			if (md.cur.time > 0) {
-				md.cur.time -= (1_000 / TIME_UPDATE_INTERVAL_MS)
-				update_ui()
-			}
-			break
-		case MessageType.TIME_PLUS_20:
-			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-			md.cur.pausestart = -1
-			md.cur.time += 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
-			update_ui()
-			break
-		case MessageType.TIME_MINUS_20:
-			if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-			md.cur.pausestart = -1
-			if (md.cur.time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
-				md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
-				else
-				md.cur.time = 0
-			update_ui()
-			break
-		case MessageType.TIME_TOGGLE_PAUSE:
-			console.log("Pausing now")
-			md.cur.pause = true
-			md.cur.pausestart = dv.getUint16(1, true) // TODO ASK why offset 1
-			break
-		case MessageType.TIME_TOGGLE_UNPAUSE:
-			// ^ TODO ASK why
-			md.cur.pausestart = -1
-			md.cur.pause = false
-			break
-		case MessageType.TIME_RESET:
-			md.cur.time = md.deftime
-			update_ui()
-			break
-		case MessageType.YELLOW_CARD:
-			card.style.display = "flex"
-			card.style.opacity = "0"
-			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
-			break
-		case MessageType.RED_CARD:
-			card.style.display = "flex"
-			card.style.opacity = "0"
-			setTimeout(() => card.style.opacity = "1", 10)
-			write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
-			break
-		case MessageType.DATA_TIME:
-			md.cur.pausestart = -1
-			console.log("Received DATA time: ", dv.getUint16(1, true)) // TODO ASK why this offset
-			md.cur.time = dv.getUint16(1, true) // TODO ASK why this offset
-			update_ui()
-			break
-		case MessageType.DATA_IS_PAUSE:
-			console.log("Received DATA is_pause: ", dv.getUint8(1) === 1) // TODO ASK just why this offset
-			md.cur.pause = dv.getUint8(1) === 1
-			break
-		case MessageType.DATA_HALFTIME:
-			console.log("Received DATA Halftime: ", dv.getUint8(1) === 1)
-			md.cur.halftime = dv.getUint8(1) === 1
-			break
-		case MessageType.DATA_GAMEINDEX:
-			// ^ TODO CONSIDER RENAME
-			console.log("Received DATA Gameindex: ", dv.getUint8(1))
-			md.cur.gameindex = dv.getUint8(1)
-			break
-		case MessageType.DATA_JSON:
-			// ^ TODO CONSIDER RENAME
-			console.log("Received DATA Gameindex")
-			const decoder = new TextDecoder("utf-8")
-			const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
-			parse_json(str)
-			update_ui()
-			break
-		//case MessageType.SCOREBOARD_SET_TIMER:
-		// TODO This is actually useful, implement in rentnerend
-		// TODO make this work
-		//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
-		//	break
+	socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
+	socket.onclose = () => {
+		console.log("WebSocket connection closed! Reconnecting in 3s");
+		reconnect_timer = window.setTimeout(connect, 3000);
 	}
 }
 
-socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
-socket.onclose = () => console.log("WebSocket connection closed!")
-
+connect()
 async_handle_time()
 console.log("Client loaded!")
 

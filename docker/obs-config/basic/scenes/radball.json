@@ -80,10 +80,11 @@
             "id": "browser_source",
             "versioned_id": "browser_source",
             "settings": {
-                "is_local_file": true,
-                "local_file": "/home/mrmine/prg/interscore/frontend/index.html",
+                "is_local_file": false,
+                "local_file": "/home/obsuser/frontend/index.html",
                 "width": 1920,
-                "height": 1080
+                "height": 1080,
+				"url": "http://localhost:8080/frontend/index.html"
             },
             "mixers": 255,
             "sync": 0,
@@ -477,7 +478,7 @@
             "settings": {
                 "input_format": "",
                 "hw_decode": false,
-                "input": "rtmp://localhost:1935/live/test",
+                "input": "rtmp://mminl.de:1935/live/stream1",
                 "seekable": false,
                 "ffmpeg_options": "-fflags nobuffer -flags low_delay -framedrop -analyzeduration 0 -sync ext -rtmp_buffer 5 -infbuf",
                 "is_local_file": false,

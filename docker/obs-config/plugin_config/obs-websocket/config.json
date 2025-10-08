@@ -1,6 +1,6 @@
 {
   "alerts_enabled": false,
-  "auth_required": false,
+  "auth_required": true,
   "first_load": false,
   "server_enabled": true,
   "server_password": "ZNYgH580fmDGXP2KGRQj",

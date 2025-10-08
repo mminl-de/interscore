@@ -12,4 +12,4 @@ replays/
 *.o
 win-pacman/msys2-root/
 backend
-docker-new/obs
+docker/obs
