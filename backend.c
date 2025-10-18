@@ -40,6 +40,7 @@ typedef unsigned int u32;
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
+//TODO NOW make these --server-url and --obs-url
 #define URL "ws://0.0.0.0:8081"
 #define OBS_URL "http://0.0.0.0:4444"
 const char *REPLAY_PATH  = "/home/flame/prg/interscore/replays";

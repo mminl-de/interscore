@@ -147,6 +147,7 @@ Also you'll need an nginx server somewhere with an rtmp config (see docker/nginx
 - flat design language
 
 ## backend
+- Decide if Stream Number should be given as ENV_VAR or arg
 - FINAL make json_load resilient to bad input.json
 - FINAL^4 add ability to count time up(+verlängerung) for other sports
 - FINAL^4 abstract program so it's applicable for other games
