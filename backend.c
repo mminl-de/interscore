@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
+#include <stdlib.h>
 #include "mongoose/mongoose.h"
 
 #if defined(_WIN32)
@@ -12,8 +13,6 @@
     #include <sys/stat.h>
     #include <sys/types.h>
 #endif
-
-#include "config.h"
 
 // This define just wipes the export making the num definition c and c++ legal
 // while typescript can just use the file. This way we only have to keep track
@@ -40,10 +39,13 @@ typedef unsigned int u32;
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
-//TODO NOW make these --server-url and --obs-url
-#define URL "ws://0.0.0.0:8081"
-#define OBS_URL "http://0.0.0.0:4444"
-const char *REPLAY_PATH  = "/home/flame/prg/interscore/replays";
+#define URL_SERVER_DEFAULT "ws://0.0.0.0:8081"
+#define URL_OBS_DEFAULT "http://0.0.0.0:4444"
+#define REPLAY_PATH_DEFAULT "/home/obs/replays"
+
+char *URL_SERVER = NULL;
+char *URL_OBS = NULL;
+char *REPLAY_PATH = NULL;
 
 void obs_switch_scene(void *scene_name);
 
@@ -356,25 +358,82 @@ void *mongoose_update(void *arg) {
 	return NULL;
 }
 
-int main(void) {
+void die(char *error, int retval) {
+	fprintf(stderr, "CRIT: %s\n", error);
+	exit(retval);
+}
+
+int main(int argc, char *argv[]) {
+
+	// Check for args
+	for (int i=1; i < argc; i++) {
+		if (!strcmp(argv[i], "--url-server")) {
+			if (argc <= i+1)
+				die("Syntax: --url-server <url> needs an url...", EXIT_FAILURE);
+			URL_SERVER = malloc(sizeof(argv[i+1] + 1));
+			// If the path has a trailing '/' we remove it
+			// The rest of the program expects the path to have no trailing '/'
+			if (argv[i+1][strlen(argv[i+1])-1] == '/')
+				argv[i+1][strlen(argv[i+1])-1] = '\0';
+			strcpy(URL_SERVER, argv[i+1]);
+			i++;
+		} else if(!strcmp(argv[i], "--url-obs")) {
+			if (argc <= i+1)
+				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
+			URL_OBS = malloc(sizeof(argv[i+1] + 1));
+			strcpy(URL_OBS, argv[i+1]);
+			i++;
+		} else if(!strcmp(argv[i], "--replay-path")) {
+			if (argc <= i+1)
+				die("Syntax: --replay-path <url> needs an path...", EXIT_FAILURE);
+			REPLAY_PATH = malloc(sizeof(argv[i+1] + 1));
+			strcpy(REPLAY_PATH, argv[i+1]);
+			i++;
+		} else {
+			die("Syntax: Unknown Argument! Usage: backend <--url-server/--url-obs/--replay-path> <url/path>", EXIT_FAILURE);
+		}
+	}
+
+	// If Arguments were not provided we use defaults
+	if (URL_SERVER == NULL) {
+		URL_SERVER = malloc(sizeof(URL_SERVER_DEFAULT) + 1);
+		strcpy(URL_SERVER, URL_SERVER_DEFAULT);
+	}
+	if (URL_OBS == NULL) {
+		URL_OBS = malloc(sizeof(URL_OBS_DEFAULT) + 1);
+		strcpy(URL_OBS, URL_OBS_DEFAULT);
+	}
+	if (REPLAY_PATH == NULL) {
+		REPLAY_PATH = malloc(sizeof(REPLAY_PATH_DEFAULT) + 1);
+		strcpy(REPLAY_PATH, REPLAY_PATH_DEFAULT);
+	}
+
+	printf("DEGUB: URL_SERVER  = %s\n", URL_SERVER);
+	printf("DEGUB: URL_OBS     = %s\n", URL_OBS);
+	printf("DEGUB: REPLAY_PATH = %s\n", REPLAY_PATH);
+
+	// Create Replay Path if not already existing
+	char str[strlen(REPLAY_PATH) + 100]; // 100 is enough
+	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
+	printf("INFO: Creating Replay Path: %s\n", str);
+	system(str);
+
+	// WebSocket as Client(OBS) stuff
+	mg_mgr_init(&mgr_obs);
+	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+	printf("INFO: Trying to connect to OBS...\n");
+
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);
-	mg_http_listen(&mgr_svr, URL, ev_handler_server, NULL);
+	mg_http_listen(&mgr_svr, URL_SERVER, ev_handler_server, NULL);
 	pthread_t thread;
 	if (pthread_create(&thread, NULL, mongoose_update, NULL) != 0) {
 		fprintf(stderr, "ERROR: Failed to create thread for updating the connection!");
 		goto cleanup;
 	}
-	// WebSocket as Client(OBS) stuff
-	mg_mgr_init(&mgr_obs);
 
+	printf("INFO: Server loaded!\n");
 
-	char str[MAX_PATH_LEN];
-	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
-	printf("INFO: Creating dir: %s\n", str);
-	system(str);
-
-	printf("INFO: Server loaded!\n\x1b[33mDon't forget to connect to OBS!\x1b[0m\n");
 
 	while (running) {
 		char temp = 0;
@@ -451,7 +510,7 @@ int main(void) {
 				break;
 			}
 			case CONNECT_OBS:
-				mg_ws_connect(&mgr_obs, OBS_URL, ev_handler_client, NULL, NULL);
+				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
 				printf("INFO: Trying to connect to OBS...\n");
 				break;
 			case PRINT_HELP:
@@ -492,5 +551,8 @@ int main(void) {
 cleanup:
 	mg_mgr_free(&mgr_svr);
 	mg_mgr_free(&mgr_obs);
+	free(URL_OBS);
+	free(URL_SERVER);
+	free(REPLAY_PATH);
 	return 0;
 }
