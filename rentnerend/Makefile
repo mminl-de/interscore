@@ -26,13 +26,6 @@ win64-old:
 		-o interscore.exe $(OLD_SRC) \
 		$(CXXFLAGS) $(WIN_LD_FLAGS) \
 
-win32-old:
-	../win-pacman/copy_msys2_to_system.sh
-	clang --target=i686-windows-gnu -static \
-		-static-libgcc -static-libstdc++ \
-		$(CXXFLAGS) $(LD_FLAGS) \
-		-o interscore.exe $(OLD_SRC)
-
 install:
 	$(CXX) -o $(OUT) $(SRC) -O3 $(CXXFLAGS) $(LD_FLAGS) -s
 

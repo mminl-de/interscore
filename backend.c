@@ -1,18 +1,12 @@
 // TODO rewrite in zig :(
+#include <errno.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <json-c/json.h>
 #include <json-c/json_object.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mongoose/mongoose.h"
-
-#if defined(_WIN32)
-    #include <direct.h>
-    #define mkdir(path, mode) _mkdir(path)
-#else
-    #include <sys/stat.h>
-    #include <sys/types.h>
-#endif
 
 // This define just wipes the export making the num definition c and c++ legal
 // while typescript can just use the file. This way we only have to keep track
@@ -66,6 +60,11 @@ bool livetable_on = false;
 bool gamestart_on = false;
 bool ad_on = false;
 
+void die(char *error, int retval) {
+	fprintf(stderr, "CRIT: %s\n", error);
+	exit(retval);
+}
+
 void obs_send_cmd(const char *s){
 	if(con_obs == NULL){
 		printf("WARN: Cant send command, OBS is not connected!\n");
@@ -98,14 +97,6 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 void run_system(void *s){
 	printf("INFO: Running System CMD: %s\n", (char*)s);
 	printf("INFO: CMD Return Value: %d", system((char*)s));
-}
-
-int make_directory(const char *path) {
-	#if defined(_WIN32)
-		return _mkdir(path);
-	#else
-		return mkdir(path, 0755);  // or 0755 for more restrictive perms
-	#endif
 }
 
 void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con){
@@ -190,6 +181,7 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			break;
 		}
 		case OBS_REPLAY_START: {
+			// TODO refactor this so it doesnt suck
 			int base_delay = 1000;
 			mg_timer_add(&mgr_obs, base_delay+500, 0, obs_switch_scene, "replay");
 			mg_timer_add(&mgr_obs, base_delay+6500, 0, obs_switch_scene, "live");
@@ -204,7 +196,10 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			//Create path (even if already existent bc its easier)
 			char path[200];
 			sprintf(path, "%s/game_%02d", REPLAY_PATH, gameindex);
-			make_directory(path);
+			// TODO DECIDE Should we die here? Probably not...
+			if (mkdir(path, 0755) == -1 && errno != EEXIST)
+				//die("CRIT: Cant Create Game Path!", EXIT_FAILURE);
+				printf("WARN: Couldnt Create Game Path!");
 
 			//After we save the replay we copy it to the games directory
 			sprintf(s2, "cp -r '%s/instant-replay.mkv' '%s/game_%02d/replay-%05d.mkv'",
@@ -358,35 +353,32 @@ void *mongoose_update(void *arg) {
 	return NULL;
 }
 
-void die(char *error, int retval) {
-	fprintf(stderr, "CRIT: %s\n", error);
-	exit(retval);
-}
 
 int main(int argc, char *argv[]) {
+	printf("test\n");
 
 	// Check for args
 	for (int i=1; i < argc; i++) {
 		if (!strcmp(argv[i], "--url-server")) {
 			if (argc <= i+1)
 				die("Syntax: --url-server <url> needs an url...", EXIT_FAILURE);
-			URL_SERVER = malloc(sizeof(argv[i+1] + 1));
-			// If the path has a trailing '/' we remove it
-			// The rest of the program expects the path to have no trailing '/'
-			if (argv[i+1][strlen(argv[i+1])-1] == '/')
-				argv[i+1][strlen(argv[i+1])-1] = '\0';
+			URL_SERVER = malloc(strlen(argv[i+1]) + 1);
 			strcpy(URL_SERVER, argv[i+1]);
 			i++;
 		} else if(!strcmp(argv[i], "--url-obs")) {
 			if (argc <= i+1)
 				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
-			URL_OBS = malloc(sizeof(argv[i+1] + 1));
+			URL_OBS = malloc(strlen(argv[i+1]) + 1);
 			strcpy(URL_OBS, argv[i+1]);
 			i++;
 		} else if(!strcmp(argv[i], "--replay-path")) {
 			if (argc <= i+1)
 				die("Syntax: --replay-path <url> needs an path...", EXIT_FAILURE);
-			REPLAY_PATH = malloc(sizeof(argv[i+1] + 1));
+			// If the path has a trailing '/' we remove it
+			// The rest of the program expects the path to have no trailing '/'
+			if (argv[i+1][strlen(argv[i+1])-1] == '/')
+				argv[i+1][strlen(argv[i+1])-1] = '\0';
+			REPLAY_PATH = malloc(strlen(argv[i+1]) + 1);
 			strcpy(REPLAY_PATH, argv[i+1]);
 			i++;
 		} else {
@@ -408,15 +400,19 @@ int main(int argc, char *argv[]) {
 		strcpy(REPLAY_PATH, REPLAY_PATH_DEFAULT);
 	}
 
-	printf("DEGUB: URL_SERVER  = %s\n", URL_SERVER);
-	printf("DEGUB: URL_OBS     = %s\n", URL_OBS);
-	printf("DEGUB: REPLAY_PATH = %s\n", REPLAY_PATH);
-
-	// Create Replay Path if not already existing
-	char str[strlen(REPLAY_PATH) + 100]; // 100 is enough
-	sprintf(str, "mkdir -p %s/last-game", REPLAY_PATH);
-	printf("INFO: Creating Replay Path: %s\n", str);
-	system(str);
+	// Create Replay Paths if not already existing
+	if (mkdir(REPLAY_PATH, 0755) == -1 && errno != EEXIST) {
+		printf("ERRNO: %s", strerror(errno));
+		die("Cant create directory for Replays!", EXIT_FAILURE);
+	}
+	printf("INFO: Created directory for Replays: %s\n", REPLAY_PATH);
+	char last_game_path[strlen(REPLAY_PATH) + strlen("/last-game")];
+	sprintf(last_game_path, "%s/last-game", REPLAY_PATH);
+	if (mkdir(last_game_path, 0755) == -1 && errno != EEXIST) {
+		printf("ERRNO: %s", strerror(errno));
+		die("Cant create replay directory for last-game!", EXIT_FAILURE);
+	}
+	printf("INFO: Created Replay directory for last-game: %s\n", last_game_path);
 
 	// WebSocket as Client(OBS) stuff
 	mg_mgr_init(&mgr_obs);
