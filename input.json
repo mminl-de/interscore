@@ -1,202 +1,38 @@
 {
-  "time":360,
-  "teams":[
-    {
-      "name":"STEIN 1",
-      "logo":"assets\/stein.png",
-      "color":"#ffffff",
-      "players":[
-        {
-          "name":"Bernd Mlady",
-          "position":"field"
-        },
-        {
-          "name":"Raphael Kopp",
-          "position":"keeper"
-        }
-      ]
-    },
-    {
-      "name":"GROẞKOSCHEN",
-      "logo":"assets\/grosskoschen.png",
-      "color":"#ffffff",
-      "players":[
-        {
-          "name":"Tim Lehmann",
-          "position":"keeper"
-        },
-        {
-          "name":"Eric Lehmann",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"WALDREMS",
-      "logo":"assets\/waldrems.png",
-      "color":"#ffffff",
-      "players":[
-        {
-          "name":"Björn Bootsmann",
-          "position":"field"
-        },
-        {
-          "name":"Marcel Schule",
-          "position":"keeper"
-        }
-      ]
-    },
-    {
-      "name":"DENKENDORF",
-      "logo":"assets\/denkendorf.svg",
-      "color":"#ffffff",
-      "players":[
-        {
-          "name":"Valentin Notheis",
-          "position":"keeper"
-        },
-        {
-          "name":"Felix Weinert",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"STEIN 2",
-      "logo":"assets\/stein.png",
-      "color":"#2f3a64",
-      "players":[
-        {
-          "name":"Robert Mlady",
-          "position":"keeper"
-        },
-        {
-          "name":"Michael Birkner",
-          "position":"field"
-        }
-      ]
-    }
-  ],
-  "games":[
-    {
-      "team_1":"STEIN 1",
-      "team_2":"STEIN 2",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GROẞKOSCHEN",
-      "team_2":"WALDREMS",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"DENKENDORF",
-      "team_2":"STEIN 2",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"STEIN 1",
-      "team_2":"WALDREMS",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GROẞKOSCHEN",
-      "team_2":"DENKENDORF",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"WALDREMS",
-      "team_2":"STEIN 2",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"STEIN 1",
-      "team_2":"DENKENDORF",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GROẞKOSCHEN",
-      "team_2":"STEIN 2",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"WALDREMS",
-      "team_2":"DENKENDORF",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"STEIN 1",
-      "team_2":"GROẞKOSCHEN",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    }
-  ]
+	"meta": {
+		"game_len": 360,
+		"game_i": null,
+		"first_halftime": true,
+		"paused": false,
+		"cur_time": 4123432413,
+		"start_time": 4123432413
+	},
+	"teams": [
+		{
+			"name": "TEAM",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "PLAYER", "role": "POSITION" },
+				{ "name": "PLAYER", "role": "POSITION" }
+			],
+			"points": 0
+		}
+	],
+	"games": [
+		{
+			"1": {
+				"name": "TEAM"
+			},
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 0
+				}
+			},
+			"halftime_score": { "1": 0, "2": 0 },
+			"score": { "1": 0, "2": 0 }
+		}
+	]
 }

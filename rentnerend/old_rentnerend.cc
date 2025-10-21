@@ -798,6 +798,8 @@ void json_autosave() {
 	printf("INFO: Autosaved JSON successfully!\n");
 }
 
+} // extern "C"
+
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
@@ -817,7 +819,7 @@ int main(int argc, char *argv[]) {
 		QApplication::setFont(app_font);
 	}
 
-	char *json = common_read_file(JSON_PATH);
+	char *json = common_read_file(JSON_PATH); // TODO dont hardcode
 	json_load(json);
 	free(json);
 	matchday_init();
@@ -835,7 +837,10 @@ int main(int argc, char *argv[]) {
 	wi.w->show();
 
 	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
-	QObject::connect(shortcut, &QShortcut::activated, []() {printf("test\n"); btn_cb_time_toggle_pause();});
+	QObject::connect(shortcut, &QShortcut::activated, []() {
+		printf("test\n");
+		btn_cb_time_toggle_pause();
+	});
 
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
@@ -855,5 +860,3 @@ int main(int argc, char *argv[]) {
 	delete wi.w;
 	return stat;
 }
-
-} // extern "C"
