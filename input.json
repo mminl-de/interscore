@@ -4,8 +4,7 @@
 		"game_i": null,
 		"first_halftime": true,
 		"paused": false,
-		"cur_time": 4123432413,
-		"start_time": 4123432413
+		"cur_time": 100
 	},
 	"teams": [
 		{
@@ -13,8 +12,8 @@
 			"logo_path": "logo.png",
 			"color": "#bedbed",
 			"players": [
-				{ "name": "PLAYER", "role": "POSITION" },
-				{ "name": "PLAYER", "role": "POSITION" }
+				{ "name": "ALICE", "role": "POSITION" },
+				{ "name": "BOB", "role": "POSITION" }
 			],
 			"points": 0
 		}
@@ -32,7 +31,15 @@
 				}
 			},
 			"halftime_score": { "1": 0, "2": 0 },
-			"score": { "1": 0, "2": 0 }
+			"score": { "1": 0, "2": 0 },
+			"cards": [
+				{
+					"name": "BOB",
+					"type": "y",
+					"reason": "skill issue",
+					"timestamp": 13241243234
+				}
+			]
 		}
 	]
 }

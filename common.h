@@ -13,11 +13,10 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef int i32;
 
-enum CardType { YELLOW, RED };
 enum PlayerRole { KEEPER, FIELD };
 
 // This define just wipes the export making the num definition C and C++ legal
-// while typescript can just use the file. This way we only have to keep track
+// while TypeScript can just use the file. This way we only have to keep track
 // of one enum definition instead of 3.
 #define export
 #include "MessageType.ts"
@@ -31,7 +30,7 @@ typedef struct {
 
 typedef struct {
 	u8 player_index;
-	enum CardType card_type;
+	char *type;
 } Card;
 
 typedef struct {
@@ -51,7 +50,7 @@ typedef struct {
 typedef struct {
 	u8 t1_index;
 	u8 t2_index;
-	Score halftimescore;
+	Score halftime_score;
 	Score score;
 	Card *cards;
 	u8 cards_count;
@@ -61,7 +60,7 @@ typedef struct {
 typedef struct {
 	struct {
 		u16 game_len;
-		u8 gameindex; // index of the current game played in the games array.
+		u8 game_i; // index of the current game played in the games array.
 		bool halftime; // 0: first half, 1: second half
 		bool paused;
 		u16 cur_time;
@@ -81,11 +80,11 @@ void matchday_free();
 int player_index(const char *name);
 int team_index(const char *name);
 char *json_generate();
-void json_load(const char *path);
+void common_json_load_from_string(const char *path);
 char *common_read_file(const char *path);
 bool file_write(const char *path, const char *s);
 char *gettimems();
-u8 add_card(enum CardType type, u8 player_index);
+u8 add_card(char *type, u8 player_index);
 
 
 #ifdef __cplusplus
