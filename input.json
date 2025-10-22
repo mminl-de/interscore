@@ -8,17 +8,31 @@
 	},
 	"teams": [
 		{
+			"name": "MAET",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			],
+			"points": 0
+		},
+		{
 			"name": "TEAM",
 			"logo_path": "logo.png",
 			"color": "#bedbed",
 			"players": [
-				{ "name": "ALICE", "role": "POSITION" },
-				{ "name": "BOB", "role": "POSITION" }
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
 			],
 			"points": 0
 		}
 	],
 	"games": [
+		{
+			"1": { "name": "TEAM" },
+			"2": { "name": "MAET" }
+		},
 		{
 			"1": {
 				"name": "TEAM"

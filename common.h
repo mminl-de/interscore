@@ -13,8 +13,6 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef int i32;
 
-enum PlayerRole { KEEPER, FIELD };
-
 // This define just wipes the export making the num definition C and C++ legal
 // while TypeScript can just use the file. This way we only have to keep track
 // of one enum definition instead of 3.
@@ -36,7 +34,7 @@ typedef struct {
 typedef struct {
 	char *name;
 	u8 team_index;
-	enum PlayerRole role;
+	char *role;
 } Player;
 
 typedef struct {
