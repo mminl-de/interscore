@@ -29,8 +29,7 @@ export enum MessageType {
 	TIME_TOGGLE_PAUSE, // Additional: u16 = time from Matchday struct
 	TIME_TOGGLE_UNPAUSE,
 	TIME_RESET,
-	YELLOW_CARD, // Additional: u8 = index of player receiving Card
-	RED_CARD, // Additional: u8 = index of player receiving Card
+	PENALTY, // Additional: u8 = player index, char* = penalty type (null-terminated)
 //	SCOREBOARD_SET_TIMER,
 	PLS_SEND_CUR_GAMEINDEX,
 	PLS_SEND_CUR_HALFTIME,

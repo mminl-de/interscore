@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -17,13 +18,13 @@ void matchday_init() {
 		printf("There are no games, exiting\n");
 		exit(EXIT_FAILURE);
 	}
-	md.cur.gameindex = 0;
-	md.cur.halftime = 0;
-	md.cur.pause = true;
-	md.cur.time = md.deftime;
+	md.meta.game_i = 0;
+	md.meta.halftime = 0;
+	md.meta.paused = true;
+	md.meta.cur_time = md.meta.game_len;
 	for (u8 i = 0; i < md.games_count; i++) {
-		md.games[i].halftimescore.t1 = 0;
-		md.games[i].halftimescore.t2 = 0;
+		md.games[i].halftime_score.t1 = 0;
+		md.games[i].halftime_score.t2 = 0;
 		md.games[i].score.t1 = 0;
 		md.games[i].score.t2 = 0;
 		md.games[i].cards_count = 0;
@@ -32,28 +33,28 @@ void matchday_init() {
 }
 
 void matchday_free() {
-	for(int i=0; i < md.games_count; i++)
-		if(md.games[i].cards_count > 0)
+	for (int i = 0; i < md.games_count; i++)
+		if (md.games[i].cards_count > 0)
 			free(md.games[i].cards);
-	for(int i=0; i < md.players_count; i++)
+	for (int i = 0; i < md.players_count; i++)
 		free(md.players[i].name);
-	if(md.players_count > 0)
+	if (md.players_count > 0)
 		free(md.players);
-	if(md.games_count > 0)
+	if (md.games_count > 0)
 		free(md.games);
-	for(int i=0; i < md.teams_count; i++){
+	for (int i = 0; i < md.teams_count; i++) {
 		free(md.teams[i].name);
-		free(md.teams[i].logo_filename);
+		free(md.teams[i].logo_path);
 		free(md.teams[i].color);
 	}
-	if(md.teams_count > 0)
+	if (md.teams_count > 0)
 		free(md.teams);
 }
 
 // Return the index of a players name.
 // If the name does not exist, return -1.
 int player_index(const char *name) {
-	for (u8 i = 0; i < md.players_count; i++)
+	for (i32 i = 0; i < md.players_count; ++i)
 		if (!strcmp(md.players[i].name, name))
 			return i;
 	return -1;
@@ -62,57 +63,54 @@ int player_index(const char *name) {
 // Return the index of a team name.
 // If the name does not exist return -1.
 int team_index(const char *name) {
-	for (u8 i = 0; i < md.teams_count; i++)
+	for (i32 i = 0; i < md.teams_count; ++i)
 		if (!strcmp(md.teams[i].name, name))
 			return i;
 	return -1;
 }
 
 char* json_generate() {
-	struct json_object *root = json_object_new_object();
-	json_object_object_add(root, "time", json_object_new_int(md.deftime));
+	json_object *root = json_object_new_object();
+	json_object_object_add(root, "time", json_object_new_int(md.meta.game_len));
 
-	struct json_object *teams = json_object_new_array();
-	struct json_object *games = json_object_new_array();
-	for(int i=0; i < md.teams_count; i++){
-		struct json_object *team = json_object_new_object();
+	json_object *teams = json_object_new_array();
+	json_object *games = json_object_new_array();
+	for (int i = 0; i < md.teams_count; i++) {
+		json_object *team = json_object_new_object();
 		json_object_object_add(team, "name", json_object_new_string(md.teams[i].name));
-		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_filename));
+		json_object_object_add(team, "logo", json_object_new_string(md.teams[i].logo_path));
 		json_object_object_add(team, "color", json_object_new_string(md.teams[i].color));
-		struct json_object *players = json_object_new_array();
-		struct json_object *player1 = json_object_new_object();
+		json_object *players = json_object_new_array();
+		json_object *player1 = json_object_new_object();
 		json_object_object_add(player1, "name", json_object_new_string(md.players[md.teams[i].keeper_index].name));
 		json_object_object_add(player1, "position", json_object_new_string("keeper"));
 		json_object_array_add(players, player1);
-		struct json_object *player2 = json_object_new_object();
+		json_object *player2 = json_object_new_object();
 		json_object_object_add(player2, "name", json_object_new_string(md.players[md.teams[i].field_index].name));
 		json_object_object_add(player2, "position", json_object_new_string("field"));
 		json_object_array_add(players, player2);
 		json_object_object_add(team, "players", players);
 		json_object_array_add(teams, team);
 	}
-	for(int i=0; i < md.games_count; i++){
-		struct json_object *game = json_object_new_object();
+	for (int i = 0; i < md.games_count; i++) {
+		json_object *game = json_object_new_object();
 		json_object_object_add(game, "team_1", json_object_new_string(md.teams[md.games[i].t1_index].name));
 		json_object_object_add(game, "team_2", json_object_new_string(md.teams[md.games[i].t2_index].name));
-		struct json_object *halftimescore = json_object_new_object();
-		json_object_object_add(halftimescore, "team_1", json_object_new_int(md.games[i].halftimescore.t1));
-		json_object_object_add(halftimescore, "team_2", json_object_new_int(md.games[i].halftimescore.t2));
+		json_object *halftimescore = json_object_new_object();
+		json_object_object_add(halftimescore, "team_1", json_object_new_int(md.games[i].halftime_score.t1));
+		json_object_object_add(halftimescore, "team_2", json_object_new_int(md.games[i].halftime_score.t2));
 		json_object_object_add(game, "halftimescore", halftimescore);
-		struct json_object *score = json_object_new_object();
+		json_object *score = json_object_new_object();
 		json_object_object_add(score, "team_1", json_object_new_int(md.games[i].score.t1));
 		json_object_object_add(score, "team_2", json_object_new_int(md.games[i].score.t2));
 		json_object_object_add(game, "score", score);
 
-		if(md.games[i].cards_count > 0){
-			struct json_object *cards = json_object_new_array();
-			for(int j=0; j < md.games[j].cards_count; j++){
-				struct json_object *card = json_object_new_object();
-				json_object_object_add(card, "player", json_object_new_string(md.players[md.games[i].cards[j].player_index].name));
-				if(md.games[i].cards[j].card_type == 0)
-					json_object_object_add(card, "type", json_object_new_string("Y"));
-				else
-					json_object_object_add(card, "type", json_object_new_string("R"));
+		if (md.games[i].cards_count > 0) {
+			json_object *cards = json_object_new_array();
+			for (int card_i = 0; card_i < md.games[card_i].cards_count; ++card_i) {
+				json_object *card = json_object_new_object();
+				json_object_object_add(card, "player", json_object_new_string(md.players[md.games[i].cards[card_i].player_index].name));
+				json_object_object_add(card, "type", json_object_new_string(md.games[i].cards[card_i].type));
 				json_object_array_add(cards, card);
 			}
 			json_object_object_add(game, "cards", cards);
@@ -125,138 +123,301 @@ char* json_generate() {
 	return str;
 }
 
-void json_load(const char *s) {
+json_object *common_json_get_object(json_object *root, const char* key) {
+	json_object *jobj;
+	json_object_object_get_ex(root, key, &jobj);
+	return jobj;
+}
+i32 common_json_get_int(json_object *root, const char* key) {
+	json_object *jobj;
+	json_object_object_get_ex(root, key, &jobj);
+	return json_object_get_int(jobj);
+}
+const char *common_json_get_string(json_object *root, const char* key) {
+	json_object *jobj;
+	json_object_object_get_ex(root, key, &jobj);
+	return json_object_get_string(jobj);
+}
+
+void common_json_interpret_team(
+	json_object *game, u8 game_i,
+	const char *team_i, u8 *md_key
+) {
+	json_object *team_obj = common_json_get_object(game, team_i);
+
+	char *team_name;
+	bool team_name_is_owned = false;
+
+	const char *team_name_cand = common_json_get_string(team_obj, "name");
+	if (team_name_cand) strcpy(team_name, team_name_cand);
+	else {
+		team_name_is_owned = true;
+
+		json_object *query = common_json_get_object(team_obj, "query");
+		if (!query) {
+			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i + 1);
+			exit(EXIT_FAILURE);
+		}
+		const char *query_set = common_json_get_string(query, "set");
+		const u16 query_key = common_json_get_int(query, "key");
+
+		printf(" TODO query set is '%s'\n", query_set);
+		if (!strcmp(query_set, "TEAM")) {
+			const char *string_part = ".-bestes Team";
+			const u8 string_part_len = strlen(string_part);
+			team_name = malloc(3 + string_part_len + 1);
+			printf("TODO about to sprint team\n");
+			sprintf(team_name, "%3d%s", query_key + 1, string_part);
+		}
+		else if (!strcmp(query_set, "WINNER")) {
+			const char *string_part = "Gewinner von Spiel ";
+			const u8 string_part_len = strlen(string_part);
+			team_name = malloc(3 + string_part_len + 1);
+			printf("TODO about to sprint winner\n");
+			sprintf(team_name, "%s%3d", string_part, query_key + 1);
+		}
+		else if (!strcmp(query_set, "LOSER")) {
+			const char *string_part = "Verlierer von Spiel ";
+			const u8 string_part_len = strlen(string_part);
+			team_name = malloc(3 + string_part_len + 1);
+			printf("TODO about to sprint loser\n");
+			sprintf(team_name, "%s%3d", string_part, query_key + 1);
+		}
+		else if (!strcmp(query_set, "GROUP")) {
+			const char *query_group = common_json_get_string(query, "group");
+			if (!query_group) {
+				fprintf(stderr, "ERROR parsing JSON: Group query of team 1 of game %d has no group key! Exiting...\n", game_i + 1);
+				exit(EXIT_FAILURE);
+			}
+			const u8 query_group_len = strlen(query_group);
+
+			const char *string_part = ".-bestes Team aus Gruppe ";
+			const u8 string_part_len = strlen(string_part);
+			team_name = malloc(3 + string_part_len + query_group_len + 1);
+			printf("TODO about to sprint group\n");
+			sprintf(team_name, "%3d%s%s", query_key + 1, string_part, query_group);
+		} else {
+			fprintf(stderr, "ERROR parsing JSON: The query set key has to be one of either TEAM, WINNER, LOSER or GROUP! Exiting...\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	const i32 this_team_index = team_index(team_name);
+	if (this_team_index == -1 && !team_name_is_owned) {
+		fprintf(stderr, "ERROR parsing JSON: Team \"%s\" in game %d does not exist! Exiting...\n", team_name, game_i + 1);
+		exit(EXIT_FAILURE);
+	}
+
+	*md_key = this_team_index;
+	if (team_name_is_owned) free(team_name);
+}
+
+// TODO FINAL before exiting, make sure to free resources
+// TODO FINAL CONSIDER migrate to a struct-based json parsing strategy
+// TODO IMPLEMENT card reason and card timestamp
+void common_json_load_from_string(const char *s) {
+	printf("TODO hi\n");
 	// Then split json into teams and games
-	struct json_object *root = json_tokener_parse(s);
+	json_object *root = json_tokener_parse(s);
+	if (!root) {
+		fprintf(stderr, "ERROR parsing JSON: Syntax error! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
 
-	struct json_object *time = json_object_new_object();
-	json_object_object_get_ex(root, "time", &time);
-	md.deftime = json_object_get_int(time);
+	json_object *meta = common_json_get_object(root, "meta");
+	if (!meta) {
+		fprintf(stderr, "ERROR parsing JSON: Missing \"meta\" field! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
+	md.meta.game_len = common_json_get_int(meta, "game_len");
 
-	struct json_object *teams = json_object_new_array();
-	struct json_object *games = json_object_new_array();
-	json_object_object_get_ex(root, "teams", &teams);
-	json_object_object_get_ex(root, "games", &games);
+	json_object *teams = common_json_get_object(root, "teams");
+	if (!teams) {
+		fprintf(stderr, "ERROR parsing JSON: Missing \"teams\" field! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
+	json_object *games = common_json_get_object(root, "games");
+	if (!games) {
+		fprintf(stderr, "ERROR parsing JSON: Missing \"games\" field! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
 
 	md.teams_count = json_object_array_length(teams);
-	//Add decoy team for the decoy game at the end
-	md.teams = (Team *) malloc((md.teams_count+1) * sizeof(Team));
+	// Add decoy team for the decoy game at the end
+	md.teams = malloc((md.teams_count + 1) * sizeof(Team));
 
-	md.players_count = md.teams_count * 2;
-	md.players = (Player *) malloc(md.players_count * sizeof(Player));
+	json_object *first_team = json_object_array_get_idx(teams, 0);
+	if (!first_team) {
+		fprintf(stderr, "ERROR parsing JSON: The teams array is empty! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
+	json_object *first_team_players = common_json_get_object(first_team, "players");
+	if (!first_team_players) {
+		fprintf(stderr, "ERROR parsing JSON: The first team's player array is empty! Exiting...\n");
+		exit(EXIT_FAILURE);
+	}
+	const u8 team_size = json_object_array_length(first_team_players);
+
+	md.players_count = md.teams_count * team_size;
+	md.players = malloc(md.players_count * sizeof(Player));
+	printf("TODO hi\n");
 
 	// Read all the teams
-	for (int i=0; i < md.teams_count; i++) {
-		json_object *team, *logo, *players, *name, *color, *position;
-		team = json_object_array_get_idx(teams, i);
-		json_object_object_get_ex(team, "name", &name);
-		md.teams[i].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-		strcpy(md.teams[i].name, json_object_get_string(name));
+	for (int team_i = 0; team_i < md.teams_count; ++team_i) {
+		json_object *team = json_object_array_get_idx(teams, team_i);
 
-		json_object_object_get_ex(team, "logo", &logo);
-		md.teams[i].logo_filename = (char *) malloc(strlen(json_object_get_string(logo)) * sizeof(char));
-		strcpy(md.teams[i].logo_filename, json_object_get_string(logo));
+		const char *team_name = common_json_get_string(team, "name");
+		if (!team_name) {
+			fprintf(stderr, "ERROR parsing JSON: Team %d has no name! Exiting...\n", team_i);
+			exit(EXIT_FAILURE);
+		}
+		const u16 team_name_len = strlen(team_name);
+		md.teams[team_i].name = malloc((team_name_len + 1) * sizeof(char));
+		strcpy(md.teams[team_i].name, team_name);
+		md.teams[team_i].name[team_name_len] = '\0';
 
-		json_object_object_get_ex(team, "players", &players);
-		for(int j=0; j < json_object_array_length(players); j++){
-			json_object *player = json_object_array_get_idx(players, j);
-			json_object_object_get_ex(player, "name", &name);
-			md.players[i * 2+j].name = (char *) malloc(strlen(json_object_get_string(name)) * sizeof(char));
-			strcpy(md.players[i * 2+j].name, json_object_get_string(name));
-			md.players[i * 2+j].team_index = i;
-			json_object_object_get_ex(player, "position", &position);
-			if(!strcmp(json_object_get_string(position), "keeper")){
-				md.players[i * 2+j].role = KEEPER;
-				md.teams[i].keeper_index = i * 2+j;
-			} else if(!strcmp(json_object_get_string(position), "field")){
-				md.players[i * 2+j].role = FIELD;
-				md.teams[i].field_index = i * 2+j;
-			} else {
-				printf("ERROR parsing JSON: Unknown Position: %s. Exiting...", json_object_get_string(position));
-				exit(EXIT_FAILURE);
+		printf("TODO servus 2\n");
+		const char *logo_path = common_json_get_string(team, "logo_path");
+		const u16 logo_path_len = strlen(logo_path);
+		md.teams[team_i].logo_path = malloc((logo_path_len + 1) * sizeof(char));
+		strcpy(md.teams[team_i].logo_path, logo_path);
+		md.teams[team_i].logo_path[logo_path_len] = '\0';
+
+		printf("TODO servus 3\n");
+		json_object *players = common_json_get_object(team, "players");
+		for (int player_i = 0; player_i < json_object_array_length(players); ++player_i) {
+			printf("TODO privet 0\n");
+			json_object *player = json_object_array_get_idx(players, player_i);
+
+			printf("TODO privet 1\n");
+			const char *player_name = common_json_get_string(player, "name");
+			const u16 player_name_len = strlen(player_name);
+			md.players[team_i * team_size + player_i].name = malloc((player_name_len + 1) * sizeof(char));
+			strcpy(md.players[team_i * team_size + player_i].name, player_name);
+			md.players[team_i * team_size + player_i].name[player_name_len] = '\0';
+
+			printf("TODO privet 2\n");
+			md.players[team_i * team_size + player_i].team_index = team_i;
+
+			printf("TODO privet 3\n");
+			const char *role = common_json_get_string(player, "role");
+			if (role) {
+				const u8 role_len = strlen(role);
+				md.players[team_i * team_size + player_i].role = malloc((role_len + 1) * sizeof(char));
+				strcpy(md.players[team_i * team_size + player_i].role, role);
+
+				// TODO
+				if (!strcmp(role, "keeper")) md.teams[team_i].keeper_index = team_i * team_size + player_i;
+				else if (!strcmp(role, "field")) md.teams[team_i].field_index = team_i * team_size + player_i;
+				else {
+					fprintf(stderr, "ERROR So far, we don't allow other player roles besides \"keeper\" and \"field\" Stay tuned. Exiting...\n");
+					exit(EXIT_FAILURE);
+				}
 			}
 		}
 
-		json_object_object_get_ex(team, "color", &color);
-		md.teams[i].color = (char *) malloc(strlen(json_object_get_string(color)) *sizeof(char));
-		strcpy(md.teams[i].color, json_object_get_string(color));
+		printf("TODO servus 4\n");
+		const char *team_color = common_json_get_string(team, "color");
+		const u16 team_color_len = strlen(team_color);
+		md.teams[team_i].color = (char *) malloc((team_color_len + 1) * sizeof(char));
+		strcpy(md.teams[team_i].color, team_color);
+		md.teams[team_i].color[team_color_len] = '\0';
 	}
-	//Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
-	md.teams[md.teams_count].name = (char *) malloc(5 * sizeof(char));
+
+	// Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
+	md.teams[md.teams_count].name = malloc((4 + 1) * sizeof(char));
 	strcpy(md.teams[md.teams_count].name, "ENDE");
 	md.teams[md.teams_count].color = md.teams[0].color;
 	md.teams[md.teams_count].field_index = md.teams[0].field_index;
 	md.teams[md.teams_count].keeper_index = md.teams[0].keeper_index;
-	md.teams[md.teams_count].logo_filename = md.teams[0].logo_filename;
+	md.teams[md.teams_count].logo_path = md.teams[0].logo_path;
 
 	md.games_count = json_object_array_length(games);
 	// We alloc one game more, because its a filler game for the end
-	md.games = (Game *) malloc((md.games_count+1) * sizeof(Game));
+	md.games = malloc((md.games_count + 1) * sizeof(Game));
+	printf("TODO hi\n");
 
-	for(int i=0; i < md.games_count; i++){
-		json_object *team, *game;
-		game = json_object_array_get_idx(games, i);
-		json_object_object_get_ex(game, "team_1", &team);
-		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 1 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
-			exit(EXIT_FAILURE);
+	for (int game_i = 0; game_i < md.games_count; ++game_i) {
+		json_object *game = json_object_array_get_idx(games, game_i);
+
+		json_object *team_1 = common_json_get_object(game, "1");
+
+		common_json_interpret_team(game, game_i, "1", &md.games[game_i].t1_index);
+		common_json_interpret_team(game, game_i, "2", &md.games[game_i].t2_index);
+
+		json_object *halftime_score = common_json_get_object(game, "halftime_score");
+		if (halftime_score) {
+			const u8 score_1 = common_json_get_int(halftime_score, "1");
+			if (!score_1 && errno == EINVAL) {
+				fprintf(stderr, "ERROR parsing JSON: Game %d has a halftime score but lacks one for team 1! Exiting...\n", game_i);
+				exit(EXIT_FAILURE);
+			}
+			const u8 score_2 = common_json_get_int(halftime_score, "2");
+			if (!score_2 && errno == EINVAL) {
+				fprintf(stderr, "ERROR parsing JSON: Game %d has a halftime score but lacks one for team 2! Exiting...\n", game_i);
+				exit(EXIT_FAILURE);
+			}
+			md.games[game_i].halftime_score.t1 = score_1;
+			md.games[game_i].halftime_score.t2 = score_2;
 		}
-		md.games[i].t1_index = team_index(json_object_get_string(team));
-
-		json_object_object_get_ex(game, "team_2", &team);
-		if (team_index(json_object_get_string(team)) == -1) {
-			printf("Erorr parsing JSON: '%s' does not exist (teamname of Team 2 in Game %d). Exiting...\n", json_object_get_string(team), i + 1);
-			exit(EXIT_FAILURE);
-		}
-		md.games[i].t2_index = team_index(json_object_get_string(team));
-
-		json_object *halftimescore, *score, *cards, *var;
-		if (json_object_object_get_ex(game, "halftimescore", &halftimescore)) {
-			json_object_object_get_ex(halftimescore, "team_1", &var);
-			md.games[i].halftimescore.t1 = json_object_get_int(var);
-			json_object_object_get_ex(halftimescore, "team_2", &var);
-			md.games[i].halftimescore.t2 = json_object_get_int(var);
-		}
-		if (json_object_object_get_ex(game, "score", &score)) {
-			json_object_object_get_ex(score, "team_1", &var);
-			md.games[i].score.t1 = json_object_get_int(var);
-			json_object_object_get_ex(score, "team_2", &var);
-			md.games[i].score.t2 = json_object_get_int(var);
+		json_object *score = common_json_get_object(game, "score");
+		if (score) {
+			const u8 score_1 = common_json_get_int(score, "1");
+			if (!score_1 && errno == EINVAL) {
+				fprintf(stderr, "ERROR parsing JSON: Game %d has a score but lacks one for team 1! Exiting...\n", game_i);
+				exit(EXIT_FAILURE);
+			}
+			const u8 score_2 = common_json_get_int(score, "2");
+			if (!score_2 && errno == EINVAL) {
+				fprintf(stderr, "ERROR parsing JSON: Game %d has a score but lacks one for team 2! Exiting...\n", game_i);
+				exit(EXIT_FAILURE);
+			}
+			md.games[game_i].score.t1 = score_1;
+			md.games[game_i].score.t2 = score_2;
 		}
 
-		if (json_object_object_get_ex(game, "cards", &cards)) {
+		json_object *cards = common_json_get_object(game, "cards");
+		if (cards) {
+			md.games[game_i].cards_count = json_object_array_length(cards);
+			md.games[game_i].cards = malloc(md.games[game_i].cards_count * sizeof(Card));
 
-			md.games[i].cards_count = json_object_array_length(cards);
-			md.games[i].cards = (Card *) malloc(md.games[i].cards_count * sizeof(Card));
+			for (int card_i = 0; card_i < md.games[game_i].cards_count; ++card_i) {
+				json_object *card = json_object_array_get_idx(cards, card_i);
 
-			for(int j=0; j < md.games[i].cards_count; j++){
-				json_object *player, *type, *card;
-				card = json_object_array_get_idx(cards, j);
-				json_object_object_get_ex(card, "player", &player);
-				if (player_index(json_object_get_string(player)) == -1) {
-					printf("Erorr parsing JSON: '%s' does not exist (Playername of Card %d in Game %d). Exiting...\n", json_object_get_string(player), j+1, i + 1);
+				const char *player_name = common_json_get_string(card, "name");
+				if (!player_name) {
+					fprintf(stderr, "ERROR parsing JSON: Card %d does not feature a player name! Exiting...\n", game_i);
 					exit(EXIT_FAILURE);
 				}
-				md.games[i].cards[j].player_index = player_index(json_object_get_string(player));
 
-				json_object_object_get_ex(card, "type", &type);
-				if(strcmp(json_object_get_string(type), "Y"))
-					md.games[i].cards[j].card_type = YELLOW;
-				else if(strcmp(json_object_get_string(type), "R"))
-					md.games[i].cards[j].card_type = RED;
+				const i32 this_player_index = player_index(player_name);
+				if (this_player_index == -1) {
+					fprintf(stderr, "ERROR parsing JSON: Player '%s' mentioned in card %d of game %d does not exist! Exiting...\n", player_name, card_i, game_i);
+					exit(EXIT_FAILURE);
+				}
+				md.games[game_i].cards[card_i].player_index = this_player_index;
+
+				const char *type = common_json_get_string(card, "type");
+				if (type) md.games[game_i].cards[card_i].type = (char *) type; // TODO NOTE could be bad
+				else md.games[game_i].cards[card_i].type = (char *) "";
 			}
 		}
 	}
-	//Init Decoy-Game at the End
-	md.games[md.games_count].t1_index = md.teams_count;
-	md.games[md.games_count].t2_index = md.teams_count;
-	md.games[md.games_count].cards = NULL;
-	md.games[md.games_count].cards_count = 0;
-	md.games[md.games_count].score.t1 = 0;
-	md.games[md.games_count].score.t2 = 0;
-	md.games[md.games_count].halftimescore.t1 = 0;
-	md.games[md.games_count].halftimescore.t2 = 0;
-	return;
+
+	// Init decoy game at the end
+	const Game decoy_game = {
+		.t1_index = md.teams_count,
+		.t2_index = md.teams_count,
+		.halftime_score = { .t1 = 0, .t2 = 0 },
+		.score = { .t1 = 0, .t2 = 0 },
+		.cards = NULL,
+		.cards_count = 0,
+		.replays_count = 0
+	};
+	md.games[md.games_count] = decoy_game;
+
+	// Free resources
+	json_object_put(root);
 }
 
 // @ret the string of the whole content of the file. In case of an error: NULL
@@ -265,24 +426,24 @@ char* common_read_file(const char *path) {
 	// First convert path to actual string containing whole file
 	FILE *f = fopen(path, "rb");
 	if (f == NULL) {
-		printf("Json Input file is not available! Exiting...\n");
+		fprintf(stderr, "Json Input file is not available! Exiting...\n");
 		return NULL;
 	}
 	// seek to end to find length, then reset to the beginning
 	fseek(f, 0, SEEK_END);
-	u32 file_size = ftell(f);
+	const u32 file_size = ftell(f);
 	rewind(f);
 
-	char *filestring = (char *) malloc((file_size + 1) * sizeof(char));
+	char *filestring = (char *) malloc((file_size + 1) * sizeof(char)); // +1 for \0
 	if (filestring == NULL) {
-		printf("Not enough memory for loading json! Exiting...\n");
+		fprintf(stderr, "Not enough memory for loading json! Exiting...\n");
 		fclose(f);
 		return NULL;
 	}
 
 	u32 chars_read = fread(filestring, sizeof(char), file_size, f);
 	if (chars_read != file_size) {
-		printf("Could not read whole json file! Exiting...");
+		fprintf(stderr, "Could not read whole json file! Exiting...");
 		free(filestring);
 		fclose(f);
 		return NULL;
@@ -293,7 +454,7 @@ char* common_read_file(const char *path) {
 }
 
 //Write the string to the file in path. If the file exists, overwrite it. If not, create it
-bool file_write(const char *path, const char *s){
+bool file_write(const char *path, const char *s) {
 	FILE *f = fopen(path, "w");
 	if (f == NULL)
 		return false;
@@ -302,70 +463,23 @@ bool file_write(const char *path, const char *s){
 	return true;
 }
 
-void merge_sort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *)) {
-    if (num < 2) return;
-
-    size_t mid = num / 2;
-    void *left = malloc(mid * size);
-    void *right = malloc((num - mid) * size);
-
-    if (!left || !right) {
-        perror("Memory allocation failed");
-        exit(EXIT_FAILURE);
-    }
-
-    memcpy(left, base, mid * size);
-    memcpy(right, (char *)base + mid * size, (num - mid) * size);
-
-    merge_sort(left, mid, size, compar);
-    merge_sort(right, num - mid, size, compar);
-
-    // Merge two halves
-    size_t i = 0, j = 0, k = 0;
-    while (i < mid && j < num - mid) {
-        if (compar((char *)left + i * size, (char *)right + j * size) <= 0) {
-            memcpy((char *)base + k * size, (char *)left + i * size, size);
-            i++;
-        } else {
-            memcpy((char *)base + k * size, (char *)right + j * size, size);
-            j++;
-        }
-        k++;
-    }
-
-    while (i < mid) {
-        memcpy((char *)base + k * size, (char *)left + i * size, size);
-        i++;
-        k++;
-    }
-
-    while (j < num - mid) {
-        memcpy((char *)base + k * size, (char *)right + j * size, size);
-        j++;
-        k++;
-    }
-
-    free(left);
-    free(right);
-}
-
-char *gettimems(){
+char *gettimems() {
 	struct timeval t;
 	gettimeofday(&t, NULL);
-	char *s = (char *)malloc(20 * sizeof(char));
+	char *s = malloc(20 * sizeof(char));
 	sprintf(s, "%ld.%06ld", (long int)t.tv_sec, (long int)t.tv_usec);
 	return s;
 }
 
-u8 add_card(enum CardType type, u8 player_index){
-	const u8 cur = md.cur.gameindex;
+u8 add_card(char *type, u8 player_index) {
+	const u8 cur = md.meta.game_i;
 
 	if (md.games[cur].cards_count == 0)
-		md.games[cur].cards = (Card *)malloc(0 + 1 * sizeof(Card));
+		md.games[cur].cards = malloc(sizeof(Card));
 	else
-		md.games[cur].cards = (Card *)realloc(md.games[cur].cards, (md.games[cur].cards_count+1) * sizeof(Card));
+		md.games[cur].cards = realloc(md.games[cur].cards, (md.games[cur].cards_count+1) * sizeof(Card));
 
 	md.games[cur].cards[md.games[cur].cards_count].player_index = player_index;
-	md.games[cur].cards[md.games[cur].cards_count++].card_type = type;
+	strcpy(md.games[cur].cards[md.games[cur].cards_count++].type, type);
 	return md.games[cur].cards_count-1;
 }

@@ -28,8 +28,6 @@
 
 #define TIME_UPDATE_INTERVAL_MS 1000
 
-extern "C" {
-
 typedef struct {
 	QWidget *w;
 	struct {
@@ -94,7 +92,7 @@ typedef struct {
 
 void update_input_window();
 void update_display_window();
-void websocket_send_card(CardType type, int player_index);
+void websocket_send_card(char *type, u8 player_index);
 void websocket_send_button_signal(u8);
 void screen_input_toggle_visibility(bool hide);
 void ev_handler(struct mg_connection *c, int ev, void *p);
@@ -118,68 +116,68 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 }
 
 void btn_cb_t1_score_plus() {
-	if (!md.cur.halftime) {
-		md.games[md.cur.gameindex].score.t1++;
+	if (!md.meta.halftime) {
+		md.games[md.meta.game_i].score.t1++;
 		websocket_send_button_signal(T1_SCORE_PLUS);
 	} else {
-		md.games[md.cur.gameindex].score.t2++;
+		md.games[md.meta.game_i].score.t2++;
 		websocket_send_button_signal(T2_SCORE_PLUS);
 	}
 	update_input_window();
 	update_display_window();
 }
 void btn_cb_t1_score_minus() {
-	if (!md.cur.halftime) {
-		if (md.games[md.cur.gameindex].score.t1 > 0)
-			md.games[md.cur.gameindex].score.t1--;
+	if (!md.meta.halftime) {
+		if (md.games[md.meta.game_i].score.t1 > 0)
+			md.games[md.meta.game_i].score.t1--;
 		websocket_send_button_signal(T1_SCORE_MINUS);
 	} else {
-		if (md.games[md.cur.gameindex].score.t2 > 0)
-			md.games[md.cur.gameindex].score.t2--;
+		if (md.games[md.meta.game_i].score.t2 > 0)
+			md.games[md.meta.game_i].score.t2--;
 		websocket_send_button_signal(T2_SCORE_MINUS);
 	}
 	update_input_window();
 	update_display_window();
 }
 void btn_cb_t2_score_plus() {
-	if (!md.cur.halftime) {
-		md.games[md.cur.gameindex].score.t2++;
+	if (!md.meta.halftime) {
+		md.games[md.meta.game_i].score.t2++;
 		websocket_send_button_signal(T2_SCORE_PLUS);
 	} else {
-		md.games[md.cur.gameindex].score.t1++;
+		md.games[md.meta.game_i].score.t1++;
 		websocket_send_button_signal(T1_SCORE_PLUS);
 	}
 	update_input_window();
 	update_display_window();
 }
 void btn_cb_t2_score_minus() {
-	if (!md.cur.halftime) {
-		if (md.games[md.cur.gameindex].score.t2 > 0)
-			md.games[md.cur.gameindex].score.t2--;
+	if (!md.meta.halftime) {
+		if (md.games[md.meta.game_i].score.t2 > 0)
+			md.games[md.meta.game_i].score.t2--;
 		websocket_send_button_signal(T2_SCORE_MINUS);
 	} else {
-		if (md.games[md.cur.gameindex].score.t1 > 0)
-			md.games[md.cur.gameindex].score.t1--;
+		if (md.games[md.meta.game_i].score.t1 > 0)
+			md.games[md.meta.game_i].score.t1--;
 		websocket_send_button_signal(T1_SCORE_MINUS);
 	}
 	update_input_window();
 	update_display_window();
 }
 void btn_cb_game_next() {
-	if (md.cur.gameindex >= md.games_count)
+	if (md.meta.game_i >= md.games_count)
 		return;
-	md.cur.gameindex++;
-	if (md.cur.gameindex == md.games_count)
+	md.meta.game_i++;
+	if (md.meta.game_i == md.games_count)
 		screen_input_toggle_visibility(true);
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_NEXT);
 }
 void btn_cb_game_prev() {
-	if (md.cur.gameindex <= 0)
+	if (md.meta.game_i <= 0)
 		return;
-	md.cur.gameindex--;
-	if (md.cur.gameindex == md.games_count-1)
+	md.meta.game_i--;
+	if (md.meta.game_i == md.games_count-1)
 		screen_input_toggle_visibility(false);
 	else // TODO does this work?
 		websocket_send_button_signal(GAME_PREV);
@@ -187,68 +185,68 @@ void btn_cb_game_prev() {
 	update_display_window();
 }
 void btn_cb_game_switch_sides() {
-	md.cur.halftime = !md.cur.halftime;
+	md.meta.halftime = !md.meta.halftime;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
 void btn_cb_time_plus() {
-	if (!md.cur.pause)
+	if (!md.meta.paused)
 		return;
-	md.cur.time++;
+	md.meta.cur_time++;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_PLUS_1);
 }
 void btn_cb_time_minus() {
-	if (!md.cur.pause || md.cur.time <= 0)
+	if (!md.meta.paused || md.meta.cur_time <= 0)
 		return;
-	md.cur.time--;
+	md.meta.cur_time--;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS_1);
 }
 void btn_cb_time_plus20() {
-	if (!md.cur.pause)
+	if (!md.meta.paused)
 		return;
-	md.cur.time += 20;
+	md.meta.cur_time += 20;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_PLUS_20);
 }
 void btn_cb_time_minus20() {
-	if (!md.cur.pause)
+	if (!md.meta.paused)
 		return;
-	else if (md.cur.time < 20) md.cur.time = 0;
-	else md.cur.time -= 20;
+	else if (md.meta.cur_time < 20) md.meta.cur_time = 0;
+	else md.meta.cur_time -= 20;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS_20);
 }
 
 void btn_cb_time_toggle_pause() {
-	if (md.cur.time == 0)
+	if (md.meta.cur_time == 0)
 		return;
-	md.cur.pause = !md.cur.pause;
+	md.meta.paused = !md.meta.paused;
 	update_input_window();
 	update_display_window();
-	if(md.cur.pause) {
+	if(md.meta.paused) {
 		char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
 		str[0] = TIME_TOGGLE_PAUSE;
-		*((u16 *)(str+1)) = md.cur.time;
+		*((u16 *)(str+1)) = md.meta.cur_time;
 		ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 	} else
 		websocket_send_button_signal(TIME_TOGGLE_UNPAUSE);
 }
 void btn_cb_time_reset() {
-	md.cur.time = md.deftime;
-	md.cur.pause = true;
+	md.meta.cur_time = md.meta.game_len;
+	md.meta.paused = true;
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(TIME_RESET);
 	char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
 	str[0] = TIME_TOGGLE_PAUSE;
-	*((u16 *)(str+1)) = md.cur.time;
+	*((u16 *)(str+1)) = md.meta.cur_time;
 	ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 }
 
@@ -256,8 +254,8 @@ void btn_cb_red_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
 	if (player_index == -1)
 		return;
-	add_card(RED, player_index);
-	websocket_send_card(RED, player_index);
+	add_card((char *) "red", player_index);
+	websocket_send_card((char *) "red", player_index);
 	wi.dd_card_players->setCurrentIndex(0);
 }
 
@@ -265,8 +263,8 @@ void btn_cb_yellow_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
 	if (player_index == -1)
 		return;
-	add_card(YELLOW, player_index);
-	websocket_send_card(YELLOW, player_index);
+	add_card((char *) "yellow", player_index);
+	websocket_send_card((char *) "yellow", player_index);
 	wi.dd_card_players->setCurrentIndex(0);
 }
 
@@ -274,15 +272,21 @@ void btn_cb_connect() {
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 }
 
-void websocket_send_card(CardType type, int player_index) {
+void websocket_send_card(char *type, u8 player_index) {
 	if (!server_connected) {
-		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		fprintf(stderr, "WARNING: Local changes could not be send to server, because the server is not connected! This is very bad!\n");
 		return;
 	}
-	u8 s[2];
-	s[0] = YELLOW_CARD + type;
-	s[1] = player_index;
-	mg_ws_send(server_con, s, sizeof(u8)+sizeof(u8), WEBSOCKET_OP_BINARY);
+
+	const u32 buf_size = sizeof(u8) + sizeof(u8) + strlen(type) + 1;
+	char *buf = (char *) malloc(buf_size);
+
+	buf[0] = PENALTY;
+	buf[1] = player_index;
+	strncpy((char *) buf + 1 + 1, type, strlen(type) + 1);
+
+	mg_ws_send(server_con, buf, buf_size, WEBSOCKET_OP_BINARY);
+	free(buf);
 }
 
 void websocket_send_button_signal(u8 signal) {
@@ -300,7 +304,7 @@ void websocket_send_json(const char *s) {
 		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, s, strlen(s), WEBSOCKET_OP_TEXT);
-	printf("Finished sending json (len: %d): %s\n", strlen(s), s);
+	printf("Finished sending json (len: %lu): %s\n", strlen(s), s);
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
@@ -331,23 +335,23 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		case PLS_SEND_CUR_GAMEINDEX: {
 			str[0] = DATA_GAMEINDEX;
 			// We need the check, because the frontend does not count gameindex + 1 at the end
-			str[1] = md.cur.gameindex == md.games_count ? md.cur.gameindex-1 : md.cur.gameindex;
+			str[1] = md.meta.game_i == md.games_count ? md.meta.game_i-1 : md.meta.game_i;
 			ws_send(server_con, str, sizeof(u8) * 2, WEBSOCKET_OP_TEXT);
 			break;
 		}
 		case PLS_SEND_CUR_HALFTIME:
 			str[0] = DATA_HALFTIME;
-			str[1] = md.cur.halftime;
+			str[1] = md.meta.halftime;
 			ws_send(server_con, str, sizeof(u8) * 2, WEBSOCKET_OP_TEXT);
 			break;
 		case PLS_SEND_CUR_IS_PAUSE:
 			str[0] = DATA_IS_PAUSE;
-			str[1] = md.cur.pause;
+			str[1] = md.meta.paused;
 			ws_send(server_con, str, sizeof(u8) * 2, WEBSOCKET_OP_TEXT);
 			break;
 		case PLS_SEND_CUR_TIME:
 			str[0] = DATA_TIME;
-			*((u16 *)(str+1)) = md.cur.time;
+			*((u16 *)(str+1)) = md.meta.cur_time;
 			ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 			break;
 		case PLS_SEND_GAMESCOUNT: {
@@ -507,7 +511,7 @@ void update_display_window() {
 	int h = wd.w->height();
 
 	/*
-	if (md.cur.gameindex == md.games_count) {
+	if (md.meta.game_i == md.games_count) {
 		update_label(wd.l.t1.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
 		update_label(wd.l.t2.name, 0.06, 0.46, 0.01, 0.25, "ENDE", -1, true, Qt::AlignCenter, Qt::AlignTop);
 		return;
@@ -516,11 +520,11 @@ void update_display_window() {
 
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	strcpy(teamname, md.teams[md.games[md.meta.game_i].t1_index].name);
 
 	//QFont f1 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	QFont f1 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	strcpy(teamname, md.teams[md.games[md.meta.game_i].t2_index].name);
 
 	//QFont f2 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
 	QFont f2 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
@@ -528,35 +532,35 @@ void update_display_window() {
 		f1 = f2;
 
 	char s[TEAM_NAME_MAX_LEN];
-	if (md.cur.halftime)
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	if (md.meta.halftime)
+		strcpy(s, md.teams[md.games[md.meta.game_i].t1_index].name);
 	else
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		strcpy(s, md.teams[md.games[md.meta.game_i].t2_index].name);
 	update_label(wd.l.t1.name, 0.02, 0.47, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
 	update_label(wd.l.colon, 0.47, 0.53, 0.01, 0.25, ":", f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
-	if (md.cur.halftime)
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	if (md.meta.halftime)
+		strcpy(s, md.teams[md.games[md.meta.game_i].t2_index].name);
 	else
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(s, md.teams[md.games[md.meta.game_i].t1_index].name);
 	update_label(wd.l.t2.name, 0.53, 0.98, 0.01, 0.25, s, f1.pointSize(), true, Qt::AlignHCenter, Qt::AlignTop);
 
 	//Display the Scores
-	if (md.cur.halftime)
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	if (md.meta.halftime)
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t1);
 	else
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t2);
 
 	update_label(wd.l.t1.score, 0, 0.5, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
 
-	if (md.cur.halftime)
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	if (md.meta.halftime)
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t2);
 	else
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t1);
 	update_label(wd.l.t2.score, 0.5, 1, 0.15, 0.65, s, -1, true, Qt::AlignCenter, Qt::AlignCenter);
 
-	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
+	sprintf(s, "%01d:%02d", md.meta.cur_time/60, md.meta.cur_time%60);
 	update_label(wd.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignHCenter, Qt::AlignBottom);
 }
 
@@ -567,9 +571,9 @@ void update_input_window() {
 	//Display the Teamnames
 	char teamname[TEAM_NAME_MAX_LEN];
 
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	strcpy(teamname, md.teams[md.games[md.meta.game_i].t1_index].name);
 	QFont f1 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
-	strcpy(teamname, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	strcpy(teamname, md.teams[md.games[md.meta.game_i].t2_index].name);
 	QFont f2 = biggest_font_possible(teamname, w*0.4, h*0.24, true);
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
@@ -578,10 +582,10 @@ void update_input_window() {
 
 
 	//Display Team 1 Name
-	if (md.cur.halftime)
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+	if (md.meta.halftime)
+		strcpy(s, md.teams[md.games[md.meta.game_i].t2_index].name);
 	else
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+		strcpy(s, md.teams[md.games[md.meta.game_i].t1_index].name);
 	update_label(wi.l.t1.name, 0.06, 0.46, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
 	float height = (float)text_height(wi.l.t1.name->text().toUtf8().constData(), wi.l.t1.name->font())/h;
@@ -596,19 +600,19 @@ void update_input_window() {
 	update_button(wi.b.game.next, w, h, 0.95, 0.99, 0.01+(0.25-height)/2, 0.25-(0.25-height)/2);
 
 	//Display Team 2 Name
-	if (md.cur.halftime)
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t1_index].name);
+	if (md.meta.halftime)
+		strcpy(s, md.teams[md.games[md.meta.game_i].t1_index].name);
 	else
-		strcpy(s, md.teams[md.games[md.cur.gameindex].t2_index].name);
+		strcpy(s, md.teams[md.games[md.meta.game_i].t2_index].name);
 	update_label(wi.l.t2.name, 0.54, 0.94, 0.01, 0.25, s, fontsize, true, Qt::AlignCenter, Qt::AlignTop);
 
 
 	//Display the Scores
 	//Display Score Team 1
-	if (md.cur.halftime)
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+	if (md.meta.halftime)
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t2);
 	else
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t1);
 	update_label(wi.l.t1.score, 0, 0.5, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 1
@@ -619,10 +623,10 @@ void update_input_window() {
 	update_button(wi.b.t1.score_minus, w, h, (0.5-width)/2, 0.5-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Score Team 2
-	if (md.cur.halftime)
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t1);
+	if (md.meta.halftime)
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t1);
 	else
-		sprintf(s, "%d", md.games[md.cur.gameindex].score.t2);
+		sprintf(s, "%d", md.games[md.meta.game_i].score.t2);
 	update_label(wi.l.t2.score, 0.5, 1, 0.2, 0.5, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Score Team 2
@@ -632,7 +636,7 @@ void update_input_window() {
 	update_button(wi.b.t2.score_minus, w, h, 0.5+(0.5-width)/2, 1-(0.5-width)/2, 0.45, 0.49);
 
 	//Display Time
-	sprintf(s, "%01d:%02d", md.cur.time/60, md.cur.time%60);
+	sprintf(s, "%01d:%02d", md.meta.cur_time/60, md.meta.cur_time%60);
 	update_label(wi.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignCenter, Qt::AlignBottom);
 
 	//Display +- Time
@@ -648,8 +652,8 @@ void update_input_window() {
 	update_button(wi.b.time.reset, w, h, 0.5, 0.49+width/2, 0.5+(0.5-height)/4, 0.5+(0.5-height)/2);
 
 	wi.dd_card_players->clear();
-	u8 t1_index = md.games[md.cur.gameindex].t1_index;
-	u8 t2_index = md.games[md.cur.gameindex].t2_index;
+	u8 t1_index = md.games[md.meta.game_i].t1_index;
+	u8 t2_index = md.games[md.meta.game_i].t2_index;
 	wi.dd_card_players->addItem("");
 	wi.dd_card_players->addItem(md.players[md.teams[t1_index].keeper_index].name, QVariant(md.teams[t1_index].keeper_index));
 	wi.dd_card_players->addItem(md.players[md.teams[t1_index].field_index].name, QVariant(md.teams[t1_index].field_index));
@@ -762,21 +766,21 @@ public:
 };
 
 void update_timer() {
-	if (!md.cur.pause && md.cur.time > 0) {
-		md.cur.time--;
+	if (!md.meta.paused && md.meta.cur_time > 0) {
+		md.meta.cur_time--;
 		//play sound if time is up
-		if (md.cur.time == 0) {
+		if (md.meta.cur_time == 0) {
 			player->setPosition(0);
 			player->play();
 		}
 		update_display_window();
 		update_input_window();
 	}
-	if (md.cur.time == 0 && !md.cur.pause) {
-		md.cur.pause = true;
+	if (md.meta.cur_time == 0 && !md.meta.paused) {
+		md.meta.paused = true;
 		char str[3]; //0: TIME_TOGGLE_UNPAUSE, 1-2: u16 time where we pause
 		str[0] = TIME_TOGGLE_PAUSE;
-		*((u16 *)(str+1)) = md.cur.time;
+		*((u16 *)(str+1)) = md.meta.cur_time;
 		ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 	}
 }
@@ -817,8 +821,8 @@ int main(int argc, char *argv[]) {
 		QApplication::setFont(app_font);
 	}
 
-	char *json = common_read_file(JSON_PATH);
-	json_load(json);
+	char *json = common_read_file(JSON_PATH); // TODO dont hardcode
+	common_json_load_from_string(json);
 	free(json);
 	matchday_init();
 
@@ -835,7 +839,10 @@ int main(int argc, char *argv[]) {
 	wi.w->show();
 
 	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
-	QObject::connect(shortcut, &QShortcut::activated, []() {printf("test\n"); btn_cb_time_toggle_pause();});
+	QObject::connect(shortcut, &QShortcut::activated, []() {
+		printf("test\n");
+		btn_cb_time_toggle_pause();
+	});
 
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
@@ -855,5 +862,3 @@ int main(int argc, char *argv[]) {
 	delete wi.w;
 	return stat;
 }
-
-} // extern "C"
