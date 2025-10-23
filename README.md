@@ -47,7 +47,12 @@ The current version is tailord to my server setup. A vps for static IP, connecti
 4. Download obs binary with WebSocket support into ./ as obs
 5. Change the path to the .ssh folder in the Makefile (default /home/mrmine/.ssh/) for yours
 6. make build run
-Also you'll need an nginx server somewhere with an rtmp config (see docker/nginx.conf rtmp section). Be aware that you need an nginx version with rtmp-module activated! It can be run anywhere, on the Docker-PC on the VPS or even on a third machine. Hosting on the VPS has the nice effect that the rtmp link is static. Then you need to edit the rtmp links both in docker/obs-config/basic/scenes/radball.json and on the device you stream from(Phone/GoPro)
+In docker we host a rtmp server. The streaming camera publishes to this server through rtmp. In order to have a static rtmp link we use a ddns service (and a CNAME DNS-Entry if you want to use your domain for rtmp as well). The config assumes a dyndns2 with dynu, the config can easily be changed though (docker/ddclient.conf)
+1. set up an free account on dynu.com
+2. change the address in docker/ddclient.conf to your ddns address
+3. If wanted create CNAME DNS Entry in your Domain Registrar to forward to the ddns address
+4. Add a port forwarding to the Docker-PC's local router with TCP and UDP on Port 1935 and a few above if you plan to host multiple docker instances
+5. Give DNS credentials When running the image: cd docker; make run DYNU_LOGIN=blibla DYNU_PASSWORD=blub
 
 ## Demonstrations
 - https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)

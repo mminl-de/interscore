@@ -445,12 +445,12 @@ function write_card(player_index: number, type: CardType) {
 	card_receiver.innerHTML = md.players[player_index].name.toString() //TODO do we need toString?
 	switch (type) {
 		case CardType.Yellow:
-			card_graphic.style.backgroundColor = "#ff0000"
-			card_message.innerHTML = "bekommt eine rote Karte"
-			break
-		case CardType.Red:
 			card_graphic.style.backgroundColor = "#ffff00"
 			card_message.innerHTML = "bekommt eine gelbe Karte"
+			break
+		case CardType.Red:
+			card_graphic.style.backgroundColor = "#ff0000"
+			card_message.innerHTML = "bekommt eine rote Karte"
 			break
 		default:
 			console.error("Unknown CardType... exiting")
