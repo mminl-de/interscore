@@ -45,7 +45,6 @@ void matchday_free() {
 	for (int i = 0; i < md.teams_count; i++) {
 		free(md.teams[i].name);
 		free(md.teams[i].logo_path);
-		free(md.teams[i].color);
 	}
 	if (md.teams_count > 0)
 		free(md.teams);
@@ -139,77 +138,42 @@ const char *common_json_get_string(json_object *root, const char* key) {
 	return json_object_get_string(jobj);
 }
 
-void common_json_interpret_team(
+void common_json_interpret_game_team(
 	json_object *game, u8 game_i,
 	const char *team_i, u8 *md_key
 ) {
 	json_object *team_obj = common_json_get_object(game, team_i);
-
-	char *team_name;
-	bool team_name_is_owned = false;
-
-	const char *team_name_cand = common_json_get_string(team_obj, "name");
-	if (team_name_cand) strcpy(team_name, team_name_cand);
-	else {
-		team_name_is_owned = true;
-
-		json_object *query = common_json_get_object(team_obj, "query");
-		if (!query) {
-			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i + 1);
-			exit(EXIT_FAILURE);
-		}
-		const char *query_set = common_json_get_string(query, "set");
-		const u16 query_key = common_json_get_int(query, "key");
-
-		printf(" TODO query set is '%s'\n", query_set);
-		if (!strcmp(query_set, "TEAM")) {
-			const char *string_part = ".-bestes Team";
-			const u8 string_part_len = strlen(string_part);
-			team_name = malloc(3 + string_part_len + 1);
-			printf("TODO about to sprint team\n");
-			sprintf(team_name, "%3d%s", query_key + 1, string_part);
-		}
-		else if (!strcmp(query_set, "WINNER")) {
-			const char *string_part = "Gewinner von Spiel ";
-			const u8 string_part_len = strlen(string_part);
-			team_name = malloc(3 + string_part_len + 1);
-			printf("TODO about to sprint winner\n");
-			sprintf(team_name, "%s%3d", string_part, query_key + 1);
-		}
-		else if (!strcmp(query_set, "LOSER")) {
-			const char *string_part = "Verlierer von Spiel ";
-			const u8 string_part_len = strlen(string_part);
-			team_name = malloc(3 + string_part_len + 1);
-			printf("TODO about to sprint loser\n");
-			sprintf(team_name, "%s%3d", string_part, query_key + 1);
-		}
-		else if (!strcmp(query_set, "GROUP")) {
-			const char *query_group = common_json_get_string(query, "group");
-			if (!query_group) {
-				fprintf(stderr, "ERROR parsing JSON: Group query of team 1 of game %d has no group key! Exiting...\n", game_i + 1);
-				exit(EXIT_FAILURE);
-			}
-			const u8 query_group_len = strlen(query_group);
-
-			const char *string_part = ".-bestes Team aus Gruppe ";
-			const u8 string_part_len = strlen(string_part);
-			team_name = malloc(3 + string_part_len + query_group_len + 1);
-			printf("TODO about to sprint group\n");
-			sprintf(team_name, "%3d%s%s", query_key + 1, string_part, query_group);
-		} else {
-			fprintf(stderr, "ERROR parsing JSON: The query set key has to be one of either TEAM, WINNER, LOSER or GROUP! Exiting...\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	const i32 this_team_index = team_index(team_name);
-	if (this_team_index == -1 && !team_name_is_owned) {
-		fprintf(stderr, "ERROR parsing JSON: Team \"%s\" in game %d does not exist! Exiting...\n", team_name, game_i + 1);
+	if (!team_obj) {
+		fprintf(stderr, "ERROR parsing JSON: Team %s in game %d does not exist! Exiting...\n", team_i, game_i);
 		exit(EXIT_FAILURE);
 	}
 
+	const char *team_name = common_json_get_string(team_obj, "name");
+	if (!team_name) {
+		json_object *query = common_json_get_object(team_obj, "query");
+		if (!query) {
+			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i);
+			exit(EXIT_FAILURE);
+		}
+		const char *query_set = common_json_get_string(query, "set");
+		const u8 query_key = common_json_get_int(query, "key");
+		if (!query_set || errno == EINVAL) {
+			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d doesn't have both \"set\" and \"key\" keys! Exiting...\n", team_i, game_i);
+			exit(EXIT_FAILURE);
+		}
+		if (!strcmp(query_set, "GROUP") && !common_json_get_string(query, "group")) {
+			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d has a GROUP type but lacks a \"group\" key! Exiting...\n", team_i, game_i);
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
+
+	const i32 this_team_index = team_index(team_name);
+	if (this_team_index == -1) {
+		fprintf(stderr, "ERROR parsing JSON: Team \"%s\" in game %d does not exist! Exiting...\n", team_name, game_i);
+		exit(EXIT_FAILURE);
+	}
 	*md_key = this_team_index;
-	if (team_name_is_owned) free(team_name);
 }
 
 // TODO FINAL before exiting, make sure to free resources
@@ -276,30 +240,24 @@ void common_json_load_from_string(const char *s) {
 		strcpy(md.teams[team_i].name, team_name);
 		md.teams[team_i].name[team_name_len] = '\0';
 
-		printf("TODO servus 2\n");
 		const char *logo_path = common_json_get_string(team, "logo_path");
 		const u16 logo_path_len = strlen(logo_path);
 		md.teams[team_i].logo_path = malloc((logo_path_len + 1) * sizeof(char));
-		strcpy(md.teams[team_i].logo_path, logo_path);
+		if (logo_path) strcpy(md.teams[team_i].logo_path, logo_path);
 		md.teams[team_i].logo_path[logo_path_len] = '\0';
 
-		printf("TODO servus 3\n");
 		json_object *players = common_json_get_object(team, "players");
 		for (int player_i = 0; player_i < json_object_array_length(players); ++player_i) {
-			printf("TODO privet 0\n");
 			json_object *player = json_object_array_get_idx(players, player_i);
 
-			printf("TODO privet 1\n");
 			const char *player_name = common_json_get_string(player, "name");
 			const u16 player_name_len = strlen(player_name);
 			md.players[team_i * team_size + player_i].name = malloc((player_name_len + 1) * sizeof(char));
 			strcpy(md.players[team_i * team_size + player_i].name, player_name);
 			md.players[team_i * team_size + player_i].name[player_name_len] = '\0';
 
-			printf("TODO privet 2\n");
 			md.players[team_i * team_size + player_i].team_index = team_i;
 
-			printf("TODO privet 3\n");
 			const char *role = common_json_get_string(player, "role");
 			if (role) {
 				const u8 role_len = strlen(role);
@@ -316,18 +274,17 @@ void common_json_load_from_string(const char *s) {
 			}
 		}
 
-		printf("TODO servus 4\n");
 		const char *team_color = common_json_get_string(team, "color");
-		const u16 team_color_len = strlen(team_color);
-		md.teams[team_i].color = (char *) malloc((team_color_len + 1) * sizeof(char));
-		strcpy(md.teams[team_i].color, team_color);
-		md.teams[team_i].color[team_color_len] = '\0';
+		if (team_color) strcpy(md.teams[team_i].color, team_color);
+		md.teams[team_i].color[6] = '\0';
+
+		md.teams[team_i].points = common_json_get_int(team, "points");
 	}
 
 	// Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
 	md.teams[md.teams_count].name = malloc((4 + 1) * sizeof(char));
 	strcpy(md.teams[md.teams_count].name, "ENDE");
-	md.teams[md.teams_count].color = md.teams[0].color;
+	strcpy(md.teams[md.teams_count].color, md.teams[0].color);
 	md.teams[md.teams_count].field_index = md.teams[0].field_index;
 	md.teams[md.teams_count].keeper_index = md.teams[0].keeper_index;
 	md.teams[md.teams_count].logo_path = md.teams[0].logo_path;
@@ -342,8 +299,8 @@ void common_json_load_from_string(const char *s) {
 
 		json_object *team_1 = common_json_get_object(game, "1");
 
-		common_json_interpret_team(game, game_i, "1", &md.games[game_i].t1_index);
-		common_json_interpret_team(game, game_i, "2", &md.games[game_i].t2_index);
+		common_json_interpret_game_team(game, game_i, "1", &md.games[game_i].t1_index);
+		common_json_interpret_game_team(game, game_i, "2", &md.games[game_i].t2_index);
 
 		json_object *halftime_score = common_json_get_object(game, "halftime_score");
 		if (halftime_score) {

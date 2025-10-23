@@ -5,6 +5,7 @@
 // }
 // #endif
 
+#include <cstdlib>
 #include <QtWidgets/QApplication>
 #include <QtMultimedia/QAudioOutput>
 #include <QtWidgets/QComboBox>
@@ -19,6 +20,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QtGui/QShortcut>
+#include <cstring>
 
 #include "../mongoose/mongoose.h"
 
@@ -88,6 +90,11 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
+typedef struct {
+	Team team;
+	u8 index;
+} TeamIndexed;
+
 #define URL "ws://mminl.de:8081"
 
 void update_input_window();
@@ -106,6 +113,7 @@ struct mg_mgr mgr;
 // TODO CHECK if you can allocate in the stack
 QMediaPlayer *player;
 QAudioOutput *audio_output;
+TeamIndexed *teams_sorted;
 
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
@@ -164,23 +172,21 @@ void btn_cb_t2_score_minus() {
 	update_display_window();
 }
 void btn_cb_game_next() {
-	if (md.meta.game_i >= md.games_count)
-		return;
+	if (md.meta.game_i >= md.games_count) return;
 	md.meta.game_i++;
-	if (md.meta.game_i == md.games_count)
-		screen_input_toggle_visibility(true);
+	if (md.meta.game_i == md.games_count) screen_input_toggle_visibility(true);
+	update_queries();
 	update_input_window();
 	update_display_window();
 	websocket_send_button_signal(GAME_NEXT);
 }
 void btn_cb_game_prev() {
-	if (md.meta.game_i <= 0)
-		return;
+	if (md.meta.game_i <= 0) return;
 	md.meta.game_i--;
-	if (md.meta.game_i == md.games_count-1)
-		screen_input_toggle_visibility(false);
+	if (md.meta.game_i == md.games_count-1) screen_input_toggle_visibility(false);
 	else // TODO does this work?
 		websocket_send_button_signal(GAME_PREV);
+	update_queries();
 	update_input_window();
 	update_display_window();
 }
@@ -191,8 +197,7 @@ void btn_cb_game_switch_sides() {
 	websocket_send_button_signal(GAME_SWITCH_SIDES);
 }
 void btn_cb_time_plus() {
-	if (!md.meta.paused)
-		return;
+	if (!md.meta.paused) return;
 	md.meta.cur_time++;
 	update_input_window();
 	update_display_window();
@@ -223,7 +228,6 @@ void btn_cb_time_minus20() {
 	update_display_window();
 	websocket_send_button_signal(TIME_MINUS_20);
 }
-
 void btn_cb_time_toggle_pause() {
 	if (md.meta.cur_time == 0)
 		return;
@@ -249,7 +253,6 @@ void btn_cb_time_reset() {
 	*((u16 *)(str+1)) = md.meta.cur_time;
 	ws_send(server_con, str, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_TEXT);
 }
-
 void btn_cb_red_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
 	if (player_index == -1)
@@ -258,7 +261,6 @@ void btn_cb_red_card() {
 	websocket_send_card((char *) "red", player_index);
 	wi.dd_card_players->setCurrentIndex(0);
 }
-
 void btn_cb_yellow_card() {
 	int player_index = wi.dd_card_players->currentData().toInt();
 	if (player_index == -1)
@@ -267,7 +269,6 @@ void btn_cb_yellow_card() {
 	websocket_send_card((char *) "yellow", player_index);
 	wi.dd_card_players->setCurrentIndex(0);
 }
-
 void btn_cb_connect() {
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 }
@@ -335,7 +336,7 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		case PLS_SEND_CUR_GAMEINDEX: {
 			str[0] = DATA_GAMEINDEX;
 			// We need the check, because the frontend does not count gameindex + 1 at the end
-			str[1] = md.meta.game_i == md.games_count ? md.meta.game_i-1 : md.meta.game_i;
+			str[1] = md.meta.game_i == md.games_count ? md.meta.game_i - 1 : md.meta.game_i;
 			ws_send(server_con, str, sizeof(u8) * 2, WEBSOCKET_OP_TEXT);
 			break;
 		}
@@ -518,16 +519,16 @@ void update_display_window() {
 	}
 	*/
 
-	//Display the Teamnames
-	char teamname[TEAM_NAME_MAX_LEN];
-	strcpy(teamname, md.teams[md.games[md.meta.game_i].t1_index].name);
+	// Display the team names
+	char team_name[TEAM_NAME_MAX_LEN];
+	strcpy(team_name, md.teams[md.games[md.meta.game_i].t1_index].name);
 
 	//QFont f1 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
-	QFont f1 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
-	strcpy(teamname, md.teams[md.games[md.meta.game_i].t2_index].name);
+	QFont f1 = biggest_font_possible(team_name, w*0.45, h*0.24, true);
+	strcpy(team_name, md.teams[md.games[md.meta.game_i].t2_index].name);
 
 	//QFont f2 = biggest_font_possible(teamname, 0.5 - 0.05, 0.15, true);
-	QFont f2 = biggest_font_possible(teamname, w*0.45, h*0.24, true);
+	QFont f2 = biggest_font_possible(team_name, w*0.45, h*0.24, true);
 	if (f2.pointSize() < f1.pointSize())
 		f1 = f2;
 
@@ -563,7 +564,6 @@ void update_display_window() {
 	sprintf(s, "%01d:%02d", md.meta.cur_time/60, md.meta.cur_time%60);
 	update_label(wd.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignHCenter, Qt::AlignBottom);
 }
-
 void update_input_window() {
 	int w = wi.w->width();
 	int h = wi.w->height();
@@ -674,8 +674,37 @@ void update_input_window() {
 		wi.b.connect->setIcon(icon);
 	}
 }
+void update_queries() {
+	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
+		Game *const game = &md.games[game_i];
+		const char *t1_query_set = game->t1_query.set;
+		const char *t2_query_set = game->t2_query.set;
 
-//fontsize is only used for icons atm, cry about it
+		if (t1_query_set) {
+			if (!strcmp(t1_query_set, "TEAM")) {
+				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
+					teams_sorted->team = md.teams[team_i];
+					teams_sorted->index = team_i;
+				}
+				qsort(teams_sorted, md.teams_count, sizeof(TeamIndexed), [](const void *a, const void *b) {
+					return ((TeamIndexed *) b)->team.points - ((TeamIndexed *) a)->team.points;
+				});
+				game->t1_index = teams_sorted[game->t1_query.key].index;
+			}
+			else if (!strcmp(t1_query_set, "WINNER")) {
+				// TODO NOW
+			}
+			else if (!strcmp(t1_query_set, "LOSER")) {
+			}
+			else if (!strcmp(t1_query_set, "GROUP")) {
+			}
+		}
+	}
+
+	delete[] teams_sorted;
+}
+
+// fontsize is only used for icons atm, cry about it
 QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize) {
 	QPushButton *b = new QPushButton("", window);
 	QIcon i = QApplication::style()->standardIcon(icon);
@@ -684,7 +713,6 @@ QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::Standa
 	QObject::connect(b, &QPushButton::clicked, callback_func);
 	return b;
 }
-
 
 // Function to create the display window
 void create_input_window() {
@@ -825,6 +853,7 @@ int main(int argc, char *argv[]) {
 	common_json_load_from_string(json);
 	free(json);
 	matchday_init();
+	teams_sorted = new TeamIndexed[md.teams_count];
 
 	create_display_window();
 	create_input_window();
@@ -860,5 +889,6 @@ int main(int argc, char *argv[]) {
 	delete audio_output;
 	delete wd.w;
 	delete wi.w;
+	delete []teams_sorted;
 	return stat;
 }

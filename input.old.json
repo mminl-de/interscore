@@ -1,202 +1,59 @@
 {
-  "time":360,
-  "teams":[
-    {
-      "name":"GIFHORN",
-      "logo":"assets\/gifhorn.png",
-      "color":"#ffff00c4545c",
-      "players":[
-        {
-          "name":"Erik Kramer",
-          "position":"keeper"
-        },
-        {
-          "name":"Linus Kramer",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"EHRENBERG",
-      "logo":"TODO NOW assets\/grosskoschen.png",
-      "color":"#0058ab",
-      "players":[
-        {
-          "name":"Ben Börngen",
-          "position":"keeper"
-        },
-        {
-          "name":"Frederick Etzold",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"N.-SEIFERSDORF",
-      "logo":"assets\/qr.png",
-      "color":"#a1ae0c",
-      "players":[
-        {
-          "name":"Alwin Großmann",
-          "position":"keeper"
-        },
-        {
-          "name":"Laurence Tschirch",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"BURGKUNSTADT",
-      "logo":"assets\/logo.svg",
-      "color":"#0f81e0",
-      "players":[
-        {
-          "name":"Benedikt Kohlmann",
-          "position":"keeper"
-        },
-        {
-          "name":"Lenny Eckert",
-          "position":"field"
-        }
-      ]
-    },
-    {
-      "name":"KIESELBRONN 1",
-      "logo":"assets\/naurod.png",
-      "color":"#2f3a64",
-      "players":[
-        {
-          "name":"Robin Häußermann",
-          "position":"keeper"
-        },
-        {
-          "name":"Nico Scholl",
-          "position":"field"
-        }
-      ]
-    }
-  ],
-  "games":[
-    {
-      "team_1":"GIFHORN",
-      "team_2":"KIESELBRONN 1",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"EHRENBERG",
-      "team_2":"BURGKUNSTADT",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"N.-SEIFERSDORF",
-      "team_2":"KIESELBRONN 1",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GIFHORN",
-      "team_2":"BURGKUNSTADT",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"EHRENBERG",
-      "team_2":"N.-SEIFERSDORF",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"BURGKUNSTADT",
-      "team_2":"KIESELBRONN 1",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GIFHORN",
-      "team_2":"N.-SEIFERSDORF",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"EHRENBERG",
-      "team_2":"KIESELBRONN 1",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"N.-SEIFERSDORF",
-      "team_2":"BURGKUNSTADT",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    },
-    {
-      "team_1":"GIFHORN",
-      "team_2":"EHRENBERG",
-      "halftimescore":{
-        "team_1":0,
-        "team_2":0
-      },
-      "score":{
-        "team_1":0,
-        "team_2":0
-      }
-    }
-  ]
+	"meta": {
+		"game_len": 360,
+		"game_i": null,
+		"first_halftime": true,
+		"paused": false,
+		"cur_time": 100
+	},
+	"teams": [
+		{
+			"name": "MAET",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			],
+			"points": 0
+		},
+		{
+			"name": "TEAM",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			],
+			"points": 0
+		}
+	],
+	"games": [
+		{
+			"1": { "name": "TEAM" },
+			"2": { "name": "MAET" }
+		},
+		{
+			"1": {
+				"name": "TEAM"
+			},
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 0
+				}
+			},
+			"halftime_score": { "1": 0, "2": 0 },
+			"score": { "1": 0, "2": 0 },
+			"cards": [
+				{
+					"name": "BOB",
+					"type": "y",
+					"reason": "skill issue",
+					"timestamp": 13241243234
+				}
+			]
+		}
+	]
 }

@@ -42,12 +42,16 @@ typedef struct {
 	u8 field_index;
 	char *name;
 	char *logo_path;
-	char *color;
+	char color[7];
+	u16 points;
 } Team;
 
 typedef struct {
 	u8 t1_index;
 	u8 t2_index;
+	// query.set must be set to NULL to signal absense of a meaningful value
+	struct { char *set; char *group; u8 key; } t1_query;
+	struct { char *set; char *group; u8 key; } t2_query;
 	Score halftime_score;
 	Score score;
 	Card *cards;
