@@ -123,6 +123,100 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	return mg_ws_send(con, message, len, op) == len;
 }
 
+// Implementation of merge sort. We use it cause qsort doesn't do stable sorting. :(
+void msort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *)) {
+	if (num < 2) return;
+
+	const size_t mid = num / 2;
+	void *left = malloc(mid * size);
+	void *right = malloc((num - mid) * size);
+
+	if (!left || !right) {
+		fprintf(stderr, "Memory allocation failed");
+		exit(EXIT_FAILURE);
+	}
+
+	memcpy(left, base, mid * size);
+	memcpy(right, (char *) base + mid * size, (num - mid) * size);
+	msort(left, mid, size, compar);
+	msort(right, num - mid, size, compar);
+
+	// Merge two halves
+	size_t i = 0, j = 0, k = 0;
+	while (i < mid && j < num - mid) {
+		if (compar((char *) left + i * size, (char *) right + j * size) <= 0) {
+			memcpy((char *) base + k * size, (char *) left + i * size, size);
+			i++;
+		} else {
+			memcpy((char *)base + k * size, (char *) right + j * size, size);
+			j++;
+		}
+		k++;
+	}
+	while (i < mid) {
+		memcpy((char *) base + k * size, (char *) left + i * size, size);
+		i++; k++;
+	}
+	while (j < num - mid) {
+		memcpy((char *) base + k * size, (char *) right + j * size, size);
+		j++; k++;
+	}
+
+	free(left);
+	free(right);
+}
+u16 team_calc_goals(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; game_i++) {
+		if (md.games[game_i].t1_index == index) p += md.games[game_i].score.t1;
+		else if (md.games[game_i].t2_index == index) p += md.games[game_i].score.t2;
+	}
+	return p;
+}
+u16 team_calc_goals_taken(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; game_i++) {
+		if (md.games[game_i].t1_index == index) p += md.games[game_i].score.t2;
+		else if (md.games[game_i].t2_index == index) p += md.games[game_i].score.t1;
+	}
+	return p;
+}
+u16 team_calc_points(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; ++game_i) {
+		if (md.games[game_i].t1_index == index) {
+			if (md.games[game_i].score.t1 > md.games[game_i].score.t2) p += 3;
+			else if (md.games[game_i].score.t1 == md.games[game_i].score.t2) p++;
+		} else if (md.games[game_i].t2_index == index) {
+			if (md.games[game_i].score.t2 > md.games[game_i].score.t1) p += 3;
+			else if (md.games[game_i].score.t2 == md.games[game_i].score.t1) p++;
+		}
+	}
+	return p;
+}
+i32 teams_sort_after_name(const void *a, const void *b) {
+	return strcmp(((TeamIndexed *) a)->team.name, ((TeamIndexed *) b)->team.name);
+}
+i32 teams_sort_after_goals(const void *a, const void *b) {
+	u16 a_goals = team_calc_goals(md.players[((TeamIndexed *) a)->team.keeper_index].team_index);
+	u16 b_goals = team_calc_goals(md.players[((TeamIndexed *) b)->team.keeper_index].team_index);
+	return b_goals - a_goals;
+}
+i32 teams_sort_after_goalratio(const void *a, const void *b) {
+	u16 a_goals = team_calc_goals(md.players[((TeamIndexed *) a)->team.keeper_index].team_index);
+	u16 b_goals = team_calc_goals(md.players[((TeamIndexed *) b)->team.keeper_index].team_index);
+	u16 a_goals_taken = team_calc_goals_taken(md.players[((TeamIndexed *) a)->team.keeper_index].team_index);
+	u16 b_goals_taken = team_calc_goals_taken(md.players[((TeamIndexed *) b)->team.keeper_index].team_index);
+	// reverse it, because bigger is better
+	return (b_goals - b_goals_taken) - (a_goals - a_goals_taken);
+}
+i32 teams_sort_after_points(const void *a, const void *b) {
+	u8 a_points = team_calc_points(md.players[((TeamIndexed *) a)->team.keeper_index].team_index);
+	u8 b_points = team_calc_points(md.players[((TeamIndexed *) b)->team.keeper_index].team_index);
+	// reverse it, because bigger is better
+	return b_points - a_points;
+}
+
 // TODO TEST
 void update_queries() {
 	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
@@ -132,13 +226,15 @@ void update_queries() {
 
 		if (t1_query_set) {
 			if (!strcmp(t1_query_set, "TEAM")) {
+				// TODO MOVE make it run only once
 				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
 					teams_sorted->team = md.teams[team_i];
 					teams_sorted->index = team_i;
 				}
-				qsort(teams_sorted, md.teams_count, sizeof(TeamIndexed), [](const void *a, const void *b) {
-					return ((TeamIndexed *) b)->team.points - ((TeamIndexed *) a)->team.points;
-				});
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_name);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_goals);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_goalratio);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_points);
 				game->t1_index = teams_sorted[game->t1_query.key].index;
 			}
 			else if (!strcmp(t1_query_set, "WINNER")) {
@@ -218,6 +314,7 @@ void btn_cb_t2_score_minus() {
 void btn_cb_game_next() {
 	if (md.meta.game_i >= md.games_count) return;
 	md.meta.game_i++;
+	printf("TODO grr %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count) screen_input_toggle_visibility(true);
 	update_queries();
 	update_input_window();
@@ -227,6 +324,7 @@ void btn_cb_game_next() {
 void btn_cb_game_prev() {
 	if (md.meta.game_i <= 0) return;
 	md.meta.game_i--;
+	printf("TODO grr %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count-1) screen_input_toggle_visibility(false);
 	else // TODO does this work?
 		websocket_send_button_signal(GAME_PREV);
@@ -901,7 +999,7 @@ int main(int argc, char *argv[]) {
 	EventFilter event_filter;
 	app.installEventFilter(&event_filter);
 
-	const int stat = app.exec();
+	const i32 stat = app.exec();
 	delete player;
 	delete audio_output;
 	delete wd.w;

@@ -7,6 +7,7 @@
 
 #include <json-c/json.h>
 #include <json-c/json_object.h>
+#include <json-c/json_object_iterator.h>
 
 #include "common.h"
 
@@ -33,19 +34,21 @@ void matchday_init() {
 }
 
 void matchday_free() {
-	for (int i = 0; i < md.games_count; i++)
+	for (i32 i = 0; i < md.games_count; ++i)
 		if (md.games[i].cards_count > 0)
 			free(md.games[i].cards);
-	for (int i = 0; i < md.players_count; i++)
+	for (i32 i = 0; i < md.players_count; ++i)
 		free(md.players[i].name);
 	if (md.players_count > 0)
 		free(md.players);
 	if (md.games_count > 0)
 		free(md.games);
-	for (int i = 0; i < md.teams_count; i++) {
+	for (i32 i = 0; i < md.teams_count; ++i) {
 		free(md.teams[i].name);
 		free(md.teams[i].logo_path);
 	}
+	for (i32 i = 0; i < md.groups_count; ++i) free(md.groups[i].members);
+	free(md.groups);
 	if (md.teams_count > 0)
 		free(md.teams);
 }
@@ -171,9 +174,7 @@ void common_json_interpret_game_team(
 			}
 			target_query->group = (char *) query_group;
 		}
-		return;
-	}
-	memset(target_query, NULL, sizeof(GameQuery));
+	} else memset(target_query, 0, sizeof(GameQuery));
 
 	const i32 this_game_index = team_index(team_name);
 	if (this_game_index == -1) {
@@ -181,7 +182,6 @@ void common_json_interpret_game_team(
 		exit(EXIT_FAILURE);
 	}
 
-	// TODO NOW
 	*target_index = this_game_index;
 }
 
@@ -189,7 +189,6 @@ void common_json_interpret_game_team(
 // TODO FINAL CONSIDER migrate to a struct-based json parsing strategy
 // TODO IMPLEMENT card reason and card timestamp
 void common_json_read_from_string(const char *s) {
-	printf("TODO hi\n");
 	// Then split json into teams and games
 	json_object *root = json_tokener_parse(s);
 	if (!root) {
@@ -286,8 +285,6 @@ void common_json_read_from_string(const char *s) {
 		const char *team_color = common_json_get_string(team, "color");
 		if (team_color) strcpy(md.teams[team_i].color, team_color);
 		md.teams[team_i].color[6] = '\0';
-
-		md.teams[team_i].points = common_json_get_int(team, "points");
 	}
 
 	// Add a decoy team thats like team 0 but with the name "ENDE". Its used in the decoy game at the end
@@ -301,12 +298,11 @@ void common_json_read_from_string(const char *s) {
 	md.games_count = json_object_array_length(games);
 	// We alloc one game more, because its a filler game for the end
 	md.games = malloc((md.games_count + 1) * sizeof(Game));
-	printf("TODO hi\n");
 
+	// Read all the games
 	for (int game_i = 0; game_i < md.games_count; ++game_i) {
 		json_object *game_obj = json_object_array_get_idx(games, game_i);
 
-		// TODO NOW NOTE this function should write into the .*_query fields too
 		common_json_interpret_game_team(
 			game_obj, game_i, "1",
 			&md.games[game_i].t1_index,
@@ -375,6 +371,37 @@ void common_json_read_from_string(const char *s) {
 				else md.games[game_i].cards[card_i].type = (char *) "";
 			}
 		}
+	}
+
+	// Read all groups
+	json_object *groups = common_json_get_object(root, "groups");
+	if (groups) {
+		md.groups_count = json_object_object_length(groups);
+		md.groups = malloc(md.groups_count * sizeof(Group));
+
+		struct json_object_iterator it = json_object_iter_begin(groups);
+		struct json_object_iterator it_end = json_object_iter_end(groups);
+		for (
+			i32 group_i = 0;
+			!json_object_iter_equal(&it, &it_end);
+			++group_i, json_object_iter_next(&it)
+		) {
+			json_object *members = json_object_iter_peek_value(&it);
+
+			const u16 members_count = json_object_array_length(members);
+			md.groups[group_i].members = malloc(members_count * sizeof(char *));
+
+			for (i32 member_i = 0; member_i < members_count; ++member_i) {
+				json_object *member = json_object_array_get_idx(members, member_i);
+				const char *member_name = json_object_get_string(member);
+				md.groups[group_i].members[member_i] = (char *) member_name;
+			}
+
+			md.groups[group_i].name = (char *) json_object_iter_peek_name(&it);
+		}
+	} else {
+		md.groups = NULL;
+		md.groups_count = 0;
 	}
 
 	// Init decoy game at the end

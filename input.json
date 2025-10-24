@@ -26,11 +26,29 @@
 				{ "name": "BOB", "role": "field" }
 			],
 			"points": 0
+		},
+		{
+			"name": "MATE",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			],
+			"points": 0
 		}
+	],
+	"groups": [
+		"A": ["TEAM"],
+		"B": ["MAET"]
 	],
 	"games": [
 		{
 			"1": { "name": "TEAM" },
+			"2": { "name": "MAET" }
+		},
+		{
+			"1": { "name": "MATE" },
 			"2": { "name": "MAET" }
 		},
 		{

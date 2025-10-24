@@ -43,8 +43,12 @@ typedef struct {
 	char *name;
 	char *logo_path;
 	char color[7];
-	u16 points;
 } Team;
+
+typedef struct {
+	char *name;
+	char **members;
+} Group;
 
 typedef struct { char *set; char *group; u8 key; } GameQuery;
 typedef struct {
@@ -69,12 +73,10 @@ typedef struct {
 		u16 cur_time;
 		time_t start_time;
 	} meta;
-	Team *teams;
-	u8 teams_count;
-	Player *players;
-	u8 players_count;
-	Game *games;
-	u8 games_count;
+	Team *teams;     u8 teams_count;
+	Player *players; u8 players_count;
+	Game *games;     u8 games_count;
+	Group *groups;   u8 groups_count;
 } Matchday;
 #pragma pack(pop)
 
