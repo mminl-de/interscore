@@ -87,6 +87,15 @@ interface Game {
 	score: Score,
 	cards: Card[]
 }
+interface Group {
+	name: string,
+	teams_index: number[]
+}
+interface GameQuery {
+	set: string,
+	group: string,
+	key: number
+}
 interface Matchday {
 	cur: {
 		gameindex: number,
@@ -98,7 +107,8 @@ interface Matchday {
 	deftime: number,
 	games: Game[],
 	teams: Team[],
-	players: Player[]
+	players: Player[],
+	groups: Group[]
 }
 
 let md: Matchday = {
@@ -112,7 +122,8 @@ let md: Matchday = {
 	deftime: -1,
 	games: [],
 	teams: [],
-	players: []
+	players: [],
+	groups: []
 }
 
 function capitalize(str: string): string {
@@ -137,6 +148,7 @@ function parse_json(str: string) {
 	md.games = []
 	md.teams = []
 	md.players = []
+	md.groups = []
 	for (let i = 0; i < json.teams.length; i++) {
 		md.players[i * 2] = {
 			name: json.teams[i].players[0].name,
@@ -186,6 +198,14 @@ function parse_json(str: string) {
 					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${json.games[i].cards[i].player}`)
 			}
 		}
+	}
+	let i = 0
+	for (const group in json.groups) {
+		md.groups[i] = {
+			name = group,
+			teams_index =
+		}
+		i++
 	}
 }
 
