@@ -8,34 +8,76 @@
 	},
 	"teams": [
 		{
-			"name": "MAET",
-			"logo_path": "logo.png",
+			"name": "LEIPZIG I",
+			"logo_path": "leipzig.png",
 			"color": "#bedbed",
 			"players": [
-				{ "name": "ALICE", "role": "keeper" },
-				{ "name": "BOB", "role": "field" }
-			],
-			"points": 0
+				{ "name": "Kai Fritsche", "role": "keeper" },
+				{ "name": "Lenie Schwarzbauer", "role": "field" }
+			]
 		},
 		{
-			"name": "TEAM",
-			"logo_path": "logo.png",
+			"name": "TANN",
+			"logo_path": "tann.png",
 			"color": "#bedbed",
 			"players": [
-				{ "name": "ALICE", "role": "keeper" },
-				{ "name": "BOB", "role": "field" }
-			],
-			"points": 0
+				{ "name": "Luca Schmitt", "role": "keeper" },
+				{ "name": "Patrick", "role": "field" }
+			]
 		},
 		{
-			"name": "MATE",
-			"logo_path": "logo.png",
+			"name": "LEIPZIG II",
+			"logo_path": "leipzig.png",
 			"color": "#bedbed",
 			"players": [
-				{ "name": "ALICE", "role": "keeper" },
-				{ "name": "BOB", "role": "field" }
-			],
-			"points": 0
+				{ "name": "Paul Fiebig", "role": "keeper" },
+				{ "name": "Max Hermann", "role": "field" }
+			]
+		},
+		{
+			"name": "NORDSHAUSEN II",
+			"logo_path": "nordshausen.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "Andy Reichenbach", "role": "keeper" },
+				{ "name": "Manuel Kopp", "role": "field" }
+			]
+		},
+		{
+			"name": "NORDSHAUSEN III",
+			"logo_path": "nordshausen.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "Christian Galinger", "role": "keeper" },
+				{ "name": "Laras Degenhardt", "role": "field" }
+			]
+		},
+		{
+			"name": "GIFHORN I",
+			"logo_path": "gifhorn.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "Corvin Rowold", "role": "keeper" },
+				{ "name": "Christian Kramer", "role": "field" }
+			]
+		},
+		{
+			"name": "GIFHORN II",
+			"logo_path": "gifhorn.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "Jan Rowold", "role": "keeper" },
+				{ "name": "Maxemilian Nilßon", "role": "field" }
+			]
+		},
+		{
+			"name": "REIDEBURG",
+			"logo_path": "reideburg.png",
+			"color": "#bedbed",
+			"players": [
+				{ "name": "Paul Berndt", "role": "keeper" },
+				{ "name": "Max Berndt", "role": "field" }
+			]
 		}
 	],
 	"groups": [
@@ -44,8 +86,70 @@
 	],
 	"games": [
 		{
-			"1": { "name": "TEAM" },
-			"2": { "name": "MAET" }
+			"1": { "name": "LEIPZIG II" },
+			"2": { "name": "TANN" }
+		},
+		{
+			"1": { "name": "GIFHORN I" },
+			"2": { "name": "NORDSHAUSEN II" }
+		},
+		{
+			"1": { "name": "LEIPZIG II" },
+			"2": { "name": "GIFHORN I" }
+		},
+		{
+			"1": { "name": "TANN" },
+			"2": { "name": "NORDSHAUSEN II" }
+		},
+		{
+			"1": { "name": "LEIPZIG II" },
+			"2": { "name": "NORDSHAUSEN II" }
+		},
+		{
+			"1": { "name": "TANN" },
+			"2": { "name": "GIFHORN I" }
+		},
+
+		{
+			"1": { "name": "NORDSHAUSEN III" },
+			"2": { "name": "LEIPZIG I" }
+		},
+		{
+			"1": { "name": "GIFHORN II" },
+			"2": { "name": "REIDEBURG" }
+		},
+		{
+			"1": { "name": "NORDSHAUSEN III" },
+			"2": { "name": "GIFHORN II" }
+		},
+		{
+			"1": { "name": "LEIPZIG I" },
+			"2": { "name": "REIDEBURG" }
+		},
+		{
+			"1": { "name": "NORDSHAUSEN III" },
+			"2": { "name": "REIDEBURG" }
+		},
+		{
+			"1": { "name": "LEIPZIG I" },
+			"2": { "name": "GIFHORN II" }
+		},
+
+		{
+			"1": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 3
+				}
+			},
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "B",
+					"key": 3
+				}
+			}
 		},
 		{
 			"1": { "name": "MATE" },
@@ -53,25 +157,79 @@
 		},
 		{
 			"1": {
-				"name": "TEAM"
-			},
-			"2": {
 				"query": {
 					"set": "GROUP",
 					"group": "A",
 					"key": 0
 				}
 			},
-			"halftime_score": { "1": 0, "2": 0 },
-			"score": { "1": 0, "2": 0 },
-			"cards": [
-				{
-					"name": "BOB",
-					"type": "y",
-					"reason": "skill issue",
-					"timestamp": 13241243234
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "B",
+					"key": 1
 				}
-			]
+			}
+		},
+		{
+			"1": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 1
+				}
+			},
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "B",
+					"key": 0
+				}
+			}
+		},
+		{
+			"1": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 2
+				}
+			},
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "B",
+					"key": 2
+				}
+			}
+		},
+		{
+			"1": {
+				"query": {
+					"set": "LOSER",
+					"key": 13
+				}
+			},
+			"2": {
+				"query": {
+					"set": "LOSER",
+					"key": 14
+				}
+			}
+		},
+		{
+			"1": {
+				"query": {
+					"set": "WINNER",
+					"key": 13
+				}
+			},
+			"2": {
+				"query": {
+					"set": "WINNER",
+					"key": 14
+				}
+			}
 		}
 	]
 }
