@@ -336,7 +336,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
         printf("INFO: OBS WebSocket handshake completed\n");
         con_obs = con;  // Save the connection
 		obs_send_cmd("{\"op\": 1, \"d\": {\"rpcVersion\": 1, \"eventSubscriptions\": 255}}");
-		obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
+		//obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
 		break;
 	case MG_EV_WS_MSG: {
         struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
