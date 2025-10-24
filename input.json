@@ -80,10 +80,10 @@
 			]
 		}
 	],
-	"groups": [
-		"A": ["TEAM"],
-		"B": ["MAET"]
-	],
+	"groups": {
+		"A": ["LEIPZIG II", "TANN", "GIFHORN I", "NORDSHAUSEN II"],
+		"B": ["NORDSHAUSEN III", "LEIPZIG I", "GIFHORN II", "REIDEBURG"]
+	},
 	"games": [
 		{
 			"1": { "name": "LEIPZIG II" },
