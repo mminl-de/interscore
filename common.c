@@ -139,8 +139,8 @@ const char *common_json_get_string(json_object *root, const char* key) {
 }
 
 void common_json_interpret_game_team(
-	json_object *game, u8 game_i,
-	const char *team_i, u8 *md_key
+	json_object *game, u8 game_i, const char *team_i,
+	u8 *target_index, GameQuery *target_query
 ) {
 	json_object *team_obj = common_json_get_object(game, team_i);
 	if (!team_obj) {
@@ -161,25 +161,34 @@ void common_json_interpret_game_team(
 			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d doesn't have both \"set\" and \"key\" keys! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
-		if (!strcmp(query_set, "GROUP") && !common_json_get_string(query, "group")) {
-			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d has a GROUP type but lacks a \"group\" key! Exiting...\n", team_i, game_i);
-			exit(EXIT_FAILURE);
+		target_query->set = (char *) query_set;
+		target_query->key = query_key;
+		if (!strcmp(query_set, "GROUP")) {
+			const char *query_group = common_json_get_string(query, "group");
+			if (!query_group) {
+				fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d has a GROUP type but lacks a \"group\" key! Exiting...\n", team_i, game_i);
+				exit(EXIT_FAILURE);
+			}
+			target_query->group = (char *) query_group;
 		}
 		return;
 	}
+	memset(target_query, NULL, sizeof(GameQuery));
 
-	const i32 this_team_index = team_index(team_name);
-	if (this_team_index == -1) {
+	const i32 this_game_index = team_index(team_name);
+	if (this_game_index == -1) {
 		fprintf(stderr, "ERROR parsing JSON: Team \"%s\" in game %d does not exist! Exiting...\n", team_name, game_i);
 		exit(EXIT_FAILURE);
 	}
-	*md_key = this_team_index;
+
+	// TODO NOW
+	*target_index = this_game_index;
 }
 
 // TODO FINAL before exiting, make sure to free resources
 // TODO FINAL CONSIDER migrate to a struct-based json parsing strategy
 // TODO IMPLEMENT card reason and card timestamp
-void common_json_load_from_string(const char *s) {
+void common_json_read_from_string(const char *s) {
 	printf("TODO hi\n");
 	// Then split json into teams and games
 	json_object *root = json_tokener_parse(s);
@@ -295,14 +304,21 @@ void common_json_load_from_string(const char *s) {
 	printf("TODO hi\n");
 
 	for (int game_i = 0; game_i < md.games_count; ++game_i) {
-		json_object *game = json_object_array_get_idx(games, game_i);
+		json_object *game_obj = json_object_array_get_idx(games, game_i);
 
-		json_object *team_1 = common_json_get_object(game, "1");
+		// TODO NOW NOTE this function should write into the .*_query fields too
+		common_json_interpret_game_team(
+			game_obj, game_i, "1",
+			&md.games[game_i].t1_index,
+			&md.games[game_i].t1_query
+		);
+		common_json_interpret_game_team(
+			game_obj, game_i, "2",
+			&md.games[game_i].t2_index,
+			&md.games[game_i].t2_query
+		);
 
-		common_json_interpret_game_team(game, game_i, "1", &md.games[game_i].t1_index);
-		common_json_interpret_game_team(game, game_i, "2", &md.games[game_i].t2_index);
-
-		json_object *halftime_score = common_json_get_object(game, "halftime_score");
+		json_object *halftime_score = common_json_get_object(game_obj, "halftime_score");
 		if (halftime_score) {
 			const u8 score_1 = common_json_get_int(halftime_score, "1");
 			if (!score_1 && errno == EINVAL) {
@@ -317,7 +333,7 @@ void common_json_load_from_string(const char *s) {
 			md.games[game_i].halftime_score.t1 = score_1;
 			md.games[game_i].halftime_score.t2 = score_2;
 		}
-		json_object *score = common_json_get_object(game, "score");
+		json_object *score = common_json_get_object(game_obj, "score");
 		if (score) {
 			const u8 score_1 = common_json_get_int(score, "1");
 			if (!score_1 && errno == EINVAL) {
@@ -333,7 +349,7 @@ void common_json_load_from_string(const char *s) {
 			md.games[game_i].score.t2 = score_2;
 		}
 
-		json_object *cards = common_json_get_object(game, "cards");
+		json_object *cards = common_json_get_object(game_obj, "cards");
 		if (cards) {
 			md.games[game_i].cards_count = json_object_array_length(cards);
 			md.games[game_i].cards = malloc(md.games[game_i].cards_count * sizeof(Card));
@@ -391,7 +407,7 @@ char* common_read_file(const char *path) {
 	const u32 file_size = ftell(f);
 	rewind(f);
 
-	char *filestring = (char *) malloc((file_size + 1) * sizeof(char)); // +1 for \0
+	char *filestring = malloc((file_size + 1) * sizeof(char)); // +1 for \0
 	if (filestring == NULL) {
 		fprintf(stderr, "Not enough memory for loading json! Exiting...\n");
 		fclose(f);

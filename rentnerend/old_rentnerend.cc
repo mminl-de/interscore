@@ -117,12 +117,56 @@ TeamIndexed *teams_sorted;
 
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
-		printf("WARNING: client is not connected, couldnt send Message: '%*s'\n", len, message);
+		printf("WARNING: client is not connected, couldn't send Message: '%*s'\n", len, message);
 		return false;
 	}
 	return mg_ws_send(con, message, len, op) == len;
 }
 
+// TODO TEST
+void update_queries() {
+	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
+		Game *const game = &md.games[game_i];
+		const char *t1_query_set = game->t1_query.set;
+		const char *t2_query_set = game->t2_query.set;
+
+		if (t1_query_set) {
+			if (!strcmp(t1_query_set, "TEAM")) {
+				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
+					teams_sorted->team = md.teams[team_i];
+					teams_sorted->index = team_i;
+				}
+				qsort(teams_sorted, md.teams_count, sizeof(TeamIndexed), [](const void *a, const void *b) {
+					return ((TeamIndexed *) b)->team.points - ((TeamIndexed *) a)->team.points;
+				});
+				game->t1_index = teams_sorted[game->t1_query.key].index;
+			}
+			else if (!strcmp(t1_query_set, "WINNER")) {
+				if (md.meta.game_i < game->t1_query.key) return;
+
+				Game *const t1_target_game = &md.games[game->t1_query.key];
+				// TODO ASK what to do in case of a draw?
+				// possibly ignore it cause we'd need to insert games manually either way, right?
+				if (t1_target_game->score.t1 >= t1_target_game->score.t2)
+					game->t1_index = t1_target_game->t1_index;
+				else game->t1_index = t1_target_game->t2_index;
+			}
+			else if (!strcmp(t1_query_set, "LOSER")) {
+				if (md.meta.game_i < game->t1_query.key) return;
+
+				Game *const t1_target_game = &md.games[game->t1_query.key];
+				// TODO ASK what to do in case of a draw?
+				// possibly ignore it cause we'd need to insert games manually either way, right?
+				if (t1_target_game->score.t1 < t1_target_game->score.t2)
+					game->t1_index = t1_target_game->t1_index;
+				else game->t1_index = t1_target_game->t2_index;
+			}
+			else if (!strcmp(t1_query_set, "GROUP")) {
+				// TODO IMPLEMENT
+			}
+		}
+	}
+}
 void btn_cb_t1_score_plus() {
 	if (!md.meta.halftime) {
 		md.games[md.meta.game_i].score.t1++;
@@ -674,35 +718,6 @@ void update_input_window() {
 		wi.b.connect->setIcon(icon);
 	}
 }
-void update_queries() {
-	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
-		Game *const game = &md.games[game_i];
-		const char *t1_query_set = game->t1_query.set;
-		const char *t2_query_set = game->t2_query.set;
-
-		if (t1_query_set) {
-			if (!strcmp(t1_query_set, "TEAM")) {
-				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
-					teams_sorted->team = md.teams[team_i];
-					teams_sorted->index = team_i;
-				}
-				qsort(teams_sorted, md.teams_count, sizeof(TeamIndexed), [](const void *a, const void *b) {
-					return ((TeamIndexed *) b)->team.points - ((TeamIndexed *) a)->team.points;
-				});
-				game->t1_index = teams_sorted[game->t1_query.key].index;
-			}
-			else if (!strcmp(t1_query_set, "WINNER")) {
-				// TODO NOW
-			}
-			else if (!strcmp(t1_query_set, "LOSER")) {
-			}
-			else if (!strcmp(t1_query_set, "GROUP")) {
-			}
-		}
-	}
-
-	delete[] teams_sorted;
-}
 
 // fontsize is only used for icons atm, cry about it
 QPushButton *button_new(QWidget *window, void (*callback_func)(), QStyle::StandardPixmap icon, int fontsize) {
@@ -850,7 +865,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	char *json = common_read_file(JSON_PATH); // TODO dont hardcode
-	common_json_load_from_string(json);
+	if (!json) return 1;
+
+	common_json_read_from_string(json);
 	free(json);
 	matchday_init();
 	teams_sorted = new TeamIndexed[md.teams_count];
