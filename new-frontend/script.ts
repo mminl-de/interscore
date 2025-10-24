@@ -826,18 +826,18 @@ function connect() {
 				md.cur.time = md.deftime
 				update_ui()
 				break
-			case MessageType.YELLOW_CARD:
-				card.style.display = "flex"
-				card.style.opacity = "0"
-				setTimeout(() => card.style.opacity = "1", 10)
-				write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
-				break
-			case MessageType.RED_CARD:
-				card.style.display = "flex"
-				card.style.opacity = "0"
-				setTimeout(() => card.style.opacity = "1", 10)
-				write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
-				break
+			//case MessageType.YELLOW_CARD:
+			//	card.style.display = "flex"
+			//	card.style.opacity = "0"
+			//	setTimeout(() => card.style.opacity = "1", 10)
+			//	write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
+			//	break
+			//case MessageType.RED_CARD:
+			//	card.style.display = "flex"
+			//	card.style.opacity = "0"
+			//	setTimeout(() => card.style.opacity = "1", 10)
+			//	write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
+			//	break
 			case MessageType.DATA_TIME:
 				md.cur.pausestart = -1
 				console.log("Received DATA time: ", dv.getUint16(1, true)) // TODO ASK why this offset

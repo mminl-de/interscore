@@ -193,11 +193,11 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case YELLOW_CARD:
-		case RED_CARD: {
-			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-			break;
-		}
+		//case YELLOW_CARD:
+		//case RED_CARD: {
+		//	ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
+		//	break;
+		//}
 		case DATA_GAMEINDEX: {
 			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
 			gameindex = ((char *)input_type)[1];
@@ -471,7 +471,6 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 void *mongoose_update(void *arg) {
 	const int replay_buffer_activation_interval = 10; // in sec
 	time_t last_replay_buffer_attempt = time(NULL);
-	time_t last_refresh = time(NULL);
 
 	while (running) {
 		mg_mgr_poll(&mgr_svr, 20);
@@ -489,13 +488,6 @@ void *mongoose_update(void *arg) {
 				printf("INFO: Trying to activate the OBS Replay Buffer...\n");
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
 				last_replay_buffer_attempt = now;
-			}
-		} else {
-			time_t now = time(NULL);
-			if(now - last_refresh >= 10) {
-				printf("INFO: Trying to fetch the OBS Replay Buffer Status...\n");
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
-				last_refresh = now;
 			}
 		}
 	}
