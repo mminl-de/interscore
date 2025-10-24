@@ -151,19 +151,24 @@ void common_json_interpret_game_team(
 		exit(EXIT_FAILURE);
 	}
 
+	printf("TODO some\n");
 	const char *team_name = common_json_get_string(team_obj, "name");
 	if (!team_name) {
+		printf("TODO 1\n");
 		json_object *query = common_json_get_object(team_obj, "query");
 		if (!query) {
 			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
+		printf("TODO 2\n");
 		const char *query_set = common_json_get_string(query, "set");
+		printf("TODO 3\n");
 		const u8 query_key = common_json_get_int(query, "key");
 		if (!query_set || errno == EINVAL) {
 			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d doesn't have both \"set\" and \"key\" keys! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
+		printf("TODO 4\n");
 		target_query->set = (char *) query_set;
 		target_query->key = query_key;
 		if (!strcmp(query_set, "GROUP")) {
@@ -174,14 +179,24 @@ void common_json_interpret_game_team(
 			}
 			target_query->group = (char *) query_group;
 		}
-	} else memset(target_query, 0, sizeof(GameQuery));
+		printf("TODO 5\n");
 
+		*target_index = 0; // TODO maybe its a bad idea
+		return;
+	}
+
+	memset(target_query, 0, sizeof(GameQuery));
+
+	printf("TODO some ii\n");
+	printf("TODO team name '%s'\n", team_name);
 	const i32 this_game_index = team_index(team_name);
+	printf("TODO some ii.i\n");
 	if (this_game_index == -1) {
 		fprintf(stderr, "ERROR parsing JSON: Team \"%s\" in game %d does not exist! Exiting...\n", team_name, game_i);
 		exit(EXIT_FAILURE);
 	}
 
+	printf("TODO some iii\n");
 	*target_index = this_game_index;
 }
 
@@ -192,7 +207,7 @@ void common_json_read_from_string(const char *s) {
 	// Then split json into teams and games
 	json_object *root = json_tokener_parse(s);
 	if (!root) {
-		fprintf(stderr, "ERROR parsing JSON: Syntax error! Exiting...\n");
+		fprintf(stderr, "ERROR parsing JSON: Syntax error! (You can use jsonlint.com to verify your JSON's correctness) Exiting...\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -232,7 +247,6 @@ void common_json_read_from_string(const char *s) {
 
 	md.players_count = md.teams_count * team_size;
 	md.players = malloc(md.players_count * sizeof(Player));
-	printf("TODO hi\n");
 
 	// Read all the teams
 	for (int team_i = 0; team_i < md.teams_count; ++team_i) {
@@ -300,7 +314,9 @@ void common_json_read_from_string(const char *s) {
 	md.games = malloc((md.games_count + 1) * sizeof(Game));
 
 	// Read all the games
+	printf("TODO feck\n");
 	for (int game_i = 0; game_i < md.games_count; ++game_i) {
+		printf("TODO game %d\n", game_i + 1);
 		json_object *game_obj = json_object_array_get_idx(games, game_i);
 
 		common_json_interpret_game_team(
@@ -313,6 +329,7 @@ void common_json_read_from_string(const char *s) {
 			&md.games[game_i].t2_index,
 			&md.games[game_i].t2_query
 		);
+		printf(" TODO 2\n");
 
 		json_object *halftime_score = common_json_get_object(game_obj, "halftime_score");
 		if (halftime_score) {
@@ -329,6 +346,7 @@ void common_json_read_from_string(const char *s) {
 			md.games[game_i].halftime_score.t1 = score_1;
 			md.games[game_i].halftime_score.t2 = score_2;
 		}
+		printf(" TODO 3\n");
 		json_object *score = common_json_get_object(game_obj, "score");
 		if (score) {
 			const u8 score_1 = common_json_get_int(score, "1");
@@ -344,6 +362,7 @@ void common_json_read_from_string(const char *s) {
 			md.games[game_i].score.t1 = score_1;
 			md.games[game_i].score.t2 = score_2;
 		}
+		printf(" TODO 4\n");
 
 		json_object *cards = common_json_get_object(game_obj, "cards");
 		if (cards) {
@@ -373,6 +392,7 @@ void common_json_read_from_string(const char *s) {
 		}
 	}
 
+	printf("TODO fock\n");
 	// Read all groups
 	json_object *groups = common_json_get_object(root, "groups");
 	if (groups) {
@@ -403,6 +423,7 @@ void common_json_read_from_string(const char *s) {
 		md.groups = NULL;
 		md.groups_count = 0;
 	}
+	printf("TODO fick\n");
 
 	// Init decoy game at the end
 	const Game decoy_game = {

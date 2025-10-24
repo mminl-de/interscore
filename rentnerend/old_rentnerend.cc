@@ -314,7 +314,7 @@ void btn_cb_t2_score_minus() {
 void btn_cb_game_next() {
 	if (md.meta.game_i >= md.games_count) return;
 	md.meta.game_i++;
-	printf("TODO grr %d\n", md.meta.game_i);
+	printf("TODO game_i: %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count) screen_input_toggle_visibility(true);
 	update_queries();
 	update_input_window();
@@ -324,7 +324,7 @@ void btn_cb_game_next() {
 void btn_cb_game_prev() {
 	if (md.meta.game_i <= 0) return;
 	md.meta.game_i--;
-	printf("TODO grr %d\n", md.meta.game_i);
+	printf("TODO game_i: %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count-1) screen_input_toggle_visibility(false);
 	else // TODO does this work?
 		websocket_send_button_signal(GAME_PREV);
@@ -993,7 +993,7 @@ int main(int argc, char *argv[]) {
 	t2->start(TIME_UPDATE_INTERVAL_MS);
 
 	QTimer *t3 = new QTimer(wi.w);
-	QObject::connect(t3, &QTimer::timeout, &json_autosave);
+	// TODO QObject::connect(t3, &QTimer::timeout, &json_autosave);
 	t3->start(2*60*1000);
 
 	EventFilter event_filter;

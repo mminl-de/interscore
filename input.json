@@ -137,23 +137,11 @@
 
 		{
 			"1": {
-				"query": {
-					"set": "GROUP",
-					"group": "A",
-					"key": 3
-				}
+				"query": { "set": "GROUP", "group": "A", "key": 3 }
 			},
 			"2": {
-				"query": {
-					"set": "GROUP",
-					"group": "B",
-					"key": 3
-				}
+				"query": { "set": "GROUP", "group": "B", "key": 3 }
 			}
-		},
-		{
-			"1": { "name": "MATE" },
-			"2": { "name": "MAET" }
 		},
 		{
 			"1": {
