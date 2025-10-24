@@ -46,12 +46,13 @@ typedef struct {
 	u16 points;
 } Team;
 
+typedef struct { char *set; char *group; u8 key; } GameQuery;
 typedef struct {
 	u8 t1_index;
 	u8 t2_index;
 	// query.set must be set to NULL to signal absense of a meaningful value
-	struct { char *set; char *group; u8 key; } t1_query;
-	struct { char *set; char *group; u8 key; } t2_query;
+	GameQuery t1_query;
+	GameQuery t2_query;
 	Score halftime_score;
 	Score score;
 	Card *cards;
@@ -82,7 +83,7 @@ void matchday_free();
 int player_index(const char *name);
 int team_index(const char *name);
 char *json_generate();
-void common_json_load_from_string(const char *path);
+void common_json_read_from_string(const char *path);
 char *common_read_file(const char *path);
 bool file_write(const char *path, const char *s);
 char *gettimems();
