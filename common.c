@@ -33,10 +33,18 @@ void matchday_init() {
 	}
 }
 
+// TODO NOW free(): invalid pointer
 void matchday_free() {
-	for (i32 i = 0; i < md.games_count; ++i)
-		if (md.games[i].cards_count > 0)
-			free(md.games[i].cards);
+	for (i32 game_i = 0; game_i < md.games_count; ++game_i) {
+		if (md.games[game_i].cards_count > 0) free(md.games[game_i].cards);
+		free(md.games[game_i].t1_query.group);
+		free(md.games[game_i].t1_query.set);
+		free(md.games[game_i].t2_query.group);
+		free(md.games[game_i].t2_query.set);
+
+		for (i32 card_i = 0; card_i < md.games[game_i].cards_count; ++card_i)
+			free(md.games[game_i].cards[card_i].type);
+	}
 	for (i32 i = 0; i < md.players_count; ++i)
 		free(md.players[i].name);
 	if (md.players_count > 0)
@@ -154,32 +162,32 @@ void common_json_interpret_game_team(
 	printf("TODO some\n");
 	const char *team_name = common_json_get_string(team_obj, "name");
 	if (!team_name) {
-		printf("TODO 1\n");
 		json_object *query = common_json_get_object(team_obj, "query");
 		if (!query) {
 			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
-		printf("TODO 2\n");
 		const char *query_set = common_json_get_string(query, "set");
-		printf("TODO 3\n");
 		const u8 query_key = common_json_get_int(query, "key");
 		if (!query_set || errno == EINVAL) {
 			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d doesn't have both \"set\" and \"key\" keys! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
-		printf("TODO 4\n");
-		target_query->set = (char *) query_set;
+		printf("TODO 4 (setting query set incoming)\n");
+		target_query->set = malloc((strlen(query_set) + 1) * sizeof(char));
+		strcpy(target_query->set, query_set);
 		target_query->key = query_key;
+
+		printf("    TODO 4.5 '%s' (%d...)\n", query_set, query_set[0]);
 		if (!strcmp(query_set, "GROUP")) {
 			const char *query_group = common_json_get_string(query, "group");
 			if (!query_group) {
 				fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d has a GROUP type but lacks a \"group\" key! Exiting...\n", team_i, game_i);
 				exit(EXIT_FAILURE);
 			}
-			target_query->group = (char *) query_group;
+			target_query->group = malloc((strlen(query_group) + 1) * sizeof(char));
+			strcpy(target_query->group, query_group);
 		}
-		printf("TODO 5\n");
 
 		*target_index = 0; // TODO maybe its a bad idea
 		return;
@@ -329,6 +337,8 @@ void common_json_read_from_string(const char *s) {
 			&md.games[game_i].t2_index,
 			&md.games[game_i].t2_query
 		);
+		printf("  TODO queries: %s\n", !md.games[game_i].t1_query.set ? "[[null]]" : "some");
+		printf("TODO latest queries 2: '%s'\n", md.games[game_i].t1_query.set);
 		printf(" TODO 2\n");
 
 		json_object *halftime_score = common_json_get_object(game_obj, "halftime_score");
@@ -386,8 +396,11 @@ void common_json_read_from_string(const char *s) {
 				md.games[game_i].cards[card_i].player_index = this_player_index;
 
 				const char *type = common_json_get_string(card, "type");
-				if (type) md.games[game_i].cards[card_i].type = (char *) type; // TODO NOTE could be bad
-				else md.games[game_i].cards[card_i].type = (char *) "";
+				// TODO malloc this, free that
+				if (type) {
+					md.games[game_i].cards[card_i].type = malloc((strlen(type) + 1) * sizeof(char));
+					strcpy(md.games[game_i].cards[card_i].type, type); // TODO NOTE could be bad
+				} else md.games[game_i].cards[card_i].type = (char *) "";
 			}
 		}
 	}
@@ -439,6 +452,7 @@ void common_json_read_from_string(const char *s) {
 
 	// Free resources
 	json_object_put(root);
+	printf("TODO latest queries 2: '%s'\n", md.games[5].t1_query.set);
 }
 
 // @ret the string of the whole content of the file. In case of an error: NULL

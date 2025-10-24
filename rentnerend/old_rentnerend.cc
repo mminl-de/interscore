@@ -224,8 +224,10 @@ void update_queries() {
 		const char *t1_query_set = game->t1_query.set;
 		const char *t2_query_set = game->t2_query.set;
 
+		if (!t1_query_set) printf("TODO game %d lacks a query\n", game_i);
 		if (t1_query_set) {
 			if (!strcmp(t1_query_set, "TEAM")) {
+				printf("TODO game %d has a query\n", game_i);
 				// TODO MOVE make it run only once
 				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
 					teams_sorted->team = md.teams[team_i];
@@ -258,6 +260,44 @@ void update_queries() {
 				else game->t1_index = t1_target_game->t2_index;
 			}
 			else if (!strcmp(t1_query_set, "GROUP")) {
+				// TODO IMPLEMENT
+			}
+		}
+		if (t2_query_set) {
+			if (!strcmp(t2_query_set, "TEAM")) {
+				printf("TODO game %d has a query\n", game_i);
+				// TODO MOVE make it run only once
+				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
+					teams_sorted->team = md.teams[team_i];
+					teams_sorted->index = team_i;
+				}
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_name);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_goals);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_goalratio);
+				msort(teams_sorted, md.teams_count, sizeof(TeamIndexed), teams_sort_after_points);
+				game->t2_index = teams_sorted[game->t2_query.key].index;
+			}
+			else if (!strcmp(t2_query_set, "WINNER")) {
+				if (md.meta.game_i < game->t2_query.key) return;
+
+				Game *const t2_target_game = &md.games[game->t2_query.key];
+				// TODO ASK what to do in case of a draw?
+				// possibly ignore it cause we'd need to insert games manually either way, right?
+				if (t2_target_game->score.t1 >= t2_target_game->score.t2)
+					game->t2_index = t2_target_game->t2_index;
+				else game->t2_index = t2_target_game->t2_index;
+			}
+			else if (!strcmp(t2_query_set, "LOSER")) {
+				if (md.meta.game_i < game->t2_query.key) return;
+
+				Game *const t2_target_game = &md.games[game->t2_query.key];
+				// TODO ASK what to do in case of a draw?
+				// possibly ignore it cause we'd need to insert games manually either way, right?
+				if (t2_target_game->score.t1 < t2_target_game->score.t2)
+					game->t2_index = t2_target_game->t2_index;
+				else game->t2_index = t2_target_game->t2_index;
+			}
+			else if (!strcmp(t2_query_set, "GROUP")) {
 				// TODO IMPLEMENT
 			}
 		}
@@ -433,21 +473,20 @@ void websocket_send_card(char *type, u8 player_index) {
 }
 
 void websocket_send_button_signal(u8 signal) {
-	printf("Sending btn press: %s\n", gettimems());
-	printf("sending signal\n");
+	// TODO printf("Sending signal and btn press: %s\n", gettimems());
 	if (!server_connected)
-		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		printf("WARNING: Local changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, &signal, sizeof(u8), WEBSOCKET_OP_BINARY);
-	printf("Finished sending btn press: %s\n", gettimems());
+	// TODO printf("Finished sending btn press: %s\n", gettimems());
 }
 
 void websocket_send_json(const char *s) {
 	if (!server_connected)
-		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		printf("WARNING: Local changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, s, strlen(s), WEBSOCKET_OP_TEXT);
-	printf("Finished sending json (len: %lu): %s\n", strlen(s), s);
+	// TODO printf("Finished sending json (len: %lu): %s\n", strlen(s), s);
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
@@ -999,6 +1038,7 @@ int main(int argc, char *argv[]) {
 	EventFilter event_filter;
 	app.installEventFilter(&event_filter);
 
+	matchday_free();
 	const i32 stat = app.exec();
 	delete player;
 	delete audio_output;
