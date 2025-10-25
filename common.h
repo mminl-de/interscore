@@ -47,7 +47,8 @@ typedef struct {
 
 typedef struct {
 	char *name;
-	char **members;
+	u8 *members_indices;
+	u8 members_count;
 } Group;
 
 typedef struct { char *set; char *group; u8 key; } GameQuery;
@@ -82,8 +83,9 @@ typedef struct {
 
 void matchday_init();
 void matchday_free();
-int player_index(const char *name);
-int team_index(const char *name);
+u8 player_index(const char *name);
+u8 team_index(const char *name);
+u8 group_index(const char *name);
 char *json_generate();
 void common_json_read_from_string(const char *path);
 char *common_read_file(const char *path);

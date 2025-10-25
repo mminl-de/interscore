@@ -55,7 +55,7 @@ void matchday_free() {
 		free(md.teams[i].name);
 		free(md.teams[i].logo_path);
 	}
-	for (i32 i = 0; i < md.groups_count; ++i) free(md.groups[i].members);
+	for (i32 i = 0; i < md.groups_count; ++i) free(md.groups[i].members_indices);
 	free(md.groups);
 	if (md.teams_count > 0)
 		free(md.teams);
@@ -63,7 +63,7 @@ void matchday_free() {
 
 // Return the index of a players name.
 // If the name does not exist, return -1.
-int player_index(const char *name) {
+u8 player_index(const char *name) {
 	for (i32 i = 0; i < md.players_count; ++i)
 		if (!strcmp(md.players[i].name, name))
 			return i;
@@ -72,10 +72,22 @@ int player_index(const char *name) {
 
 // Return the index of a team name.
 // If the name does not exist return -1.
-int team_index(const char *name) {
+u8 team_index(const char *name) {
 	for (i32 i = 0; i < md.teams_count; ++i)
 		if (!strcmp(md.teams[i].name, name))
 			return i;
+	return -1;
+}
+
+// Return the index of a Group name.
+// If the name does not exist return -1.
+u8 group_index(const char *name) {
+	printf("looking for Group Index: %s\n", name);
+	for (i32 i = 0; i < md.groups_count; ++i) {
+		printf("Das hier (%d)? %s == %s\n", i, name, md.groups[i].name);
+		if (!strcmp(md.groups[i].name, name))
+			return i;
+	}
 	return -1;
 }
 
@@ -159,9 +171,9 @@ void common_json_interpret_game_team(
 		exit(EXIT_FAILURE);
 	}
 
-	printf("TODO some\n");
 	const char *team_name = common_json_get_string(team_obj, "name");
 	if (!team_name) {
+		printf("Game %d is query based\n", game_i);
 		json_object *query = common_json_get_object(team_obj, "query");
 		if (!query) {
 			fprintf(stderr, "ERROR parsing JSON: Team %s in game %d has neither name nor query! Exiting...\n", team_i, game_i);
@@ -173,12 +185,10 @@ void common_json_interpret_game_team(
 			fprintf(stderr, "ERROR parsing JSON: Query of team %s in game %d doesn't have both \"set\" and \"key\" keys! Exiting...\n", team_i, game_i);
 			exit(EXIT_FAILURE);
 		}
-		printf("TODO 4 (setting query set incoming)\n");
 		target_query->set = malloc((strlen(query_set) + 1) * sizeof(char));
 		strcpy(target_query->set, query_set);
 		target_query->key = query_key;
 
-		printf("    TODO 4.5 '%s' (%d...)\n", query_set, query_set[0]);
 		if (!strcmp(query_set, "GROUP")) {
 			const char *query_group = common_json_get_string(query, "group");
 			if (!query_group) {
@@ -189,9 +199,10 @@ void common_json_interpret_game_team(
 			strcpy(target_query->group, query_group);
 		}
 
-		*target_index = 0; // TODO maybe its a bad idea
+		*target_index = 255; // TODO maybe its a bad idea
 		return;
 	}
+	printf("Game %d is name based\n", game_i);
 
 	memset(target_query, 0, sizeof(GameQuery));
 
@@ -337,9 +348,7 @@ void common_json_read_from_string(const char *s) {
 			&md.games[game_i].t2_index,
 			&md.games[game_i].t2_query
 		);
-		printf("  TODO queries: %s\n", !md.games[game_i].t1_query.set ? "[[null]]" : "some");
-		printf("TODO latest queries 2: '%s'\n", md.games[game_i].t1_query.set);
-		printf(" TODO 2\n");
+		printf("DEBUG: Game %d: t1_index: %d, t2_index: %d\n", game_i, md.games[game_i].t1_index, md.games[game_i].t1_index);
 
 		json_object *halftime_score = common_json_get_object(game_obj, "halftime_score");
 		if (halftime_score) {
@@ -419,18 +428,28 @@ void common_json_read_from_string(const char *s) {
 			!json_object_iter_equal(&it, &it_end);
 			++group_i, json_object_iter_next(&it)
 		) {
-			json_object *members = json_object_iter_peek_value(&it);
+			const char *shallow_name = (char *) json_object_iter_peek_name(&it);
+			md.groups[group_i].name = malloc(strlen(shallow_name) + 1);
+			strcpy(md.groups[group_i].name, shallow_name);
 
+			json_object *members = json_object_iter_peek_value(&it);
 			const u16 members_count = json_object_array_length(members);
-			md.groups[group_i].members = malloc(members_count * sizeof(char *));
+
+			md.groups[group_i].members_count = members_count;
+			printf("OAOAOAO --- MEMBERS COUNT: %d --- OAOAOAOAO\n", md.groups[group_i].members_count);
+			md.groups[group_i].members_indices = malloc(members_count * sizeof(u8 *));
 
 			for (i32 member_i = 0; member_i < members_count; ++member_i) {
 				json_object *member = json_object_array_get_idx(members, member_i);
 				const char *member_name = json_object_get_string(member);
-				md.groups[group_i].members[member_i] = (char *) member_name;
+				int team_i = team_index(member_name);
+				if(team_i == -1) {
+					fprintf(stderr, "ERROR: Cant parse input.json: Cant find Team '%s' from Group '%s\n", member_name, md.groups[group_i].name);
+					exit(EXIT_FAILURE);
+				}
+				md.groups[group_i].members_indices[member_i] = team_i;
 			}
 
-			md.groups[group_i].name = (char *) json_object_iter_peek_name(&it);
 		}
 	} else {
 		md.groups = NULL;
