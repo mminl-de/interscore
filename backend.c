@@ -175,7 +175,6 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 		case T1_SCORE_MINUS:
 		case T2_SCORE_PLUS:
 		case T2_SCORE_MINUS:
-		case GAME_NEXT:
 		case GAME_PREV:
 		case GAME_SWITCH_SIDES:
 		case TIME_PLUS_1:
@@ -187,17 +186,19 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 			ws_send(con_front, (char *)input_type, sizeof(enum MessageType), WEBSOCKET_OP_BINARY);
 			break;
 		}
+		case GAME_NEXT:
+			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
 		case DATA_TIME: // Same syntax as TIME_TOGGLE_PAUSE as it also ships time as u16 after the MessageType
 			printf("INFO: Received DATA: Time\n");
 		case TIME_TOGGLE_PAUSE: {
 			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
 			break;
 		}
-		case YELLOW_CARD:
-		case RED_CARD: {
-			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-			break;
-		}
+		//case YELLOW_CARD:
+		//case RED_CARD: {
+		//	ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
+		//	break;
+		//}
 		case DATA_GAMEINDEX: {
 			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
 			gameindex = ((char *)input_type)[1];
