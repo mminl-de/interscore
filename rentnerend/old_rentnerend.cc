@@ -90,11 +90,6 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
-typedef struct {
-	Team team;
-	u8 index;
-} TeamIndexed;
-
 #define URL "ws://mminl.de:8081"
 
 void update_input_window();
@@ -113,16 +108,220 @@ struct mg_mgr mgr;
 // TODO CHECK if you can allocate in the stack
 QMediaPlayer *player;
 QAudioOutput *audio_output;
-TeamIndexed *teams_sorted;
 
 bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 	if (con == NULL) {
-		printf("WARNING: client is not connected, couldnt send Message: '%*s'\n", len, message);
+		printf("WARNING: client is not connected, couldn't send Message: '%*s'\n", len, message);
 		return false;
 	}
 	return mg_ws_send(con, message, len, op) == len;
 }
 
+// Implementation of merge sort. We use it cause qsort doesn't do stable sorting. :(
+void msort(void *base, size_t num, size_t size, int (*compar)(const void *, const void *)) {
+	if (num < 2) return;
+
+	const size_t mid = num / 2;
+	void *left = malloc(mid * size);
+	void *right = malloc((num - mid) * size);
+
+	if (!left || !right) {
+		fprintf(stderr, "Memory allocation failed");
+		exit(EXIT_FAILURE);
+	}
+
+	memcpy(left, base, mid * size);
+	memcpy(right, (char *) base + mid * size, (num - mid) * size);
+	msort(left, mid, size, compar);
+	msort(right, num - mid, size, compar);
+
+	// Merge two halves
+	size_t i = 0, j = 0, k = 0;
+	while (i < mid && j < num - mid) {
+		if (compar((char *) left + i * size, (char *) right + j * size) <= 0) {
+			memcpy((char *) base + k * size, (char *) left + i * size, size);
+			i++;
+		} else {
+			memcpy((char *)base + k * size, (char *) right + j * size, size);
+			j++;
+		}
+		k++;
+	}
+	while (i < mid) {
+		memcpy((char *) base + k * size, (char *) left + i * size, size);
+		i++; k++;
+	}
+	while (j < num - mid) {
+		memcpy((char *) base + k * size, (char *) right + j * size, size);
+		j++; k++;
+	}
+
+	free(left);
+	free(right);
+}
+u16 team_calc_goals(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; game_i++) {
+		if (md.games[game_i].t1_index == index) p += md.games[game_i].score.t1;
+		else if (md.games[game_i].t2_index == index) p += md.games[game_i].score.t2;
+	}
+	return p;
+}
+u16 team_calc_goals_taken(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; game_i++) {
+		if (md.games[game_i].t1_index == index) p += md.games[game_i].score.t2;
+		else if (md.games[game_i].t2_index == index) p += md.games[game_i].score.t1;
+	}
+	return p;
+}
+u16 team_calc_points(u8 index) {
+	u16 p = 0;
+	for (u8 game_i = 0; game_i < md.meta.game_i; ++game_i) {
+		if (md.games[game_i].t1_index == index) {
+			if (md.games[game_i].score.t1 > md.games[game_i].score.t2) p += 3;
+			else if (md.games[game_i].score.t1 == md.games[game_i].score.t2) p++;
+		} else if (md.games[game_i].t2_index == index) {
+			if (md.games[game_i].score.t2 > md.games[game_i].score.t1) p += 3;
+			else if (md.games[game_i].score.t2 == md.games[game_i].score.t1) p++;
+		}
+	}
+	return p;
+}
+i32 teams_sort_after_name(const void *a, const void *b) {
+	printf("???\n");
+	return strcmp(md.teams[*(u8*)a].name, md.teams[*(u8*)b].name);
+}
+i32 teams_sort_after_goals(const void *a, const void *b) {
+	return team_calc_goals(*(u8*)b) - team_calc_goals(*(u8*)a);
+}
+i32 teams_sort_after_goalratio(const void *a, const void *b) {
+	u16 a_goals = team_calc_goals(*(u8*)a);
+	u16 b_goals = team_calc_goals(*(u8*)b);
+	u16 a_goals_taken = team_calc_goals_taken(*(u8*)a);
+	u16 b_goals_taken = team_calc_goals_taken(*(u8*)b);
+	// reverse it, because bigger is better
+	return (b_goals - b_goals_taken) - (a_goals - a_goals_taken);
+}
+i32 teams_sort_after_points(const void *a, const void *b) {
+	return team_calc_points(*(u8*)b) - team_calc_points(*(u8*)a);
+}
+
+void update_query(u8 game_i, bool is_team_1) {
+	printf("DEBUG: Updating Query: game_i: %d, Team: %d\n", game_i, is_team_1 ? 1 : 2);
+	Game *g = &md.games[game_i];
+	GameQuery *q = is_team_1 ? &(g->t1_query) : &(g->t2_query);
+	u8 *t_index = is_team_1 ? &(g->t1_index) : &(g->t2_index);
+	printf("DEBUG: GROUP 0: q->key: %d\n", q->key);
+	if (!strcmp(q->set, "TEAM")) {
+		// Check if we can calculate the Query at this time
+		// TEAM can only be calculated exactly when the game is now,
+		// because later the ranking is changed and calculating after makes no sense anyways.
+		// Before we dont know the standing of all teams at the time of the game
+		if(md.meta.game_i != game_i) return;
+
+		printf("TODO game %d has a query\n", game_i);
+		u8 teams_sorted[md.teams_count];
+		for(int i=0; i < md.teams_count; i++) teams_sorted[i] = i;
+
+		msort(teams_sorted, md.teams_count, sizeof(u8 *), teams_sort_after_name);
+		msort(teams_sorted, md.teams_count, sizeof(u8 *), teams_sort_after_goals);
+		msort(teams_sorted, md.teams_count, sizeof(u8 *), teams_sort_after_goalratio);
+		msort(teams_sorted, md.teams_count, sizeof(u8 *), teams_sort_after_points);
+		*t_index = teams_sorted[g->t1_query.key];
+	}
+	else if (!strcmp(q->set, "WINNER")) {
+		// Check if we can calculate the Query at this time
+		if (md.meta.game_i <= q->key) return;
+
+		Game *const target_game = &md.games[q->key];
+		// TODO ASK what to do in case of a draw?
+		// possibly ignore it cause we'd need to insert games manually either way, right?
+		if (target_game->score.t1 >= target_game->score.t2)
+			*t_index = target_game->t1_index;
+		else *t_index = target_game->t2_index;
+	}
+	else if (!strcmp(q->set, "LOSER")) {
+		// Check if we can calculate the Query at this time
+		if (md.meta.game_i <= q->key) return;
+		if (md.meta.game_i <= g->t1_query.key) return;
+
+		Game *const target_game = &md.games[q->key];
+		// TODO ASK what to do in case of a draw?
+		// possibly ignore it cause we'd need to insert games manually either way, right?
+		if (target_game->score.t1 < target_game->score.t2)
+			*t_index = target_game->t1_index;
+		else *t_index = target_game->t2_index;
+	}
+	else if (!strcmp(q->set, "GROUP")) {
+		// Check if we can calculate the Query at this time
+		// GROUP can only be calculated exactly when all games of the group have been played
+		// We can use i < game_i here, because if there are Group games after that the JSON is illegal anyways... TODO check that when loading the json
+		u8 group_i = group_index(q->group);
+		u8 members_count = md.groups[group_i].members_count;
+		printf("Members Count: %d\n", members_count);
+
+		printf("DEBUG:  Can we calculate the game yet?\n");
+		for(int i=md.meta.game_i; i < game_i; i++) {
+			int t1_index, t2_index;
+			if(md.games[i].t1_index != 255) t1_index = md.games[i].t1_index;
+			else return;
+			if(md.games[i].t2_index != 255) t2_index = md.games[i].t2_index;
+			else return;
+			printf("Checking game %d: (T1:%d, T2:%d)\n", i, t1_index, t2_index);
+			for(int j=0; j < members_count; j++) {
+				printf("Members: %d.) %d\n", j, md.groups[group_i].members_indices[j]);
+				// If t1/t2 is in the Group set it to -1
+				if(t1_index == md.groups[group_i].members_indices[j]) t1_index = -1;
+				if(t2_index == md.groups[group_i].members_indices[j]) t2_index = -1;
+
+				// If there is a game where both Teams are Members of the Group,
+				// we have to wait for the result before calculating
+				if(t1_index == -1 && t2_index == -1) return;
+			}
+		}
+
+		printf("DEBUG: GROUP 3\n");
+		u8 *teams_sorted = (u8 *) malloc(members_count * sizeof(u8));
+		printf("DEBUG: GROUP 4\n");
+		memcpy(teams_sorted, md.groups[group_i].members_indices, members_count * sizeof(u8));
+		printf("DEBUG: GROUP 5\n");
+		printf("TEAMS_UNSORTED: [");
+		for(int i=0; i < members_count; i++) printf("%d, ", teams_sorted[i]);
+		printf("]\n");
+
+		msort(teams_sorted, members_count, sizeof(u8), teams_sort_after_name);
+		printf("DEBUG: GROUP 5.1\n");
+		msort(teams_sorted, members_count, sizeof(u8), teams_sort_after_goals);
+		printf("DEBUG: GROUP 5.2\n");
+		msort(teams_sorted, members_count, sizeof(u8), teams_sort_after_goalratio);
+		printf("DEBUG: GROUP 5.3\n");
+		msort(teams_sorted, members_count, sizeof(u8), teams_sort_after_points);
+		printf("TEAMS_SORTED: [");
+		for(int i=0; i < members_count; i++) printf("%d, ", teams_sorted[i]);
+		printf("]\n");
+		printf("DEBUG: GROUP 6: q->key: %d\n", q->key);
+		*t_index = teams_sorted[q->key];
+		printf("DEBUG: GROUP 7, %d\n", *t_index);
+	}
+}
+
+// TODO TEST
+void update_queries() {
+	printf("DEBUG: Start Updating Queries\n");
+	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
+		Game *const game = &md.games[game_i];
+		const char *t1_query_set = game->t1_query.set;
+		const char *t2_query_set = game->t2_query.set;
+
+		if (!t1_query_set && !t2_query_set) {
+			printf("DEBUG: game %d has no queries\n", game_i);
+			continue;
+		}
+		if (t1_query_set) update_query(game_i, true);
+		if (t2_query_set) update_query(game_i, false);
+	}
+}
 void btn_cb_t1_score_plus() {
 	if (!md.meta.halftime) {
 		md.games[md.meta.game_i].score.t1++;
@@ -174,6 +373,7 @@ void btn_cb_t2_score_minus() {
 void btn_cb_game_next() {
 	if (md.meta.game_i >= md.games_count) return;
 	md.meta.game_i++;
+	printf("TODO game_i: %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count) screen_input_toggle_visibility(true);
 	update_queries();
 	update_input_window();
@@ -183,6 +383,7 @@ void btn_cb_game_next() {
 void btn_cb_game_prev() {
 	if (md.meta.game_i <= 0) return;
 	md.meta.game_i--;
+	printf("TODO game_i: %d\n", md.meta.game_i);
 	if (md.meta.game_i == md.games_count-1) screen_input_toggle_visibility(false);
 	else // TODO does this work?
 		websocket_send_button_signal(GAME_PREV);
@@ -291,21 +492,20 @@ void websocket_send_card(char *type, u8 player_index) {
 }
 
 void websocket_send_button_signal(u8 signal) {
-	printf("Sending btn press: %s\n", gettimems());
-	printf("sending signal\n");
+	// TODO printf("Sending signal and btn press: %s\n", gettimems());
 	if (!server_connected)
-		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		printf("WARNING: Local changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, &signal, sizeof(u8), WEBSOCKET_OP_BINARY);
-	printf("Finished sending btn press: %s\n", gettimems());
+	// TODO printf("Finished sending btn press: %s\n", gettimems());
 }
 
 void websocket_send_json(const char *s) {
 	if (!server_connected)
-		printf("WARNING: Local Changes could not be send to Server, because the Server is not connected! This is very bad!\n");
+		printf("WARNING: Local changes could not be send to Server, because the Server is not connected! This is very bad!\n");
 	else
 		mg_ws_send(server_con, s, strlen(s), WEBSOCKET_OP_TEXT);
-	printf("Finished sending json (len: %lu): %s\n", strlen(s), s);
+	// TODO printf("Finished sending json (len: %lu): %s\n", strlen(s), s);
 }
 
 void ev_handler(struct mg_connection *c, int ev, void *p) {
@@ -328,7 +528,8 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 		switch ((int)wm->data.buf[0]) {
 		case PLS_SEND_JSON: {
-			char* s = json_generate();
+			//char* s = json_generate();
+			char *s = common_read_file(JSON_PATH); // TODO dont hardcode
 			websocket_send_json(s);
 			printf("INFO: Sent the newest JSON version to backend\n");
 			break;
@@ -564,6 +765,7 @@ void update_display_window() {
 	sprintf(s, "%01d:%02d", md.meta.cur_time/60, md.meta.cur_time%60);
 	update_label(wd.l.time, 0, 1, 0.5, 1, s, -1, true, Qt::AlignHCenter, Qt::AlignBottom);
 }
+
 void update_input_window() {
 	int w = wi.w->width();
 	int h = wi.w->height();
@@ -673,35 +875,6 @@ void update_input_window() {
 		QIcon icon = QApplication::style()->standardIcon(QStyle::SP_DialogApplyButton);
 		wi.b.connect->setIcon(icon);
 	}
-}
-void update_queries() {
-	for (int game_i = md.meta.game_i; game_i < md.games_count; ++game_i) {
-		Game *const game = &md.games[game_i];
-		const char *t1_query_set = game->t1_query.set;
-		const char *t2_query_set = game->t2_query.set;
-
-		if (t1_query_set) {
-			if (!strcmp(t1_query_set, "TEAM")) {
-				for (int team_i = 0; team_i < md.teams_count; ++team_i) {
-					teams_sorted->team = md.teams[team_i];
-					teams_sorted->index = team_i;
-				}
-				qsort(teams_sorted, md.teams_count, sizeof(TeamIndexed), [](const void *a, const void *b) {
-					return ((TeamIndexed *) b)->team.points - ((TeamIndexed *) a)->team.points;
-				});
-				game->t1_index = teams_sorted[game->t1_query.key].index;
-			}
-			else if (!strcmp(t1_query_set, "WINNER")) {
-				// TODO NOW
-			}
-			else if (!strcmp(t1_query_set, "LOSER")) {
-			}
-			else if (!strcmp(t1_query_set, "GROUP")) {
-			}
-		}
-	}
-
-	delete[] teams_sorted;
 }
 
 // fontsize is only used for icons atm, cry about it
@@ -833,6 +1006,8 @@ void json_autosave() {
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
 
+	printf("DEBUG: -1\n");
+
 	player = new QMediaPlayer;
 	audio_output = new QAudioOutput;
 
@@ -840,6 +1015,8 @@ int main(int argc, char *argv[]) {
 	player->setAudioOutput(audio_output);
 	audio_output->setVolume(1);
 	player->setSource(QUrl::fromLocalFile(SOUND_GAME_END));
+
+	printf("DEBUG: 0\n");
 
 	// Applying Kanit font globally
 	const int font_id = QFontDatabase::addApplicationFont("assets/ChivoMono-Regular.ttf");
@@ -849,46 +1026,61 @@ int main(int argc, char *argv[]) {
 		QApplication::setFont(app_font);
 	}
 
+	printf("DEBUG: 1\n");
+
 	char *json = common_read_file(JSON_PATH); // TODO dont hardcode
-	common_json_load_from_string(json);
+	if (!json) return 1;
+
+	printf("DEBUG: <<<<<<< 2 >>>>>>>>\n");
+	common_json_read_from_string(json);
 	free(json);
 	matchday_init();
-	teams_sorted = new TeamIndexed[md.teams_count];
+
+	printf("DEBUG: <<<<<< 3 >>>>>>>\n");
 
 	create_display_window();
+	printf("DEBUG: <<<<<< 4 >>>>>>>\n");
 	create_input_window();
+	printf("DEBUG: <<<<<< 5 >>>>>>>\n");
 
 	mg_mgr_init(&mgr);
 	mg_ws_connect(&mgr, URL, ev_handler, NULL, NULL);
 	QTimer *t1 = new QTimer(wi.w);
 	QObject::connect(t1, &QTimer::timeout, &websocket_poll);
 	t1->start(100);
+	printf("DEBUG: <<<<<< 6 >>>>>>>\n");
 
 	wd.w->show();
 	wi.w->show();
 
+	printf("DEBUG: <<<<<< 7 >>>>>>>\n");
 	QShortcut *shortcut = new QShortcut(QKeySequence(Qt::Key_Space), wi.w);
 	QObject::connect(shortcut, &QShortcut::activated, []() {
 		printf("test\n");
 		btn_cb_time_toggle_pause();
 	});
 
+	printf("DEBUG: <<<<<< 8 >>>>>>>\n");
 	QTimer *t2 = new QTimer(wi.w);
 	QObject::connect(t2, &QTimer::timeout, &update_timer);
 	t2->start(TIME_UPDATE_INTERVAL_MS);
 
-	QTimer *t3 = new QTimer(wi.w);
-	QObject::connect(t3, &QTimer::timeout, &json_autosave);
-	t3->start(2*60*1000);
+	printf("DEBUG: <<<<<< 9 >>>>>>>\n");
+	// QTimer *t3 = new QTimer(wi.w);
+	// TODO QObject::connect(t3, &QTimer::timeout, &json_autosave);
+	// t3->start(2*60*1000);
 
 	EventFilter event_filter;
 	app.installEventFilter(&event_filter);
 
-	const int stat = app.exec();
+	printf("DEBUG: <<<<<< 10 >>>>>>>\n");
+	const i32 stat = app.exec();
+
+	matchday_free();
 	delete player;
 	delete audio_output;
 	delete wd.w;
 	delete wi.w;
-	delete []teams_sorted;
+	printf("DEBUG: <<<<<< 11 >>>>>>>\n");
 	return stat;
 }

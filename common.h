@@ -43,15 +43,21 @@ typedef struct {
 	char *name;
 	char *logo_path;
 	char color[7];
-	u16 points;
 } Team;
 
+typedef struct {
+	char *name;
+	u8 *members_indices;
+	u8 members_count;
+} Group;
+
+typedef struct { char *set; char *group; u8 key; } GameQuery;
 typedef struct {
 	u8 t1_index;
 	u8 t2_index;
 	// query.set must be set to NULL to signal absense of a meaningful value
-	struct { char *set; char *group; u8 key; } t1_query;
-	struct { char *set; char *group; u8 key; } t2_query;
+	GameQuery t1_query;
+	GameQuery t2_query;
 	Score halftime_score;
 	Score score;
 	Card *cards;
@@ -68,21 +74,20 @@ typedef struct {
 		u16 cur_time;
 		time_t start_time;
 	} meta;
-	Team *teams;
-	u8 teams_count;
-	Player *players;
-	u8 players_count;
-	Game *games;
-	u8 games_count;
+	Team *teams;     u8 teams_count;
+	Player *players; u8 players_count;
+	Game *games;     u8 games_count;
+	Group *groups;   u8 groups_count;
 } Matchday;
 #pragma pack(pop)
 
 void matchday_init();
 void matchday_free();
-int player_index(const char *name);
-int team_index(const char *name);
+u8 player_index(const char *name);
+u8 team_index(const char *name);
+u8 group_index(const char *name);
 char *json_generate();
-void common_json_load_from_string(const char *path);
+void common_json_read_from_string(const char *path);
 char *common_read_file(const char *path);
 bool file_write(const char *path, const char *s);
 char *gettimems();
