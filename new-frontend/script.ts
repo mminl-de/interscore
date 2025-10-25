@@ -194,9 +194,15 @@ function parse_json(str: string): void {
 			pause_start: json.meta.game_len * (1_000 / TIME_UPDATE_INTERVAL_MS)
 		}
 	}
-	md.games = []
+	md.games = Array(json.games.length).fill(null).map(() => ({
+		t1_index: 0, t2_index: 0,
+		t1_query: null, t2_query: null,
+		halftime_score: { t1: 0, t2: 0 },
+		score: { t1: 0, t2: 0 },
+		cards: []
+	}))
 	md.teams = []
-	md.players = []
+	md.players = Array(json.teams.length * 2).fill(null)
 	md.groups = new Map()
 	for (let i = 0; i < json.teams.length; i++) {
 		md.players[i * 2] = {
@@ -209,13 +215,13 @@ function parse_json(str: string): void {
 			role: json.teams[i].players[1].role,
 			team_index: i
 		}
-		md.teams[i] = {
+		md.teams.push({
 			players: [i * 2, i * 2 + 1],
 			name: json.teams[i].name,
 			logo_path: json.teams[i].logo_path,
 			color_main: string_to_color(json.teams[i].color),
 			color_darker: string_to_darker_color(json.teams[i].color)
-		}
+		})
 		console.log("TODO color lighter:", md.teams[i].color_main)
 		console.log("TODO color darker:", md.teams[i].color_darker)
 	}
@@ -331,7 +337,7 @@ function write_scoreboard() {
 		color_darker: { r: 100, g: 100, b: 100 }
 	}
 
-	// TODO TEST
+	// TODO NOW TEST
 	const game = md.games[md.meta.game_i]
 	const team_left = (() => {
 		const query = md.meta.halftime ? game.t2_query : game.t1_query
