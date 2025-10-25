@@ -1,3 +1,5 @@
+// TODO NOW implement update_queries
+
 import { MessageType } from "../MessageType.js"
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // MessageType.ts contains only the enum MessageType and is exported, so backend
@@ -43,6 +45,13 @@ const ad = document.querySelector(".ad")! as HTMLElement
 
 const livetable = document.querySelector(".livetable")! as HTMLElement
 
+type time_t = number
+
+// Important variables for `read_c_string`
+const decoder = new TextDecoder("utf-8")
+let str_len: number // temporary variable for counting string lengths
+let u8_array: Uint8Array
+
 const CARD_SHOW_LENGTH = 7_000
 const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
@@ -59,13 +68,12 @@ let shown = {
 	ad: false
 }
 
-enum CardType { Yellow, Red }
 interface Color { r: number, g: number, b: number }
 
 interface Score { t1: number, t2: number }
 interface Card {
 	player_index: number,
-	card_type: CardType
+	card_type: string
 }
 interface Player {
 	name: string,
@@ -73,57 +81,98 @@ interface Player {
 	role: string
 }
 interface Team {
-	player_indices: number[],
 	name: string,
+	players: number[],
 	// TODO handle fallback
-	logo_filename: string, // logo als Bild direkt?
+	logo_path: string, // logo als Bild direkt?
 	color_main: Color,
 	color_darker: Color
 }
 interface Game {
 	t1_index: number,
 	t2_index: number,
+	t1_query: GameQuery | null,
+	t2_query: GameQuery | null,
 	halftime_score: Score,
 	score: Score,
 	cards: Card[]
-}
-interface Group {
-	name: string,
-	teams_index: number[]
 }
 interface GameQuery {
 	set: string,
 	group: string,
 	key: number
 }
-interface Matchday {
-	cur: {
-		gameindex: number,
-		halftime: boolean,
-		pause: boolean,
-		time: number,
-		pausestart: number // time_t
+interface InputJSON {
+	meta: {
+		game_len: number,
+		game_i: number | null,
+		first_halftime: boolean,
+		paused: boolean,
+		cur_time: number
 	},
-	deftime: number,
-	games: Game[],
+	teams: {
+		name: string,
+		logo_path: string,
+		color: string,
+		players: { name: string, role: string }[]
+	}[],
+	groups: { [key: string]: string[] },
+	games: {
+		[1]: {
+			name: string | null,
+			query: { set: string, group: string, key: number } | null
+		},
+		[2]: {
+			name: string | null,
+			query: { set: string, group: string, key: number } | null
+		},
+		halftime_score: { ["1"]: number, ["2"]: number },
+		score: { ["1"]: number, ["2"]: number },
+		cards: {
+			name: string,
+			type: "y" | "r", // TODO NOW TEMPORARY
+			reason: string,
+			timestamp: time_t
+		}[]
+	}[]
+}
+interface Matchday {
+	meta: {
+		game_len: number,
+		game_i: number,
+		halftime: boolean,
+		paused: boolean,
+		cur_time: number,
+		pause_start: time_t,
+	},
 	teams: Team[],
 	players: Player[],
-	groups: Group[]
+	games: Game[],
+	groups: Map<string, string[]>
 }
 
 let md: Matchday = {
-	cur: {
-		gameindex: 0,
+	meta: {
+		game_len: -1,
+		game_i: 0,
 		halftime: false,
-		pause: true,
-		time: -1,
-		pausestart: -1
+		paused: true,
+		cur_time: -1,
+		pause_start: -1
 	},
-	deftime: -1,
 	games: [],
 	teams: [],
 	players: [],
-	groups: []
+	groups: new Map()
+}
+
+// Reads the characters of `view` starting with `offset` until the next \0
+// delimiter. Returns the characters as a string without the delimiter.
+function read_c_string(view: DataView, offset: number): string {
+	str_len = 0
+	while (view.getUint8(offset + str_len) !== 0) ++str_len
+	u8_array = new Uint8Array(view.buffer, view.byteOffset + offset, str_len)
+	return decoder.decode(u8_array)
 }
 
 function capitalize(str: string): string {
@@ -131,82 +180,92 @@ function capitalize(str: string): string {
 	return str[0].toUpperCase() + str.slice(1)
 }
 
-function parse_json(str: string) {
-	const json = JSON.parse(str)
+function parse_json(str: string): void {
+	const json: InputJSON = JSON.parse(str)
 
-	if (md.deftime === -1) {
+	if (md.meta.game_len === -1) {
 		console.log("First JSON Parse")
-		md.cur = {
-			gameindex: 0,
+		md.meta = {
+			game_len: json.meta.game_len * (1_000 / TIME_UPDATE_INTERVAL_MS),
+			game_i: 0,
 			halftime: false,
-			pause: true,
-			time: json.time * (1_000 / TIME_UPDATE_INTERVAL_MS),
-			pausestart: json.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
+			paused: true,
+			cur_time: json.meta.game_len * (1_000 / TIME_UPDATE_INTERVAL_MS),
+			pause_start: json.meta.game_len * (1_000 / TIME_UPDATE_INTERVAL_MS)
 		}
 	}
-	md.deftime = json.time * (1_000 / TIME_UPDATE_INTERVAL_MS)
 	md.games = []
 	md.teams = []
 	md.players = []
-	md.groups = []
+	md.groups = new Map()
 	for (let i = 0; i < json.teams.length; i++) {
 		md.players[i * 2] = {
 			name: json.teams[i].players[0].name,
-			role: json.teams[i].players[0].position,
+			role: json.teams[i].players[0].role,
 			team_index: i
 		}
 		md.players[i * 2 + 1] = {
 			name: json.teams[i].players[1].name,
-			role: json.teams[i].players[1].position,
+			role: json.teams[i].players[1].role,
 			team_index: i
 		}
 		md.teams[i] = {
-			player_indices: [i * 2, i * 2 + 1],
+			players: [i * 2, i * 2 + 1],
 			name: json.teams[i].name,
-			logo_filename: json.teams[i].logo,
+			logo_path: json.teams[i].logo_path,
 			color_main: string_to_color(json.teams[i].color),
 			color_darker: string_to_darker_color(json.teams[i].color)
 		}
 		console.log("TODO color lighter:", md.teams[i].color_main)
 		console.log("TODO color darker:", md.teams[i].color_darker)
 	}
-	for (let i = 0; i < json.games.length; i++) {
-		md.games[i] = {
-			t1_index: md.teams.findIndex(temp => temp.name === json.games[i].team_1),
-			t2_index: md.teams.findIndex(temp => temp.name === json.games[i].team_2),
-			halftime_score: {t1: 0, t2: 0},
-			score: {t1: 0, t2: 0},
-			cards: []
+	let find_team_index_cb = (game: any, temp: Team, team_nr: 1 | 2) => {
+		if (game[team_nr].name === null) return false
+		return temp.name === game[team_nr].name
+	}
+	for (let game_i = 0; game_i < json.games.length; game_i++) {
+		md.games[game_i].t1_index = md.teams.findIndex(temp => find_team_index_cb(json.games[game_i], temp, 1))
+		md.games[game_i].t2_index = md.teams.findIndex(temp => find_team_index_cb(json.games[game_i], temp, 2))
+		if (md.games[game_i].t1_index === -1 && json.games[game_i][1].query !== null)
+			md.games[game_i].t1_query = {
+				set: json.games[game_i][1].query?.set as string,
+				group: json.games[game_i][1].query?.group as string,
+				key: json.games[game_i][1].query?.key as number
+			}
+		if (md.games[game_i].t2_index === -1 && json.games[game_i][2].query !== null)
+			md.games[game_i].t2_query = {
+				set: json.games[game_i][2].query?.set as string,
+				group: json.games[game_i][2].query?.group as string,
+				key: json.games[game_i][2].query?.key as number
+			}
+
+		md.games[game_i].halftime_score = { t1: 0, t2: 0 }
+		md.games[game_i].score = { t1: 0, t2: 0 }
+		md.games[game_i].cards = []
+
+		if (md.games[game_i].t1_index === -1) console.log(`JSON Misformated: Game ${game_i} Team 1 not found: ${json.games[game_i][1]}`)
+		if (md.games[game_i].t2_index === -1) console.log(`JSON Misformated: Game ${game_i} Team 2 not found: ${json.games[game_i][2]}`)
+		if (json.games[game_i].score !== undefined) {
+			md.games[game_i].score.t1 = json.games[game_i].score[1]
+			md.games[game_i].score.t2 = json.games[game_i].score[2]
 		}
-		if (md.games[i].t1_index === -1) console.log(`JSON Misformated: Game ${i} Team 1 not found: ${json.games[i].team_1}`)
-		if (md.games[i].t2_index === -1) console.log(`JSON Misformated: Game ${i} Team 2 not found: ${json.games[i].team_2}`)
-		if (json.games[i].score !== undefined) {
-			md.games[i].score.t1 = json.games[i].score.team_1
-			md.games[i].score.t2 = json.games[i].score.team_2
+		if (json.games[game_i].halftime_score !== undefined) {
+			md.games[game_i].halftime_score.t1 = json.games[game_i].halftime_score[1]
+			md.games[game_i].halftime_score.t2 = json.games[game_i].halftime_score[2]
 		}
-		if (json.games[i].halftimescore !== undefined) {
-			md.games[i].halftime_score.t1 = json.games[i].halftimescore.team_1
-			md.games[i].halftime_score.t2 = json.games[i].halftimescore.team_2
-		}
-		if (json.games[i].cards !== undefined) {
-			for(let j = 0; j < json.games[i].cards.length; j++) {
-				md.games[i].cards[j] = {
-					card_type: (json.games[i].cards[j].type === "Y") ? CardType.Yellow : CardType.Red,
-					player_index: md.players.findIndex(temp => temp.name === capitalize(json.games[i].cards[j].player))
+		if (json.games[game_i].cards !== undefined) {
+			for (let j = 0; j < json.games[game_i].cards.length; j++) {
+				md.games[game_i].cards[j] = {
+					card_type: json.games[game_i].cards[j].type,
+					player_index: md.players.findIndex(temp => temp.name === capitalize(json.games[game_i].cards[j].name))
 				}
-				if (md.games[i].cards[j].player_index === -1)
-					console.log(`JSON Misformated: Game ${i} Card ${j} Player not found: ${json.games[i].cards[i].player}`)
+				if (md.games[game_i].cards[j].player_index === -1)
+					console.log(`JSON Misformated: Game ${game_i} Card ${j} Player not found: ${json.games[game_i].cards[game_i].name}`)
 			}
 		}
 	}
-	let i = 0
-	for (const group in json.groups) {
-		md.groups[i] = {
-			name = group,
-			teams_index =
-		}
-		i++
-	}
+	for (const group_name in json.groups)
+		md.groups.set(group_name, structuredClone(json.groups[group_name]))
 }
 
 function color_gradient_to_string(l: Color, r: Color): string {
@@ -237,6 +296,21 @@ function string_to_darker_color(hexcode: string): Color {
 	}
 }
 
+function query_set_to_string(query: GameQuery): string {
+	switch (query.set) {
+		case "TEAM":
+			return `${query.key + 1}.-stärkstes Team `
+		case "WINNER":
+			return `Gewinner vom ${query.key + 1}. Spiel`
+		case "LOSER":
+			return `Verlierer vom ${query.key + 1}. Spiel`
+		case "GROUP":
+			return `${query.key + 1}. aus Gruppe ${query.group}`
+		default:
+			return query.set + query.key + query.group // actually unreachable
+	}
+}
+
 async function file_exists(url: string): Promise<boolean> {
 	try {
 		const response = await fetch(url, { method: "HEAD" })
@@ -247,26 +321,51 @@ async function file_exists(url: string): Promise<boolean> {
 }
 
 function write_scoreboard() {
-	const game = md.games[md.cur.gameindex]
-	const team_left = md.cur.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
-	const team_right = md.cur.halftime ? md.teams[game.t1_index] : md.teams[game.t2_index]
+	const fallback_team: Team = {
+		name: "",
+		players: [],
+		logo_path: "../assets/fallback.png",
+		color_main: { r: 255, g: 255, b: 255 },
+		color_darker: { r: 100, g: 100, b: 100 }
+	}
+
+	// TODO TEST
+	const game = md.games[md.meta.game_i]
+	const team_left = (() => {
+		const query = md.meta.halftime ? game.t2_query : game.t1_query
+		if (query === null)
+			return md.meta.halftime ? md.teams[game.t2_index] : md.teams[game.t1_index]
+
+		let result = fallback_team
+		result.name = query_set_to_string(query)
+		return result
+	})()
+	const team_right = (() => {
+		const query = md.meta.halftime ? game.t1_query : game.t2_query
+		if (query === null)
+			return md.meta.halftime ? md.teams[game.t1_index] : md.teams[game.t2_index]
+
+		let result = fallback_team
+		result.name = query_set_to_string(query)
+		return result
+	})()
+
 	scoreboard_t1.innerHTML = team_left.name
 	scoreboard_t2.innerHTML = team_right.name
 
-	// TODO NOW
-	file_exists("../" + team_left.logo_filename).then((exists: boolean) => {
-		if (exists) scoreboard_logo_1.src = "../" + team_left.logo_filename
+	file_exists("../" + team_left.logo_path).then((exists: boolean) => {
+		if (exists) scoreboard_logo_1.src = "../" + team_left.logo_path
 		else scoreboard_logo_1.src = "../assets/fallback.png"
 	})
-	file_exists("../" + team_right.logo_filename).then((exists: boolean) => {
-		if (exists) scoreboard_logo_2.src = "../" + team_right.logo_filename
+	file_exists("../" + team_right.logo_path).then((exists: boolean) => {
+		if (exists) scoreboard_logo_2.src = "../" + team_right.logo_path
 		else scoreboard_logo_2.src = "../assets/fallback.png"
 	})
 
-	scoreboard_s1.innerHTML = md.cur.halftime ? game.score.t2.toString() : game.score.t1.toString()
-	scoreboard_s2.innerHTML = md.cur.halftime ? game.score.t1.toString() : game.score.t2.toString()
+	scoreboard_s1.innerHTML = md.meta.halftime ? game.score.t2.toString() : game.score.t1.toString()
+	scoreboard_s2.innerHTML = md.meta.halftime ? game.score.t1.toString() : game.score.t2.toString()
 
-	// TODO
+	// TODO NOW this can become a problem for queried teams
 	const t1_col_main = team_left.color_main
 	const t1_col_darker = team_left.color_darker
 	const t2_col_main = team_right.color_main
@@ -286,7 +385,7 @@ function write_gameplan() {
 	gameplan.removeChild(gameplan.lastChild!)
 
 	const game_n = md.games.length
-	const cur = md.cur.gameindex //TODO Index ab 0 so richtig?
+	const cur = md.meta.game_i //TODO Index ab 0 so richtig?
 
 	for (let game_i = 0; game_i < game_n; ++game_i) {
 		const teams_1 = md.teams[md.games[game_i].t1_index].name
@@ -380,16 +479,15 @@ function write_gamestart() {
 	gamestart_t1.innerHTML = ""
 	gamestart_t2.innerHTML = ""
 
-	const gamei = md.cur.gameindex
+	const gamei = md.meta.game_i
 
 	const t1_name = md.teams[md.games[gamei].t1_index].name
 	const t2_name = md.teams[md.games[gamei].t2_index].name
 
-	// TODO WIP
-	const t1_keeper = md.players[md.teams[md.games[gamei].t1_index].player_indices[0]].name
-	const t1_field = md.players[md.teams[md.games[gamei].t1_index].player_indices[1]].name
-	const t2_keeper = md.players[md.teams[md.games[gamei].t2_index].player_indices[0]].name
-	const t2_field = md.players[md.teams[md.games[gamei].t2_index].player_indices[1]].name
+	const t1_keeper = md.players[md.teams[md.games[gamei].t1_index].players[0]].name
+	const t1_field = md.players[md.teams[md.games[gamei].t1_index].players[1]].name
+	const t2_keeper = md.players[md.teams[md.games[gamei].t2_index].players[0]].name
+	const t2_field = md.players[md.teams[md.games[gamei].t2_index].players[1]].name
 
 	const t1_col_left = md.teams[md.games[gamei].t1_index].color_darker
 	const t1_col_right = md.teams[md.games[gamei].t1_index].color_main
@@ -461,14 +559,15 @@ function write_gamestart() {
 }
 
 // TODO refactor as handler function for receiving a card, also adding it to the Matchday
-function write_card(player_index: number, type: CardType) {
+function write_card(player_index: number, type: string) {
 	card_receiver.innerHTML = md.players[player_index].name.toString() //TODO do we need toString?
+	// TODO make the card system more flexible
 	switch (type) {
-		case CardType.Yellow:
+		case "Y":
 			card_graphic.style.backgroundColor = "#ffff00"
 			card_message.innerHTML = "bekommt eine gelbe Karte"
 			break
-		case CardType.Red:
+		case "R":
 			card_graphic.style.backgroundColor = "#ff0000"
 			card_message.innerHTML = "bekommt eine rote Karte"
 			break
@@ -477,7 +576,7 @@ function write_card(player_index: number, type: CardType) {
 			return // TODO can we do that and no UI appears?
 	}
 
-	md.games[md.cur.gameindex].cards[md.games[md.cur.gameindex].cards.length] = {
+	md.games[md.meta.game_i].cards[md.games[md.meta.game_i].cards.length] = {
 		player_index: player_index,
 		card_type: type
 	}
@@ -515,7 +614,7 @@ function write_livetable() {
 			name: md.teams[i].name.toString(),
 			points: ((i, m) => {
 				let p: number = 0
-				for (let j = 0; j <= m.cur.gameindex; j++) { // TODO Count the game right now?
+				for (let j = 0; j <= m.meta.game_i; j++) { // TODO Count the game right now?
 					if (m.games[j].t1_index === i) {
 						p += (m.games[j].score.t1 - m.games[j].score.t2 > 0) ? 3 : 0
 						p += (m.games[j].score.t1 - m.games[j].score.t2 === 0) ? 1 : 0
@@ -528,13 +627,13 @@ function write_livetable() {
 			}) (i, md),
 			played: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++)
+				for (let j = 0; j <= md.meta.game_i; j++)
 				if (md.games[j].t1_index === i || md.games[j].t2_index === i) p++
 				return p
 			}) (i),
 			won: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.meta.game_i; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 1 : 0
 						else if (md.games[j].t2_index === i)
@@ -544,7 +643,7 @@ function write_livetable() {
 			}) (i),
 			tied: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.meta.game_i; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 === 0) ? 1 : 0
 						else if (md.games[j].t2_index === i)
@@ -554,7 +653,7 @@ function write_livetable() {
 			}) (i),
 			lost: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.meta.game_i; j++) {
 					if (md.games[j].t1_index === i)
 						p += (md.games[j].score.t1 - md.games[j].score.t2 > 0) ? 0 : 1
 						else if (md.games[j].t2_index === i)
@@ -564,7 +663,7 @@ function write_livetable() {
 			}) (i),
 			goals: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.meta.game_i; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t1
 						else if (md.games[j].t2_index === i) p += md.games[j].score.t2
 				}
@@ -572,7 +671,7 @@ function write_livetable() {
 			}) (i),
 			goals_taken: (i => {
 				let p: number = 0
-				for (let j = 0; j <= md.cur.gameindex; j++) {
+				for (let j = 0; j <= md.meta.game_i; j++) {
 					if (md.games[j].t1_index === i) p += md.games[j].score.t2
 						else if (md.games[j].t2_index === i) p += md.games[j].score.t1
 				}
@@ -652,30 +751,30 @@ function async_handle_time() {
 	countdown = setInterval(() => {
 		update_scoreboard_timer()
 
-		if (md.cur.pause && (md.cur.pausestart == md.cur.time || md.cur.pausestart == -1)) return
-		if (md.cur.pause && md.cur.pausestart > md.cur.time) {
-			md.cur.time = md.cur.pausestart
+		if (md.meta.paused && (md.meta.pause_start == md.meta.cur_time || md.meta.pause_start == -1)) return
+		if (md.meta.paused && md.meta.pause_start > md.meta.cur_time) {
+			md.meta.cur_time = md.meta.pause_start
 			update_timer_html()
 			return
 		}
-		if (md.cur.time <= 1) clearInterval(countdown)
+		if (md.meta.cur_time <= 1) clearInterval(countdown)
 
-		console.log("tick one down now: ", md.cur.time)
-		--md.cur.time
+		console.log("tick one down now: ", md.meta.cur_time)
+		--md.meta.cur_time
 
 		update_timer_html()
 	}, TIME_UPDATE_INTERVAL_MS)
 }
 
 function update_scoreboard_timer() {
-	if (md.cur.time === -1 || md.deftime === -1) return
-	const bar_width = Math.min(100, Math.max(0, (md.cur.time / md.deftime) * 100))
+	if (md.meta.cur_time === -1 || md.meta.game_len === -1) return
+	const bar_width = Math.min(100, Math.max(0, (md.meta.cur_time / md.meta.game_len) * 100))
 	scoreboard_time_bar.style.width = bar_width + "%"
 }
 
 function update_timer_html() {
-	const minutes = Math.floor(md.cur.time / 60).toString().padStart(2, "0")
-	const seconds = (md.cur.time % 60).toString().padStart(2, "0")
+	const minutes = Math.floor(md.meta.cur_time / 60).toString().padStart(2, "0")
+	const seconds = (md.meta.cur_time % 60).toString().padStart(2, "0")
 	console.log("update timer: min: " +  minutes +  "sec: " + seconds)
 	scoreboard_time_minutes.innerHTML = minutes
 	scoreboard_time_seconds.innerHTML = seconds
@@ -766,116 +865,112 @@ function connect() {
 				setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
 				break
 			case MessageType.T1_SCORE_PLUS:
-				md.games[md.cur.gameindex].score.t1++
+				md.games[md.meta.game_i].score.t1++
 				update_ui()
 				break
 			case MessageType.T1_SCORE_MINUS:
-				if (md.games[md.cur.gameindex].score.t1 > 0) {
-					md.games[md.cur.gameindex].score.t1--
+				if (md.games[md.meta.game_i].score.t1 > 0) {
+					md.games[md.meta.game_i].score.t1--
 					update_ui()
 				}
 				break
 			case MessageType.T2_SCORE_PLUS:
-				md.games[md.cur.gameindex].score.t2++
+				md.games[md.meta.game_i].score.t2++
 				update_ui()
 				break
 			case MessageType.T2_SCORE_MINUS:
-				if (md.games[md.cur.gameindex].score.t2 > 0) {
-					md.games[md.cur.gameindex].score.t2--
+				if (md.games[md.meta.game_i].score.t2 > 0) {
+					md.games[md.meta.game_i].score.t2--
 					update_ui()
 				}
 				break
 			case MessageType.GAME_NEXT:
-				if (md.cur.gameindex < md.games.length - 1) {
-					md.cur.gameindex++
+				// TODO NOW update queries
+				if (md.meta.game_i < md.games.length - 1) {
+					md.meta.game_i++
 					update_ui()
 				}
 				break
 			case MessageType.GAME_PREV:
-				if (md.cur.gameindex > 0) {
-					md.cur.gameindex--
+				// TODO NOW update queries
+				if (md.meta.game_i > 0) {
+					md.meta.game_i--
 					update_ui()
 				}
 				break
 			case MessageType.GAME_SWITCH_SIDES:
 				// TODO ASK should this signal be independent of the halftime signal?
-				md.cur.halftime = !md.cur.halftime
+				md.meta.halftime = !md.meta.halftime
 				update_ui()
 				break
 			case MessageType.TIME_PLUS_1:
 				// TODO Disallow time changes this when we are not paused?
-				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-				md.cur.pausestart = -1
-				md.cur.time += (1_000 / TIME_UPDATE_INTERVAL_MS)
+				if (md.meta.paused && md.meta.pause_start != -1) md.meta.cur_time = md.meta.pause_start
+				md.meta.pause_start = -1
+				md.meta.cur_time += (1_000 / TIME_UPDATE_INTERVAL_MS)
 				update_ui()
 				break
 			case MessageType.TIME_MINUS_1:
-				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-				md.cur.pausestart = -1
-				if (md.cur.time > 0) {
-					md.cur.time -= (1_000 / TIME_UPDATE_INTERVAL_MS)
+				if (md.meta.paused && md.meta.pause_start != -1) md.meta.cur_time = md.meta.pause_start
+				md.meta.pause_start = -1
+				if (md.meta.cur_time > 0) {
+					md.meta.cur_time -= (1_000 / TIME_UPDATE_INTERVAL_MS)
 					update_ui()
 				}
 				break
 			case MessageType.TIME_PLUS_20:
-				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-				md.cur.pausestart = -1
-				md.cur.time += 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
+				if (md.meta.paused && md.meta.pause_start != -1) md.meta.cur_time = md.meta.pause_start
+				md.meta.pause_start = -1
+				md.meta.cur_time += 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
 				update_ui()
 				break
 			case MessageType.TIME_MINUS_20:
-				if (md.cur.pause && md.cur.pausestart != -1) md.cur.time = md.cur.pausestart
-				md.cur.pausestart = -1
-				if (md.cur.time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
-					md.cur.time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
+				if (md.meta.paused && md.meta.pause_start != -1) md.meta.cur_time = md.meta.pause_start
+				md.meta.pause_start = -1
+				if (md.meta.cur_time >= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS))
+					md.meta.cur_time -= 20 * (1_000 / TIME_UPDATE_INTERVAL_MS)
 					else
-					md.cur.time = 0
+					md.meta.cur_time = 0
 				update_ui()
 				break
 			case MessageType.TIME_TOGGLE_PAUSE:
 				console.log("Pausing now")
-				md.cur.pause = true
-				md.cur.pausestart = dv.getUint16(1, true) // TODO ASK why offset 1
+				md.meta.paused = true
+				md.meta.pause_start = dv.getUint16(1, true) // TODO ASK why offset 1
 				break
 			case MessageType.TIME_TOGGLE_UNPAUSE:
 				// ^ TODO ASK why
-				md.cur.pausestart = -1
-				md.cur.pause = false
+				md.meta.pause_start = -1
+				md.meta.paused = false
 				break
 			case MessageType.TIME_RESET:
-				md.cur.time = md.deftime
+				md.meta.cur_time = md.meta.game_len
 				update_ui()
 				break
-			case MessageType.YELLOW_CARD:
+			case MessageType.PENALTY:
 				card.style.display = "flex"
 				card.style.opacity = "0"
 				setTimeout(() => card.style.opacity = "1", 10)
-				write_card(dv.getUint8(1), CardType.Yellow) // TODO ASK why this offset
-				break
-			case MessageType.RED_CARD:
-				card.style.display = "flex"
-				card.style.opacity = "0"
-				setTimeout(() => card.style.opacity = "1", 10)
-				write_card(dv.getUint8(1), CardType.Red) // TODO ASK why this offset
+				write_card(dv.getUint8(1), read_c_string(dv, 1)) // TODO ASK why this offset
 				break
 			case MessageType.DATA_TIME:
-				md.cur.pausestart = -1
+				md.meta.pause_start = -1
 				console.log("Received DATA time: ", dv.getUint16(1, true)) // TODO ASK why this offset
-				md.cur.time = dv.getUint16(1, true) // TODO ASK why this offset
+				md.meta.cur_time = dv.getUint16(1, true) // TODO ASK why this offset
 				update_ui()
 				break
 			case MessageType.DATA_IS_PAUSE:
 				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1) // TODO ASK just why this offset
-				md.cur.pause = dv.getUint8(1) === 1
+				md.meta.paused = dv.getUint8(1) === 1
 				break
 			case MessageType.DATA_HALFTIME:
 				console.log("Received DATA Halftime: ", dv.getUint8(1) === 1)
-				md.cur.halftime = dv.getUint8(1) === 1
+				md.meta.halftime = dv.getUint8(1) === 1
 				break
 			case MessageType.DATA_GAMEINDEX:
 				// ^ TODO CONSIDER RENAME
 				console.log("Received DATA Gameindex: ", dv.getUint8(1))
-				md.cur.gameindex = dv.getUint8(1)
+				md.meta.game_i = dv.getUint8(1)
 				break
 			case MessageType.DATA_JSON:
 				// ^ TODO CONSIDER RENAME

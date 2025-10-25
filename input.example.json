@@ -1,142 +1,59 @@
 {
+	"meta": {
+		"game_len": 360,
+		"game_i": null,
+		"first_halftime": true,
+		"paused": false,
+		"cur_time": 100
+	},
 	"teams": [
 		{
-			"name": "GIFHORN",
-			"logo": "assets/gifhorn.jpg",
+			"name": "MAET",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
 			"players": [
-				{
-					"name": "Erik Kramer",
-					"position": "keeper"
-				},
-				{
-					"name": "Linus Kramer",
-					"position": "field"
-				}
-			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			]
 		},
 		{
-			"name": "SCHIEFBAHN",
-			"logo": "assets/schiefbahn.jpg",
+			"name": "TEAM",
+			"logo_path": "logo.png",
+			"color": "#bedbed",
 			"players": [
-				{
-					"name": "Ben Juckenhöfel",
-					"position": "keeper"
-				},
-				{
-					"name": "Lukas Lank",
-					"position": "field"
-				}
-			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
-		},
-		{
-			"name": "Leeden",
-			"logo": "assets/leeden.jpg",
-			"players": [
-				{
-					"name": "Pascal Westphal",
-					"position": "keeper"
-				},
-				{
-					"name": "Ilias Kröner",
-					"position": "field"
-				}
-			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
-		},
-		{
-			"name": "OBERNFELD",
-			"logo": "assets/obernfeld.svg",
-			"players": [
-				{
-					"name": "Hagen Weiß",
-					"position": "keeper"
-				},
-				{
-					"name": "Calvin Rudolph",
-					"position": "field"
-				}
-			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
-		}
-		{
-			"name": "VELBERT",
-			"logo": "assets/velbert.svg",
-			"players": [
-				{
-					"name": "Fritz Reinhold",
-					"position": "keeper"
-				},
-				{
-					"name": "Thilo Peters",
-					"position": "field"
-				}
-			],
-			"color_light": "#234521",
-			"color_dark": "#544521"
+				{ "name": "ALICE", "role": "keeper" },
+				{ "name": "BOB", "role": "field" }
+			]
 		}
 	],
+	"groups": {
+		"A": ["TEAM", "MAET"],
+		"B": ["TEAM", "MAET"]
+	},
 	"games": [
 		{
-			"team1": "SCHIEFBAHN",
-			"team2": "VELBERT"
+			"1": { "name": "TEAM" },
+			"2": { "name": "MAET" }
 		},
 		{
-			"team1": "GIFHORN",
-			"team2": "LEEDEN"
-		},
-		{
-			"team1": "OBERNFELD",
-			"team2": "VELBERT"
-		},
-		{
-			"team1": "SCHIEFBAHN",
-			"team2": "LEEDEN"
-		},
-		{
-			"team1": "GIFHORN",
-			"team2": "OBERNFELD"
-		},
-		{
-			"team1": "LEEDEN",
-			"team2": "VELBERT"
-		},
-		{
-			"team1": "SCHIEFBAHN",
-			"team2": "OBERNFELD"
-		},
-		{
-			"team1": "GIFHORN",
-			"team2": "VELBERT"
-		},
-		{
-			"team1": "LEEDEN",
-			"team2": "OBERNFELD"
-		},
-		{
-			"team1": "SCHIEFBAHN",
-			"team2": "GIFHORN",
-			"halftimescore": {
-				"team1": "0",
-				"team2": "3"
+			"1": {
+				"name": "TEAM"
 			},
-			"score": {
-				"team1": "4",
-				"team2": "4"
+			"2": {
+				"query": {
+					"set": "GROUP",
+					"group": "A",
+					"key": 0
+				}
 			},
+			"halftime_score": { "1": 0, "2": 0 },
+			"score": { "1": 0, "2": 0 },
 			"cards": [
 				{
-					"player": "Erik Kramer",
-					"type": "Y"
-				},
-				{
-					"player": "Linus Kramer",
-					"type": "R"
+					"name": "BOB",
+					"type": "y",
+					"reason": "skill issue",
+					"timestamp": 13241243234
 				}
 			]
 		}
