@@ -98,9 +98,9 @@ int copy_file(const char *src, const char *dst) {
     return result;
 }
 
-void obs_send_cmd(const char *s){
+void obs_send_cmd(const char *s) {
 	printf("DEBUG: Sending OBS a Message: %s\n", s);
-	if(con_obs == NULL){
+	if(con_obs == NULL) {
 		printf("WARN: Cant send command, OBS is not connected!\n");
 		return;
 	}
@@ -136,8 +136,8 @@ bool create_replay_dirs() {
 	return true;
 }
 
-//void send_time(u16 t){
-//	if(con_front == NULL){
+//void send_time(u16 t) {
+//	if(con_front == NULL) {
 //		printf("client is not connected, couldnt send time\n");
 //		return;
 //	}
@@ -148,16 +148,16 @@ bool create_replay_dirs() {
 //	mg_ws_send(con_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
 //}
 
-void run_system(void *s){
+void run_system(void *s) {
 	printf("INFO: Running System CMD: %s\n", (char*)s);
 	printf("INFO: CMD Return Value: %d", system((char*)s));
 }
 
-void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con){
+void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con) {
 	char con_name[20];
-	if(con==con_rentner) strcpy(con_name, "rentnerend");
-	else if(con==con_front) strcpy(con_name, "frontend");
-	else if(con==con_remote) strcpy(con_name, "remoteend");
+	if(con == con_rentner) strcpy(con_name, "rentnerend");
+	else if(con == con_front) strcpy(con_name, "frontend");
+	else if(con == con_remote) strcpy(con_name, "remoteend");
 	printf("INFO: Received a Input from %s: %d\n", con_name, *input_type);
 	switch (*input_type) {
 		// All of these cases should be forwarded to frontend
@@ -250,7 +250,7 @@ void handle_message(enum MessageType *input_type, int input_len, struct mg_conne
 	}
 }
 
-void obs_switch_scene(void *scene_name){
+void obs_switch_scene(void *scene_name) {
 	char cmd[strlen(scene_name)+256];
     snprintf(cmd, sizeof(cmd), "{\"op\": 6, \"d\": {\"requestType\": \"SetCurrentProgramScene\", \"requestId\": \"switch_scene\", \"requestData\": {\"sceneName\": \"%s\"}}}", (char *)scene_name);
 	obs_send_cmd(cmd);
@@ -389,13 +389,13 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			break;
 		case MG_EV_CLOSE: {
 			char con_name[20];
-			if(con==con_rentner) {
+			if(con == con_rentner) {
 				strcpy(con_name, "rentnerend");
 				con_rentner = NULL;
-			} else if(con==con_front) {
+			} else if(con == con_front) {
 				strcpy(con_name, "frontend");
 				con_front = NULL;
-			} else if(con==con_remote) {
+			} else if(con == con_remote) {
 				strcpy(con_name, "remoteend");
 				con_remote = NULL;
 			}
@@ -413,13 +413,14 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			char client_type[20];
     		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
 			printf("INFO: Clienttype: %s\n", client_type);
-			if(!strcmp(client_type, "frontend")){
+			if(!strcmp(client_type, "frontend")) {
 				printf("INFO: New Client is frontend!\n");
 				con_front = con;
-			} else if(!strcmp(client_type, "remoteend")){
+			} else if(!strcmp(client_type, "remoteend")) {
 				printf("INFO: New Client is remoteend!\n");
 				con_remote = con;
-			} else if(client_type[0] == '\0'){
+			} else if(client_type[0] == '\0') {
+				printf("\n\n\n\n\n\n"); // TODO
 				printf("INFO: New Client is rentnerend!\n");
 				con_rentner = con;
 			} else{

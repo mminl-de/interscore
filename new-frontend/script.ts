@@ -266,6 +266,8 @@ function parse_json(str: string): void {
 	}
 	for (const group_name in json.groups)
 		md.groups.set(group_name, structuredClone(json.groups[group_name]))
+	for (let i = 0; i < md.games.length; ++i)
+		console.log(`TODO our game indices: ${md.games[i].t1_index}/${md.games[i].t2_index}`)
 }
 
 function color_gradient_to_string(l: Color, r: Color): string {
@@ -991,7 +993,7 @@ function connect() {
 	socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
 	socket.onclose = () => {
 		console.log("WebSocket connection closed! Reconnecting in 3s");
-		reconnect_timer = window.setTimeout(connect, 3000);
+		reconnect_timer = window.setTimeout(connect, 3_000);
 	}
 }
 
