@@ -529,8 +529,9 @@ void ev_handler(struct mg_connection *c, int ev, void *p) {
 		switch ((int)wm->data.buf[0]) {
 		case PLS_SEND_JSON: {
 			//char* s = json_generate();
-			//websocket_send_json(s);
-			//printf("INFO: Sent the newest JSON version to backend\n");
+			char *s = common_read_file(JSON_PATH); // TODO dont hardcode
+			websocket_send_json(s);
+			printf("INFO: Sent the newest JSON version to backend\n");
 			break;
 		}
 		case PLS_SEND_CUR_GAMEINDEX: {
