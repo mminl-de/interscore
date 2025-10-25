@@ -42,8 +42,8 @@ COPY ./docker/mediamtx.sh /usr/bin/
 RUN chmod +x /usr/bin/mediamtx.sh
 
 # ddclient.sh reinkopieren
-COPY ./docker/ddclient.sh /usr/bin/
-RUN chmod +x /usr/bin/ddclient.sh
+RUN mkdir -p /etc/ddclient/
+COPY ./docker/ddclient.conf /etc/ddclient/ddclient.conf
 
 # OBS reinkopieren
 WORKDIR /home/obsuser

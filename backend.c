@@ -473,7 +473,6 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 void *mongoose_update(void *arg) {
 	const int replay_buffer_activation_interval = 10; // in sec
 	time_t last_replay_buffer_attempt = time(NULL);
-	time_t last_refresh = time(NULL);
 
 	while (running) {
 		mg_mgr_poll(&mgr_svr, 20);
@@ -491,13 +490,6 @@ void *mongoose_update(void *arg) {
 				printf("INFO: Trying to activate the OBS Replay Buffer...\n");
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
 				last_replay_buffer_attempt = now;
-			}
-		} else {
-			time_t now = time(NULL);
-			if(now - last_refresh >= 10) {
-				printf("INFO: Trying to fetch the OBS Replay Buffer Status...\n");
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
-				last_refresh = now;
 			}
 		}
 	}
