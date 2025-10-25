@@ -90,7 +90,7 @@ typedef struct {
 	QComboBox *dd_card_players;
 } w_input;
 
-#define URL "ws://mminl.de:8081"
+#define URL "ws://0.0.0.0:8081"
 
 void update_input_window();
 void update_display_window();
