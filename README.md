@@ -60,6 +60,8 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 # TODO
 
 ## top features
+- nicknames for games (either stored in json or jit as a textbox)
+- elfmeter support
 - "gorgeous" UI
 - replay support
 - mobile app
