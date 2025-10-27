@@ -19,26 +19,8 @@ This project was made for our personal use prior to a Cycleball tournament under
 - cycleball.eu library: https://github.com/mminl-de/cycleu
 
 ## Usage
-### Linux (legacy):
-1. `git clone --recursive https://github.com/hiimsergey/interscore && cd interscore`
-2. Compile the frontend script and the binaries with `make js b-install r-old`.
-3. Fill out `input.json` given the template at `input.template.json`.
-4. Ensure your OBS edition supports Browser Source.
-5. Configure OBS profile with `make obs-install`
-6. Change the OBS profile to your liking and configure path to `frontend/index.html`
-7. Either connect a camera through cable or whatever to obs and skip to 11. or when using RTMP follow the next steps
-8. Download nginx with rtmp patch.
-9. Use `make nginx-install` to configure
-10. Start nginx and in your camera put the IP of your nginx machine with Port 1935
-11. Launch the `backend` binary. (Or use `make b-run`)
-12. Give the `interscore` binary to your nearest referee and set up the correct IP/URL in `rentnerend/old_rentnerend.cc`
-13. Reload the HTML page so that you see `Client upgraded to WebSocket connection!` in the backend terminal.
-14. Press `?` (followed by Enter/Return) in the backend terminal to see possible actions.
-15. Download apk and install it on an android device
-16. Set up the correct IP in the app
-17. connect and now you can toggle all widgets and replays
 
-### Docker-Hosten
+### Docker
 The current version is tailord to my server setup. A vps for static IP, connection to a dommainname. OBS hosted on a PC with dynamic IP and enough CPU/GPU Power to run obs and stream. This will be abstracted/automated in the future to be more flexible and easy to setup.
 0. The VPS needs a user (interscore-tunnel) for which the Host-PC has a ssh-key.
 1. make sure all ports are open on the VPS (8081, 4444)
@@ -59,25 +41,19 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 
 # TODO
 
-## top features
-- "gorgeous" UI
-- replay support
-- mobile app
-- PDF export
-
 ## meta
-- FINAL Checkliste for streams
 - FINAL^2 assets folder in seperate repo (only logos)
+- FINAL^4 abstract program further to support other sports
+	- Count time up instead of down (e.g. football)
 
 ## frontend
-- URGENT Reversing der anzeige, je nach Kameraposition
-- URGENT widget pipelines:
-	- 5s this widget, 5s that
-	- absolute cinema
+- Reversing der anzeige, je nach Kameraposition (in input.json)
 - team logos for gamestart
 - Fix Font Problems wth Umlaute in Cards section
 - Widget spawn animation fixen(manchmal kaputt)
 - Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
+- Dislpay Widgets for single groups/multiple groups etc
+- FINAL make json_load resilient to bad input.json
 - FINAL animate line by line
 - FINAL comment all relevant CSS
 - FINAL handle dealing multiple cards
@@ -97,54 +73,40 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - FINAL Kartengrund unterstützen:
 	- second dropdown in the rentnerend
 	- with default values ("refusing to elaborate") or a custom one
-- FINAL Widget: Aktuelle Livetabelle der gesamten Liga (cycleball.eu):
-	- part of the pipeline???
-- FINAL Widget: Aktuelle Spielliste des Parallel-Spieltags (cycleball.eu):
-	- part of the pipeline???
 - FINAL Seite: Ads unten (or Vollbild/Seite)
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
-- FINAL i18n
+- FINAL translations
 
 ## rentnerend
-- URGENT Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers
-- URGENT change all icons to nice looking icons
-- bind Ctrl-N for create new tournament
+- URGENT widget pipelines:
+	- 5s this widget, 5s that
+	- absolute cinema
 - JSON-Creator GUI for non-technical users
-- prohibit changing games while the clock runs
-- Halbzeituhr
-- Add possibility of teams missing:
-	- start screen in the rentnerend
+- allow changing time while the clock runs
+- more keyboard binds
+	- bind Ctrl-N for create new tournament
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
+- Pause Button färben/Icon ändern, je nach Pause/Nicht Pause
+- PDF Export
+- @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
+- FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
 - FINAL additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts):
 	- visual guides
-- @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
-- Pause Button färben/Icon ändern, je nach Pause/Nicht Pause
-- FINAL Support more tournament modes, support leagues:
-	- group games are built different because of unknown game order
-	- abstract "normal tournaments" away by putting their games into one group
-	- group games will use multiple game
-	- thus we add a logic to handle multiple groups that wont get used in "normal tournaments"
-- FINAL Add cycleball.eu push support:
-	- radball.at writing key written into json
-	- (push button in rentnerend start screen and gear icon)
-- FINAL make the Justice UI not suck
-- FINAL Cards for Coaches:
-	- "Coach von Gifhorn 1 bekommt eine gelbe Karte"
-- FINAL Ads in public window:
-	- fullscreen video during a pause
-- FINAL Next Game in public window:
-	- before the fullscreen ad during a pause
-- FINAL FINAL port to windows/mac
+- FINAL Add cycleball.eu push support
+- FINAL Cards for Coaches: "Coach von Gifhorn 1 bekommt eine gelbe Karte"
+- FINAL Ads in public window, e.g. fullscreen video/picture during a pause
+- FINAL Next Game in public window, e.g. before the fullscreen ad during a pause
+- FINAL delte cards
+- FINAL deal with non-existing assets
+- FINAL make json_load resilient to bad input.json
 - FINAL FINAL add export to Spielplan-pdf:
 	- we define a standard for what formular keys we expect
 	- users can upload their template only if their matches our standard:
 		- otherwise error dialog ig
 	- we export the results as a writable formular
-- FINAL³ Idee: Ansagen durch KI bei der Hälfte
-- FINAL delte cards
 - FINAL² Add referees
-- FINAL ENSURE assets are always found by the executable
+- FINAL³ Idee: Ansagen durch KI bei der Hälfte
 
 ### design
 - gray-black colorscheme
@@ -152,13 +114,10 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - flat design language
 
 ## backend
-- FINAL make json_load resilient to bad input.json
-- FINAL^4 add ability to count time up(+verlängerung) for other sports
-- FINAL^4 abstract program so it's applicable for other games
 
 ## Docker
 ### Misc
-- Check if we cant extract the appimage before building the docker image...
+- Check if we cant get obs appimage programmatically
 ### OBS
 - Make replay System work properly, test it throughly
 - Find a robust solution to combat delay (like blinking square)
@@ -167,7 +126,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - Better Transition-Animations
 - Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
 
-## Remoteend
+## DEPRECATED Remoteend (rentnerend rewrite includes remoteend)
 - Add Ability to start and end replay of a game
 - FINAL Waterboard remoteend (dont kill websocket connection)
 - FINAL server sends widgets status (on/off)
