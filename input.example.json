@@ -287,6 +287,7 @@
 		},
 
 		{
+			"name": "Spiel um Platz 7",
 			"1": {
 				"query": { "set": "GROUP", "group": "A", "key": 3 }
 			},
@@ -297,6 +298,7 @@
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
+			"name": "1. Halbfinale",
 			"1": {
 				"query": {
 					"set": "GROUP",
@@ -314,6 +316,7 @@
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
+			"name": "2. Halbfinale",
 			"1": {
 				"query": {
 					"set": "GROUP",
@@ -331,6 +334,7 @@
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
+			"name": "Spiel um Platz 5",
 			"1": {
 				"query": {
 					"set": "GROUP",
@@ -348,6 +352,7 @@
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
+			"name": "Spiel um Platz 3",
 			"1": {
 				"query": {
 					"set": "LOSER",
@@ -363,6 +368,7 @@
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
+			"name": "Finale",
 			"1": {
 				"query": {
 					"set": "WINNER",
