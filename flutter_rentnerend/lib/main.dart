@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_rentnerend/public_window.dart" as public_window;
+import "package:flutter_rentnerend/input_window.dart";
 
 void main() {
 	runApp(const MyApp());
@@ -34,23 +35,43 @@ class _LaunchWindowState extends State<LaunchWindow> {
 	@override
 	Widget build(BuildContext context) {
 		return Scaffold(
-			appBar: AppBar(
-				backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-				title: Text(widget.title),
-			),
 			body: Center(
-				child: Column(
-					mainAxisAlignment: MainAxisAlignment.center,
-					children: <Widget>[
-						const Text("You have pushed the button this many times:"),
-					],
-				),
-			),
-			floatingActionButton: FloatingActionButton(
-				onPressed: public_window.create,
-				tooltip: "Increment",
-				child: const Icon(Icons.add),
-			),
+				child: Row (
+					children: [
+						ElevatedButton(
+							child: const Text('Load Input Window'),
+							onPressed: () {
+								Navigator.push(
+									context,
+									MaterialPageRoute<void>(
+										builder: (context) => const input_window(),
+									)
+								);
+							},
+						), ElevatedButton(
+							child: const Text('Load JSON Creator'),
+							onPressed: () {
+
+							},
+						), ElevatedButton(
+							child: const Text('Load from Cycleball.eu'),
+							onPressed: () {
+
+							},
+						), ElevatedButton(
+							child: const Text('Connect to existing livestream'),
+							onPressed: () {
+
+							},
+						), ElevatedButton(
+							child: const Text('Exit'),
+							onPressed: () {
+
+							},
+						)
+					]
+				)
+			)
 		);
 	}
 }
