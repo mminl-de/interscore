@@ -1,8 +1,7 @@
 {
 	"meta": {
-		"game_len": 420,
-		"game_i": null,
-		"first_halftime": true,
+		"game_i": 0,
+		"cur_gamepart": 0,
 		"paused": false,
 		"cur_time": 100,
 		"formats": [
@@ -11,7 +10,6 @@
 				"gameparts": {
 					{
 						"name": "4M Schießen",
-						"length": "0",
 						"repeat": false,
 						"decider": true,
 						"penalties": [
@@ -43,7 +41,7 @@
 					},
 					{
 						"name": "4M Schießen",
-						"length": "0",
+						"length": 0,
 						"decider": true,
 						"repeat": true,
 						"penalties": [
@@ -63,7 +61,7 @@
 					},
 					{
 						"name": "4M Schießen",
-						"length": "0",
+						"length": 0,
 						"decider": true,
 						"repeat": true,
 						"penalties": [
@@ -89,31 +87,31 @@
 				"gameparts": [
 					{
 						"name": "1. HZ",
-						"length": "420",
+						"length": 420,
 						"repeat": false,
 						"decider": false
 					},
 					{
 						"name": "Halbzeitpause",
-						"length": "120",
+						"length": 120,
 						"repeat": false,
 						"decider": false
 					},
 					{
 						"name": "2. HZ",
-						"length": "420",
+						"length": 420,
 						"repeat": false,
 						"decider": false
 					},
 					{
 						"name": "Halbzeitpause",
-						"length": "120",
+						"length": 120,
 						"repeat": false,
 						"decider": true
 					},
 					{
 						"name": "3. HZ",
-						"length": "420",
+						"length": 420,
 						"repeat": false,
 						"decider": true
 					},
@@ -212,10 +210,9 @@
 	],
 	"games": [
 		{
-			"1": { "name": "LEIPZIG II" },
-			"2": { "name": "TANN" },
+			"1": { "name": "LEIPZIG II", "missing": {"reason": "Verspätung"}},
+			"2": { "name": "TANN", "missing": {"reason": "Krankheit"} },
 			"groups": ["A"],
-			"teams_missing": ["1", "2"],
 			"format": { "name": "Radball Elite", "decider": "false" }
 		},
 		{
