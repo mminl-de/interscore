@@ -127,7 +127,7 @@
 	"teams": [
 		{
 			"name": "STEIN I",
-			"logo_path": "stein.png",
+			"logo_uri": "stein.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Kai Fritsche", "role": "keeper" },
@@ -136,7 +136,7 @@
 		},
 		{
 			"name": "STEIN II",
-			"logo_path": "tann.png",
+			"logo_uri": "tann.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Luca Schmitt", "role": "keeper" },
@@ -145,7 +145,7 @@
 		},
 		{
 			"name": "GROẞKOSCHEN",
-			"logo_path": "leipzig.png",
+			"logo_uri": "leipzig.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Paul Fiebig", "role": "keeper" },
@@ -153,8 +153,8 @@
 			]
 		},
 		{
-			"name": "",
-			"logo_path": "nordshausen.png",
+			"name": "NORDSHAUSEN II",
+			"logo_uri": "nordshausen.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Andy Reichenbach", "role": "keeper" },
@@ -163,7 +163,7 @@
 		},
 		{
 			"name": "NORDSHAUSEN III",
-			"logo_path": "nordshausen.png",
+			"logo_uri": "nordshausen.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Christian Galinger", "role": "keeper" },
@@ -172,7 +172,7 @@
 		},
 		{
 			"name": "GIFHORN I",
-			"logo_path": "gifhorn.png",
+			"logo_uri": "gifhorn.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Corvin Rowold", "role": "keeper" },
@@ -181,7 +181,7 @@
 		},
 		{
 			"name": "GIFHORN II",
-			"logo_path": "gifhorn.png",
+			"logo_uri": "gifhorn.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Jan Rowold", "role": "keeper" },
@@ -190,7 +190,7 @@
 		},
 		{
 			"name": "REIDEBURG",
-			"logo_path": "reideburg.png",
+			"logo_uri": "reideburg.png",
 			"color": "#bedbed",
 			"players": [
 				{ "name": "Paul Berndt", "role": "keeper" },
@@ -291,7 +291,6 @@
 			"2": {
 				"query": { "set": "GROUP", "group": "B", "key": 3 }
 			},
-			"name": "Spiel um Platz 7",
 			"format": { "name": "Radball Elite", "decider": "true" }
 		},
 		{
