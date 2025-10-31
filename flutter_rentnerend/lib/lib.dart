@@ -8,3 +8,10 @@ Widget buttonWithIcon (void Function() onPressed, IconData icon){
 		child: FittedBox(fit: BoxFit.contain, child: Icon(icon, size: maxHeight))
 	);
 }
+
+// hex format: "#123123"
+Color colorFromHexString(String hex) {
+	hex = hex.replaceFirst('#', '');
+	if (hex.length == 6) hex = 'FF$hex'; // Add full opacity
+	return Color(int.parse(hex, radix:16));
+}
