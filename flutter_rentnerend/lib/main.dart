@@ -1,6 +1,9 @@
 import "package:flutter/material.dart";
+
 import "package:flutter_rentnerend/public_window.dart" as public_window;
 import "package:flutter_rentnerend/input_window.dart";
+import "package:flutter_rentnerend/matchday.dart";
+import "package:flutter_rentnerend/lib.dart";
 
 void main() {
 	runApp(const MyApp());
@@ -68,8 +71,15 @@ class _LaunchWindowState extends State<LaunchWindow> {
 									},
 								), ElevatedButton(
 									child: const Text('Load JSON Creator'),
-									onPressed: () {
-
+									onPressed: () async {
+										final json = await loadInputJson();
+										if(json == null) {debugPrint("json does not exist"); return;}
+										Matchday md;
+										try {
+											md = Matchday(json);
+										} catch (_){
+											debugPrint("JSON parsing Error");
+										}
 									},
 								), ElevatedButton(
 									child: const Text('Load from Cycleball.eu'),
@@ -79,7 +89,6 @@ class _LaunchWindowState extends State<LaunchWindow> {
 								), ElevatedButton(
 									child: const Text('Connect to existing livestream'),
 									onPressed: () {
-
 									},
 								), ElevatedButton(
 									child: const Text('Exit'),

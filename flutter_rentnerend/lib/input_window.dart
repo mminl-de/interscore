@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_rentnerend/lib.dart';
+import 'package:flutter_rentnerend/matchday.dart';
 
 class InputWindow extends StatelessWidget {
-	const InputWindow({super.key});
+	const InputWindow({super.key, Matchday? md});
 
 	Widget blockTeams(double width, double height) {
 		const double paddingHorizontal = 16.0;
