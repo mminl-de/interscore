@@ -1,22 +1,25 @@
 # Interscore
-A livestream system for Cycleball that includes an OBS overlay, software for the judges, independent backend, advanced replay system, Android app to manage the OBS Overlay/replays etc.
-[cycleball.eu](https://cycleball.eu) integration and docker images for all the backend stuff are planned.
+A livestream system for Cycleball that includes an docker image with OBS, stream overlay, backend and advanced replay system as well as a software for the judges and an Android app to manage the OBS Overlay/replays etc. Judge software and mobile app will be merged in a rewrite, which is in progress. The new app will support all platforms.
+[cycleball.eu](https://cycleball.eu) integration and if possible REWATT support as judge software are in progress.
 
 ## About
+This project goal is to make it as easy as possible to livestream cycleball, that isnt just an image without overlay. For more info and motivation visit the projects [website](https://mminl.de/projects/interscore) (keep in mind, that its not finished yet and mya not be updated regularly).
+
+We want to achieve this by providing an high quality judge software running on Windows, MacOS, Linux, Web, Android and theoretically iOS (everything that flutter runs on), while the user additionally just has to install an andorid app or quickly configure a GoPro and stable internet connection.
+On a technical level, we just need a RTMP stream to our server and a connected judge software.
+
+We host all the backend via docker.
 The OBS overlay is a single HTML file launched via the Browser source.
-The DOM contents are controlled via the WebSocket protocol using a CLI server program, meant for admins.
-Another client uses Qt6 and is meant for the referees and the public display in the hall. The can change the HTML contents by using the server as the middleman.
-Another client is a android app, which controls the contents or "widgets" of the Stream/HTML file. It also has the ability to trigger replays.
+The DOM contents are controlled in Typescript via WebSocket using the judges software/android app via a backend, which serves as websockets-server.
+The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
 
 Tournament metadata (competing teams, timer lengths, game plan) is fed using a JSON file.
 
-The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
-
-This project was made for our personal use prior to a Cycleball tournament under ridiculous deadlines.
+This project was made for our personal use prior to a Cycleball tournament under ridiculous deadlines. We are currently cleaning up the mess.
 
 ## Related Projects
 - Android App: https://github.com/mminl-de/interscore-remoteend
-- cycleball.eu library: https://github.com/mminl-de/cycleu
+- unofficial cycleball.eu library: https://github.com/mminl-de/cycleu
 
 ## Usage
 
@@ -37,7 +40,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 5. Give DNS credentials When running the image: cd docker; make run DYNU_LOGIN=blibla DYNU_PASSWORD=blub
 
 ## Demonstrations
-- https://www.youtube.com/watch?v=3LFNC_H9lVw (a little unstable but brings the idea across)
+- https://www.youtube.com/watch?v=m4PdxYp68SQ (stream in early development)
 
 # TODO
 
