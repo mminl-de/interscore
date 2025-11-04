@@ -3,8 +3,23 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_rentnerend/lib.dart';
 import 'package:flutter_rentnerend/matchday.dart';
 
-class InputWindow extends StatelessWidget {
-	const InputWindow({super.key, Matchday? md});
+class InputWindow extends StatefulWidget {
+	const InputWindow({super.key, required this.md});
+
+	final Matchday md;
+
+	@override
+	State<InputWindow> createState() => _InputWindowState();
+}
+
+class _InputWindowState extends State<InputWindow> {
+	late Matchday md;
+
+	@override
+	void initState() {
+		super.initState();
+		md = widget.md;
+	}
 
 	Widget blockTeams(double width, double height) {
 		const double paddingHorizontal = 16.0;
@@ -27,7 +42,7 @@ class InputWindow extends StatelessWidget {
 					),
 					SizedBox(
 						width: teamNameWidth,
-						child: Center(child: AutoSizeText("NORDSHAUSEN I", maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						child: Center(child: AutoSizeText(md.games[md.m_gameI].t1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
 					),
 					SizedBox(
 						width: switchSideWidth,
@@ -114,6 +129,8 @@ class InputWindow extends StatelessWidget {
 		final blockTeamsHeight = screenHeight * 0.1;
 		final blockGoalsHeight = screenHeight * 0.3;
 		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
+
+		debugPrint("Matchday: ${md}");
 
 		return Scaffold(
 			appBar: AppBar(title: const Text('Input Window')),

@@ -12,13 +12,13 @@ void main() {
 class MyApp extends StatefulWidget {
 	const MyApp({super.key});
 
-	// This widget is the root of your application.
 	@override
 	State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
 	ThemeMode _themeMode = ThemeMode.dark;
+	Matchday? md = null;
 
 	void _toggleTheme() {
 		setState(() {
@@ -26,82 +26,57 @@ class _MyAppState extends State<MyApp> {
 		});
 	}
 
+	Matchday? matchday_from_json(String json) {
+	}
+
 	@override
 	Widget build(BuildContext context) {
+
 		return MaterialApp(
 			title: "Control Window – Interscore",
 			darkTheme: ThemeData.dark(),
 			themeMode: _themeMode,
-			//theme: ThemeData(
-			//	colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
-			//),
-			home: LaunchWindow(title: "Flutter Demo Home Page", onToggleTheme: _toggleTheme),
-		);
-	}
-}
-
-class LaunchWindow extends StatefulWidget {
-	const LaunchWindow({super.key, required this.title, required this.onToggleTheme});
-
-	final String title;
-	final VoidCallback onToggleTheme;
-
-	@override
-	State<LaunchWindow> createState() => _LaunchWindowState();
-}
-
-class _LaunchWindowState extends State<LaunchWindow> {
-	@override
-	Widget build(BuildContext context) {
-		return Scaffold(
-			body: Center(
-				child: Column(
-					children: [
-						Row (
-							children: [
-								ElevatedButton(
-									child: const Text('Load Input Window'),
-									onPressed: () {
-										Navigator.push(
-											context,
-											MaterialPageRoute<void>(
-												builder: (context) => const InputWindow(),
-											)
-										);
-									},
-								), ElevatedButton(
-									child: const Text('Load JSON Creator'),
-									onPressed: () async {
-										final json = await loadInputJson();
-										if(json == null) {debugPrint("json does not exist"); return;}
-										Matchday md;
-										try {
-											md = Matchday(json);
-										} catch (_){
-											debugPrint("JSON parsing Error");
-										}
-									},
-								), ElevatedButton(
-									child: const Text('Load from Cycleball.eu'),
-									onPressed: () {
-
-									},
-								), ElevatedButton(
-									child: const Text('Connect to existing livestream'),
-									onPressed: () {
-									},
-								), ElevatedButton(
-									child: const Text('Exit'),
-									onPressed: () {
-
-									},
-								)
-							]
-						),
-						ElevatedButton(onPressed: widget.onToggleTheme, child: const Text ("Night"))
-					]
+			home: Builder(
+				builder: (context) => Scaffold(
+				body: Center(
+					child: Column(
+						children: [
+							Row (
+								children: [
+									ElevatedButton(
+										child: const Text('Load Input Window'),
+										onPressed: () async {
+											final json = await loadInputJson();
+											if(json == null) {debugPrint("json does not exist"); return;}
+											try { this.md = Matchday(json);
+											} catch (_){ debugPrint("JSON parsing Error"); return;}
+											Navigator.push(
+												context,
+												MaterialPageRoute<void>(
+													builder: (context) => InputWindow(md: matchday_from_json(json)),
+												)
+											);
+										},
+									), ElevatedButton(
+										child: const Text('Load JSON Creator'),
+										onPressed: () {},
+									), ElevatedButton(
+										child: const Text('Load from Cycleball.eu'),
+										onPressed: () {},
+									), ElevatedButton(
+										child: const Text('Connect to existing livestream'),
+										onPressed: () {},
+									), ElevatedButton(
+										child: const Text('Exit'),
+										onPressed: () {},
+									)
+								]
+							),
+							ElevatedButton(onPressed: _toggleTheme, child: const Text ("Night"))
+						]
+					)
 				)
-			)
+			))
 		);
 	}
 }
