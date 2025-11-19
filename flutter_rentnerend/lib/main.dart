@@ -1,8 +1,10 @@
+import "dart:convert";
+
 import "package:flutter/material.dart";
 
 import "package:flutter_rentnerend/public_window.dart" as public_window;
 import "package:flutter_rentnerend/input_window.dart";
-import "package:flutter_rentnerend/matchday.dart";
+import "package:flutter_rentnerend/md.dart";
 import "package:flutter_rentnerend/lib.dart";
 
 void main() {
@@ -26,9 +28,6 @@ class _MyAppState extends State<MyApp> {
 		});
 	}
 
-	Matchday? matchday_from_json(String json) {
-	}
-
 	@override
 	Widget build(BuildContext context) {
 
@@ -48,12 +47,12 @@ class _MyAppState extends State<MyApp> {
 										onPressed: () async {
 											final json = await loadInputJson();
 											if(json == null) {debugPrint("json does not exist"); return;}
-											try { this.md = Matchday(json);
-											} catch (_){ debugPrint("JSON parsing Error"); return;}
+											try { this.md = Matchday.fromJson(jsonDecode(json));
+											} catch (e, st){ debugPrint("JSON parsing Error: $e\nStack:\n$st"); return;}
 											Navigator.push(
 												context,
 												MaterialPageRoute<void>(
-													builder: (context) => InputWindow(md: matchday_from_json(json)),
+													builder: (context) => InputWindow(md: md!),
 												)
 											);
 										},

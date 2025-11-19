@@ -37,6 +37,9 @@ dependencies:
   desktop_multi_window: ^0.2.1
   auto_size_text: ^3.0.0
   path_provider: ^2.1.5
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +51,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  build_runner: ^2.4.6
+  freezed: ^2.4.5
+  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

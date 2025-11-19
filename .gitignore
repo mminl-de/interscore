@@ -13,3 +13,6 @@ replays/
 win-pacman/msys2-root/
 backend
 docker/obs
+flutter_rentnerend/lib/*.freezed.dart
+flutter_rentnerend/lib/*.g.dart
+flutter_rentnerend/pubspec.lock

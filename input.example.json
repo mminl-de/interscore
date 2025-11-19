@@ -2,121 +2,55 @@
     "meta": {
         "game_i": 0,
         "cur_gamepart": 0,
-        "paused": false,
+        "paused": true,
         "cur_time": 100,
         "formats": [
+			{
+				"name": "4M Schießen Best of 4",
+				"gameparts": [
+					{ "type": "penalty", "name": "1. Shoot T1", "penalty": { "shooting": { "team": 0, "player": 0 } } },
+					{ "type": "penalty", "name": "1. Shoot T2", "penalty": { "shooting": { "team": 1, "player": 0 } } },
+					{ "type": "penalty", "name": "2. Shoot T1", "penalty": { "shooting": { "team": 0, "player": 1 } } },
+					{ "type": "penalty", "name": "2. Shoot T2", "penalty": { "shooting": { "team": 1, "player": 1 } } }
+				]
+			},
+			{
+				"name": "4M Schießen Overtime Part 1",
+				"gameparts": [
+					{ "type": "penalty", "name": "Shoot T1", "penalty": { "shooting": { "team": 0, "player": 0 } } },
+					{ "type": "penalty", "name": "Shoot T2", "penalty": { "shooting": { "team": 1, "player": 0 } } }
+				]
+			},
+			{
+				"name": "4M Schießen Overtime Part 2",
+				"gameparts": [
+					{ "type": "penalty", "name": "Shoot T1", "penalty": { "shooting": { "team": 0, "player": 1 } } },
+					{ "type": "penalty", "name": "Shoot T2", "penalty": { "shooting": { "team": 1, "player": 1 } } }
+				]
+			},
+			{
+				"name": "4M Schießen Overtime",
+				"gameparts": [
+					{ "type": "format", "format": "4M Schießen Overtime Part 2", "decider": true },
+					{ "type": "format", "format": "4M Schießen Overtime Part 2", "decider": true }
+				]
+			},
             {
                 "name": "4M Schießen",
                 "gameparts": [
-                    {
-                        "name": "4M Schießen",
-                        "repeat": false,
-                        "decider": true,
-                        "penalties": [
-                            {
-                                "shooting": {
-                                    "team": 0,
-                                    "player": 0
-                                }
-                            },
-                            {
-                                "shooting": {
-                                    "team": 1,
-                                    "player": 0
-                                }
-                            },
-                            {
-                                "shooting": {
-                                    "team": 0,
-                                    "player": 1
-                                }
-                            },
-                            {
-                                "shooting": {
-                                    "team": 1,
-                                    "player": 1
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "name": "4M Schießen",
-                        "decider": true,
-                        "repeat": true,
-                        "penalties": [
-                            {
-                                "shooting": {
-                                    "team": 0,
-                                    "player": 0
-                                }
-                            },
-                            {
-                                "shooting": {
-                                    "team": 1,
-                                    "player": 0
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "name": "4M Schießen",
-                        "decider": true,
-                        "repeat": true,
-                        "penalties": [
-                            {
-                                "shooting": {
-                                    "team": 0,
-                                    "player": 1
-                                }
-                            },
-                            {
-                                "shooting": {
-                                    "team": 1,
-                                    "player": 1
-                                }
-                            }
-                        ]
-                    }
+					{ "type": "format", "format": "4M Schießen Best of 4" },
+					{ "type": "format", "format": "4M Schießen Overtime", "decider": true, "repeat": true }
                 ]
             },
             {
                 "name": "Radball Elite",
                 "gameparts": [
-                    {
-                        "name": "1. HZ",
-                        "length": 420,
-                        "repeat": false,
-                        "decider": false
-                    },
-                    {
-                        "name": "Halbzeitpause",
-                        "length": 120,
-                        "repeat": false,
-                        "decider": false
-                    },
-                    {
-                        "name": "2. HZ",
-                        "length": 420,
-                        "repeat": false,
-                        "decider": false
-                    },
-                    {
-                        "name": "Halbzeitpause",
-                        "length": 120,
-                        "repeat": false,
-                        "decider": true
-                    },
-                    {
-                        "name": "3. HZ",
-                        "length": 420,
-                        "repeat": false,
-                        "decider": true
-                    },
-                    {
-                        "format": "4M Schießen",
-                        "repeat": false,
-                        "decider": true
-                    }
+                    { "type": "timed", "name": "1. HZ", "length": 420 },
+                    { "type": "timed", "name": "Halbzeitpause", "length": 120, "sides_inverted": true },
+                    { "type": "timed", "name": "2. HZ", "length": 420, "sides_inverted": true },
+                    { "type": "timed", "name": "Halbzeitpause", "length": 120, "decider": true, "sides_inverted": true },
+                    { "type": "timed", "name": "3. HZ", "length": 420, "decider": true, "sides_inverted": true },
+                    { "type": "format", "format": "4M Schießen", "decider": true }
                 ]
             }
         ]
@@ -127,14 +61,8 @@
             "logo_uri": "stein.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Kai Fritsche",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Lenie Schwarzbauer",
-                    "role": "field"
-                }
+                { "name": "Kai Fritsche", "role": "keeper" },
+                { "name": "Lenie Schwarzbauer", "role": "field" }
             ]
         },
         {
@@ -142,14 +70,8 @@
             "logo_uri": "tann.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Luca Schmitt",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Patrick",
-                    "role": "field"
-                }
+                { "name": "Luca Schmitt", "role": "keeper" },
+                { "name": "Patrick", "role": "field" }
             ]
         },
         {
@@ -157,14 +79,8 @@
             "logo_uri": "leipzig.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Paul Fiebig",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Max Hermann",
-                    "role": "field"
-                }
+                { "name": "Paul Fiebig", "role": "keeper" },
+                { "name": "Max Hermann", "role": "field" }
             ]
         },
         {
@@ -172,14 +88,8 @@
             "logo_uri": "nordshausen.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Andy Reichenbach",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Manuel Kopp",
-                    "role": "field"
-                }
+                { "name": "Andy Reichenbach", "role": "keeper" },
+                { "name": "Manuel Kopp", "role": "field" }
             ]
         },
         {
@@ -187,14 +97,8 @@
             "logo_uri": "nordshausen.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Christian Galinger",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Laras Degenhardt",
-                    "role": "field"
-                }
+                { "name": "Christian Galinger", "role": "keeper" },
+                { "name": "Laras Degenhardt", "role": "field" }
             ]
         },
         {
@@ -202,14 +106,8 @@
             "logo_uri": "gifhorn.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Corvin Rowold",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Christian Kramer",
-                    "role": "field"
-                }
+                { "name": "Corvin Rowold", "role": "keeper" },
+                { "name": "Christian Kramer", "role": "field" }
             ]
         },
         {
@@ -217,14 +115,8 @@
             "logo_uri": "gifhorn.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Jan Rowold",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Maxemilian Nilßon",
-                    "role": "field"
-                }
+                { "name": "Jan Rowold", "role": "keeper" },
+                { "name": "Maxemilian Nilßon", "role": "field" }
             ]
         },
         {
@@ -232,345 +124,175 @@
             "logo_uri": "reideburg.png",
             "color": "#bedbed",
             "players": [
-                {
-                    "name": "Paul Berndt",
-                    "role": "keeper"
-                },
-                {
-                    "name": "Max Berndt",
-                    "role": "field"
-                }
+                { "name": "Paul Berndt", "role": "keeper" },
+                { "name": "Max Berndt", "role": "field" }
             ]
         }
     ],
     "groups": [
         {
             "name": "A",
-            "members": [
-                "LEIPZIG II",
-                "TANN",
-                "GIFHORN I",
-                "NORDSHAUSEN II"
-            ]
+            "members": [ "LEIPZIG II", "TANN", "GIFHORN I", "NORDSHAUSEN II" ]
         },
         {
             "name": "B",
-            "members": [
-                "NORDSHAUSEN III",
-                "LEIPZIG I",
-                "GIFHORN II",
-                "REIDEBURG"
-            ]
+            "members": [ "NORDSHAUSEN III", "LEIPZIG I", "GIFHORN II", "REIDEBURG" ]
         }
     ],
     "games": [
         {
-            "1": {
-                "name": "LEIPZIG II",
-                "missing": {
-                    "reason": "Verspätung"
-                }
-            },
-            "2": {
-                "name": "TANN",
-                "missing": {
-                    "reason": "Krankheit"
-                }
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "LEIPZIG II", "missing": { "reason": "Verspätung" } },
+            "2": { "type": "byName", "name": "TANN", "missing": { "reason": "Krankheit" } },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false },
+			"actions": [
+				{
+					"id": 0,
+					"type": "goal",
+					"time_game": 34,
+					"players_involved": [
+						{ "name": "CHRISTIAN KRAMER", "role": "scorer" },
+						{ "name": "Luca Schmitt", "role": "keeper" },
+						{ "name": "Corvin Rowold", "role": "ineligible" },
+						{ "name": "Patrick", "role": "defender" }
+					],
+					"change": {"type": "score", "score": { "1": 1} },
+					"description": "Unhaltbar in die obere rechte Ecke"
+				},
+				{
+					"id": 1,
+					"type": "foul",
+					"time_game": 60,
+					"players_involved": [
+						{ "name": "CHRISTIAN KRAMER", "role": "fouler" },
+						{ "name": "Luca Schmitt", "role": "fouled" },
+						{ "name": "Patrick Meier", "role": "referee" }
+					],
+					"triggers_action": 2,
+					"description": "Christian Kramer hält Luca Schmitt mehrere Sekunden fest, Patrick Meier entscheided auf 4 Meter"
+				},
+				{
+					"id": 2,
+					"type": "penalty",
+					"time_game": 60,
+					"timespan_game": 11,
+					"players_involved": [
+						{ "name": "Corvin Rowold", "role": "keeper" },
+						{ "name": "Luca Schmitt", "role": "shooter" }
+					],
+					"triggers_action": 3,
+					"description": "Luca Schmitt verschießt den 4 Meter gegen die Latte ins Aus"
+				},
+				{
+					"id": 3,
+					"type": "outball",
+					"time_game": 72,
+					"team": 1,
+					"done": false
+				}
+			]
         },
         {
-            "1": {
-                "name": "GIFHORN I"
-            },
-            "2": {
-                "name": "NORDSHAUSEN II"
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "GIFHORN I" },
+            "2": { "type": "byName", "name": "NORDSHAUSEN II" },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "LEIPZIG II"
-            },
-            "2": {
-                "name": "GIFHORN I"
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "LEIPZIG II" },
+            "2": { "type": "byName", "name": "GIFHORN I" },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "TANN"
-            },
-            "2": {
-                "name": "NORDSHAUSEN II"
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "TANN" },
+            "2": { "type": "byName", "name": "NORDSHAUSEN II" },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "LEIPZIG II"
-            },
-            "2": {
-                "name": "NORDSHAUSEN II"
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "LEIPZIG II" },
+            "2": { "type": "byName", "name": "NORDSHAUSEN II" },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "TANN"
-            },
-            "2": {
-                "name": "GIFHORN I"
-            },
-            "groups": [
-                "A"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "TANN" },
+            "2": { "type": "byName", "name": "GIFHORN I" },
+            "groups": [ "A" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "NORDSHAUSEN III"
-            },
-            "2": {
-                "name": "LEIPZIG I"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "NORDSHAUSEN III" },
+            "2": { "type": "byName", "name": "LEIPZIG I" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "GIFHORN II"
-            },
-            "2": {
-                "name": "REIDEBURG"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "GIFHORN II" },
+            "2": { "type": "byName", "name": "REIDEBURG" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "NORDSHAUSEN III"
-            },
-            "2": {
-                "name": "GIFHORN II"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "NORDSHAUSEN III" },
+            "2": { "type": "byName", "name": "GIFHORN II" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "LEIPZIG I"
-            },
-            "2": {
-                "name": "REIDEBURG"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "LEIPZIG I" },
+            "2": { "type": "byName", "name": "REIDEBURG" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "NORDSHAUSEN III"
-            },
-            "2": {
-                "name": "REIDEBURG"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "NORDSHAUSEN III" },
+            "2": { "type": "byName", "name": "REIDEBURG" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "name": "LEIPZIG I"
-            },
-            "2": {
-                "name": "GIFHORN II"
-            },
-            "groups": [
-                "B"
-            ],
-            "format": {
-                "name": "Radball Elite",
-                "decider": false
-            }
+            "1": { "type": "byName", "name": "LEIPZIG I" },
+            "2": { "type": "byName", "name": "GIFHORN II" },
+            "groups": [ "B" ],
+            "format": { "name": "Radball Elite", "decider": false }
         },
         {
-            "1": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "A",
-                    "key": 3
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "B",
-                    "key": 3
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "groupPlace", "group": "A", "place": 3 } },
+            "2": { "type": "byQuery", "query": { "type": "groupPlace", "group": "B", "place": 3 } },
             "name": "Spiel um Platz 7",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         },
         {
-            "1": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "A",
-                    "key": 0
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "B",
-                    "key": 1
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "groupPlace", "group": "A", "place": 0 } },
+            "2": { "type": "byQuery", "query": { "type": "groupPlace", "group": "B", "place": 1 } },
             "name": "1. Halbfinale",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         },
         {
-            "1": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "A",
-                    "key": 1
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "B",
-                    "key": 0
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "groupPlace", "group": "A", "place": 1 } },
+            "2": { "type": "byQuery", "query": { "type": "groupPlace", "group": "B", "place": 0 } },
             "name": "2. Halbfinale",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         },
         {
-            "1": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "A",
-                    "key": 2
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "GROUP",
-                    "group": "B",
-                    "key": 2
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "groupPlace", "group": "A", "place": 2 } },
+            "2": { "type": "byQuery", "query": { "type": "groupPlace", "group": "B", "place": 2 } },
             "name": "Spiel um Platz 5",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         },
         {
-            "1": {
-                "query": {
-                    "set": "LOSER",
-                    "key": 13
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "LOSER",
-                    "key": 14
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "gameLoser", "gameIndex": 13 } },
+            "2": { "type": "byQuery", "query": { "type": "gameLoser", "gameIndex": 14 } },
             "name": "Spiel um Platz 3",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         },
         {
-            "1": {
-                "query": {
-                    "set": "WINNER",
-                    "key": 13
-                }
-            },
-            "2": {
-                "query": {
-                    "set": "WINNER",
-                    "key": 14
-                }
-            },
+            "1": { "type": "byQuery", "query": { "type": "gameWinner", "gameIndex": 13 } },
+            "2": { "type": "byQuery", "query": { "type": "gameWinner", "gameIndex": 14 } },
             "name": "Finale",
-            "format": {
-                "name": "Radball Elite",
-                "decider": true
-            }
+            "format": { "name": "Radball Elite", "decider": true }
         }
     ]
 }
