@@ -3,11 +3,23 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
-Widget buttonWithIcon (void Function() onPressed, IconData icon){
+Widget buttonWithIcon (BuildContext c, void Function()? onPressed, IconData icon, {bool inverted = false}){
 	const double maxHeight = 10000; // This value should be an unreachable height
 
+	final cs = Theme.of(c).colorScheme;
+
+	final style = ButtonStyle(
+		backgroundColor: WidgetStateProperty.resolveWith(
+			(states) { return inverted ? cs.primary.withValues(alpha: 0.7) : null; }),
+		foregroundColor: WidgetStateProperty.resolveWith(
+			(states) { return inverted ? cs.onPrimary : null; }),
+		padding: const WidgetStatePropertyAll(
+			EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+		),
+	);
+
 	return ElevatedButton(onPressed: onPressed,
-		style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4)),
+		style: style,
 		child: FittedBox(fit: BoxFit.contain, child: Icon(icon, size: maxHeight))
 	);
 }

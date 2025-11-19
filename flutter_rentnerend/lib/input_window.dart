@@ -3,6 +3,8 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_rentnerend/lib.dart';
 //import 'package:flutter_rentnerend/matchday.dart';
 import 'package:flutter_rentnerend/md.dart';
+import 'dart:async';
+
 
 class InputWindow extends StatefulWidget {
 	const InputWindow({super.key, required this.md});
@@ -15,17 +17,41 @@ class InputWindow extends StatefulWidget {
 
 class _InputWindowState extends State<InputWindow> {
 	late ValueNotifier<Matchday> mdl;
+	Timer? ticker;
 
 	@override
 	void initState() {
 		super.initState();
 		mdl = ValueNotifier(widget.md);
+		startTimer();
 	}
 
 	@override
 	void dispose() {
 		mdl.dispose();
 		super.dispose();
+		stopTimer();
+	}
+
+	void startTimer() {
+		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+			final Matchday md = mdl.value;
+			if(!md.meta.paused) {
+				if (md.meta.currentTime == 0)
+					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
+				else {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+					if(mdl.value.meta.currentTime == 0)
+						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+				}
+
+			}
+		});
+	}
+
+	void stopTimer() {
+		ticker?.cancel();
+		ticker = null;
 	}
 
 	Widget blockTeams(double width, double height, Matchday md) {
@@ -61,7 +87,7 @@ class _InputWindowState extends State<InputWindow> {
 					SizedBox(
 						width: forwardBackwardWidth,
 						height: height, // use max height
-						child: buttonWithIcon(() => mdl.value = md.prevGame(), Icons.arrow_back_rounded)
+						child: buttonWithIcon(context, () => mdl.value = md.prevGame(), Icons.arrow_back_rounded)
 					),
 					SizedBox(
 						width: teamNameWidth,
@@ -71,7 +97,7 @@ class _InputWindowState extends State<InputWindow> {
 					SizedBox(
 						width: switchSideWidth,
 						height: height, // use max height
-						child: buttonWithIcon(() => mdl.value = md.switchSides(), Icons.compare_arrows_rounded)
+						child: buttonWithIcon(context, () => mdl.value = md.switchSides(), Icons.compare_arrows_rounded)
 					),
 					SizedBox(
 						width: teamNameWidth,
@@ -80,7 +106,7 @@ class _InputWindowState extends State<InputWindow> {
 					SizedBox(
 						width: forwardBackwardWidth,
 						height: height, // use max height
-						child: buttonWithIcon(() => mdl.value = md.nextGame(), Icons.arrow_forward_rounded)
+						child: buttonWithIcon(context, () => mdl.value = md.nextGame(), Icons.arrow_forward_rounded)
 					)
 				]
 			))
@@ -105,17 +131,17 @@ class _InputWindowState extends State<InputWindow> {
 				child: Row( children: [
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(() => mdl.value = md.goalAdd(team: t1), Icons.arrow_upward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t1), Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
 							AutoSizeText(md.currentGame?.pointsTeam(t1).toString() ?? '0',
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(() => mdl.value = md.goalRemoveLast(team: t1), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1), Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(() => mdl.value = md.goalAdd(team: t2), Icons.arrow_upward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2), Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.pointsTeam(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(() => mdl.value = md.goalRemoveLast(team: t2), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2), Icons.arrow_downward_rounded)),
 					])),
 				])
 			)
@@ -135,22 +161,41 @@ class _InputWindowState extends State<InputWindow> {
 		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
+		final defTime = md.currentGamePart?.whenOrNull(timed: (_, len, _, _, _) => len);
+
 		return SizedBox(
 			width: width,
 			height: height,
 			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
 				child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: paddingHorizontal/2, children: [
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(() => mdl.value = md.timeChange(-20), Icons.arrow_downward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(() => mdl.value = md.timeChange(-1), Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(-20), Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(-1), Icons.arrow_downward_rounded)),
 					Column( children: [
 						Row( spacing: paddingHorizontal/2, children: [
-							SizedBox(height: pauseResetHeight, width: pauseResetWidth, child: buttonWithIcon(() => mdl.value = md.togglePause(), Icons.pause_rounded)),
-							SizedBox(height: pauseResetHeight, width: pauseResetWidth, child: buttonWithIcon(() => mdl.value = md.timeReset(), Icons.autorenew))
+							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
+								child: buttonWithIcon(
+									context, () {
+										// We need to reset the timer because otherwise we could disable pause
+										// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
+										stopTimer();
+										mdl.value = md.togglePause();
+										startTimer();
+									},
+									md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+									inverted: !md.meta.paused)),
+							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
+								child: buttonWithIcon(
+									context,
+									md.meta.currentTime == defTime
+										? null
+										: () => mdl.value = md.timeReset(),
+									Icons.autorenew,
+									inverted: md.meta.currentTime == defTime))
 						]),
 						SizedBox(height: textHeight, width: pauseResetWidth, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					]),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(() => mdl.value = md.timeChange(1), Icons.arrow_upward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(() => mdl.value = md.timeChange(20), Icons.arrow_upward_rounded))
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(1), Icons.arrow_upward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(20), Icons.arrow_upward_rounded))
 				])
 			)
 		);

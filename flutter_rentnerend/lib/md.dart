@@ -122,6 +122,7 @@ class Matchday with _$Matchday {
 	}
 
 	Matchday togglePause() {
+		if(meta.paused && meta.currentTime == 0) return this;
 		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
 	}
 }
