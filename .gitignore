@@ -2,6 +2,7 @@
 frontend/script.js
 new-frontend/script.js
 MessageType.js
+MessageType.ts
 rentnerend/interscore-rentnerend
 rentnerend/interscore-server
 rentnerend/interscore-old
@@ -15,4 +16,5 @@ backend
 docker/obs
 flutter_rentnerend/lib/*.freezed.dart
 flutter_rentnerend/lib/*.g.dart
+flutter_rentnerend/lib/MessageType.dart
 flutter_rentnerend/pubspec.lock
