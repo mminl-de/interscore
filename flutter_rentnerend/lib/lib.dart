@@ -65,3 +65,9 @@ T require<T>(Map<String, dynamic> json, String key) {
   }
   return value;
 }
+
+int u16FromBytes(List<int> bytes, int offset, {bool littleEndian = false}) {
+  return littleEndian
+      ? (bytes[offset] | (bytes[offset + 1] << 8))
+      : ((bytes[offset] << 8) | bytes[offset + 1]);
+}
