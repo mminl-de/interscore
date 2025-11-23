@@ -108,8 +108,34 @@ class InterscoreWebSocketClient {
 		);
 	}
 
-	void send(String message) {
-		_channel.sink.add(message);
+	void sendString(String msg) {
+		_channel.sink.add(msg);
+	}
+
+	void sendBytes(List<int> msg) {
+		_channel.sink.add(msg);
+	}
+
+	void sendSignal(MessageType msg) {
+		final Matchday md = mdl.value;
+
+		// Parse the message
+		if(msg == MessageType.PENALTY.value)
+			debugPrint("WARN: Penalty sending is not implemented yet!");
+		else if(msg == MessageType.DATA_GAMEINDEX.value)
+			sendBytes([msg.value, md.meta.gameIndex]);
+		else if(msg == MessageType.DATA_HALFTIME.value)
+			sendBytes([msg.value, md.meta.currentGamepart]);
+		else if(msg == MessageType.DATA_IS_PAUSE.value)
+			sendBytes([msg.value, md.meta.paused ? 1 : 0]);
+		else if(msg == MessageType.DATA_TIME.value)
+			sendBytes([msg.value, ... u16ToBytes(md.meta.currentTime)]);
+		else if(msg == MessageType.DATA_GAMESCOUNT.value)
+			sendBytes([msg.value, md.games.length]);
+		else if(msg == MessageType.DATA_JSON.value)
+			sendString(jsonEncode(md.toJson()));
+		else
+			sendBytes([msg.value]);
 	}
 
 	void disconnect() {
