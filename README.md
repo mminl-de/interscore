@@ -86,11 +86,9 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- 5s this widget, 5s that
 	- absolute cinema
 - JSON-Creator GUI for non-technical users
-- allow changing time while the clock runs
 - more keyboard binds
 	- bind Ctrl-N for create new tournament
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
-- Pause Button färben/Icon ändern, je nach Pause/Nicht Pause
 - PDF Export
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
 - FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
@@ -102,7 +100,6 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - FINAL Next Game in public window, e.g. before the fullscreen ad during a pause
 - FINAL delte cards
 - FINAL deal with non-existing assets
-- FINAL make json_load resilient to bad input.json
 - FINAL FINAL add export to Spielplan-pdf:
 	- we define a standard for what formular keys we expect
 	- users can upload their template only if their matches our standard:
