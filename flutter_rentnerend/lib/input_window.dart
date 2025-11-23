@@ -4,6 +4,8 @@ import 'package:flutter_rentnerend/lib.dart';
 //import 'package:flutter_rentnerend/matchday.dart';
 import 'package:flutter_rentnerend/md.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 
 class InputWindow extends StatefulWidget {
@@ -22,15 +24,44 @@ class _InputWindowState extends State<InputWindow> {
 	@override
 	void initState() {
 		super.initState();
+
 		mdl = ValueNotifier(widget.md);
+
+		mdl.addListener(() {
+			inputJsonWriteState(mdl.value);
+		});
 		startTimer();
 	}
 
 	@override
 	void dispose() {
 		mdl.dispose();
-		super.dispose();
 		stopTimer();
+
+		super.dispose();
+	}
+
+	// returns if the window should close
+	Future<bool> onWindowClose() async {
+		final result = await showDialog<bool>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: const Text("Save?"),
+				content: const Text("Do you want to save? This will overwrite the original"),
+				actions: [
+				TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Dont Save")),
+				TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Save")),
+				],
+			),
+		);
+
+		if (result == true)
+			inputJsonWrite(mdl.value);
+		else if (result == false)
+			deleteMatchdayStateFile();
+
+		// TODO Add more options about not exiting at all
+		return true;
 	}
 
 	void startTimer() {
@@ -210,21 +241,30 @@ class _InputWindowState extends State<InputWindow> {
 		final blockGoalsHeight = screenHeight * 0.3;
 		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
 
-		debugPrint("Matchday: ${mdl.value}");
-
-		return Scaffold(
-			appBar: AppBar(title: const Text('Input Window')),
-			body: ValueListenableBuilder<Matchday>(
-				valueListenable: mdl,
-				builder: (context, md, _) {
-					return Column(
-						children: [
-							blockTeams(screenWidth, blockTeamsHeight, md),
-							blockGoals(screenWidth, blockGoalsHeight, md),
-							blockTime(screenWidth, blockTimeHeight, md)
-						]
-					);
-				}
+		// debugPrint("Matchday: ${mdl.value}\n\n");
+		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
+		return PopScope(
+			canPop: false,
+			onPopInvokedWithResult: (didPop, _) async {
+				if(didPop) return;
+				final bool shouldClose = await onWindowClose();
+				if(shouldClose == true)
+					Navigator.of(context).pop();
+			},
+			child: Scaffold(
+				appBar: AppBar(title: const Text('Input Window')),
+				body: ValueListenableBuilder<Matchday>(
+					valueListenable: mdl,
+					builder: (context, md, _) {
+						return Column(
+							children: [
+								blockTeams(screenWidth, blockTeamsHeight, md),
+								blockGoals(screenWidth, blockGoalsHeight, md),
+								blockTime(screenWidth, blockTimeHeight, md)
+							]
+						);
+					}
+				)
 			)
 		);
 	}
