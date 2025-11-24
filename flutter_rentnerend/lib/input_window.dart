@@ -56,9 +56,10 @@ class _InputWindowState extends State<InputWindow> {
 			),
 		);
 
-		if (result == 2)
+		if (result == 2) {
 			inputJsonWrite(mdl.value);
-		else if (result == 1)
+			deleteMatchdayStateFile();
+		} else if (result == 1)
 			deleteMatchdayStateFile();
 		else if (result == null || result == 0)
 			return false;
