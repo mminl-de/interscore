@@ -125,6 +125,27 @@ class Matchday with _$Matchday {
 		if(meta.paused && meta.currentTime == 0) return this;
 		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
 	}
+
+	Team? resolveTeam() {
+		return GameQuery.map(
+			groupPlace: (e) => _resolveTeamGroupPlace(e),
+			gameWinner: (e) => _resolveTeamGameWinner(e),
+			gameLoser: (e) => _resolveTeamGameLoser(e),
+		);
+	}
+
+	Team? _resolveTeamGroupPlace(_GameQueryByGroupPlace gq) {
+		return null;
+	}
+
+	Team? _resolveTeamGameWinner(_GameQueryByGameWinner gq) {
+		return null;
+	}
+
+	Team? _resolveTeamGameLoser(_GameQueryByGameLoser gq) {
+		return null;
+	}
+
 }
 
 @freezed
