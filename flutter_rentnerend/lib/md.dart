@@ -126,26 +126,56 @@ class Matchday with _$Matchday {
 		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
 	}
 
-	Team? resolveTeam() {
-		return GameQuery.map(
-			groupPlace: (e) => _resolveTeamGroupPlace(e),
-			gameWinner: (e) => _resolveTeamGameWinner(e),
-			gameLoser: (e) => _resolveTeamGameLoser(e),
+	// Returns a Map with Team and an associated integer to it.
+	// This allows e.g. for 2 teams who are equally ranked
+	Map<Team, int> getRanking() {
+		final stats = [for (final t in teams) getTeamPoints(t)];
+
+		stats.sort((a, b) {
+			int c;
+			if((c = b.points.compareTo(a.points)) != 0) return c;
+			if((c = b.goalDiff.compareTo(a.goalDiff)) != 0) return c;
+			return b.goals.compareTo(a.goals);
+		});
+
+		final Map<Team, int> out = {};
+		int currentRank = 1;
+
+		for (int i=0; i < stats.length; i++) {
+			if( i > 0 &&
+			    (stats[i].points != stats[i-1].points ||
+				 stats[i].goalDiff != stats[i-1].goalDiff ||
+				 stats[i].goals != stats[i-1].goals))
+				currentRank = i + 1;
+			out[stats[i].team] = currentRank;
+		}
+
+		return out;
+
+		return Map.fromIterable(teams,
+			key: (team) => team,
+			value: (team) => getTeamPoints(team),
 		);
 	}
 
-	Team? _resolveTeamGroupPlace(_GameQueryByGroupPlace gq) {
-		return null;
-	}
+	int getTeamPoints(Team t) {
+		int points = 0;
+		for(int i=0; i < meta.gameIndex; i++) {
+			Game g = games[i];
+			int? gameTeamIndex;
+			if(g.team1.map(byName: (t1) => t.name == t1.name, byQuery: (t1) => t.name == t1.query.resolveTeam(this)?.name))
+				gameTeamIndex = 1;
+			if(g.team2.map(byName: (t2) => t.name == t2.name, byQuery: (t2) => t.name == t2.query.resolveTeam(this)?.name))
+				gameTeamIndex = 2;
+			if(gameTeamIndex == null) continue;
 
-	Team? _resolveTeamGameWinner(_GameQueryByGameWinner gq) {
-		return null;
+			int pointsDiff = g.goalsTeam(gameTeamIndex) - g.goalsTeam(gameTeamIndex == 1 ? 2 : 1);
+			if(pointsDiff > 0) points += 3;
+			else if (pointsDiff == 0) points++;
+		}
+		points *= 10;
+		return points;
 	}
-
-	Team? _resolveTeamGameLoser(_GameQueryByGameLoser gq) {
-		return null;
-	}
-
 }
 
 @freezed
@@ -179,7 +209,7 @@ class Game with _$Game {
 		List<GameAction>? actions,
 	}) = _Game;
 
-	int pointsTeam(int team) {
+	int goalsTeam(int team) {
 		if(actions == null || actions!.isEmpty) return 0;
 
 		return actions!.whereType<_GameActionGoal>().fold(0, (sum, action) {
@@ -284,6 +314,7 @@ class GameTeamSlot with _$GameTeamSlot {
 
 	factory GameTeamSlot.fromJson(Map<String, dynamic> json) => _$GameTeamSlotFromJson(json);
 }
+
 @Freezed(unionKey: "type")
 class GameQuery with _$GameQuery {
 	const factory GameQuery.groupPlace(String group, int place) = _GameQueryByGroupPlace;
@@ -291,6 +322,29 @@ class GameQuery with _$GameQuery {
 	const factory GameQuery.gameLoser(int gameIndex) = _GameQueryByGameLoser;
 
 	// TODO Validate functions
+	Team? resolveTeam(Matchday m) {
+		return map(
+			groupPlace: (e) => _resolveTeamGroupPlace(e, m),
+			gameWinner: (e) => _resolveTeamGameWinner(e, m),
+			gameLoser: (e) => _resolveTeamGameLoser(e, m),
+		);
+	}
+
+	Team? _resolveTeamGroupPlace(_GameQueryByGroupPlace gq, Matchday m) {
+		Group? g = m.groups.firstWhereIndexedOrNull((_, group) => gq.group == group.name);
+		if(g == null) return null;
+
+		return null;
+	}
+
+	Team? _resolveTeamGameWinner(_GameQueryByGameWinner gq, Matchday m) {
+		return null;
+	}
+
+	Team? _resolveTeamGameLoser(_GameQueryByGameLoser gq, Matchday m) {
+		return null;
+	}
+
 
 	factory GameQuery.fromJson(Map<String, dynamic> json) => _$GameQueryFromJson(json);
 }

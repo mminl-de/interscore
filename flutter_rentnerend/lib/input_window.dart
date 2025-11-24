@@ -167,14 +167,14 @@ class _InputWindowState extends State<InputWindow> {
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t1), Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
-							AutoSizeText(md.currentGame?.pointsTeam(t1).toString() ?? '0',
+							AutoSizeText(md.currentGame?.goalsTeam(t1).toString() ?? '0',
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1), Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2), Icons.arrow_upward_rounded)),
-						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.pointsTeam(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.goalsTeam(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2), Icons.arrow_downward_rounded)),
 					])),
 				])
