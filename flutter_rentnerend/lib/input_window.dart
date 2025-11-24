@@ -43,24 +43,26 @@ class _InputWindowState extends State<InputWindow> {
 
 	// returns if the window should close
 	Future<bool> onWindowClose() async {
-		final result = await showDialog<bool>(
+		final result = await showDialog<int>(
 			context: context,
 			builder: (context) => AlertDialog(
 				title: const Text("Save?"),
 				content: const Text("Do you want to save? This will overwrite the original"),
 				actions: [
-				TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Dont Save")),
-				TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Save")),
+				TextButton(onPressed: () => Navigator.pop(context, 0), child: const Text("Stay")),
+				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Dont Save")),
+				TextButton(onPressed: () => Navigator.pop(context, 2), child: const Text("Save")),
 				],
 			),
 		);
 
-		if (result == true)
+		if (result == 2)
 			inputJsonWrite(mdl.value);
-		else if (result == false)
+		else if (result == 1)
 			deleteMatchdayStateFile();
+		else if (result == null || result == 0)
+			return false;
 
-		// TODO Add more options about not exiting at all
 		return true;
 	}
 
