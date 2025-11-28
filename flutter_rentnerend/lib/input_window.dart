@@ -99,12 +99,14 @@ class _InputWindowState extends State<InputWindow> {
 
 		String t1name = md.currentGame?.team1.when(
 			byName: (name, _) => name,
-			byQuery: (_, __) => "[???]", // TODO resolve
+			byQuery: (gq, __) => "[???]",
+			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
 		String t2name = md.currentGame?.team2.when(
 			byName: (name, _) => name,
-			byQuery: (_, __) => "[???]", // TODO resolve
+			byQuery: (gq, __) => "[???]",
+			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
 		if(md.meta.sidesInverted) {
@@ -121,7 +123,21 @@ class _InputWindowState extends State<InputWindow> {
 					SizedBox(
 						width: forwardBackwardWidth,
 						height: height, // use max height
-						child: buttonWithIcon(context, () => mdl.value = md.prevGame(), Icons.arrow_back_rounded)
+						child: buttonWithIcon(context, () {
+							if(md.currentGame == null) return null;
+
+							// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
+							// from the last game, because they arent resolved anymore
+							GameTeamSlot t1 = md.currentGame!.team1;
+							GameTeamSlot t2 = md.currentGame!.team2;
+							List<Game> new_games = List.from(md.games);
+							new_games[md.meta.gameIndex] = md.currentGame!.copyWith(
+								team1: t1.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
+								team2: t2.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
+							);
+							final Matchday new_md = md.prevGame();
+							mdl.value = new_md.copyWith(games: new_games);
+						}, Icons.arrow_back_rounded)
 					),
 					SizedBox(
 						width: teamNameWidth,
@@ -140,7 +156,22 @@ class _InputWindowState extends State<InputWindow> {
 					SizedBox(
 						width: forwardBackwardWidth,
 						height: height, // use max height
-						child: buttonWithIcon(context, () => mdl.value = md.nextGame(), Icons.arrow_forward_rounded)
+						child: buttonWithIcon(context, () {
+							final Matchday new_md = md.nextGame();
+							if(new_md.currentGame == null) return null;
+
+							// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
+							GameTeamSlot? gq1_resolved = new_md.currentGame!.team1.resolveQuery(new_md);
+							if(gq1_resolved == null) gq1_resolved = new_md.currentGame!.team1;
+							GameTeamSlot? gq2_resolved = new_md.currentGame!.team2.resolveQuery(new_md);
+							if(gq2_resolved == null) gq2_resolved = new_md.currentGame!.team2;
+							List<Game> new_games = List.from(new_md.games);
+							new_games[new_md.meta.gameIndex] = new_md.currentGame!.copyWith(
+								team1: gq1_resolved,
+								team2: gq2_resolved
+							);
+							mdl.value = new_md.copyWith(games: new_games);
+						}, Icons.arrow_forward_rounded)
 					)
 				]
 			))
@@ -167,14 +198,14 @@ class _InputWindowState extends State<InputWindow> {
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t1), Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
-							AutoSizeText(md.currentGame?.goalsTeam(t1).toString() ?? '0',
+							AutoSizeText(md.currentGame?.teamGoals(t1).toString() ?? '0',
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1), Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2), Icons.arrow_upward_rounded)),
-						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.goalsTeam(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.teamGoals(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2), Icons.arrow_downward_rounded)),
 					])),
 				])
