@@ -162,3 +162,11 @@ List<int> u16ToBytes(int value, {bool littleEndian = false}) {
       ? [low, high]
       : [high, low];
 }
+
+// Returns if b == wanted, else null
+// Why you ask? Its needed in md.dart in @JsonKey(toJson: boolOrNull) to omit default keys when writing to json
+// Why not a lambda function you ask? Guess what: fuck you, it doesnt work because comptime
+bool? boolOrNullFalse(bool b) => b == false ? false : null;
+bool? boolOrNullTrue(bool b) => b == true ? true : null;
+int? intOrNull0(int b) => b == 0 ? 0 : null;
+int? intOrNullNot0(int b) => b != 0 ? b : null;

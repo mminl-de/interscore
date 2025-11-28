@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
-//import 'package:flutter_rentnerend/lib.dart';
+import 'package:flutter_rentnerend/lib.dart';
 
 part 'md.freezed.dart';
 part 'md.g.dart';
@@ -12,6 +12,7 @@ part 'md.g.dart';
 class Matchday with _$Matchday {
 	const Matchday._(); // This is needed to allow methods/getters
 
+	@JsonSerializable(includeIfNull: false)
 	const factory Matchday(
 		Meta meta,
 		List<Team> teams,
@@ -125,19 +126,112 @@ class Matchday with _$Matchday {
 		if(meta.paused && meta.currentTime == 0) return this;
 		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
 	}
+
+	// Returns a Map with Team and an associated integer to it.
+	// This allows e.g. for 2 teams who are equally ranked
+	Map<String, int>? rankingFromGroup(String groupName) {
+		final Group? group = groupFromName(groupName);
+		if(group == null) return null; // TODO This should probably crash the program
+
+		final List<String> stats = [for (final t in group.members) t];
+
+		stats.sort((a, b) {
+			int c;
+			if((c = teamPoints(b, groupName) - teamPoints(a, groupName)) != 0) return c;
+			if((c = teamGoalDiff(b, groupName) - teamGoalDiff(a, groupName)) != 0) return c;
+			return teamGoals(b, groupName) - teamGoals(a, groupName);
+		});
+
+		final Map<String, int> out = {};
+		int currentRank = 1;
+
+		for (int i=0; i < stats.length; i++) {
+			if( i > 0 &&
+			    (teamPoints(stats[i], groupName) != teamPoints(stats[i-1], groupName) ||
+				 teamGoalDiff(stats[i], groupName) != teamGoalDiff(stats[i-1], groupName) ||
+				 teamGoals(stats[i], groupName) != teamGoals(stats[i-1], groupName)))
+				currentRank = i + 1;
+			out[stats[i]] = currentRank;
+		}
+
+		return out;
+	}
+
+	// Gives back Map of all games the team played and an
+	Map<Game, int> _teamGamesPlayed(String t, String group) {
+		if(groupFromName(group) == null); // TODO crash the program?
+
+		Map<Game, int> gamesPlayed = Map<Game, int>();
+		for(int i=0; i < meta.gameIndex; i++) {
+			Game game = games[i];
+			if(game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
+			int? gameTeamIndex;
+			if(game.team1.map(
+			    byName: (t1) => t == t1.name,
+				byQueryResolved: (t1) => t == t1.name,
+				byQuery: (t1) => false,
+			))
+				gameTeamIndex = 1;
+			else if(game.team2.map(
+				byName: (t2) => t == t2.name,
+				byQueryResolved: (t2) => t == t2.name,
+				byQuery: (t2) => false)
+			)
+				gameTeamIndex = 2;
+			else continue;
+
+			gamesPlayed[game] = gameTeamIndex;
+		}
+		return gamesPlayed;
+	}
+
+	int teamPoints(String t, String g) {
+		int points = 0;
+		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
+			int goalsDiff = g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
+			if(goalsDiff > 0) points += 3;
+			else if (goalsDiff == 0) points++;
+		});
+		return points;
+	}
+
+	int teamGoalDiff(String t, String g) {
+		int goalDiff = 0;
+		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
+			goalDiff += g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
+		});
+		return goalDiff;
+	}
+
+	int teamGoals(String t, String g) {
+		int goals = 0;
+		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
+			goals += g.teamGoals(gameTeamIndex);
+		});
+		return goals;
+	}
+
+	Team? teamFromName(String name) {
+		return this.teams.firstWhere((team) => name == team.name);
+	}
+
+	Group? groupFromName(String name) {
+		return this.groups.firstWhere((group) => name == group.name);
+	}
 }
 
 @freezed
 class Meta with _$Meta {
+	@JsonSerializable(includeIfNull: false)
 	const factory Meta({
-		@JsonKey(name: 'game_i') @Default(0) int gameIndex,
-		@JsonKey(name: 'cur_gamepart') @Default(0) int currentGamepart,
+		@JsonKey(name: 'game_i', toJson: intOrNullNot0) @Default(0) int gameIndex,
+		@JsonKey(name: 'cur_gamepart', toJson: intOrNullNot0) @Default(0) int currentGamepart,
 		// This is for an EXTRA invert, not the normal side switching.
 		// The normal side switching is done through formats!
 		// This is still needed, because maybe the teams are standing the other way around at the beginning
-		@JsonKey(name: 'sides_inverted') @Default(false) bool sidesInverted,
-		@Default(true) bool paused,
-		@JsonKey(name: 'cur_time') @Default(0) int currentTime,
+		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
+		@JsonKey(name: 'cur_time', toJson: intOrNullNot0) @Default(0) int currentTime,
 		required List<Format> formats,
 	}) = _Meta;
 
@@ -148,17 +242,18 @@ class Meta with _$Meta {
 class Game with _$Game {
 	const Game._(); // This is needed to allow methods/getters
 
+	@JsonSerializable(includeIfNull: false)
 	const factory Game({
 		String? name,
 		@JsonKey(name: '1') required GameTeamSlot team1,
 		@JsonKey(name: '2') required GameTeamSlot team2,
 		List<String>? groups,
 		required GameFormat format,
-		@Default(false) bool decider,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
 		List<GameAction>? actions,
 	}) = _Game;
 
-	int pointsTeam(int team) {
+	int teamGoals(int team) {
 		if(actions == null || actions!.isEmpty) return 0;
 
 		return actions!.whereType<_GameActionGoal>().fold(0, (sum, action) {
@@ -169,11 +264,28 @@ class Game with _$Game {
 		});
 	}
 
+	// returns 1/2 if they are the winner and 0 in case of draw
+	int get winner {
+		final goalDiff = teamGoals(2) - teamGoals(1);
+		if(goalDiff < 0) return 1;
+		if(goalDiff > 0) return 2;
+		return goalDiff;
+	}
+
+	// returns 1/2 if they are the loser and 0 in case of draw
+	int get loser {
+		final goalDiff = teamGoals(2) - teamGoals(1);
+		if(goalDiff < 0) return 2;
+		if(goalDiff > 0) return 1;
+		return goalDiff;
+	}
+
 	factory Game.fromJson(Map<String, dynamic> json) => _$GameFromJson(json);
 }
 
 @Freezed(unionKey: "type")
 class GameAction with _$GameAction {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameAction.goal({
 		required int id,
 		@JsonKey(name: "time_game") int? timeGame,
@@ -184,9 +296,10 @@ class GameAction with _$GameAction {
 		required GameActionChange change,
 		@JsonKey(name: "triggers_action") int? triggersAction,
 		String? description,
-		@Default(true) bool done,
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool done,
 	}) = _GameActionGoal;
 
+	@JsonSerializable(includeIfNull: false)
 	const factory GameAction.foul({
 		required int id,
 		@JsonKey(name: "time_game") int? timeGame,
@@ -196,9 +309,10 @@ class GameAction with _$GameAction {
 		List<GameActionPlayerInvolved>? players_involved,
 		@JsonKey(name: "triggers_action") int? triggersAction,
 		String? description,
-		@Default(true) bool done,
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool done,
 	}) = _GameActionFoul;
 
+	@JsonSerializable(includeIfNull: false)
 	const factory GameAction.penalty({
 		required int id,
 		@JsonKey(name: "time_game") int? timeGame,
@@ -207,9 +321,10 @@ class GameAction with _$GameAction {
 		@JsonKey(name: "timespan_unix") int? timespanUnix,
 		List<GameActionPlayerInvolved>? players_involved,
 		String? description,
-		@Default(true) bool done,
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool done,
 	}) = _GameActionPenalty;
 
+	@JsonSerializable(includeIfNull: false)
 	const factory GameAction.outball({
 		required int id,
 		@JsonKey(name: "time_game") int? timeGame,
@@ -219,7 +334,7 @@ class GameAction with _$GameAction {
 		List<GameActionPlayerInvolved>? players_involved,
 		required int team, // either 1 or 2 for the equivalent team
 		String? description,
-		@Default(true) bool done,
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool done,
 	}) = _GameActionOutball;
 
 	factory GameAction.fromJson(Map<String, dynamic> json) => _$GameActionFromJson(json);
@@ -227,6 +342,7 @@ class GameAction with _$GameAction {
 
 @freezed
 class GameActionPlayerInvolved with _$GameActionPlayerInvolved {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameActionPlayerInvolved(String name, String role) = _GameActionPlayerInvolved;
 
 	factory GameActionPlayerInvolved.fromJson(Map<String, dynamic> json) => _$GameActionPlayerInvolvedFromJson(json);
@@ -234,6 +350,7 @@ class GameActionPlayerInvolved with _$GameActionPlayerInvolved {
 
 @Freezed(unionKey: "type")
 class GameActionChange with _$GameActionChange {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameActionChange.score(GameActionChangeScore score) = _GameActionChange;
 
 	factory GameActionChange.fromJson(Map<String, dynamic> json) => _$GameActionChangeFromJson(json);
@@ -241,9 +358,10 @@ class GameActionChange with _$GameActionChange {
 
 @freezed
 class GameActionChangeScore with _$GameActionChangeScore {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameActionChangeScore({
-		@JsonKey(name: '1') @Default(0) int t1,
-		@JsonKey(name: '2') @Default(0) int t2,
+		@JsonKey(name: '1', toJson: intOrNullNot0) @Default(0) int t1,
+		@JsonKey(name: '2', toJson: intOrNullNot0) @Default(0) int t2,
 	}) = _GameActionChangeScore;
 
 	factory GameActionChangeScore.fromJson(Map<String, dynamic> json) => _$GameActionChangeScoreFromJson(json);
@@ -251,42 +369,132 @@ class GameActionChangeScore with _$GameActionChangeScore {
 
 @freezed
 class GameFormat with _$GameFormat {
-	const factory GameFormat({ required String name, @Default(false) bool decider }) = _GameFormat;
+	@JsonSerializable(includeIfNull: false)
+	const factory GameFormat({
+		required String name,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider
+	}) = _GameFormat;
 
 	factory GameFormat.fromJson(Map<String, dynamic> json) => _$GameFormatFromJson(json);
 }
 
 @Freezed(unionKey: "type")
 class GameTeamSlot with _$GameTeamSlot {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameTeamSlot.byName({ required String name, MissingInfo? missing }) = _GameTeamSlotByName;
+	@JsonSerializable(includeIfNull: false)
 	const factory GameTeamSlot.byQuery({ required GameQuery query, MissingInfo? missing }) = _GameTeamSlotByQuery;
+	@JsonSerializable(includeIfNull: false)
+	const factory GameTeamSlot.byQueryResolved({required String name, required _GameTeamSlotByQuery q}) = _GameTeamSlotByQueryResolved;
 
 	factory GameTeamSlot.fromJson(Map<String, dynamic> json) => _$GameTeamSlotFromJson(json);
 }
+
+extension GameTeamSlotEx on GameTeamSlot {
+	@JsonSerializable(includeIfNull: false)
+	GameTeamSlot? resolveQuery(Matchday m) {
+		return map(
+			byName: (_) => this,
+			byQueryResolved: (_) => this,
+			byQuery: (gts) {
+				final String? name = GameQuery.resolveTeam(gts.query, m)?[0];
+				if(name == null) return null;
+				return GameTeamSlot.byQueryResolved(name: name, q: gts);
+			}
+		);
+	}
+}
+
 @Freezed(unionKey: "type")
 class GameQuery with _$GameQuery {
+	@JsonSerializable(includeIfNull: false)
 	const factory GameQuery.groupPlace(String group, int place) = _GameQueryByGroupPlace;
+	@JsonSerializable(includeIfNull: false)
 	const factory GameQuery.gameWinner(int gameIndex) = _GameQueryByGameWinner;
+	@JsonSerializable(includeIfNull: false)
 	const factory GameQuery.gameLoser(int gameIndex) = _GameQueryByGameLoser;
 
 	// TODO Validate functions
+	static List<String>? resolveTeam(GameQuery gq, Matchday m) {
+		List<String>? ret = gq.map(
+			groupPlace: (e) => _resolveTeamGroupPlace(e, m),
+			gameWinner: (e) {
+				final winner = _resolveTeamGameWinner(e, m);
+				if(winner == null) return null;
+				return [winner];
+			},
+			gameLoser: (e) {
+				final loser = _resolveTeamGameLoser(e, m);
+				if(loser == null) return null;
+				return [loser];
+
+			}
+		);
+		debugPrint("resolved: ${gq.runtimeType} to -> ${ret}");
+		return ret;
+	}
+
+	static List<String>? _resolveTeamGroupPlace(_GameQueryByGroupPlace gq, Matchday m) {
+		Group? g = m.groups.firstWhereIndexedOrNull((_, group) => gq.group == group.name);
+		if(g == null) return null;
+
+		Map<String, int>? groupRankingMap = m.rankingFromGroup(gq.group);
+		if(groupRankingMap == null) return null;
+		groupRankingMap.forEach((t, i) => debugPrint("[${t}, ${i}],"));
+		groupRankingMap.removeWhere((key, _) => !g.members.contains(key));
+
+		List<MapEntry<String, int>> groupRanking = groupRankingMap.entries.toList()..sort((a, b) => a.value - b.value);
+
+		debugPrint("Group Ranking 1: ${groupRanking}");
+		debugPrint("gq.place: ${gq.place}");
+		debugPrint("Group Ranking[gq.place]: ${groupRanking[gq.place]}");
+		if(gq.place >= groupRanking.length) return null;
+
+		List<String> ret = groupRanking
+			.where((e) => e.value == groupRanking[gq.place].value)
+			.map((e) => e.key)
+			.toList();
+		debugPrint("Group Ranking 2: ${ret.map((t) => t).toList()}");
+		if(ret.length == 0) return null;
+		debugPrint("Group Ranking 3: ${ret.map((t) => t).toList()}");
+		return ret.map((t) => t).toList();
+	}
+
+	static String? _resolveTeamGameWinner(_GameQueryByGameWinner gq, Matchday m) {
+		if(gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		final Game g = m.games[gq.gameIndex];
+		final int winner = g.winner;
+		final GameTeamSlot winnerTeamSlot = winner == 1 ? g.team1 : g.team2;
+		return winnerTeamSlot.mapOrNull(byName: (gts) => gts.name, byQueryResolved: (gts) => gts.name);
+	}
+
+	static String? _resolveTeamGameLoser(_GameQueryByGameLoser gq, Matchday m) {
+		if(gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		final Game g = m.games[gq.gameIndex];
+		final int loser = g.loser;
+		final GameTeamSlot loserTeamSlot = loser == 1 ? g.team1 : g.team2;
+		return loserTeamSlot.mapOrNull(byName: (gts) => gts.name, byQueryResolved: (gts) => gts.name);
+	}
 
 	factory GameQuery.fromJson(Map<String, dynamic> json) => _$GameQueryFromJson(json);
 }
 @freezed
 class MissingInfo with _$MissingInfo {
+	@JsonSerializable(includeIfNull: false)
 	const factory MissingInfo(String reason) = _MissingInfo;
 
 	factory MissingInfo.fromJson(Map<String, dynamic> json) => _$MissingInfoFromJson(json);
 }
 @freezed
 class Player with _$Player {
+	@JsonSerializable(includeIfNull: false)
 	const factory Player(String name, String role) = _Player;
 
 	factory Player.fromJson(Map<String, dynamic> json) => _$PlayerFromJson(json);
 }
 @freezed
 class Team with _$Team {
+	@JsonSerializable(includeIfNull: false)
 	const factory Team(
 		String name,
 		@JsonKey(name: 'logo_uri') String logoUri,
@@ -298,6 +506,7 @@ class Team with _$Team {
 }
 @freezed
 class Group with _$Group {
+	@JsonSerializable(includeIfNull: false)
 	const factory Group(String name, List<String> members) = _Group;
 
 	factory Group.fromJson(Map<String, dynamic> json) => _$GroupFromJson(json);
@@ -305,6 +514,7 @@ class Group with _$Group {
 
 @freezed
 class Format with _$Format {
+	@JsonSerializable(includeIfNull: false)
 	const factory Format(String name, List<GamePart> gameparts) = _Format;
 
 	factory Format.fromJson(Map<String, dynamic> json) => _$FormatFromJson(json);
@@ -312,39 +522,44 @@ class Format with _$Format {
 
 @Freezed(unionKey: 'type')
 class GamePart with _$GamePart {
+	@JsonSerializable(includeIfNull: false)
 	const factory GamePart.timed({
 		required String name,
 		required int length,
-		@Default(false) bool repeat,
-		@Default(false) bool decider,
-		@JsonKey(name: 'sides_inverted') @Default(false) bool sidesInverted,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
+		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 	}) = _GamePartTimed;
 
+	@JsonSerializable(includeIfNull: false)
 	const factory GamePart.format({
 		required String format, // nested reference to another format
-		@Default(false) bool repeat,
-		@Default(false) bool decider,
-		@JsonKey(name: 'sides_inverted') @Default(false) bool sidesInverted,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
+		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 	}) = _GamePartFormat;
 
+	@JsonSerializable(includeIfNull: false)
 	const factory GamePart.penalty({
 		required String name,
 		required Penalty penalty,
-		@Default(false) bool repeat,
-		@Default(false) bool decider,
-		@JsonKey(name: 'sides_inverted') @Default(false) bool sidesInverted,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
+		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 	}) = _GamePartPenalty;
 
 	factory GamePart.fromJson(Map<String, dynamic> json) => _$GamePartFromJson(json);
 }
 @freezed
 class Penalty with _$Penalty {
+	@JsonSerializable(includeIfNull: false)
 	const factory Penalty(Shooting shooting) = _Penalty;
 
 	factory Penalty.fromJson(Map<String, dynamic> json) => _$PenaltyFromJson(json);
 }
 @freezed
 class Shooting with _$Shooting {
+	@JsonSerializable(includeIfNull: false)
 	const factory Shooting(int team, int player) = _Shooting;
 
 	factory Shooting.fromJson(Map<String, dynamic> json) => _$ShootingFromJson(json);
