@@ -244,7 +244,7 @@ class Game with _$Game {
 
 	@JsonSerializable(includeIfNull: false)
 	const factory Game({
-		String? name,
+		required String name,
 		@JsonKey(name: '1') required GameTeamSlot team1,
 		@JsonKey(name: '2') required GameTeamSlot team2,
 		List<String>? groups,
