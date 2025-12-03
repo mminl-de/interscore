@@ -170,3 +170,4 @@ bool? boolOrNullFalse(bool b) => b == false ? false : null;
 bool? boolOrNullTrue(bool b) => b == true ? true : null;
 int? intOrNull0(int b) => b == 0 ? 0 : null;
 int? intOrNullNot0(int b) => b != 0 ? b : null;
+

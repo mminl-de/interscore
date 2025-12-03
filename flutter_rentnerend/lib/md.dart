@@ -4,6 +4,10 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_rentnerend/lib.dart';
+import 'package:flutter_rentnerend/websocket.dart';
+import 'package:flutter_rentnerend/MessageType.dart';
+
+import 'dart:convert';
 
 part 'md.freezed.dart';
 part 'md.g.dart';
@@ -43,23 +47,26 @@ class Matchday with _$Matchday {
 		return format.gameparts[meta.currentGamepart];
 	}
 
-	Matchday nextGame() {
+	Matchday nextGame({InterscoreWS? ws}) {
 		final next = meta.gameIndex + 1;
 		if (next >= games.length) return this;
+		if(ws != null) ws.sendBytes([MessageType.DATA_GAMEINDEX.value, next]);
 		return copyWith(meta: meta.copyWith(gameIndex: next));
 	}
 
-	Matchday prevGame() {
+	Matchday prevGame({InterscoreWS? ws}) {
 		final prev = meta.gameIndex - 1;
 		if (prev < 0) return this;
+		if(ws != null) ws.sendBytes([MessageType.DATA_GAMEINDEX.value, prev]);
 		return copyWith(meta: meta.copyWith(gameIndex: prev));
 	}
 
-	Matchday switchSides() {
+	Matchday switchSides({InterscoreWS? ws}) {
+		if(ws != null) ws.sendBytes([MessageType.DATA_SIDES_SWITCHED.value, !meta.sidesInverted ? 1 : 0]);
 		return copyWith(meta: meta.copyWith(sidesInverted: !meta.sidesInverted));
 	}
 
-	Matchday goalAdd({required int team}) {
+	Matchday goalAdd({required int team, InterscoreWS? ws}) {
 		Game? g = currentGame;
 		if(g == null) return this;
 		int id = g.actions?.length ?? 0;
@@ -75,10 +82,12 @@ class Matchday with _$Matchday {
 		final newGames = [...games];
 		newGames[meta.gameIndex] = updatedGame;
 
+		// TODO test this, looks very suspicious
+		if(ws != null) ws.sendBytes([MessageType.DATA_GAME_ACTION.value, ... utf8.encode(jsonEncode(goalAction.toJson()))]);
 		return copyWith(games: newGames);
 	}
 
-	Matchday goalRemoveLast({required int team}) {
+	Matchday goalRemoveLast({required int team, InterscoreWS? ws}) {
 		Game? g = currentGame;
 		if(g == null) return this;
 		if(g.actions == null || g.actions!.isEmpty) return this;
@@ -104,26 +113,30 @@ class Matchday with _$Matchday {
 		final updatedGame = g.copyWith(actions: newActions);
 		final newGames = [...games];
 		newGames[meta.gameIndex] = updatedGame;
+		if(ws != null) ws.sendBytes([MessageType.GAME_ACTION_DELETE.value, g.actions![lastGoalIndex].id]);
 
 		return copyWith(games: newGames);
 	}
 
 	// Time can be positive or negative
-	Matchday timeChange(int change) {
+	Matchday timeChange({required int change, InterscoreWS? ws}) {
 		if(change + meta.currentTime < 0) change = -meta.currentTime;
+		if(ws != null) ws.sendBytes([MessageType.DATA_TIME.value, meta.currentTime + change]);
 		return copyWith(meta: meta.copyWith(currentTime: meta.currentTime + change));
 	}
 
 	// Time can be positive or negative
-	Matchday timeReset() {
+	Matchday timeReset({InterscoreWS? ws}) {
 		if(currentGamePart == null) return this;
 		int? defTime = currentGamePart!.whenOrNull(timed: (_, len, _, _, _) => len);
 		if(defTime == null) return this;
+		if(ws != null) ws.sendBytes([MessageType.DATA_TIME.value, defTime]);
 		return copyWith(meta: meta.copyWith(currentTime: defTime));
 	}
 
-	Matchday togglePause() {
+	Matchday togglePause({InterscoreWS? ws}) {
 		if(meta.paused && meta.currentTime == 0) return this;
+		if(ws != null) ws.sendBytes([MessageType.DATA_IS_PAUSE.value, meta.paused ? 0 : 1]);
 		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
 	}
 

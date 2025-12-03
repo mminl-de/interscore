@@ -2,12 +2,12 @@ import "dart:convert";
 
 import "package:flutter/material.dart";
 
-import "package:flutter_rentnerend/public_window.dart" as public_window;
+import "package:flutter_rentnerend/public_window.dart";
 import "package:flutter_rentnerend/input_window.dart";
 import "package:flutter_rentnerend/md.dart";
 import "package:flutter_rentnerend/lib.dart";
 
-void main() {
+Future<void> main() async {
 	runApp(const MyApp());
 }
 
@@ -49,10 +49,21 @@ class _MyAppState extends State<MyApp> {
 											if(json == null) {debugPrint("json does not exist"); return;}
 											try { this.md = Matchday.fromJson(jsonDecode(json));
 											} catch (e, st){ debugPrint("JSON parsing Error: $e\nStack:\n$st"); return;}
+
 											Navigator.push(
 												context,
 												MaterialPageRoute<void>(
 													builder: (context) => InputWindow(md: md!),
+												)
+											);
+										},
+									), ElevatedButton(
+										child: const Text('Public Window'),
+										onPressed: () {
+											Navigator.push(
+												context,
+												MaterialPageRoute<void>(
+													builder: (context) => PublicWindow(md: md!),
 												)
 											);
 										},

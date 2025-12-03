@@ -5,12 +5,12 @@ import 'dart:convert';
 import 'MessageType.dart';
 import 'md.dart';
 
-class InterscoreWebSocketClient {
+class InterscoreWS {
 	final String url;
 	final ValueNotifier<Matchday> mdl;
 	late final WebSocketChannel _channel;
 
-	InterscoreWebSocketClient(this.url, this.mdl);
+	InterscoreWS(this.url, this.mdl);
 
 	void connect() {
 		_channel = WebSocketChannel.connect(Uri.parse(url));
