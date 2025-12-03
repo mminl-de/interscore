@@ -1,11 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter_rentnerend/MessageType.dart';
+
 import 'package:flutter_rentnerend/lib.dart';
-//import 'package:flutter_rentnerend/matchday.dart';
 import 'package:flutter_rentnerend/md.dart';
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
+import 'package:flutter_rentnerend/websocket.dart';
 
 
 class InputWindow extends StatefulWidget {
@@ -19,6 +20,8 @@ class InputWindow extends StatefulWidget {
 
 class _InputWindowState extends State<InputWindow> {
 	late ValueNotifier<Matchday> mdl;
+	late InterscoreWS wsc; // WS client
+	late InterscoreWS wss; // WS Server
 	Timer? ticker;
 
 	@override
@@ -27,10 +30,10 @@ class _InputWindowState extends State<InputWindow> {
 
 		mdl = ValueNotifier(widget.md);
 
-		mdl.addListener(() {
-			inputJsonWriteState(mdl.value);
-		});
 		startTimer();
+
+		// TODO how to check for disconnect?
+		wsc = InterscoreWS("mminl.de", mdl);
 	}
 
 	@override
@@ -71,12 +74,15 @@ class _InputWindowState extends State<InputWindow> {
 		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
 			final Matchday md = mdl.value;
 			if(!md.meta.paused) {
-				if (md.meta.currentTime == 0)
+				if (md.meta.currentTime == 0){
 					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-				else {
+					wsc.sendBytes([MessageType.DATA_IS_PAUSE.value, 1]);
+				} else {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
-					if(mdl.value.meta.currentTime == 0)
+					if(mdl.value.meta.currentTime == 0) {
 						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+						wsc.sendBytes([MessageType.DATA_IS_PAUSE.value, 1]);
+					}
 				}
 
 			}
@@ -94,20 +100,22 @@ class _InputWindowState extends State<InputWindow> {
 		final switchSideWidth = width * 0.1;
 		final forwardBackwardWidth = width * 0.05;
 		final teamNameWidth = (width-switchSideWidth-forwardBackwardWidth*2-paddingHorizontal*2) / 2;
+		final gameNameHeight = height * 0.35;
+		final teamsHeight = height - gameNameHeight;
 
 		final teamsTextGroup = AutoSizeGroup();
 
-		String t1name = md.currentGame?.team1.when(
+		String t1name = md.currentGame?.team1.whenOrNull(
 			byName: (name, _) => name,
-			byQuery: (gq, __) => "[???]",
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame?.team2.when(
+		String t2name = md.currentGame?.team2.whenOrNull(
 			byName: (name, _) => name,
-			byQuery: (gq, __) => "[???]",
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
+
+		final String gameName = md.currentGame?.name ?? "???";
 
 		if(md.meta.sidesInverted) {
 			final tmp = t1name;
@@ -118,63 +126,69 @@ class _InputWindowState extends State<InputWindow> {
 		return SizedBox(
 			height: height,
 			width: width,
-			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical), child: Row(
-				children: [
-					SizedBox(
-						width: forwardBackwardWidth,
-						height: height, // use max height
-						child: buttonWithIcon(context, () {
-							if(md.currentGame == null) return null;
+			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
+				child: Column( children: [
+					SizedBox(height: gameNameHeight, child: Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+					SizedBox(height: teamsHeight, child: Row( children: [
+						SizedBox(
+							width: forwardBackwardWidth,
+							height: teamsHeight, // use max height
+							child: buttonWithIcon(context, () {
+								if(md.currentGame == null) return null;
 
-							// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
-							// from the last game, because they arent resolved anymore
-							GameTeamSlot t1 = md.currentGame!.team1;
-							GameTeamSlot t2 = md.currentGame!.team2;
-							List<Game> new_games = List.from(md.games);
-							new_games[md.meta.gameIndex] = md.currentGame!.copyWith(
-								team1: t1.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
-								team2: t2.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
-							);
-							final Matchday new_md = md.prevGame();
-							mdl.value = new_md.copyWith(games: new_games);
-						}, Icons.arrow_back_rounded)
-					),
-					SizedBox(
-						width: teamNameWidth,
-						//child: Center(child: AutoSizeText(md.games[md.meta.gameIndex].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-						child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-					),
-					SizedBox(
-						width: switchSideWidth,
-						height: height, // use max height
-						child: buttonWithIcon(context, () => mdl.value = md.switchSides(), Icons.compare_arrows_rounded)
-					),
-					SizedBox(
-						width: teamNameWidth,
-						child: Center(child: AutoSizeText(t2name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-					),
-					SizedBox(
-						width: forwardBackwardWidth,
-						height: height, // use max height
-						child: buttonWithIcon(context, () {
-							final Matchday new_md = md.nextGame();
-							if(new_md.currentGame == null) return null;
+								// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
+								// from the last game, because they arent resolved anymore
+								GameTeamSlot t1 = md.currentGame!.team1;
+								GameTeamSlot t2 = md.currentGame!.team2;
+								List<Game> new_games = List.from(md.games);
+								new_games[md.meta.gameIndex] = md.currentGame!.copyWith(
+									team1: t1.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
+									team2: t2.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
+								);
+								final Matchday new_md = md.prevGame(ws: wsc);
+								mdl.value = new_md.copyWith(games: new_games);
+							}, Icons.arrow_back_rounded)
+						),
+						SizedBox(
+							width: teamNameWidth,
+							//child: Center(child: AutoSizeText(md.games[md.meta.gameIndex].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+							child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						),
+						SizedBox(
+							width: switchSideWidth,
+							height: teamsHeight, // use max height
+							child: buttonWithIcon(context, () {
+								mdl.value = md.switchSides(ws: wsc);
+							}, Icons.compare_arrows_rounded)
+						),
+						SizedBox(
+							width: teamNameWidth,
+							child: Center(child: AutoSizeText(t2name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						),
+						SizedBox(
+							width: forwardBackwardWidth,
+							height: teamsHeight, // use max height
+							child: buttonWithIcon(context, () {
+								final Matchday new_md = md.nextGame(ws: wsc);
+								// TODO this if should always be false and removed
+								if(new_md.currentGame == null) return null;
 
-							// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
-							GameTeamSlot? gq1_resolved = new_md.currentGame!.team1.resolveQuery(new_md);
-							if(gq1_resolved == null) gq1_resolved = new_md.currentGame!.team1;
-							GameTeamSlot? gq2_resolved = new_md.currentGame!.team2.resolveQuery(new_md);
-							if(gq2_resolved == null) gq2_resolved = new_md.currentGame!.team2;
-							List<Game> new_games = List.from(new_md.games);
-							new_games[new_md.meta.gameIndex] = new_md.currentGame!.copyWith(
-								team1: gq1_resolved,
-								team2: gq2_resolved
-							);
-							mdl.value = new_md.copyWith(games: new_games);
-						}, Icons.arrow_forward_rounded)
-					)
-				]
-			))
+								// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
+								GameTeamSlot? gq1_resolved = new_md.currentGame!.team1.resolveQuery(new_md);
+								if(gq1_resolved == null) gq1_resolved = new_md.currentGame!.team1;
+								GameTeamSlot? gq2_resolved = new_md.currentGame!.team2.resolveQuery(new_md);
+								if(gq2_resolved == null) gq2_resolved = new_md.currentGame!.team2;
+								List<Game> new_games = List.from(new_md.games);
+								new_games[new_md.meta.gameIndex] = new_md.currentGame!.copyWith(
+									team1: gq1_resolved,
+									team2: gq2_resolved
+								);
+								mdl.value = new_md.copyWith(games: new_games);
+							}, Icons.arrow_forward_rounded)
+						)
+					]))
+				])
+			)
 		);
 	}
 
@@ -196,17 +210,19 @@ class _InputWindowState extends State<InputWindow> {
 				child: Row( children: [
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t1), Icons.arrow_upward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
+							mdl.value = md.goalAdd(team: t1, ws: ws);
+						}, Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
 							AutoSizeText(md.currentGame?.teamGoals(t1).toString() ?? '0',
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1, ws: ws), Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2), Icons.arrow_upward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2, ws: ws), Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.teamGoals(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2, ws: ws), Icons.arrow_downward_rounded)),
 					])),
 				])
 			)
@@ -233,8 +249,8 @@ class _InputWindowState extends State<InputWindow> {
 			height: height,
 			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
 				child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: paddingHorizontal/2, children: [
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(-20), Icons.arrow_downward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(-1), Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: -20, ws: ws), Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: -1, ws: ws), Icons.arrow_downward_rounded)),
 					Column( children: [
 						Row( spacing: paddingHorizontal/2, children: [
 							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
@@ -243,7 +259,7 @@ class _InputWindowState extends State<InputWindow> {
 										// We need to reset the timer because otherwise we could disable pause
 										// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
 										stopTimer();
-										mdl.value = md.togglePause();
+										mdl.value = md.togglePause(ws: ws);
 										startTimer();
 									},
 									md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
@@ -253,14 +269,14 @@ class _InputWindowState extends State<InputWindow> {
 									context,
 									md.meta.currentTime == defTime
 										? null
-										: () => mdl.value = md.timeReset(),
+										: () => mdl.value = md.timeReset(ws: ws),
 									Icons.autorenew,
 									inverted: md.meta.currentTime == defTime))
 						]),
 						SizedBox(height: textHeight, width: pauseResetWidth, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					]),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(1), Icons.arrow_upward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(20), Icons.arrow_upward_rounded))
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: 1, ws: ws), Icons.arrow_upward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: 20, ws: ws), Icons.arrow_upward_rounded))
 				])
 			)
 		);
@@ -271,7 +287,7 @@ class _InputWindowState extends State<InputWindow> {
 		final screenHeight = MediaQuery.of(context).size.height;
 		final screenWidth = MediaQuery.of(context).size.width;
 
-		final blockTeamsHeight = screenHeight * 0.1;
+		final blockTeamsHeight = screenHeight * 0.18;
 		final blockGoalsHeight = screenHeight * 0.3;
 		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
 

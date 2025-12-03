@@ -1,31 +1,167 @@
-import "dart:convert";
-import "package:flutter/material.dart";
-import "package:desktop_multi_window/desktop_multi_window.dart";
+import 'dart:async';
 
-class PublicWindowInfo {
-	final int id;
-	final String name;
-	final WindowController controller;
+import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
-	PublicWindowInfo({
-		required this.id,
-		required this.name,
-		required this.controller
-	});
+import 'package:flutter_rentnerend/md.dart';
+
+
+class PublicWindow extends StatefulWidget {
+	const PublicWindow({super.key, required this.md});
+
+	final Matchday md;
+
+	@override
+	State<PublicWindow> createState() => _PublicWindowState();
 }
 
-Future<void> create() async {
-	try {
-		final String name = "Public Window";
-		final windowConfig = { "name": name };
+class _PublicWindowState extends State<PublicWindow> {
+	late ValueNotifier<Matchday> mdl;
+	Timer? ticker;
 
-		final windowController = await DesktopMultiWindow.createWindow(
-			jsonEncode(windowConfig)
+	@override
+	void initState() {
+		super.initState();
+
+		mdl = ValueNotifier(widget.md);
+	}
+
+	@override
+	void dispose() {
+		mdl.dispose();
+
+		super.dispose();
+	}
+
+	Widget blockTeams(double width, double height, Matchday md) {
+		const double paddingHorizontal = 16.0;
+		const double paddingVertical = 0;
+		final switchSideWidth = width * 0.1;
+		final forwardBackwardWidth = width * 0.05;
+		final teamNameWidth = (width-switchSideWidth-forwardBackwardWidth*2-paddingHorizontal*2) / 2;
+		final gameNameHeight = height * 0.35;
+		final teamsHeight = height - gameNameHeight;
+
+		final teamsTextGroup = AutoSizeGroup();
+
+		String t1name = md.currentGame?.team1.whenOrNull(
+			byName: (name, _) => name,
+			byQueryResolved: (name, __) => name,
+		) ?? "[???]";
+
+		String t2name = md.currentGame?.team2.whenOrNull(
+			byName: (name, _) => name,
+			byQueryResolved: (name, __) => name,
+		) ?? "[???]";
+
+		final String gameName = md.currentGame?.name ?? "???";
+
+		if(md.meta.sidesInverted) {
+			final tmp = t1name;
+			t1name = t2name;
+			t2name = tmp;
+		}
+
+		return SizedBox(
+			height: height,
+			width: width,
+			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
+				child: Column( children: [
+					SizedBox(height: gameNameHeight, child: Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+					SizedBox(height: teamsHeight, child: Row( children: [
+						SizedBox(
+							width: teamNameWidth,
+							//child: Center(child: AutoSizeText(md.games[md.meta.gameIndex].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+							child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						),
+						SizedBox(
+							width: teamNameWidth,
+							child: Center(child: AutoSizeText(t2name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						),
+					]))
+				])
+			)
 		);
+	}
 
-		windowController
-			..setFrame(const Offset(100, 100) & const Size(800, 600))
-			..setTitle(name)
-			..show();
-	} catch (_) {}
+	Widget blockGoals(double width, double height, Matchday md) {
+		const double paddingHorizontal = 16;
+		const double paddingVertical = 8;
+
+		final upDownHeight = height * 0.15;
+		final textHeight = height - upDownHeight * 2 - paddingVertical * 2;
+
+		int t1 = 1 + (md.meta.sidesInverted ? 1 : 0 );
+		int t2 = 2 - (md.meta.sidesInverted ? 1 : 0 );
+
+		return SizedBox(
+			width: width,
+			height: height,
+			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
+				child: Row( children: [
+					//Expanded( child: Column(spacing: -(height * 0.05), children:[
+					Expanded( child: Column(children:[
+						SizedBox(height: textHeight, child: Center(child:
+							AutoSizeText(md.currentGame?.teamGoals(t1).toString() ?? '0',
+							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+					])),
+					//Expanded( child: Column(spacing: -(height * 0.05), children:[
+					Expanded( child: Column(children:[
+						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.teamGoals(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+					])),
+				])
+			)
+		);
+	}
+
+	Widget blockTime(double width, double height, Matchday md) {
+		const double paddingHorizontal = 16;
+		const double paddingVertical = 8;
+
+		final upDownWidth = width * 0.05;
+		final pauseResetHeight = height * 0.2;
+		final textHeight = height - pauseResetHeight - paddingVertical * 2;
+		final pauseResetWidth = width/2 - (upDownWidth * 4 + (paddingHorizontal/2 * 5));
+
+		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
+		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
+		final curTimeString = "${curTimeMin}:${curTimeSec}";
+
+		return SizedBox(
+			width: width,
+			height: height,
+			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
+				child: SizedBox(height: textHeight, width: pauseResetWidth, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+		));
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		final screenHeight = MediaQuery.of(context).size.height;
+		final screenWidth = MediaQuery.of(context).size.width;
+
+		final blockTeamsHeight = screenHeight * 0.18;
+		final blockGoalsHeight = screenHeight * 0.3;
+		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
+
+		// debugPrint("Matchday: ${mdl.value}\n\n");
+		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
+		return PopScope(
+			child: Scaffold(
+				appBar: AppBar(title: const Text('Input Window')),
+				body: ValueListenableBuilder<Matchday>(
+					valueListenable: mdl,
+					builder: (context, md, _) {
+						return Column(
+							children: [
+								blockTeams(screenWidth, blockTeamsHeight, md),
+								blockGoals(screenWidth, blockGoalsHeight, md),
+								blockTime(screenWidth, blockTimeHeight, md)
+							]
+						);
+					}
+				)
+			)
+		);
+	}
 }
