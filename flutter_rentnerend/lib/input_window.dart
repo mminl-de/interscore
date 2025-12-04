@@ -20,8 +20,7 @@ class InputWindow extends StatefulWidget {
 
 class _InputWindowState extends State<InputWindow> {
 	late ValueNotifier<Matchday> mdl;
-	late InterscoreWS wsc; // WS client
-	late InterscoreWS wss; // WS Server
+	late InterscoreWS ws;
 	Timer? ticker;
 
 	@override
@@ -33,7 +32,7 @@ class _InputWindowState extends State<InputWindow> {
 		startTimer();
 
 		// TODO how to check for disconnect?
-		wsc = InterscoreWS("mminl.de", mdl);
+		ws = InterscoreWS(clientUrl: "ws://mminl.de:8080", serverUrl: "ws://0.0.0.0:6464", mdl: mdl);
 	}
 
 	@override
@@ -76,12 +75,12 @@ class _InputWindowState extends State<InputWindow> {
 			if(!md.meta.paused) {
 				if (md.meta.currentTime == 0){
 					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-					wsc.sendBytes([MessageType.DATA_IS_PAUSE.value, 1]);
+					ws.sendSignal(MessageType.DATA_PAUSE_ON);
 				} else {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
 					if(mdl.value.meta.currentTime == 0) {
 						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-						wsc.sendBytes([MessageType.DATA_IS_PAUSE.value, 1]);
+						ws.sendSignal(MessageType.DATA_PAUSE_ON);
 					}
 				}
 
@@ -105,17 +104,17 @@ class _InputWindowState extends State<InputWindow> {
 
 		final teamsTextGroup = AutoSizeGroup();
 
-		String t1name = md.currentGame?.team1.whenOrNull(
+		String t1name = md.currentGame.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame?.team2.whenOrNull(
+		String t2name = md.currentGame.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		final String gameName = md.currentGame?.name ?? "???";
+		final String gameName = md.currentGame.name;
 
 		if(md.meta.sidesInverted) {
 			final tmp = t1name;
@@ -134,19 +133,8 @@ class _InputWindowState extends State<InputWindow> {
 							width: forwardBackwardWidth,
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
-								if(md.currentGame == null) return null;
-
-								// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
-								// from the last game, because they arent resolved anymore
-								GameTeamSlot t1 = md.currentGame!.team1;
-								GameTeamSlot t2 = md.currentGame!.team2;
-								List<Game> new_games = List.from(md.games);
-								new_games[md.meta.gameIndex] = md.currentGame!.copyWith(
-									team1: t1.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
-									team2: t2.map(byName: (gts) => gts, byQuery: (gts) => gts, byQueryResolved: (gts) => gts.q),
-								);
-								final Matchday new_md = md.prevGame(ws: wsc);
-								mdl.value = new_md.copyWith(games: new_games);
+								mdl.value = md.setGameIndex(md.meta.gameIndex-1);
+								ws.sendSignal(MessageType.DATA_GAMEINDEX);
 							}, Icons.arrow_back_rounded)
 						),
 						SizedBox(
@@ -158,7 +146,8 @@ class _InputWindowState extends State<InputWindow> {
 							width: switchSideWidth,
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
-								mdl.value = md.switchSides(ws: wsc);
+								mdl.value = md.setSidesInverted(!md.meta.sidesInverted);
+								ws.sendSignal(MessageType.DATA_SIDES_SWITCHED);
 							}, Icons.compare_arrows_rounded)
 						),
 						SizedBox(
@@ -169,21 +158,8 @@ class _InputWindowState extends State<InputWindow> {
 							width: forwardBackwardWidth,
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
-								final Matchday new_md = md.nextGame(ws: wsc);
-								// TODO this if should always be false and removed
-								if(new_md.currentGame == null) return null;
-
-								// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
-								GameTeamSlot? gq1_resolved = new_md.currentGame!.team1.resolveQuery(new_md);
-								if(gq1_resolved == null) gq1_resolved = new_md.currentGame!.team1;
-								GameTeamSlot? gq2_resolved = new_md.currentGame!.team2.resolveQuery(new_md);
-								if(gq2_resolved == null) gq2_resolved = new_md.currentGame!.team2;
-								List<Game> new_games = List.from(new_md.games);
-								new_games[new_md.meta.gameIndex] = new_md.currentGame!.copyWith(
-									team1: gq1_resolved,
-									team2: gq2_resolved
-								);
-								mdl.value = new_md.copyWith(games: new_games);
+								mdl.value = md.setGameIndex(md.meta.gameIndex+1);
+								ws.sendSignal(MessageType.DATA_GAMEINDEX);
 							}, Icons.arrow_forward_rounded)
 						)
 					]))
@@ -211,18 +187,28 @@ class _InputWindowState extends State<InputWindow> {
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
-							mdl.value = md.goalAdd(team: t1, ws: ws);
+							mdl.value = md.goalAdd(t1);
+							ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
 						}, Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
-							AutoSizeText(md.currentGame?.teamGoals(t1).toString() ?? '0',
+							AutoSizeText(md.currentGame.teamGoals(t1).toString(),
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t1, ws: ws), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
+							mdl.value = md.goalRemoveLast(t1);
+							ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
+						}, Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalAdd(team: t2, ws: ws), Icons.arrow_upward_rounded)),
-						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.teamGoals(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () => mdl.value = md.goalRemoveLast(team: t2, ws: ws), Icons.arrow_downward_rounded)),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
+							mdl.value = md.goalAdd(t2);
+							ws.sendSignal(MessageType.DATA_JSON);
+						}, Icons.arrow_upward_rounded)),
+						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
+							mdl.value = md.goalRemoveLast(t2);
+							ws.sendSignal(MessageType.DATA_JSON);
+						}, Icons.arrow_downward_rounded)),
 					])),
 				])
 			)
@@ -249,8 +235,14 @@ class _InputWindowState extends State<InputWindow> {
 			height: height,
 			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
 				child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: paddingHorizontal/2, children: [
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: -20, ws: ws), Icons.arrow_downward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: -1, ws: ws), Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
+						mdl.value = md.timeChange(-20);
+						ws.sendSignal(MessageType.DATA_TIME);
+					}, Icons.arrow_downward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
+						mdl.value = md.timeChange(-1);
+						ws.sendSignal(MessageType.DATA_TIME);
+					}, Icons.arrow_downward_rounded)),
 					Column( children: [
 						Row( spacing: paddingHorizontal/2, children: [
 							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
@@ -259,7 +251,8 @@ class _InputWindowState extends State<InputWindow> {
 										// We need to reset the timer because otherwise we could disable pause
 										// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
 										stopTimer();
-										mdl.value = md.togglePause(ws: ws);
+										mdl.value = md.setPause(!md.meta.paused);
+										ws.sendSignal(MessageType.DATA_PAUSE_ON);
 										startTimer();
 									},
 									md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
@@ -269,14 +262,23 @@ class _InputWindowState extends State<InputWindow> {
 									context,
 									md.meta.currentTime == defTime
 										? null
-										: () => mdl.value = md.timeReset(ws: ws),
+										: () {
+											mdl.value = md.timeReset();
+											ws.sendSignal(MessageType.DATA_TIME);
+										},
 									Icons.autorenew,
 									inverted: md.meta.currentTime == defTime))
 						]),
 						SizedBox(height: textHeight, width: pauseResetWidth, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					]),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: 1, ws: ws), Icons.arrow_upward_rounded)),
-					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () => mdl.value = md.timeChange(change: 20, ws: ws), Icons.arrow_upward_rounded))
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
+						mdl.value = md.timeChange(1);
+						ws.sendSignal(MessageType.DATA_TIME);
+					}, Icons.arrow_upward_rounded)),
+					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
+						mdl.value = md.timeChange(20);
+						ws.sendSignal(MessageType.DATA_TIME);
+					}, Icons.arrow_upward_rounded))
 				])
 			)
 		);

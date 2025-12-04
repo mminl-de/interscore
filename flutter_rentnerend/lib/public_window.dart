@@ -3,13 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
-import 'package:flutter_rentnerend/md.dart';
+import 'md.dart';
+import 'websocket.dart';
 
 
 class PublicWindow extends StatefulWidget {
-	const PublicWindow({super.key, required this.md});
+	const PublicWindow({super.key, required this.mdl, required this.ws});
 
-	final Matchday md;
+	final ValueNotifier<Matchday> mdl;
+	final InterscoreWS ws;
 
 	@override
 	State<PublicWindow> createState() => _PublicWindowState();
@@ -17,13 +19,15 @@ class PublicWindow extends StatefulWidget {
 
 class _PublicWindowState extends State<PublicWindow> {
 	late ValueNotifier<Matchday> mdl;
+	late InterscoreWS ws;
 	Timer? ticker;
 
 	@override
 	void initState() {
 		super.initState();
 
-		mdl = ValueNotifier(widget.md);
+		mdl = widget.mdl;
+		ws = widget.ws;
 	}
 
 	@override
@@ -44,17 +48,17 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final teamsTextGroup = AutoSizeGroup();
 
-		String t1name = md.currentGame?.team1.whenOrNull(
+		String t1name = md.currentGame.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame?.team2.whenOrNull(
+		String t2name = md.currentGame.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		final String gameName = md.currentGame?.name ?? "???";
+		final String gameName = md.currentGame.name;
 
 		if(md.meta.sidesInverted) {
 			final tmp = t1name;
@@ -102,12 +106,12 @@ class _PublicWindowState extends State<PublicWindow> {
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
 						SizedBox(height: textHeight, child: Center(child:
-							AutoSizeText(md.currentGame?.teamGoals(t1).toString() ?? '0',
+							AutoSizeText(md.currentGame.teamGoals(t1).toString(),
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
-						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame?.teamGoals(t2).toString() ?? '0', maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					])),
 				])
 			)

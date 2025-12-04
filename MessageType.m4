@@ -12,8 +12,8 @@ DATA_OBS_REPLAY_ON,dnl Additional: boolean on(1)/off(0)
 DATA_SIDES_SWITCHED,dnl Additional: boolean switched(1)/not switched(0)
 DATA_GAME_ACTION,dnl Additional: Game Action as json
 DATA_GAMEINDEX,dnl Additional: u8 = Gameindex)
-DATA_HALFTIME,dnl Additional: u8/boolean = halftime 0 bzw 1)
-DATA_IS_PAUSE,dnl Additional: u8/boolean = is_pause)
+DATA_GAMEPART,dnl Additional: u8/boolean = halftime 0 bzw 1)
+DATA_PAUSE_ON,dnl Additional: u8/boolean = is_pause)
 DATA_TIME,dnl Additional: u16 = time from Matchday struct)
 DATA_GAMESCOUNT,dnl Additional: u8 = Gamescount)
 GAME_ACTION_DELETE,dnl Additional: uint = id of game action
@@ -27,7 +27,7 @@ PLS_SEND_OBS_REPLAY_ON,
 PLS_SEND_SIDES_SWITCHED,
 PLS_SEND_GAME_ACTION,dnl Additional: uint = id of wanted game action
 PLS_SEND_GAMEINDEX,
-PLS_SEND_HALFTIME,
+PLS_SEND_GAMEPART,
 PLS_SEND_IS_PAUSE,
 PLS_SEND_TIME,
 PLS_SEND_GAMESCOUNT,

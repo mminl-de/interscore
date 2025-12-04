@@ -4,10 +4,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_rentnerend/lib.dart';
-import 'package:flutter_rentnerend/websocket.dart';
-import 'package:flutter_rentnerend/MessageType.dart';
-
-import 'dart:convert';
 
 part 'md.freezed.dart';
 part 'md.g.dart';
@@ -26,14 +22,13 @@ class Matchday with _$Matchday {
 
 	factory Matchday.fromJson(Map<String, dynamic> json) => _$MatchdayFromJson(json);
 
-	Game? get currentGame {
+	Game get currentGame {
 		final i = meta.gameIndex;
-		if (i < 0 || i >= games.length) return null;
 		return games[i];
 	}
 
 	Format? get currentFormat {
-		final String? name = currentGame?.format.name;
+		final String? name = currentGame.format.name;
 		if(name == null) return null;
 		return meta.formats.firstWhereOrNull(
 			(f) => f.name == name
@@ -47,28 +42,47 @@ class Matchday with _$Matchday {
 		return format.gameparts[meta.currentGamepart];
 	}
 
-	Matchday nextGame({InterscoreWS? ws}) {
-		final next = meta.gameIndex + 1;
-		if (next >= games.length) return this;
-		if(ws != null) ws.sendBytes([MessageType.DATA_GAMEINDEX.value, next]);
-		return copyWith(meta: meta.copyWith(gameIndex: next));
+	Matchday setGameIndex(int index) {
+		if(index < 0 || index >= games.length) return this;
+		debugPrint("Setting Gameindex: ${meta.gameIndex} -> ${index}");
+		// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
+		// from the last game, because they arent resolved anymore
+		List<Game> new_games = List.from(games);
+		for(int i = meta.gameIndex; i > index; i--) {
+			debugPrint("unresolve game ${i}");
+			new_games[i] = games[i].copyWith(
+				team1: games[i].team1.map(byName: (x) => x, byQuery: (x) => x, byQueryResolved: (x) => x.q),
+				team2: games[i].team2.map(byName: (x) => x, byQuery: (x) => x, byQueryResolved: (x) => x.q),
+			);
+		}
+		// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
+		// because all games already played and the one we are playing now have to be resolved
+		for(int i = meta.gameIndex+1; i <= index; i++) {
+			debugPrint("resolve game ${i}");
+			GameTeamSlot? t1 = games[i].team1.resolveQuery(this);
+			GameTeamSlot? t2 = games[i].team2.resolveQuery(this);
+			if(t1 == null || t2 == null) return this;
+			new_games[i] = games[i].copyWith(
+				team1: t1,
+				team2: t2,
+			);
+		}
+
+		return copyWith(games: new_games, meta: meta.copyWith(gameIndex: index));
 	}
 
-	Matchday prevGame({InterscoreWS? ws}) {
-		final prev = meta.gameIndex - 1;
-		if (prev < 0) return this;
-		if(ws != null) ws.sendBytes([MessageType.DATA_GAMEINDEX.value, prev]);
-		return copyWith(meta: meta.copyWith(gameIndex: prev));
+	Matchday setSidesInverted(bool inverted) {
+		return copyWith(meta: meta.copyWith(sidesInverted: inverted));
 	}
 
-	Matchday switchSides({InterscoreWS? ws}) {
-		if(ws != null) ws.sendBytes([MessageType.DATA_SIDES_SWITCHED.value, !meta.sidesInverted ? 1 : 0]);
-		return copyWith(meta: meta.copyWith(sidesInverted: !meta.sidesInverted));
+	Matchday addGameAction(GameAction ga) {
+		final newGames = games;
+		newGames[meta.gameIndex] = currentGame.copyWith(actions: [...? currentGame.actions, ga]);
+		return copyWith(games: newGames);
 	}
 
-	Matchday goalAdd({required int team, InterscoreWS? ws}) {
-		Game? g = currentGame;
-		if(g == null) return this;
+	Matchday goalAdd(int team) {
+		Game g = currentGame;
 		int id = g.actions?.length ?? 0;
 
 		GameActionChange change = GameActionChange.score(
@@ -83,13 +97,11 @@ class Matchday with _$Matchday {
 		newGames[meta.gameIndex] = updatedGame;
 
 		// TODO test this, looks very suspicious
-		if(ws != null) ws.sendBytes([MessageType.DATA_GAME_ACTION.value, ... utf8.encode(jsonEncode(goalAction.toJson()))]);
 		return copyWith(games: newGames);
 	}
 
-	Matchday goalRemoveLast({required int team, InterscoreWS? ws}) {
-		Game? g = currentGame;
-		if(g == null) return this;
+	Matchday goalRemoveLast(int team) {
+		Game g = currentGame;
 		if(g.actions == null || g.actions!.isEmpty) return this;
 
 		// Find last index of a goal for the team
@@ -113,31 +125,33 @@ class Matchday with _$Matchday {
 		final updatedGame = g.copyWith(actions: newActions);
 		final newGames = [...games];
 		newGames[meta.gameIndex] = updatedGame;
-		if(ws != null) ws.sendBytes([MessageType.GAME_ACTION_DELETE.value, g.actions![lastGoalIndex].id]);
 
 		return copyWith(games: newGames);
 	}
 
 	// Time can be positive or negative
-	Matchday timeChange({required int change, InterscoreWS? ws}) {
+	Matchday timeChange(int change) {
 		if(change + meta.currentTime < 0) change = -meta.currentTime;
-		if(ws != null) ws.sendBytes([MessageType.DATA_TIME.value, meta.currentTime + change]);
 		return copyWith(meta: meta.copyWith(currentTime: meta.currentTime + change));
 	}
 
 	// Time can be positive or negative
-	Matchday timeReset({InterscoreWS? ws}) {
+	Matchday timeReset() {
 		if(currentGamePart == null) return this;
 		int? defTime = currentGamePart!.whenOrNull(timed: (_, len, _, _, _) => len);
 		if(defTime == null) return this;
-		if(ws != null) ws.sendBytes([MessageType.DATA_TIME.value, defTime]);
 		return copyWith(meta: meta.copyWith(currentTime: defTime));
 	}
 
-	Matchday togglePause({InterscoreWS? ws}) {
+	Matchday setPause(bool pause) {
 		if(meta.paused && meta.currentTime == 0) return this;
-		if(ws != null) ws.sendBytes([MessageType.DATA_IS_PAUSE.value, meta.paused ? 0 : 1]);
-		return copyWith(meta: meta.copyWith(paused: meta.paused ? false: true));
+		return copyWith(meta: meta.copyWith(paused: pause));
+	}
+
+	Matchday setCurrentGamepart(int part) {
+		// TODO add checks for out of bounds
+		if(part < 0) return this;
+		return copyWith(meta: meta.copyWith(currentGamepart: part));
 	}
 
 	// Returns a Map with Team and an associated integer to it.

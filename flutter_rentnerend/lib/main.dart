@@ -2,10 +2,12 @@ import "dart:convert";
 
 import "package:flutter/material.dart";
 
-import "package:flutter_rentnerend/public_window.dart";
-import "package:flutter_rentnerend/input_window.dart";
-import "package:flutter_rentnerend/md.dart";
-import "package:flutter_rentnerend/lib.dart";
+import "public_window.dart";
+import "input_window.dart";
+import "md.dart";
+import "lib.dart";
+import "websocket.dart";
+import "MessageType.dart";
 
 Future<void> main() async {
 	runApp(const MyApp());
@@ -60,10 +62,17 @@ class _MyAppState extends State<MyApp> {
 									), ElevatedButton(
 										child: const Text('Public Window'),
 										onPressed: () {
+											// Create a default Matchday
+											final md = Matchday(Meta(formats: []), [], [], []);
+											ValueNotifier<Matchday> mdl = ValueNotifier(md);
+											final ws = InterscoreWS(clientUrl: "ws://0.0.0.0:6464", mdl: mdl, server: false);
+
+											ws.sendSignal(MessageType.PLS_SEND_JSON);
+											while(mdl.value == md);
 											Navigator.push(
 												context,
 												MaterialPageRoute<void>(
-													builder: (context) => PublicWindow(md: md!),
+													builder: (context) => PublicWindow(mdl: mdl, ws: ws)
 												)
 											);
 										},
