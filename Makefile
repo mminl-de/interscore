@@ -41,11 +41,8 @@ r-run:
 	rentnerend/interscore
 
 js:
-	tsc --target es2017 frontend/script.ts
-
-js-new:
 	m4 -DTS MessageType.m4 > MessageType.ts
-	tsc --target es2017 new-frontend/script.ts
+	tsc --target es2017 frontend/script.ts
 
 flutter:
 	m4 -DDART MessageType.m4 > flutter_rentnerend/lib/MessageType.dart
