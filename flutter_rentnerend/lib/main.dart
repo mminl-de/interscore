@@ -61,14 +61,19 @@ class _MyAppState extends State<MyApp> {
 										},
 									), ElevatedButton(
 										child: const Text('Public Window'),
-										onPressed: () {
+										onPressed: () async {
 											// Create a default Matchday
 											final md = Matchday(Meta(formats: []), [], [], []);
 											ValueNotifier<Matchday> mdl = ValueNotifier(md);
-											final ws = InterscoreWS(clientUrl: "ws://0.0.0.0:6464", mdl: mdl, server: false);
+											final ws = InterscoreWS(mdl);
+											await ws.initClient("ws://0.0.0.0:6464");
 
 											ws.sendSignal(MessageType.PLS_SEND_JSON);
-											while(mdl.value == md);
+
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return mdl.value == md;
+											});
 											Navigator.push(
 												context,
 												MaterialPageRoute<void>(

@@ -36,15 +36,17 @@ Color colorFromHexString(String hex) {
 }
 
 Future<String?> inputJsonLoad() async {
-	final dir = await getApplicationDocumentsDirectory();
-	debugPrint('Documents Path: ${dir.path}');
-	createDir('${dir.path}/interscore/');
+	final cacheDir = await getApplicationCacheDirectory();
+	final docDir = await getApplicationDocumentsDirectory();
 	File file;
 	// if we have a state file, we load it instead of the original input file
 	// State files get removed when closing the program normally
-	file = File('${dir.path}/interscore/matchday_state.json');
-	if(!file.existsSync())
-		file = File('${dir.path}/interscore/input.json');
+	debugPrint("cache path: ${cacheDir.path}/interscore/matchday_state.json");
+	file = File('${cacheDir.path}/interscore/matchday_state.json');
+	if(!file.existsSync()) {
+		createDir('${docDir.path}/interscore/');
+		file = File('${docDir.path}/interscore/input.json');
+	}
 
 	if (!file.existsSync()) return null;
 

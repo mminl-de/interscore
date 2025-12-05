@@ -20,7 +20,7 @@ class InputWindow extends StatefulWidget {
 
 class _InputWindowState extends State<InputWindow> {
 	late ValueNotifier<Matchday> mdl;
-	late InterscoreWS ws;
+	InterscoreWS? ws;
 	Timer? ticker;
 
 	@override
@@ -29,10 +29,19 @@ class _InputWindowState extends State<InputWindow> {
 
 		mdl = ValueNotifier(widget.md);
 
+		mdl.addListener(() => inputJsonWriteState(mdl.value));
+
 		startTimer();
 
 		// TODO how to check for disconnect?
-		ws = InterscoreWS(clientUrl: "ws://mminl.de:8080", serverUrl: "ws://0.0.0.0:6464", mdl: mdl);
+		startWS();
+	}
+
+	Future<void> startWS() async {
+		this.ws = InterscoreWS(mdl);
+		ws?.initServer("ws://0.0.0.0:6464");
+		await ws?.initClient("ws://mminl.de:8080");
+		debugPrint("finished initializing");
 	}
 
 	@override
@@ -75,12 +84,14 @@ class _InputWindowState extends State<InputWindow> {
 			if(!md.meta.paused) {
 				if (md.meta.currentTime == 0){
 					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-					ws.sendSignal(MessageType.DATA_PAUSE_ON);
+					ws?.sendSignal(MessageType.DATA_PAUSE_ON);
 				} else {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+					ws?.sendSignal(MessageType.DATA_TIME);
+
 					if(mdl.value.meta.currentTime == 0) {
 						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-						ws.sendSignal(MessageType.DATA_PAUSE_ON);
+						ws?.sendSignal(MessageType.DATA_PAUSE_ON);
 					}
 				}
 
@@ -134,7 +145,7 @@ class _InputWindowState extends State<InputWindow> {
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
 								mdl.value = md.setGameIndex(md.meta.gameIndex-1);
-								ws.sendSignal(MessageType.DATA_GAMEINDEX);
+								ws?.sendSignal(MessageType.DATA_GAMEINDEX);
 							}, Icons.arrow_back_rounded)
 						),
 						SizedBox(
@@ -147,7 +158,7 @@ class _InputWindowState extends State<InputWindow> {
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
 								mdl.value = md.setSidesInverted(!md.meta.sidesInverted);
-								ws.sendSignal(MessageType.DATA_SIDES_SWITCHED);
+								ws?.sendSignal(MessageType.DATA_SIDES_SWITCHED);
 							}, Icons.compare_arrows_rounded)
 						),
 						SizedBox(
@@ -159,7 +170,7 @@ class _InputWindowState extends State<InputWindow> {
 							height: teamsHeight, // use max height
 							child: buttonWithIcon(context, () {
 								mdl.value = md.setGameIndex(md.meta.gameIndex+1);
-								ws.sendSignal(MessageType.DATA_GAMEINDEX);
+								ws?.sendSignal(MessageType.DATA_GAMEINDEX);
 							}, Icons.arrow_forward_rounded)
 						)
 					]))
@@ -188,26 +199,26 @@ class _InputWindowState extends State<InputWindow> {
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
 							mdl.value = md.goalAdd(t1);
-							ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
+							ws?.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
 						}, Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child:
 							AutoSizeText(md.currentGame.teamGoals(t1).toString(),
 							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
 							mdl.value = md.goalRemoveLast(t1);
-							ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
+							ws?.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
 						}, Icons.arrow_downward_rounded)),
 					])),
 					//Expanded( child: Column(spacing: -(height * 0.05), children:[
 					Expanded( child: Column(children:[
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
 							mdl.value = md.goalAdd(t2);
-							ws.sendSignal(MessageType.DATA_JSON);
+							ws?.sendSignal(MessageType.DATA_JSON);
 						}, Icons.arrow_upward_rounded)),
 						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 						SizedBox(height: upDownHeight, width: buttonWidth, child: buttonWithIcon(context, () {
 							mdl.value = md.goalRemoveLast(t2);
-							ws.sendSignal(MessageType.DATA_JSON);
+							ws?.sendSignal(MessageType.DATA_JSON);
 						}, Icons.arrow_downward_rounded)),
 					])),
 				])
@@ -237,11 +248,11 @@ class _InputWindowState extends State<InputWindow> {
 				child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: paddingHorizontal/2, children: [
 					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
 						mdl.value = md.timeChange(-20);
-						ws.sendSignal(MessageType.DATA_TIME);
+						ws?.sendSignal(MessageType.DATA_TIME);
 					}, Icons.arrow_downward_rounded)),
 					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
 						mdl.value = md.timeChange(-1);
-						ws.sendSignal(MessageType.DATA_TIME);
+						ws?.sendSignal(MessageType.DATA_TIME);
 					}, Icons.arrow_downward_rounded)),
 					Column( children: [
 						Row( spacing: paddingHorizontal/2, children: [
@@ -252,7 +263,7 @@ class _InputWindowState extends State<InputWindow> {
 										// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
 										stopTimer();
 										mdl.value = md.setPause(!md.meta.paused);
-										ws.sendSignal(MessageType.DATA_PAUSE_ON);
+										ws?.sendSignal(MessageType.DATA_PAUSE_ON);
 										startTimer();
 									},
 									md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
@@ -264,7 +275,7 @@ class _InputWindowState extends State<InputWindow> {
 										? null
 										: () {
 											mdl.value = md.timeReset();
-											ws.sendSignal(MessageType.DATA_TIME);
+											ws?.sendSignal(MessageType.DATA_TIME);
 										},
 									Icons.autorenew,
 									inverted: md.meta.currentTime == defTime))
@@ -273,11 +284,11 @@ class _InputWindowState extends State<InputWindow> {
 					]),
 					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
 						mdl.value = md.timeChange(1);
-						ws.sendSignal(MessageType.DATA_TIME);
+						ws?.sendSignal(MessageType.DATA_TIME);
 					}, Icons.arrow_upward_rounded)),
 					SizedBox(height: height, width: upDownWidth, child: buttonWithIcon(context, () {
 						mdl.value = md.timeChange(20);
-						ws.sendSignal(MessageType.DATA_TIME);
+						ws?.sendSignal(MessageType.DATA_TIME);
 					}, Icons.arrow_upward_rounded))
 				])
 			)
