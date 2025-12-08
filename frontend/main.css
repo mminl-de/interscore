@@ -1,0 +1,35 @@
+/* TODO FINAL COMMENT ALL */
+
+body {
+	font-family: "Kanit";   /* great font for the entire scoreboard */
+	font-size: 32px;
+
+	margin: 32px;           /* space from the top and left edges */
+
+	/* TODO DEBUG background: linear-gradient(0deg, #bedbed 0%, #0090ff 100%); */
+}
+
+.heading {
+	font-size: 60px;
+	text-align: center;
+	text-shadow:
+	2px 2px 0 white,
+	-2px 2px 0 white,
+	2px -2px 0 white,
+	-2px -2px 0 white;
+}
+
+.bordered {
+	border: solid 4px black;
+	border-radius: 10px;
+	box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.9);
+}
+
+::-webkit-scrollbar {
+	display: none;
+}
+
+@font-face {
+	font-family: "Kanit";
+	src: url("../assets/Kanit-Regular.ttf") format("truetype");
+}
