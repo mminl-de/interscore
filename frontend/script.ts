@@ -905,7 +905,7 @@ function connect() {
 				md.meta.cur_time = dv.getUint16(1, true)
 				update_ui()
 				break
-			case MessageType.DATA_IS_PAUSE:
+			case MessageType.DATA_PAUSE_ON:
 				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1)
 				md.meta.paused = dv.getUint8(1) === 1
 				break

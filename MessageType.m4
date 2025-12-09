@@ -17,6 +17,9 @@ DATA_PAUSE_ON,dnl Additional: u8/boolean = is_pause)
 DATA_TIME,dnl Additional: u16 = time from Matchday struct)
 DATA_GAMESCOUNT,dnl Additional: u8 = Gamescount)
 GAME_ACTION_DELETE,dnl Additional: uint = id of game action
+IM_THE_BOSS,
+DATA_IM_BOSS,dnl Additional: bool = this client is boss
+PLS_SEND_IM_BOSS,
 PLS_SEND_WIDGET_SCOREBOARD_ON,
 PLS_SEND_WIDGET_GAMEPLAN_ON,
 PLS_SEND_WIDGET_LIVETABLE_ON,

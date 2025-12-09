@@ -54,9 +54,9 @@ u8 replays_count[1]; //TODO find out length efficiently
 
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-struct mg_connection *con_front = NULL;
-struct mg_connection *con_rentner = NULL;
-struct mg_connection *con_remote = NULL;
+struct mg_connection **cons;
+int cons_len = 0;
+int boss = 0; // The boss, which state is always right
 struct mg_connection *con_obs = NULL;
 struct mg_mgr mgr_svr, mgr_obs;
 time_t last_obs_con_attempt = 0;
@@ -153,99 +153,72 @@ void run_system(void *s) {
 	printf("INFO: CMD Return Value: %d", system((char*)s));
 }
 
-void handle_message(enum MessageType *input_type, int input_len, struct mg_connection * con) {
-	char con_name[20];
-	if(con == con_rentner) strcpy(con_name, "rentnerend");
-	else if(con == con_front) strcpy(con_name, "frontend");
-	else if(con == con_remote) strcpy(con_name, "remoteend");
-	printf("INFO: Received a Input from %s: %d\n", con_name, *input_type);
-	switch (*input_type) {
+void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * con) {
+	int con_ind = 0;
+	for(int i=0; i < cons_len; i++) if(con == cons[i]) { con_ind = i; break;}
+	printf("INFO: Received a Input from con %d: %d\n", con_ind, *msg);
+	switch (*msg) {
 		// All of these cases should be forwarded to frontend
-		case WIDGET_SCOREBOARD_SHOW:
-		case WIDGET_SCOREBOARD_HIDE:
-		case WIDGET_GAMEPLAN_SHOW:
-		case WIDGET_GAMEPLAN_HIDE:
-		case WIDGET_LIVETABLE_SHOW:
-		case WIDGET_LIVETABLE_HIDE:
-		case WIDGET_GAMESTART_SHOW:
-		case WIDGET_GAMESTART_HIDE:
-		case WIDGET_AD_SHOW:
-		case WIDGET_AD_HIDE:
-		case T1_SCORE_PLUS:
-		case T1_SCORE_MINUS:
-		case T2_SCORE_PLUS:
-		case T2_SCORE_MINUS:
-		case GAME_PREV:
-		case GAME_SWITCH_SIDES:
-		case TIME_PLUS_1:
-		case TIME_MINUS_1:
-		case TIME_PLUS_20:
-		case TIME_MINUS_20:
-		case TIME_TOGGLE_UNPAUSE:
-		case TIME_RESET: {
-			ws_send(con_front, (char *)input_type, sizeof(enum MessageType), WEBSOCKET_OP_BINARY);
+		case PLS_SEND_SIDES_SWITCHED:
+		case PLS_SEND_GAMEPART:
+		case PLS_SEND_GAMEINDEX:
+		case PLS_SEND_IS_PAUSE:
+		case PLS_SEND_TIME:
+		case PLS_SEND_JSON:
+		case PLS_SEND_OBS_REPLAY_ON:
+		case PLS_SEND_OBS_STREAM_ON:
+		case PLS_SEND_WIDGET_AD_ON:
+		case PLS_SEND_WIDGET_GAMESTART_ON:
+		case PLS_SEND_WIDGET_GAMEPLAN_ON:
+		case PLS_SEND_WIDGET_LIVETABLE_ON:
+		case PLS_SEND_WIDGET_SCOREBOARD_ON:
+		case PLS_SEND_GAME_ACTION:
+			ws_send(cons[boss], (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
+			break;
+
+		case PLS_SEND_IM_BOSS: {
+			char tmp[2] = {DATA_IM_BOSS, con_ind == boss};
+			ws_send(cons[boss], tmp, 2, WEBSOCKET_OP_BINARY);
+			break;
+
+		} case DATA_OBS_STREAM_ON: {
+			if(msg_len < 2) {
+				printf("WARN: Received DATA_OBS_STREAM_ON without data about the Status\n");
+				break;
+			}
+			if(msg[1])
+				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
+			else
+				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
 			break;
 		}
-		case GAME_NEXT:
-			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
-		case DATA_TIME: // Same syntax as TIME_TOGGLE_PAUSE as it also ships time as u16 after the MessageType
-			printf("INFO: Received DATA: Time\n");
-		case TIME_TOGGLE_PAUSE: {
-			ws_send(con_front, (void *)input_type, sizeof(u8) + sizeof(u16), WEBSOCKET_OP_BINARY);
-			break;
-		}
-		//case YELLOW_CARD:
-		//case RED_CARD: {
-		//	ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-		//	break;
-		//}
-		case DATA_GAMEINDEX: {
-			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)input_type)[1]);
-			gameindex = ((char *)input_type)[1];
-			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-			break;
-		}
-		case DATA_IS_PAUSE: // TODO MERGE TO ONE AGAIN
-			printf("INFO: Received DATA: IS_PAUSE\n");
-			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-			break;
-		case DATA_HALFTIME: {
-			printf("INFO: Received DATA: DATA_HALFTIME\n");
-			ws_send(con_front, (char *)input_type, sizeof(char) * 2, WEBSOCKET_OP_BINARY);
-			break;
-		}
-		case PLS_SEND_CUR_GAMEINDEX:
-		case PLS_SEND_CUR_HALFTIME:
-		case PLS_SEND_CUR_IS_PAUSE:
-		case PLS_SEND_CUR_TIME:
-		case PLS_SEND_JSON: {
-			ws_send(con_rentner, (char *)input_type, sizeof(enum MessageType), WEBSOCKET_OP_TEXT);
-			break;
-		}
-		case DATA_JSON: {
-			printf("INFO: Received DATA: JSON\n");
-			ws_send(con_front, (char *)input_type, input_len, WEBSOCKET_OP_BINARY);
-			break;
-		}
-		case OBS_STREAM_START: {
-			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
-			break;
-		}
-		case OBS_STREAM_STOP: {
-			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
-			break;
-		}
-		case OBS_REPLAY_START: {
+		case DATA_OBS_REPLAY_ON: {
 			if(!replays_instant_working) break;
-			// Tell OBS to save replay buffer
-			obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
+			if(msg_len < 2) {
+				printf("WARN: Received DATA_OBS_STREAM_ON without data about the Status\n");
+				break;
+			}
+			if(msg[1])
+				// Tell OBS to save replay buffer
+				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
+			else
+				obs_switch_scene("live");
 			break;
 		}
-		case OBS_REPLAY_STOP: {
-			obs_switch_scene("live");
+		case DATA_GAMEINDEX: {
+			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
+			gameindex = ((char *)msg)[1];
+			for(int i=0; i < cons_len; i++) {
+				if (i == boss) continue;
+				ws_send(cons[i], (char *)msg, 2, WEBSOCKET_OP_BINARY);
+			}
 			break;
 		}
 		default:
+			for(int i=0; i < cons_len; i++) {
+				if (i == boss) continue;
+				ws_send(cons[i], (char *)msg, 2, WEBSOCKET_OP_BINARY);
+			}
 			break;
 	}
 }
@@ -388,18 +361,9 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			printf("INFO: New client connected!\n");
 			break;
 		case MG_EV_CLOSE: {
-			char con_name[20];
-			if(con == con_rentner) {
-				strcpy(con_name, "rentnerend");
-				con_rentner = NULL;
-			} else if(con == con_front) {
-				strcpy(con_name, "frontend");
-				con_front = NULL;
-			} else if(con == con_remote) {
-				strcpy(con_name, "remoteend");
-				con_remote = NULL;
-			}
-			printf("WARN: Client %s disconnected!\n", con_name);
+			int con_ind = 0;
+			for(int i=0; i < cons_len; i++) if(con == cons[i]) { con_ind = i; break;}
+			printf("WARN: Client %d disconnected!\n", con_ind);
 			break;
 		}
 		case MG_EV_HTTP_MSG: {
@@ -437,13 +401,11 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			sleep(1); // TODO NOW we cant send requests this rapidly. Destroys json and everything else
 			char message_type = PLS_SEND_JSON;
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_CUR_HALFTIME;
+			message_type = PLS_SEND_IS_PAUSE;
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_CUR_IS_PAUSE;
+			message_type = PLS_SEND_TIME;
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_CUR_TIME;
-			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_CUR_GAMEINDEX;
+			message_type = PLS_SEND_GAMEINDEX;
 			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
 			break;
 		}
@@ -567,101 +529,13 @@ int main(int argc, char *argv[]) {
 		char temp = 0;
 		char c = getchar();
 		switch (c) {
-			// TODO actually implement getting gameindex etc
-			case '+':
-				gameindex++;
-				break;
-			case '-':
-				gameindex--;
-			case '=':
-				printf("INFO: Gameindex == %d\n", gameindex);
-			case WIDGET_SCOREBOARD_TOGGLE:
-				if(scoreboard_on) {
-					temp = WIDGET_SCOREBOARD_HIDE;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				} else {
-					temp = WIDGET_SCOREBOARD_SHOW;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				}
-				scoreboard_on = !scoreboard_on;
-				break;
-			case WIDGET_GAMEPLAN_TOGGLE:
-				if(gameplan_on) {
-					temp = WIDGET_GAMEPLAN_HIDE;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				} else {
-					temp = WIDGET_GAMEPLAN_SHOW;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				}
-				gameplan_on = !gameplan_on;
-				break;
-			case WIDGET_LIVETABLE_TOGGLE:
-				if(livetable_on) {
-					temp = WIDGET_LIVETABLE_HIDE;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				} else {
-					temp = WIDGET_LIVETABLE_SHOW;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				}
-				livetable_on = !livetable_on;
-				break;
-			case WIDGET_GAMESTART_TOGGLE:
-				if(gamestart_on) {
-					temp = WIDGET_GAMESTART_HIDE;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				} else {
-					temp = WIDGET_GAMESTART_SHOW;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				}
-				gamestart_on = !gamestart_on;
-				break;
-			case WIDGET_AD_TOGGLE:
-				if(ad_on) {
-					temp = WIDGET_AD_HIDE;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				} else {
-					temp = WIDGET_AD_SHOW;
-					ws_send(con_front, &temp, sizeof(u8), WEBSOCKET_OP_BINARY);
-				}
-				ad_on = !ad_on;
-				break;
-			case RELOAD_RENTNERJSON: {
-				char w1 = PLS_SEND_JSON;
-				if(!ws_send(con_rentner, &w1, sizeof(char), WEBSOCKET_OP_BINARY))
-					fprintf(stderr, "ERROR: Could not send request to Rentnerend!\n");
-				break;
-			}
-			case RELOAD_RENTNER_GAMEINDEX: {
-				char w2 = PLS_SEND_CUR_GAMEINDEX;
-				if(!ws_send(con_rentner, &w2, sizeof(char), WEBSOCKET_OP_BINARY))
-					fprintf(stderr, "ERROR: Could not send request to Rentnerend!\n");
-				break;
-			}
 			case CONNECT_OBS:
 				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
 				printf("INFO: Trying to connect to OBS...\n");
 				break;
-			case 'R':
-				if(!replays_instant_working) break;
-				// Tell OBS to save replay buffer
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
-				printf("INFO: Trying to Save a Replay...\n");
-				break;
 			case PRINT_HELP:
 				printf(
 					"======= Keyboard options =======\n"
-					"s  Scoreboard Toggle\n"
-					"p  Gameplan Toggle\n"
-					"l  Livetabelle Toggle\n"
-					"g  Gamestart Toggle\n"
-					"a  Ad Toggle\n"
-					"\n"
-					"+  Next Game\n"
-					"-  Prev Game\n"
-					"=  Gameindex right now\n"
-					"\n"
-					"j  Send rentnerend json to Frontend\n"
-					"r  Send rentnerend gameindex to Backend\n"
 					"o  connect to obs\n"
 					"\n"
 					"?  print help\n"

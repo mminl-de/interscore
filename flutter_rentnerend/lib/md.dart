@@ -259,6 +259,11 @@ class Meta with _$Meta {
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
 		@JsonKey(name: 'cur_time', toJson: intOrNullNot0) @Default(0) int currentTime,
+		@Default(false) bool widgetScoreboard,
+		@Default(false) bool widgetGameplan,
+		@Default(false) bool widgetLiveplan,
+		@Default(false) bool widgetGamestart,
+		@Default(false) bool widgetAd,
 		required List<Format> formats,
 	}) = _Meta;
 

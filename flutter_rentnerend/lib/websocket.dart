@@ -74,6 +74,7 @@ class _WSClient {
 	// This is needed, so updates pushed by the listen function here triggers a UI redraw
 	final ValueNotifier<Matchday> _mdl;
 	WebSocket? _channel;
+	bool boss = false; // This says, if we are the boss for the server
 
 	_WSClient(this._url, this._mdl);
 
@@ -139,6 +140,10 @@ class _WSClient {
 			_mdl.value = md.timeChange(time_diff);
 		}
 		else if(msg[0] == MessageType.DATA_GAMESCOUNT.value);
+		else if(msg[0] == MessageType.DATA_IM_BOSS.value) {
+			if(msg.length < 2) return;
+			this.boss = msg[1] == 1 ? true : false;
+		}
 		else if(msg[0] == MessageType.DATA_JSON.value) {
 			debugPrint("grrr?");
 			_mdl.value = Matchday.fromJson(jsonDecode(utf8.decode(msg)) as Map<String, dynamic>);
@@ -226,9 +231,19 @@ List<int>? signalToMsg(MessageType msg, Matchday md) {
 		return [msg.value, md.games.length];
 	else if(msg == MessageType.DATA_SIDES_SWITCHED)
 		return [msg.value, md.meta.sidesInverted ? 1 : 0];
-	else if(msg == MessageType.DATA_JSON) {
+	else if(msg == MessageType.DATA_JSON)
 		return utf8.encode(jsonEncode(md.toJson()));
-	} else
+	else if(msg == MessageType.DATA_WIDGET_SCOREBOARD_ON)
+		return [msg.value, md.meta.widgetScoreboard ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_GAMEPLAN_ON)
+		return [msg.value, md.meta.widgetGameplan ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_LIVETABLE_ON)
+		return [msg.value, md.meta.widgetLiveplan ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_GAMESTART_ON)
+		return [msg.value, md.meta.widgetGamestart ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_AD_ON)
+		return [msg.value, md.meta.widgetAd ? 1 : 0];
+	else
 		return [msg.value];
 	return null;
 }

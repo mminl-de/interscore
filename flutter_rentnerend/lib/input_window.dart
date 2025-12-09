@@ -41,6 +41,10 @@ class _InputWindowState extends State<InputWindow> {
 		this.ws = InterscoreWS(mdl);
 		ws?.initServer("ws://0.0.0.0:6464");
 		await ws?.initClient("ws://mminl.de:8080");
+		while(!(ws?.client?.boss ?? false)) {
+			ws?.client?.sendSignal(MessageType.IM_THE_BOSS);
+			await Future.delayed(Duration(seconds: 1));
+		}
 		debugPrint("finished initializing");
 	}
 
@@ -295,14 +299,44 @@ class _InputWindowState extends State<InputWindow> {
 		);
 	}
 
+	Widget blockWidgets(double width, double height, Matchday md) {
+		return SizedBox(
+			width: width,
+			height: height,
+			child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetScoreboard: !md.meta.widgetScoreboard));
+					ws?.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
+				}, Icons.arrow_downward_rounded, inverted: md.meta.widgetScoreboard)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGameplan: !md.meta.widgetGameplan));
+					ws?.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
+				}, Icons.arrow_downward_rounded, inverted: md.meta.widgetGameplan)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetLiveplan: !md.meta.widgetLiveplan));
+					ws?.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
+				}, Icons.arrow_upward_rounded, inverted: md.meta.widgetLiveplan)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGamestart: !md.meta.widgetGamestart));
+					ws?.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
+				}, Icons.arrow_upward_rounded, inverted: md.meta.widgetGamestart)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
+					ws?.sendSignal(MessageType.DATA_WIDGET_AD_ON);
+				}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd))
+			])
+		);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		final screenHeight = MediaQuery.of(context).size.height;
 		final screenWidth = MediaQuery.of(context).size.width;
 
 		final blockTeamsHeight = screenHeight * 0.18;
-		final blockGoalsHeight = screenHeight * 0.3;
-		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
+		final blockGoalsHeight = screenHeight * 0.25;
+		final blockTimeHeight = screenHeight * 0.35;
+		final blockWidgetsHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - blockTimeHeight - screenHeight * 0.1;
 
 		// debugPrint("Matchday: ${mdl.value}\n\n");
 		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
@@ -323,7 +357,8 @@ class _InputWindowState extends State<InputWindow> {
 							children: [
 								blockTeams(screenWidth, blockTeamsHeight, md),
 								blockGoals(screenWidth, blockGoalsHeight, md),
-								blockTime(screenWidth, blockTimeHeight, md)
+								blockTime(screenWidth, blockTimeHeight, md),
+								blockWidgets(screenWidth, blockWidgetsHeight, md)
 							]
 						);
 					}
