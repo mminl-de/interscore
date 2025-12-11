@@ -23,17 +23,18 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-// Widgets
-#define WIDGET_SCOREBOARD_TOGGLE 's'
-#define WIDGET_GAMEPLAN_TOGGLE 'p'
-#define WIDGET_LIVETABLE_TOGGLE 'l'
-#define WIDGET_GAMESTART_TOGGLE 'g'
-#define WIDGET_AD_TOGGLE 'a'
+struct Client {
+	struct mg_connection *con;
+	struct Client *next;
+};
+
+struct ClientsList {
+	struct Client *first;
+	struct mg_connection *boss;
+};
 
 // Meta
 #define EXIT 'q'
-#define RELOAD_RENTNERJSON 'j'
-#define RELOAD_RENTNER_GAMEINDEX 'r'
 #define CONNECT_OBS 'o'
 #define PRINT_HELP '?'
 
@@ -54,9 +55,7 @@ u8 replays_count[1]; //TODO find out length efficiently
 
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-struct mg_connection **cons;
-int cons_len = 0;
-int boss = 0; // The boss, which state is always right
+struct ClientsList clients = {.first = NULL, .boss = NULL};
 struct mg_connection *con_obs = NULL;
 struct mg_mgr mgr_svr, mgr_obs;
 time_t last_obs_con_attempt = 0;
@@ -65,11 +64,6 @@ const int obs_reconnect_interval = 5; // in sec
 bool replays_instant_working = true;
 bool replays_game_working = true;
 bool replay_buffer_status = false;
-bool scoreboard_on = false;
-bool gameplan_on = false;
-bool livetable_on = false;
-bool gamestart_on = false;
-bool ad_on = false;
 
 void die(char *error, int retval) {
 	fprintf(stderr, "CRIT: %s\n", error);
@@ -113,7 +107,7 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 		printf("WARN: client is not connected, couldnt send Message: '%*s'\n", len, message);
 		return false;
 	}
-	return mg_ws_send(con, message, len, op) == len;
+	return mg_ws_send(con, message, len, op) == (size_t) len;
 }
 
 bool create_replay_dirs() {
@@ -136,27 +130,13 @@ bool create_replay_dirs() {
 	return true;
 }
 
-//void send_time(u16 t) {
-//	if(con_front == NULL) {
-//		printf("client is not connected, couldnt send time\n");
-//		return;
-//	}
-//	u8 buffer[3];
-//	buffer[0] = SCOREBOARD_SET_TIMER;
-//	u16 time = htons(t);
-//	memcpy(&buffer[1], &time, sizeof(time));
-//	mg_ws_send(con_front, buffer, sizeof(buffer), WEBSOCKET_OP_BINARY);
-//}
-
 void run_system(void *s) {
 	printf("INFO: Running System CMD: %s\n", (char*)s);
 	printf("INFO: CMD Return Value: %d", system((char*)s));
 }
 
 void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * con) {
-	int con_ind = 0;
-	for(int i=0; i < cons_len; i++) if(con == cons[i]) { con_ind = i; break;}
-	printf("INFO: Received a Input from con %d: %d\n", con_ind, *msg);
+	printf("INFO: Received a Input from con %lu: %d\n", con->id, *msg);
 	switch (*msg) {
 		// All of these cases should be forwarded to frontend
 		case PLS_SEND_SIDES_SWITCHED:
@@ -173,12 +153,12 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		case PLS_SEND_WIDGET_LIVETABLE_ON:
 		case PLS_SEND_WIDGET_SCOREBOARD_ON:
 		case PLS_SEND_GAME_ACTION:
-			ws_send(cons[boss], (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
+			ws_send(clients.boss, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
 			break;
 
 		case PLS_SEND_IM_BOSS: {
-			char tmp[2] = {DATA_IM_BOSS, con_ind == boss};
-			ws_send(cons[boss], tmp, 2, WEBSOCKET_OP_BINARY);
+			char tmp[2] = {DATA_IM_BOSS, con == clients.boss};
+			ws_send(con, tmp, 2, WEBSOCKET_OP_BINARY);
 			break;
 
 		} case DATA_OBS_STREAM_ON: {
@@ -205,19 +185,23 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 				obs_switch_scene("live");
 			break;
 		}
-		case DATA_GAMEINDEX: {
-			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
-			gameindex = ((char *)msg)[1];
-			for(int i=0; i < cons_len; i++) {
-				if (i == boss) continue;
-				ws_send(cons[i], (char *)msg, 2, WEBSOCKET_OP_BINARY);
+		case DATA_IM_BOSS:
+			if(msg_len < 2 || !msg[1]) break;
+			if(clients.boss != NULL) {
+				printf("WARN: Con %lu is trying to be boss, but %lu is already!\n", con->id, clients.boss->id);
+				break;
 			}
+			clients.boss = con;
 			break;
-		}
+		case DATA_GAMEINDEX:
+			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
+			gameindex = msg[1];
+			// Now we go into default
+			__attribute__((fallthrough)); // silence compiler warning
 		default:
-			for(int i=0; i < cons_len; i++) {
-				if (i == boss) continue;
-				ws_send(cons[i], (char *)msg, 2, WEBSOCKET_OP_BINARY);
+			for(struct Client *c = clients.first; c != NULL; c = c->next) {
+				if (c->con == clients.boss) continue;
+				ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
 			}
 			break;
 	}
@@ -361,57 +345,39 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			printf("INFO: New client connected!\n");
 			break;
 		case MG_EV_CLOSE: {
-			int con_ind = 0;
-			for(int i=0; i < cons_len; i++) if(con == cons[i]) { con_ind = i; break;}
-			printf("WARN: Client %d disconnected!\n", con_ind);
+			if(clients.boss == con) clients.boss = NULL;
+			if(clients.first->con == con) {
+				struct Client *tmp = clients.first->next;
+				free(clients.first);
+				clients.first = tmp;
+			}
+			for(struct Client *c = clients.first; c->next != NULL; c = c->next) {
+				if(c->next->con == con) {
+					struct Client *tmp = c->next->next;
+					free(c->next);
+					c->next = tmp;
+				}
+			}
+			printf("WARN: Client %lu disconnected!\n", con->id);
 			break;
 		}
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
-			//We have to know which client is connecting (frontend/rentnerend)
-			//Therefor we extract the query parameter as seen below.
-			//FRONTEND URL: http://0.0.0.0:8081?client=frontend
-			//RENTNEREND URL: http://0.0.0.0:8081
-			//REMOTEEND URL: http://0.0.0.0:8081?client=remoteend // TODO make this work properly
-			//TODO FINAL make this not suck
-			char client_type[20];
-    		mg_http_get_var(&hm->query, "client", client_type, sizeof(client_type));
-			printf("INFO: Clienttype: %s\n", client_type);
-			if(!strcmp(client_type, "frontend")) {
-				printf("INFO: New Client is frontend!\n");
-				con_front = con;
-			} else if(!strcmp(client_type, "remoteend")) {
-				printf("INFO: New Client is remoteend!\n");
-				con_remote = con;
-			} else if(client_type[0] == '\0') {
-				printf("\n\n\n\n\n\n"); // TODO
-				printf("INFO: New Client is rentnerend!\n");
-				con_rentner = con;
-			} else{
-				printf("WARN: Unknown Client is trying to connect! Closing Connection\n");
-				con->is_closing = true;
-				break;
-			}
+			struct Client *new = malloc(sizeof(struct Client));
+			*new = (struct Client){ .con = con, .next = NULL };
+
+			if(clients.first == NULL) clients.first = new;
+			else
+				for(struct Client *c = clients.first; c != NULL; c = c->next)
+					if(c->next == NULL) { c->next = new; break; }
 
 			//TODO check if upgrade is successfull
 			mg_ws_upgrade(con, hm, NULL);
-			printf("INFO: Client upgraded to WebSocket connection!\n");
-
-			// Get latest and greatest information from rentnerend
-			sleep(1); // TODO NOW we cant send requests this rapidly. Destroys json and everything else
-			char message_type = PLS_SEND_JSON;
-			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_IS_PAUSE;
-			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_TIME;
-			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
-			message_type = PLS_SEND_GAMEINDEX;
-			ws_send(con_rentner, &message_type, sizeof(char), WEBSOCKET_OP_BINARY);
+			printf("INFO: Client %lu upgraded to WebSocket connection!\n", con->id);
 			break;
 		}
 		case MG_EV_WS_OPEN:
 			printf("INFO: New connection opened!\n");
-			//con_front = con;
 			break;
 		case MG_EV_WS_MSG: {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
@@ -432,7 +398,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	}
 }
 
-void *mongoose_update(void *arg) {
+void *mongoose_update(void *) {
 	const int replay_buffer_activation_interval = 10; // in sec
 	time_t last_replay_buffer_attempt = time(NULL);
 
@@ -526,9 +492,7 @@ int main(int argc, char *argv[]) {
 
 
 	while (running) {
-		char temp = 0;
-		char c = getchar();
-		switch (c) {
+		switch (getchar()) {
 			case CONNECT_OBS:
 				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
 				printf("INFO: Trying to connect to OBS...\n");

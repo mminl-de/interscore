@@ -63,7 +63,7 @@ RUN	chown -R obsuser:obsuser /home/obsuser/.config/ && \
 
 # frontend reinkopieren
 RUN mkdir -p /home/obsuser/frontend/
-COPY new-frontend/ /home/obsuser/frontend/frontend/
+COPY frontend/ /home/obsuser/frontend/frontend/
 COPY assets/ /home/obsuser/frontend/assets/
 COPY MessageType.js /home/obsuser/frontend/MessageType.js
 RUN	chown -R obsuser:obsuser /home/obsuser/frontend/ && \

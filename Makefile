@@ -1,6 +1,6 @@
 SRC ?= backend.c mongoose/mongoose.c
 OUT ?= backend
-CFLAGS ?= -Wall -Wextra -Wpedantic -fshort-enums
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wunused -Wunreachable-code -Wunused-macros -fshort-enums
 WIN_LIBS ?= -ljson-c -lwinpthread -lws2_32 -liphlpapi -luserenv
 CC ?= cc
 CXX ?= c++
@@ -42,7 +42,7 @@ r-run:
 
 js:
 	m4 -DTS MessageType.m4 > MessageType.ts
-	tsc --target es2017 frontend/script.ts
+	tsc # Config is in tsconfig.json
 
 flutter:
 	m4 -DDART MessageType.m4 > flutter_rentnerend/lib/MessageType.dart

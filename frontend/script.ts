@@ -1,4 +1,5 @@
 // TODO NOW implement update_queries
+import { z } from "zod";
 
 import { MessageType } from "../MessageType.js"
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -66,207 +67,218 @@ let shown = {
 
 interface Color { r: number, g: number, b: number }
 
-interface Matchday {
-	meta: Meta,
-	teams: Team[],
-	groups: Group[],
-	games: Game[]
-}
+const PenaltySchema = z.object({
+  shooting: z.object({
+    team: z.number(),
+    player: z.number(),
+  }),
+});
+const GamePartTimedSchema = z.object({
+	type: z.literal("timed"),
+	name: z.string(),
+	length: z.number(),
+	repeat: z.boolean().default(false),
+	decider: z.boolean().default(false),
+	sides_inverted: z.boolean().default(false),
+});
+const GamePartFormatSchema = z.object({
+	type: z.literal("format"),
+	format: z.string(),
+	repeat: z.boolean().default(false),
+	decider: z.boolean().default(false),
+	sides_inverted: z.boolean().default(false),
+});
+const GamePartPenaltySchema = z.object({
+	type: z.literal("penalty"),
+	name: z.string(),
+	penalty: PenaltySchema,
+	repeat: z.boolean().default(false),
+	decider: z.boolean().default(false),
+	sides_inverted: z.boolean().default(false),
+});
+const GamePartSchema = z.discriminatedUnion("type", [
+	GamePartTimedSchema,
+	GamePartFormatSchema,
+	GamePartPenaltySchema
+]);
 
-interface Meta {
-	game_i: number | 0,
-	cur_gamepart: number | 0,
-	sides_inverted: boolean | false,
-	paused: boolean | true,
-	cur_time: number | 0,
-	formats: Format[]
-}
+export const PlayerSchema = z.object({
+  name: z.string(),
+  role: z.string(),
+});
 
-interface Format {
-	name: string,
-	gameparts: GamePart[]
-}
+export const TeamSchema = z.object({
+  name: z.string(),
+  logo_uri: z.string(),
+  color: z.string(),
+  players: z.array(PlayerSchema),
+});
 
-type GamePart = (
-	GamePartTimed |
-	GamePartFormat |
-	GamePartPenalty
-)
-interface GamePartTimed {
-	type: "timed",
-	name: string,
-	length: number,
-	repeat: boolean | false,
-	decider: boolean | false,
-	sides_inverted: boolean | false
-}
-interface GamePartFormat {
-	type: "format",
-	format: string,
-	repeat: boolean | false,
-	decider: boolean | false,
-	sides_inverted: boolean | false
-}
-interface GamePartPenalty {
-	type: "penalty",
-	name: string,
-	penalty: Penalty,
-	repeat: boolean | false,
-	decider: boolean | false,
-	sides_inverted: boolean | false
-}
-interface Penalty {
-	shooting: {
-		team: number,
-		player: number
-	}
-}
+export const GroupSchema = z.object({
+  name: z.string(),
+  members: z.array(z.string()),
+});
 
+const GameQueryGroupPlaceSchema = z.object({
+    type: z.literal("groupPlace"),
+    group: z.string(),
+    place: z.number(),
+});
 
-interface Team {
-	name: string,
-	logo_uri: string,
-	color: string,
-	players: Player[]
+const GameQueryGameWinnerSchema = z.object({
+    type: z.literal("gameWinner"),
+    gameIndex: z.number(),
+});
+
+const GameQueryGameLoserSchema = z.object({
+    type: z.literal("gameLoser"),
+    gameIndex: z.number(),
+});
+
+export const GameQuerySchema = z.discriminatedUnion("type", [
+    GameQueryGroupPlaceSchema,
+    GameQueryGameWinnerSchema,
+    GameQueryGameLoserSchema,
+]);
+
+export const MissingInfoSchema = z.object({
+    reason: z.string(),
+});
+
+const GameTeamSlotByNameSchema = z.object({
+    type: z.literal("byName"),
+    name: z.string(),
+    missing: MissingInfoSchema.nullable().optional(),
+});
+
+const GameTeamSlotByQuerySchema = z.object({
+    type: z.literal("byQuery"),
+    query: GameQuerySchema,
+    missing: MissingInfoSchema.nullable().optional(),
+});
+
+const GameTeamSlotByQueryResolvedSchema = z.object({
+    type: z.literal("byQueryResolved"),
+    name: z.string(),
+    q: GameTeamSlotByQuerySchema,
+});
+
+export const GameTeamSlotSchema = z.discriminatedUnion("type", [
+    GameTeamSlotByNameSchema,
+    GameTeamSlotByQuerySchema,
+    GameTeamSlotByQueryResolvedSchema,
+]);
+
+export const GameActionPlayerInvolvedSchema = z.object({
+    name: z.string(),
+    role: z.string(),
+});
+
+export const GameFormatSchema = z.object({
+    name: z.string(),
+    decider: z.boolean().default(false),
+});
+
+const GameActionBaseSchema = z.object({
+    id: z.number(),
+    time_game: z.number().nullable().default(null),
+    timespan_game: z.number().nullable().default(null),
+    time_unix: z.number().nullable().default(null),
+    timespan_unix: z.number().nullable().default(null),
+    players_involved: z.array(GameActionPlayerInvolvedSchema).nullable().default(null),
+    description: z.string().nullable().default(null),
+    done: z.boolean().default(true),
+});
+
+const GameActionGoalSchema = GameActionBaseSchema.extend({
+    type: z.literal("goal"),
+    change: z.object({
+        type: z.literal("score"),
+        score: z.object({
+            '1': z.number().default(0),
+            '2': z.number().default(0),
+        }),
+    }),
+    triggers_action: z.number().nullable().default(null),
+});
+
+const GameActionFoulSchema = GameActionBaseSchema.extend({
+    type: z.literal("foul"),
+    triggers_action: z.number().nullable().default(null),
+});
+
+const GameActionPenaltySchema = GameActionBaseSchema.extend({
+    type: z.literal("penalty"),
+    // No 'triggers_action' field here, just using base fields
+});
+
+const GameActionOutballSchema = GameActionBaseSchema.extend({
+    type: z.literal("outball"),
+    team: z.number().refine(n => n === 1 || n === 2), // Ensure team is 1 or 2
+});
+
+export const GameActionSchema = z.discriminatedUnion("type", [
+    GameActionGoalSchema,
+    GameActionFoulSchema,
+    GameActionPenaltySchema,
+    GameActionOutballSchema,
+]);
+
+const FormatSchema  = z.object({
+	name: z.string(),
+	gameparts: z.array(GamePartSchema)
+});
+
+const MetaSchema = z.object({
+	game_i: z.number().default(0),
+	cur_gamepart: z.number().default(0),
+	sides_inverted: z.boolean().default(false),
+	paused: z.boolean().default(true),
+	cur_time: z.number().default(0),
+	formats: z.array(FormatSchema)
+});
+
+export const GameSchema = z.object({
+    name: z.string(),
+    '1': GameTeamSlotSchema,
+    '2': GameTeamSlotSchema,
+    groups: z.array(z.string()).default([]),
+    format: GameFormatSchema,
+    decider: z.boolean().default(false),
+    actions: z.array(z.any()).default([]),
+});
+
+const MatchdaySchema = z.object({
+	meta: MetaSchema,
+	teams: z.array(TeamSchema),
+	groups: z.array(GroupSchema),
+	games: z.array(GameSchema)
+});
+
+export type Matchday = z.infer<typeof MatchdaySchema>;
+export type Meta = z.infer<typeof MetaSchema>;
+export type Team = z.infer<typeof TeamSchema>;
+export type Group = z.infer<typeof GroupSchema>;
+export type Game = z.infer<typeof GameSchema>;
+export type Format = z.infer<typeof FormatSchema>;
+export type GamePart = z.infer<typeof GamePartSchema>;
+export type GameTeamSlot = z.infer<typeof GameTeamSlotSchema>;
+export type GameAction = z.infer<typeof GameActionSchema>;
+export type GameQuery = z.infer<typeof GameQuerySchema>;
+
+let md: Matchday = {
+	meta: {
+		game_i: 0,
+		paused: true,
+		cur_time: 0,
+		cur_gamepart: 0,
+		formats: [],
+		sides_inverted: false
+	},
+	games: [],
+	groups: [],
+	teams: []
 }
-
-interface Player {
-	name: string,
-	role: string
-}
-
-interface Group {
-	name: string,
-	members: string[]
-}
-
-interface Game {
-	name: string,
-	'1': GameTeamSlot, // or [1]
-	'2': GameTeamSlot,
-	groups: string[],
-	format: GameFormat,
-	decider: boolean | false,
-	actions: GameAction[],
-}
-
-type GameTeamSlot = (
-	GameTeamSlotByName |
-	GameTeamSlotByQuery |
-	GameTeamSlotByQueryResolved
-)
-
-interface GameTeamSlotByName {
-	type: "byName",
-	name: string,
-	missing: MissingInfo | null
-}
-
-interface GameTeamSlotByQuery {
-	type: "byQuery",
-	query: GameQuery,
-	missing: MissingInfo | null
-}
-
-interface GameTeamSlotByQueryResolved {
-	type: "byQueryResolved",
-	name: string,
-	q: GameTeamSlotByQuery
-}
-
-interface MissingInfo { reason: string }
-
-type GameQuery = (
-	GameQueryGroupPlace |
-	GameQueryGameWinner |
-	GameQueryGameLoser
-)
-
-interface GameQueryGroupPlace { type: "groupPlace", group: string, place: number }
-interface GameQueryGameWinner { type: "gameWinner", gameIndex: number }
-interface GameQueryGameLoser { type: "gameLoser", gameIndex: number }
-
-interface GameFormat {
-	name: string,
-	decider: boolean | false,
-}
-
-type GameAction = (
-	GameActionGoal |
-	GameActionFoul |
-	GameActionPenalty |
-	GameActionOutball
-)
-
-interface GameActionGoal {
-	type: "goal",
-	id: number,
-	time_game: number | null,
-	timespan_game: number | null,
-	time_unix: number | null,
-	timespan_unix: number | null
-	players_involved: GameActionPlayerInvolved[] | null,
-	change: {type: "score", score: {'1': number | 0, '2': number | 0}},
-	triggers_action: number | null,
-	description: string | null,
-	done: boolean | true
-}
-interface GameActionFoul {
-	type: "foul",
-	id: number,
-	time_game: number | null,
-	timespan_game: number | null,
-	time_unix: number | null,
-	timespan_unix: number | null
-	players_involved: GameActionPlayerInvolved[] | null,
-	triggers_action: number | null,
-	description: string | null,
-	done: boolean | true
-}
-interface GameActionPenalty {
-	type: "penalty",
-	id: number,
-	time_game: number | null,
-	timespan_game: number | null,
-	time_unix: number | null,
-	timespan_unix: number | null
-	players_involved: GameActionPlayerInvolved[] | null,
-	description: string | null,
-	done: boolean | true
-}
-interface GameActionOutball {
-	type: "outball",
-	id: number,
-	time_game: number | null,
-	timespan_game: number | null,
-	time_unix: number | null,
-	timespan_unix: number | null
-	players_involved: GameActionPlayerInvolved[] | null,
-	team: number, // either 1 or 2 for the equivalent team
-	description: string | null,
-	done: boolean | true
-}
-
-interface GameActionPlayerInvolved {
-	name: string,
-	role: string
-}
-
-let md: Matchday;
-//= {
-//	meta: {
-//		game_len: -1,
-//		game_i: 0,
-//		halftime: false,
-//		paused: true,
-//		cur_time: -1,
-//		pause_start: -1
-//	},
-//	games: [],
-//	teams: [],
-//	players: [],
-//	groups: new Map()
-//}
 
 function cur_game(): (Game | null) {
 	return md.games[md.meta.game_i];
@@ -294,8 +306,9 @@ function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
 
 // team=0 für Team 1, team=1 für Team 2
 function getScores(g: Game): [scoreT1: number, scoreT2: number] {
+	console.log(`getting Score for Game:` + JSON.stringify(g));
 	return g.actions.reduce<[number, number]>((acc: [t1: number,t2: number], a: GameAction) => {
-		if (a.type == "goal") return [acc[0] + a.change.score[1], acc[1] + a.change.score[2]];
+		if (a.type === "goal") return [acc[0] + (a.change.score['1'] || 0), acc[1] + (a.change.score['2'] || 0)];
 		else return acc;
 	}, [0, 0]);
 }
@@ -306,6 +319,10 @@ function get_teams(g: Game): [t1: Team | null,t2: Team | null] {
 	const team_right = resolve_GameTeamSlot(g[2]);
 	return md.meta.sides_inverted ? [team_right, team_left] : [team_left, team_right];
 
+}
+
+function json_parse(s: string): Matchday {
+	return MatchdaySchema.parse(JSON.parse(s));
 }
 
 // Reads the characters of `view` starting with `offset` until the next \0
@@ -380,22 +397,25 @@ async function file_exists(url: string): Promise<boolean> {
 
 function write_scoreboard() {
 	const game = md.games[md.meta.game_i]
+	//console.log(md.meta.game_i);
+	console.log(md);
 
 	const teams = get_teams(game);
 
 	scoreboard_t1.innerHTML = teams[0]?.name ?? '[???]';
 	scoreboard_t2.innerHTML = teams[1]?.name ?? '[???]';
 
-	file_exists("../" + teams[0]?.logo_uri).then((exists: boolean) => {
-		if (exists) scoreboard_logo_1.src = "../" + teams[0]?.logo_uri
-		else scoreboard_logo_1.src = "../assets/fallback.png"
-	})
-	file_exists("../" + teams[1]?.logo_uri).then((exists: boolean) => {
-		if (exists) scoreboard_logo_2.src = "../" + teams[1]?.logo_uri
-		else scoreboard_logo_2.src = "../assets/fallback.png"
-	})
+	//file_exists("../" + teams[0]?.logo_uri).then((exists: boolean) => {
+	//	if (exists) scoreboard_logo_1.src = "../" + teams[0]?.logo_uri
+	//	else scoreboard_logo_1.src = "../assets/fallback.png"
+	//})
+	//file_exists("../" + teams[1]?.logo_uri).then((exists: boolean) => {
+	//	if (exists) scoreboard_logo_2.src = "../" + teams[1]?.logo_uri
+	//	else scoreboard_logo_2.src = "../assets/fallback.png"
+	//})
 
 	const scores: [number, number] = getScores(game);
+	console.log(`scores: ${scores}`);
 	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString()
 	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString()
 
@@ -434,7 +454,7 @@ function write_gameplan() {
 
 		let t1 = document.createElement("div");
 		t1.classList.add("bordered", "t1");
-		t1.innerHTML = teams[0]?.toString() ?? "[???]";
+		t1.innerHTML = teams[0]?.name.toString() ?? "[???]";
 		t1.style.background = gradient2str(str2col(left_col), str2coldark(left_col));
 		t1.style.color = color_font_contrast(str2coldark(left_col));
 		line.appendChild(t1);
@@ -451,7 +471,7 @@ function write_gameplan() {
 
 		let t2 = document.createElement("div");
 		t2.classList.add("bordered", "t2");
-		t2.innerHTML = teams[1]?.toString() ?? "[???]";
+		t2.innerHTML = teams[1]?.name.toString() ?? "[???]";
 		t2.style.background = gradient2str(str2col(right_col), str2col(right_col));
 		t1.style.color = color_font_contrast(str2coldark(left_col));
 		line.appendChild(t2);
@@ -533,7 +553,7 @@ function write_gamestart() {
 	t1_name_el.style.fontSize = "60px";
 	t1_name_el.style.background = gradient2str(str2col(left_col_cur), str2coldark(left_col_cur));
 	t1_name_el.style.color = color_font_contrast(str2coldark(left_col_cur));
-	t1_name_el.innerHTML = teams_cur[0]?.toString() ?? "[???]";
+	t1_name_el.innerHTML = teams_cur[0]?.name.toString() ?? "[???]";
 
 	const t1_keeper_el = document.createElement("div");
 	t1_keeper_el.classList.add("bordered", "player");
@@ -554,7 +574,7 @@ function write_gamestart() {
 	t2_name_el.style.fontSize = "60px";
 	t2_name_el.style.background = gradient2str(str2col(right_col_cur), str2coldark(right_col_cur));
 	t2_name_el.style.color = color_font_contrast(str2coldark(right_col_cur));
-	t2_name_el.innerHTML = teams_cur[1]?.toString() ?? "[???]";
+	t2_name_el.innerHTML = teams_cur[1]?.name.toString() ?? "[???]";
 
 	const t2_keeper_el = document.createElement("div")
 	t2_keeper_el.classList.add("bordered", "player")
@@ -573,10 +593,10 @@ function write_gamestart() {
 	if (teams_next[0] == null && teams_next[1] == null) gamestart_next.style.display = "none";
 	else {
 		gamestart_next.style.display = "block";
-		gamestart_next_t1.innerHTML = teams_next[0]?.name ?? "[???]";
+		gamestart_next_t1.innerHTML = teams_next[0]?.name.toString() ?? "[???]";
 		gamestart_next_t1.style.background =
 			gradient2str(str2col(left_col_next), str2coldark(left_col_next));
-		gamestart_next_t2.innerHTML = teams_next[1]?.name ?? "[???]";
+		gamestart_next_t2.innerHTML = teams_next[1]?.name.toString() ?? "[???]";
 		gamestart_next_t2.style.background =
 			gradient2str(str2col(right_col_next), str2coldark(right_col_next));
 	}
@@ -687,7 +707,7 @@ function write_livetable() {
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] > 0) ? 1 : 0;
+						p += (getScores(g)[0] - getScores(g)[1] < 0) ? 1 : 0;
 					else if (resolve_GameTeamSlot(g[2]) === t)
 						p += (getScores(g)[0] - getScores(g)[1] > 0) ? 1 : 0;
 				}
@@ -821,12 +841,16 @@ function update_ui() {
 }
 
 function connect() {
-	socket = new WebSocket("ws://0.0.0.0:8081?client=frontend", "interscore");
+	socket = new WebSocket("ws://localhost:8081", "interscore");
 	socket.binaryType = "arraybuffer";
 
-	socket.onopen = () => console.log("Connected to WebSocket server!");
+	socket.onopen = () => {
+		console.log("Connected to WebSocket server!");
+		socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
+	}
 
 	socket.onmessage = (event: MessageEvent) => {
+		console.debug(`Received: ${event.data}`);
 		if (!(event.data instanceof ArrayBuffer)) {
 			console.error("The backend didn't send proper binary data. There's nothing we can do...");
 			return;
@@ -890,19 +914,20 @@ function connect() {
 				} else
 					setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
 				break
-			} case MessageType.DATA_GAME_ACTION: {
-				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
-				cur_game()?.actions.push(JSON.parse(str)); // TODO what if this fails somehow?
-				update_ui()
-				break
+			//} case MessageType.DATA_GAME_ACTION: {
+			//	const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
+			//	console.log(str);
+			//	cur_game()?.actions.push(GameActionSchema.parse(str)); // TODO what if this fails somehow?
+			//	update_ui()
+			//	break
 			} case MessageType.DATA_SIDES_SWITCHED:
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
 				md.meta.sides_inverted = show;
 				update_ui()
 				break
 			case MessageType.DATA_TIME:
-				console.log("Received DATA time: ", dv.getUint16(1, true))
-				md.meta.cur_time = dv.getUint16(1, true)
+				console.log("Received DATA time: ", dv.getUint16(1, false))
+				md.meta.cur_time = dv.getUint16(1, false)
 				update_ui()
 				break
 			case MessageType.DATA_PAUSE_ON:
@@ -913,12 +938,13 @@ function connect() {
 				// ^ TODO CONSIDER RENAME
 				console.log("Received DATA Gameindex: ", dv.getUint8(1))
 				md.meta.game_i = dv.getUint8(1)
+				update_ui()
 				break
 			case MessageType.DATA_JSON:
 				// ^ TODO CONSIDER RENAME
 				console.log("Received DATA Gameindex")
 				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
-				md = JSON.parse(str)
+				md = json_parse(str)
 				update_ui()
 				break
 			//case MessageType.SCOREBOARD_SET_TIMER:
@@ -936,8 +962,8 @@ function connect() {
 	}
 }
 
-connect()
-async_handle_time()
+connect();
+async_handle_time();
 console.log("Client loaded!")
 
 // For debugging

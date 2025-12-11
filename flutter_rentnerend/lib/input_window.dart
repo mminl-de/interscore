@@ -40,8 +40,10 @@ class _InputWindowState extends State<InputWindow> {
 	Future<void> startWS() async {
 		this.ws = InterscoreWS(mdl);
 		ws?.initServer("ws://0.0.0.0:6464");
-		await ws?.initClient("ws://mminl.de:8080");
-		while(!(ws?.client?.boss ?? false)) {
+		//await ws?.initClient("ws://mminl.de:8081");
+		await ws?.initClient("ws://localhost:8081");
+		ws?.client?.sendSignal(MessageType.DATA_JSON);
+		while(!(ws?.client?.boss ?? false) && (ws?.clientConnected ?? false)) {
 			ws?.client?.sendSignal(MessageType.IM_THE_BOSS);
 			await Future.delayed(Duration(seconds: 1));
 		}

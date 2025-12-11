@@ -114,6 +114,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - flat design language
 
 ## backend
+- Handle missing files for copy and ffmpeg commands gracefully (dont call them)
 
 ## Docker
 ### Misc

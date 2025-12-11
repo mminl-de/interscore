@@ -212,6 +212,10 @@ class InterscoreWS {
 		server?.send(msg);
 		client?.send(msg);
 	}
+
+	bool get clientConnected {
+		return (client?._channel ?? null) == null;
+	}
 }
 
 List<int>? signalToMsg(MessageType msg, Matchday md) {
