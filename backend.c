@@ -153,6 +153,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		case PLS_SEND_WIDGET_LIVETABLE_ON:
 		case PLS_SEND_WIDGET_SCOREBOARD_ON:
 		case PLS_SEND_GAME_ACTION:
+			printf("DEBUG: clients.boss: %p\n", clients.boss);
 			ws_send(clients.boss, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
 			break;
 
@@ -185,13 +186,16 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 				obs_switch_scene("live");
 			break;
 		}
-		case DATA_IM_BOSS:
-			if(msg_len < 2 || !msg[1]) break;
+		case IM_THE_BOSS:
+			if(msg_len < 2 || !msg[1]) { printf("Boss sent illegal message\n"); break;}
 			if(clients.boss != NULL) {
 				printf("WARN: Con %lu is trying to be boss, but %lu is already!\n", con->id, clients.boss->id);
 				break;
 			}
+			printf("setting boss: %p\n", con);
 			clients.boss = con;
+			char tmp[] = {DATA_IM_BOSS, true};
+			mg_ws_send(clients.boss, &tmp, 2, WEBSOCKET_OP_BINARY);
 			break;
 		case DATA_GAMEINDEX:
 			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
@@ -329,6 +333,8 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	case MG_EV_WRITE:
 	case MG_EV_HTTP_HDRS:
 	case MG_EV_WS_CTL:
+	case MG_EV_ERROR:
+	case MG_EV_RESOLVE:
 		break;
 	default:
 		printf("WARN: Ignoring unknown signal from OBS: %d \n", ev);
@@ -350,12 +356,14 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 				struct Client *tmp = clients.first->next;
 				free(clients.first);
 				clients.first = tmp;
-			}
-			for(struct Client *c = clients.first; c->next != NULL; c = c->next) {
-				if(c->next->con == con) {
-					struct Client *tmp = c->next->next;
-					free(c->next);
-					c->next = tmp;
+			} else {
+				for(struct Client *c = clients.first; c->next != NULL; c = c->next) {
+					if(c->next->con == con) {
+						struct Client *tmp = c->next->next;
+						free(c->next);
+						c->next = tmp;
+						break;
+					}
 				}
 			}
 			printf("WARN: Client %lu disconnected!\n", con->id);
@@ -392,6 +400,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		case MG_EV_READ:
 		case MG_EV_WRITE:
 		case MG_EV_HTTP_HDRS:
+		case MG_EV_WS_CTL:
 			break;
 		default:
 			printf("WARN: Ignoring unknown WS_Signal from client: %d\n", ev);
@@ -406,12 +415,12 @@ void *mongoose_update(void *) {
 		mg_mgr_poll(&mgr_svr, 20);
 		mg_mgr_poll(&mgr_obs, 20);
 		if (!con_obs) {
-			time_t now = time(NULL);
-			if(now - last_obs_con_attempt >= obs_reconnect_interval) {
-				printf("INFO: Trying to reconnect to OBS...\n");
-				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
-				last_obs_con_attempt = now;
-			}
+			//time_t now = time(NULL);
+			//if(now - last_obs_con_attempt >= obs_reconnect_interval) {
+			//	printf("INFO: Trying to reconnect to OBS...\n");
+			//	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+			//	last_obs_con_attempt = now;
+			//}
 		} else if (!replay_buffer_status) {
 			time_t now = time(NULL);
 			if(now - last_replay_buffer_attempt >= replay_buffer_activation_interval) {
@@ -474,10 +483,10 @@ int main(int argc, char *argv[]) {
 	create_replay_dirs();
 
 	// WebSocket as Client(OBS) stuff
-	mg_mgr_init(&mgr_obs);
-	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
-	last_obs_con_attempt = time(NULL);
-	printf("INFO: Trying to connect to OBS...\n");
+	//mg_mgr_init(&mgr_obs);
+	//mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+	//last_obs_con_attempt = time(NULL);
+	//printf("INFO: Trying to connect to OBS...\n");
 
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);

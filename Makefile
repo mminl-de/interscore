@@ -42,7 +42,7 @@ r-run:
 
 js:
 	m4 -DTS MessageType.m4 > MessageType.ts
-	tsc # Config is in tsconfig.json
+	bun build frontend/script.ts --target browser --outdir ./frontend --minify
 
 flutter:
 	m4 -DDART MessageType.m4 > flutter_rentnerend/lib/MessageType.dart
