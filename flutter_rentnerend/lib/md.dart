@@ -264,6 +264,8 @@ class Meta with _$Meta {
 		@Default(false) bool widgetLiveplan,
 		@Default(false) bool widgetGamestart,
 		@Default(false) bool widgetAd,
+		@Default(false) bool streamStarted,
+		@Default(false) bool replayStarted,
 		required List<Format> formats,
 	}) = _Meta;
 

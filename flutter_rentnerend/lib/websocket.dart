@@ -247,6 +247,10 @@ List<int>? signalToMsg(MessageType msg, Matchday md) {
 		return [msg.value, md.meta.widgetGamestart ? 1 : 0];
 	else if(msg == MessageType.DATA_WIDGET_AD_ON)
 		return [msg.value, md.meta.widgetAd ? 1 : 0];
+	else if(msg == MessageType.DATA_OBS_STREAM_ON)
+		return [msg.value, md.meta.streamStarted ? 1 : 0];
+	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
+		return [msg.value, md.meta.replayStarted ? 1 : 0];
 	else
 		return [msg.value];
 	return null;

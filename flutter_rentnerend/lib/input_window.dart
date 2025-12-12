@@ -40,8 +40,8 @@ class _InputWindowState extends State<InputWindow> {
 	Future<void> startWS() async {
 		this.ws = InterscoreWS(mdl);
 		ws?.initServer("ws://0.0.0.0:6464");
-		//await ws?.initClient("ws://mminl.de:8081");
-		await ws?.initClient("ws://localhost:8081");
+		await ws?.initClient("ws://mminl.de:8081");
+		//await ws?.initClient("ws://localhost:8081");
 		ws?.client?.sendSignal(MessageType.DATA_JSON);
 		while(!(ws?.client?.boss ?? false) && (ws?.clientConnected ?? false)) {
 			ws?.client?.sendSignal(MessageType.IM_THE_BOSS);
@@ -325,7 +325,15 @@ class _InputWindowState extends State<InputWindow> {
 				SizedBox(height: height, child: buttonWithIcon(context, () {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
 					ws?.sendSignal(MessageType.DATA_WIDGET_AD_ON);
-				}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd))
+				}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
+					ws?.sendSignal(MessageType.DATA_OBS_STREAM_ON);
+				}, Icons.arrow_upward_rounded, inverted: md.meta.streamStarted)),
+				SizedBox(height: height, child: buttonWithIcon(context, () {
+					mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.replayStarted));
+					ws?.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
+				}, Icons.arrow_upward_rounded, inverted: md.meta.replayStarted))
 			])
 		);
 	}
