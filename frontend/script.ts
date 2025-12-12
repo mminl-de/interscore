@@ -942,7 +942,7 @@ function connect() {
 				break
 			case MessageType.DATA_JSON:
 				// ^ TODO CONSIDER RENAME
-				console.log("Received DATA Gameindex")
+				console.log("Received DATA JSON")
 				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
 				md = json_parse(str)
 				update_ui()

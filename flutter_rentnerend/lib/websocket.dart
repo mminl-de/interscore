@@ -142,6 +142,7 @@ class _WSClient {
 		else if(msg[0] == MessageType.DATA_GAMESCOUNT.value);
 		else if(msg[0] == MessageType.DATA_IM_BOSS.value) {
 			if(msg.length < 2) return;
+			debugPrint("Am I the boss? ${msg[1]}");
 			this.boss = msg[1] == 1 ? true : false;
 		}
 		else if(msg[0] == MessageType.DATA_JSON.value) {
@@ -214,7 +215,7 @@ class InterscoreWS {
 	}
 
 	bool get clientConnected {
-		return (client?._channel ?? null) == null;
+		return (client?._channel ?? null) != null;
 	}
 }
 
@@ -251,6 +252,8 @@ List<int>? signalToMsg(MessageType msg, Matchday md) {
 		return [msg.value, md.meta.streamStarted ? 1 : 0];
 	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
 		return [msg.value, md.meta.replayStarted ? 1 : 0];
+	else if(msg == MessageType.IM_THE_BOSS)
+		return [msg.value, 1];
 	else
 		return [msg.value];
 	return null;
