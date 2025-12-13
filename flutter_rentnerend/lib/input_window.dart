@@ -77,7 +77,7 @@ class _InputWindowState extends State<InputWindow> {
 				content: const Text("Do you want to save? This will overwrite the original"),
 				actions: [
 				TextButton(onPressed: () => Navigator.pop(context, 0), child: const Text("Stay")),
-				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Dont Save")),
+				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Don't Save")),
 				TextButton(onPressed: () => Navigator.pop(context, 2), child: const Text("Save")),
 				],
 			),
