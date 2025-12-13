@@ -39,7 +39,7 @@ class _InputWindowState extends State<InputWindow> {
 
 	Future<void> startWS() async {
 		this.ws = InterscoreWS(mdl);
-		//ws?.initServer("ws://0.0.0.0:6464");
+		ws?.initServer("ws://0.0.0.0:6464");
 		await ws?.initClient("ws://mminl.de:8081");
 		//await ws?.initClient("ws://localhost:8081");
 		ws?.client?.sendSignal(MessageType.DATA_JSON);

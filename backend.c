@@ -391,7 +391,10 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
-			handle_message((enum MessageType *) m->data.buf, m->data.len, con);
+			if(m->flags & WEBSOCKET_OP_TEXT) {
+				printf("FRONTEND: %.*s\n", (int) m->data.len, m->data.buf);
+			} else
+				handle_message((enum MessageType *) m->data.buf, m->data.len, con);
 			break;
 		}
 		// Signals not worth logging

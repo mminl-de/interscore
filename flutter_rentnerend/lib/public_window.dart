@@ -40,9 +40,7 @@ class _PublicWindowState extends State<PublicWindow> {
 	Widget blockTeams(double width, double height, Matchday md) {
 		const double paddingHorizontal = 16.0;
 		const double paddingVertical = 0;
-		final switchSideWidth = width * 0.1;
-		final forwardBackwardWidth = width * 0.05;
-		final teamNameWidth = (width-switchSideWidth-forwardBackwardWidth*2-paddingHorizontal*2) / 2;
+		final teamNameWidth = (width-paddingHorizontal*2) / 2;
 		final gameNameHeight = height * 0.35;
 		final teamsHeight = height - gameNameHeight;
 
@@ -89,11 +87,7 @@ class _PublicWindowState extends State<PublicWindow> {
 	}
 
 	Widget blockGoals(double width, double height, Matchday md) {
-		const double paddingHorizontal = 16;
-		const double paddingVertical = 8;
-
-		final upDownHeight = height * 0.15;
-		final textHeight = height - upDownHeight * 2 - paddingVertical * 2;
+		final textHeight = height;
 
 		int t1 = 1 + (md.meta.sidesInverted ? 1 : 0 );
 		int t2 = 2 - (md.meta.sidesInverted ? 1 : 0 );
@@ -101,32 +95,20 @@ class _PublicWindowState extends State<PublicWindow> {
 		return SizedBox(
 			width: width,
 			height: height,
-			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
-				child: Row( children: [
-					//Expanded( child: Column(spacing: -(height * 0.05), children:[
-					Expanded( child: Column(children:[
-						SizedBox(height: textHeight, child: Center(child:
-							AutoSizeText(md.currentGame.teamGoals(t1).toString(),
-							maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-					])),
-					//Expanded( child: Column(spacing: -(height * 0.05), children:[
-					Expanded( child: Column(children:[
-						SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-					])),
-				])
-			)
+			child: Row( children: [
+				Expanded( child: Column(children:[
+					SizedBox(height: textHeight, child: Center(child:
+						AutoSizeText(md.currentGame.teamGoals(t1).toString(),
+						maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+				])),
+				Expanded( child: Column(children:[
+					SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+				])),
+			])
 		);
 	}
 
 	Widget blockTime(double width, double height, Matchday md) {
-		const double paddingHorizontal = 16;
-		const double paddingVertical = 8;
-
-		final upDownWidth = width * 0.05;
-		final pauseResetHeight = height * 0.2;
-		final textHeight = height - pauseResetHeight - paddingVertical * 2;
-		final pauseResetWidth = width/2 - (upDownWidth * 4 + (paddingHorizontal/2 * 5));
-
 		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
 		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
@@ -134,9 +116,8 @@ class _PublicWindowState extends State<PublicWindow> {
 		return SizedBox(
 			width: width,
 			height: height,
-			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
-				child: SizedBox(height: textHeight, width: pauseResetWidth, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-		));
+			child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000))),
+		);
 	}
 
 	@override
@@ -144,15 +125,14 @@ class _PublicWindowState extends State<PublicWindow> {
 		final screenHeight = MediaQuery.of(context).size.height;
 		final screenWidth = MediaQuery.of(context).size.width;
 
-		final blockTeamsHeight = screenHeight * 0.18;
-		final blockGoalsHeight = screenHeight * 0.3;
-		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight - screenHeight * 0.1;
+		final blockTeamsHeight = screenHeight * 0.25;
+		final blockGoalsHeight = screenHeight * 0.35;
+		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight;
 
 		// debugPrint("Matchday: ${mdl.value}\n\n");
 		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
 		return PopScope(
 			child: Scaffold(
-				appBar: AppBar(title: const Text('Input Window')),
 				body: ValueListenableBuilder<Matchday>(
 					valueListenable: mdl,
 					builder: (context, md, _) {

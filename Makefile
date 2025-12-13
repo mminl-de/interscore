@@ -41,6 +41,7 @@ r-run:
 	rentnerend/interscore
 
 js:
+	m4 -DTS MessageType.m4 > frontend/MessageType.ts
 	m4 -DTS MessageType.m4 > MessageType.ts
 	bun build frontend/script.ts --target browser --outdir ./frontend --minify
 
