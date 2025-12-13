@@ -42,6 +42,7 @@ Future<String?> inputJsonLoad() async {
 	// if we have a state file, we load it instead of the original input file
 	// State files get removed when closing the program normally
 	debugPrint("cache path: ${cacheDir.path}/interscore/matchday_state.json");
+	debugPrint("doc path: ${docDir.path}/interscore/input.json");
 	file = File('${cacheDir.path}/interscore/matchday_state.json');
 	if(!file.existsSync()) {
 		createDir('${docDir.path}/interscore/');

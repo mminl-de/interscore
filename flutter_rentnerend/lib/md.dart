@@ -29,7 +29,7 @@ class Matchday with _$Matchday {
 
 	Format? get currentFormat {
 		final String? name = currentGame.format.name;
-		if(name == null) return null;
+		if (name == null) return null;
 		return meta.formats.firstWhereOrNull(
 			(f) => f.name == name
 		);
@@ -37,13 +37,13 @@ class Matchday with _$Matchday {
 
 	GamePart? get currentGamePart {
 		final Format? format = currentFormat;
-		if(format == null) return null;
-		if(meta.currentGamepart >= format.gameparts.length) return null;
+		if (format == null) return null;
+		if (meta.currentGamepart >= format.gameparts.length) return null;
 		return format.gameparts[meta.currentGamepart];
 	}
 
 	Matchday setGameIndex(int index) {
-		if(index < 0 || index >= games.length) return this;
+		if (index < 0 || index >= games.length) return this;
 		debugPrint("Setting Gameindex: ${meta.gameIndex} -> ${index}");
 		// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
 		// from the last game, because they arent resolved anymore
@@ -61,7 +61,7 @@ class Matchday with _$Matchday {
 			debugPrint("resolve game ${i}");
 			GameTeamSlot? t1 = games[i].team1.resolveQuery(this);
 			GameTeamSlot? t2 = games[i].team2.resolveQuery(this);
-			if(t1 == null || t2 == null) return this;
+			if (t1 == null || t2 == null) return this;
 			new_games[i] = games[i].copyWith(
 				team1: t1,
 				team2: t2,
@@ -102,22 +102,22 @@ class Matchday with _$Matchday {
 
 	Matchday goalRemoveLast(int team) {
 		Game g = currentGame;
-		if(g.actions == null || g.actions!.isEmpty) return this;
+		if (g.actions == null || g.actions!.isEmpty) return this;
 
 		// Find last index of a goal for the team
 		final lastGoalIndex = g.actions!.lastIndexWhere((a) =>
 			a.mapOrNull(
 				goal: (g) {
 					final scoreChange = g.change.mapOrNull(score: (s) => s.score);
-					if(scoreChange == null) return false;
-					if(team == 1) return scoreChange.t1 > 0;
-					if(team == 2) return scoreChange.t2 > 0;
+					if (scoreChange == null) return false;
+					if (team == 1) return scoreChange.t1 > 0;
+					if (team == 2) return scoreChange.t2 > 0;
 					return false;
 				}
 			) ?? false
 		);
 
-		if(lastGoalIndex == -1) return this;
+		if (lastGoalIndex == -1) return this;
 
 		final newActions = List<GameAction>.from(g.actions!);
 		newActions.removeAt(lastGoalIndex);
@@ -131,26 +131,26 @@ class Matchday with _$Matchday {
 
 	// Time can be positive or negative
 	Matchday timeChange(int change) {
-		if(change + meta.currentTime < 0) change = -meta.currentTime;
+		if (change + meta.currentTime < 0) change = -meta.currentTime;
 		return copyWith(meta: meta.copyWith(currentTime: meta.currentTime + change));
 	}
 
 	// Time can be positive or negative
 	Matchday timeReset() {
-		if(currentGamePart == null) return this;
+		if (currentGamePart == null) return this;
 		int? defTime = currentGamePart!.whenOrNull(timed: (_, len, _, _, _) => len);
-		if(defTime == null) return this;
+		if (defTime == null) return this;
 		return copyWith(meta: meta.copyWith(currentTime: defTime));
 	}
 
 	Matchday setPause(bool pause) {
-		if(meta.paused && meta.currentTime == 0) return this;
+		if (meta.paused && meta.currentTime == 0) return this;
 		return copyWith(meta: meta.copyWith(paused: pause));
 	}
 
 	Matchday setCurrentGamepart(int part) {
 		// TODO add checks for out of bounds
-		if(part < 0) return this;
+		if (part < 0) return this;
 		return copyWith(meta: meta.copyWith(currentGamepart: part));
 	}
 
@@ -158,14 +158,14 @@ class Matchday with _$Matchday {
 	// This allows e.g. for 2 teams who are equally ranked
 	Map<String, int>? rankingFromGroup(String groupName) {
 		final Group? group = groupFromName(groupName);
-		if(group == null) return null; // TODO This should probably crash the program
+		if (group == null) return null; // TODO This should probably crash the program
 
 		final List<String> stats = [for (final t in group.members) t];
 
 		stats.sort((a, b) {
 			int c;
-			if((c = teamPoints(b, groupName) - teamPoints(a, groupName)) != 0) return c;
-			if((c = teamGoalDiff(b, groupName) - teamGoalDiff(a, groupName)) != 0) return c;
+			if ((c = teamPoints(b, groupName) - teamPoints(a, groupName)) != 0) return c;
+			if ((c = teamGoalDiff(b, groupName) - teamGoalDiff(a, groupName)) != 0) return c;
 			return teamGoals(b, groupName) - teamGoals(a, groupName);
 		});
 
@@ -173,7 +173,7 @@ class Matchday with _$Matchday {
 		int currentRank = 1;
 
 		for (int i=0; i < stats.length; i++) {
-			if( i > 0 &&
+			if ( i > 0 &&
 			    (teamPoints(stats[i], groupName) != teamPoints(stats[i-1], groupName) ||
 				 teamGoalDiff(stats[i], groupName) != teamGoalDiff(stats[i-1], groupName) ||
 				 teamGoals(stats[i], groupName) != teamGoals(stats[i-1], groupName)))
@@ -186,20 +186,20 @@ class Matchday with _$Matchday {
 
 	// Gives back Map of all games the team played and an
 	Map<Game, int> _teamGamesPlayed(String t, String group) {
-		if(groupFromName(group) == null); // TODO crash the program?
+		if (groupFromName(group) == null); // TODO crash the program?
 
 		Map<Game, int> gamesPlayed = Map<Game, int>();
 		for(int i=0; i < meta.gameIndex; i++) {
 			Game game = games[i];
-			if(game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
+			if (game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
 			int? gameTeamIndex;
-			if(game.team1.map(
+			if (game.team1.map(
 			    byName: (t1) => t == t1.name,
 				byQueryResolved: (t1) => t == t1.name,
 				byQuery: (t1) => false,
 			))
 				gameTeamIndex = 1;
-			else if(game.team2.map(
+			else if (game.team2.map(
 				byName: (t2) => t == t2.name,
 				byQueryResolved: (t2) => t == t2.name,
 				byQuery: (t2) => false)
@@ -216,7 +216,7 @@ class Matchday with _$Matchday {
 		int points = 0;
 		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
 			int goalsDiff = g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
-			if(goalsDiff > 0) points += 3;
+			if (goalsDiff > 0) points += 3;
 			else if (goalsDiff == 0) points++;
 		});
 		return points;
@@ -288,12 +288,12 @@ class Game with _$Game {
 	}) = _Game;
 
 	int teamGoals(int team) {
-		if(actions == null || actions!.isEmpty) return 0;
+		if (actions == null || actions!.isEmpty) return 0;
 
 		return actions!.whereType<_GameActionGoal>().fold(0, (sum, action) {
 			final score = action.change.map(score: (s) => s.score);
-			if(team == 1) return sum + score.t1;
-			if(team == 2) return sum + score.t2;
+			if (team == 1) return sum + score.t1;
+			if (team == 2) return sum + score.t2;
 			return sum;
 		});
 	}
@@ -301,16 +301,16 @@ class Game with _$Game {
 	// returns 1/2 if they are the winner and 0 in case of draw
 	int get winner {
 		final goalDiff = teamGoals(2) - teamGoals(1);
-		if(goalDiff < 0) return 1;
-		if(goalDiff > 0) return 2;
+		if (goalDiff < 0) return 1;
+		if (goalDiff > 0) return 2;
 		return goalDiff;
 	}
 
 	// returns 1/2 if they are the loser and 0 in case of draw
 	int get loser {
 		final goalDiff = teamGoals(2) - teamGoals(1);
-		if(goalDiff < 0) return 2;
-		if(goalDiff > 0) return 1;
+		if (goalDiff < 0) return 2;
+		if (goalDiff > 0) return 1;
 		return goalDiff;
 	}
 
@@ -432,7 +432,7 @@ extension GameTeamSlotEx on GameTeamSlot {
 			byQueryResolved: (_) => this,
 			byQuery: (gts) {
 				final String? name = GameQuery.resolveTeam(gts.query, m)?[0];
-				if(name == null) return null;
+				if (name == null) return null;
 				return GameTeamSlot.byQueryResolved(name: name, q: gts);
 			}
 		);
@@ -454,12 +454,12 @@ class GameQuery with _$GameQuery {
 			groupPlace: (e) => _resolveTeamGroupPlace(e, m),
 			gameWinner: (e) {
 				final winner = _resolveTeamGameWinner(e, m);
-				if(winner == null) return null;
+				if (winner == null) return null;
 				return [winner];
 			},
 			gameLoser: (e) {
 				final loser = _resolveTeamGameLoser(e, m);
-				if(loser == null) return null;
+				if (loser == null) return null;
 				return [loser];
 
 			}
@@ -470,10 +470,10 @@ class GameQuery with _$GameQuery {
 
 	static List<String>? _resolveTeamGroupPlace(_GameQueryByGroupPlace gq, Matchday m) {
 		Group? g = m.groups.firstWhereIndexedOrNull((_, group) => gq.group == group.name);
-		if(g == null) return null;
+		if (g == null) return null;
 
 		Map<String, int>? groupRankingMap = m.rankingFromGroup(gq.group);
-		if(groupRankingMap == null) return null;
+		if (groupRankingMap == null) return null;
 		groupRankingMap.forEach((t, i) => debugPrint("[${t}, ${i}],"));
 		groupRankingMap.removeWhere((key, _) => !g.members.contains(key));
 
@@ -482,20 +482,20 @@ class GameQuery with _$GameQuery {
 		debugPrint("Group Ranking 1: ${groupRanking}");
 		debugPrint("gq.place: ${gq.place}");
 		debugPrint("Group Ranking[gq.place]: ${groupRanking[gq.place]}");
-		if(gq.place >= groupRanking.length) return null;
+		if (gq.place >= groupRanking.length) return null;
 
 		List<String> ret = groupRanking
 			.where((e) => e.value == groupRanking[gq.place].value)
 			.map((e) => e.key)
 			.toList();
 		debugPrint("Group Ranking 2: ${ret.map((t) => t).toList()}");
-		if(ret.length == 0) return null;
+		if (ret.length == 0) return null;
 		debugPrint("Group Ranking 3: ${ret.map((t) => t).toList()}");
 		return ret.map((t) => t).toList();
 	}
 
 	static String? _resolveTeamGameWinner(_GameQueryByGameWinner gq, Matchday m) {
-		if(gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		if (gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
 		final Game g = m.games[gq.gameIndex];
 		final int winner = g.winner;
 		final GameTeamSlot winnerTeamSlot = winner == 1 ? g.team1 : g.team2;
@@ -503,7 +503,7 @@ class GameQuery with _$GameQuery {
 	}
 
 	static String? _resolveTeamGameLoser(_GameQueryByGameLoser gq, Matchday m) {
-		if(gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		if (gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
 		final Game g = m.games[gq.gameIndex];
 		final int loser = g.loser;
 		final GameTeamSlot loserTeamSlot = loser == 1 ? g.team1 : g.team2;

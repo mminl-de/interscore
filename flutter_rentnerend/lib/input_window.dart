@@ -1,13 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_rentnerend/MessageType.dart';
+import 'package:flutter/services.dart';
 
+//import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+
+import 'package:flutter_rentnerend/MessageType.dart';
 import 'package:flutter_rentnerend/lib.dart';
 import 'package:flutter_rentnerend/md.dart';
 import 'package:flutter_rentnerend/websocket.dart';
 
+class TogglePauseIntent extends Intent {
+	const TogglePauseIntent();
+}
 
 class InputWindow extends StatefulWidget {
 	const InputWindow({super.key, required this.md});
@@ -19,6 +26,8 @@ class InputWindow extends StatefulWidget {
 }
 
 class _InputWindowState extends State<InputWindow> {
+	// TODO
+	final player = AudioPlayer();
 	late ValueNotifier<Matchday> mdl;
 	InterscoreWS? ws;
 	Timer? ticker;
@@ -68,7 +77,7 @@ class _InputWindowState extends State<InputWindow> {
 				content: const Text("Do you want to save? This will overwrite the original"),
 				actions: [
 				TextButton(onPressed: () => Navigator.pop(context, 0), child: const Text("Stay")),
-				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Dont Save")),
+				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Don't Save")),
 				TextButton(onPressed: () => Navigator.pop(context, 2), child: const Text("Save")),
 				],
 			),
@@ -86,22 +95,49 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void startTimer() {
-		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+		debugPrint("STARTING TIMER BROOOOOOOOOO");
+		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
+			debugPrint("PERIODCIXICJI TIMER BROOOOOOOOOO");
 			final Matchday md = mdl.value;
-			if(!md.meta.paused) {
-				if (md.meta.currentTime == 0){
-					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-					ws?.sendSignal(MessageType.DATA_PAUSE_ON);
-				} else {
+			if (!md.meta.paused) {
+				if (md.meta.currentTime != 0) {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
 					ws?.sendSignal(MessageType.DATA_TIME);
+				}
+				if (mdl.value.meta.currentTime == 0) {
+					debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+					mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+					ws?.sendSignal(MessageType.DATA_PAUSE_ON);
 
-					if(mdl.value.meta.currentTime == 0) {
-						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-						ws?.sendSignal(MessageType.DATA_PAUSE_ON);
-					}
+					// TODO FINAL so far, on Linux, you need this for audio to work:
+					//     gst-plugins-base
+					//     gst-plugins-good
+					//     gst-plugins-bad
+					//     gst-plugins-ugly
+					//     gst-plugins-libav
+					// mb make it self-contained
+					await player.play(AssetSource("sound_game_end_shorter.wav"));
+					//player.setUrl("file://../assets/sound_game_end_shorter.wav");
+					//await player.play();
 				}
 
+				//if (md.meta.currentTime == 0) {
+				//	debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+				//	mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
+				//	ws?.sendSignal(MessageType.DATA_PAUSE_ON);
+
+				//	// TODO NOW
+				//	//player.setUrl("asset://../assets/sound_game_end_shorter.wav");
+				//	await player.play(UrlSource("https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3"));
+				//} else {
+				//	mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+				//	ws?.sendSignal(MessageType.DATA_TIME);
+
+				//	if(mdl.value.meta.currentTime == 0) {
+				//		mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+				//		ws?.sendSignal(MessageType.DATA_PAUSE_ON);
+				//	}
+				//}
 			}
 		});
 	}
@@ -109,6 +145,15 @@ class _InputWindowState extends State<InputWindow> {
 	void stopTimer() {
 		ticker?.cancel();
 		ticker = null;
+	}
+
+	void togglePause(Matchday md) {
+		// We need to reset the timer because otherwise we could disable pause
+		// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
+		stopTimer();
+		mdl.value = md.setPause(!md.meta.paused);
+		ws?.sendSignal(MessageType.DATA_PAUSE_ON);
+		startTimer();
 	}
 
 	Widget blockTeams(double width, double height, Matchday md) {
@@ -265,16 +310,11 @@ class _InputWindowState extends State<InputWindow> {
 						Row( spacing: paddingHorizontal/2, children: [
 							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
 								child: buttonWithIcon(
-									context, () {
-										// We need to reset the timer because otherwise we could disable pause
-										// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
-										stopTimer();
-										mdl.value = md.setPause(!md.meta.paused);
-										ws?.sendSignal(MessageType.DATA_PAUSE_ON);
-										startTimer();
-									},
+									context, () => togglePause(md),
 									md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-									inverted: !md.meta.paused)),
+									inverted: !md.meta.paused
+								)
+							),
 							SizedBox(height: pauseResetHeight, width: pauseResetWidth,
 								child: buttonWithIcon(
 									context,
@@ -355,24 +395,39 @@ class _InputWindowState extends State<InputWindow> {
 			canPop: false,
 			onPopInvokedWithResult: (didPop, _) async {
 				if(didPop) return;
+				// TODO wtf
 				final bool shouldClose = await onWindowClose();
-				if(shouldClose == true)
-					Navigator.of(context).pop();
+				if(shouldClose == true) Navigator.of(context).pop();
 			},
-			child: Scaffold(
-				appBar: AppBar(title: const Text('Input Window')),
-				body: ValueListenableBuilder<Matchday>(
-					valueListenable: mdl,
-					builder: (context, md, _) {
-						return Column(
-							children: [
-								blockTeams(screenWidth, blockTeamsHeight, md),
-								blockGoals(screenWidth, blockGoalsHeight, md),
-								blockTime(screenWidth, blockTimeHeight, md),
-								blockWidgets(screenWidth, blockWidgetsHeight, md)
-							]
-						);
-					}
+			child: Shortcuts(
+				shortcuts: {
+					LogicalKeySet(LogicalKeyboardKey.space): const TogglePauseIntent(),
+				},
+				child: Actions(
+					actions: {
+						TogglePauseIntent: CallbackAction<TogglePauseIntent>(
+							onInvoke: (_) { togglePause(mdl.value); return null; },
+						),
+					},
+					child: Focus(
+						autofocus: true,
+						child: Scaffold(
+							appBar: AppBar(title: const Text('Input Window')),
+							body: ValueListenableBuilder<Matchday>(
+								valueListenable: mdl,
+								builder: (context, md, _) {
+									return Column(
+										children: [
+											blockTeams(screenWidth, blockTeamsHeight, md),
+											blockGoals(screenWidth, blockGoalsHeight, md),
+											blockTime(screenWidth, blockTimeHeight, md),
+											blockWidgets(screenWidth, blockWidgetsHeight, md)
+										]
+									);
+								}
+							)
+						)
+					)
 				)
 			)
 		);
