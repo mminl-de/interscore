@@ -72,7 +72,6 @@ RUN	chown -R obsuser:obsuser /home/obsuser/.config/ && \
 RUN mkdir -p /home/obsuser/frontend/
 COPY frontend/ /home/obsuser/frontend/frontend/
 COPY assets/ /home/obsuser/frontend/assets/
-COPY MessageType.js /home/obsuser/frontend/MessageType.js
 RUN	chown -R obsuser:obsuser /home/obsuser/frontend/ && \
 	chmod -R 700 /home/obsuser/frontend/
 

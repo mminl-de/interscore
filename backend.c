@@ -415,12 +415,12 @@ void *mongoose_update(void *) {
 		mg_mgr_poll(&mgr_svr, 20);
 		mg_mgr_poll(&mgr_obs, 20);
 		if (!con_obs) {
-			//time_t now = time(NULL);
-			//if(now - last_obs_con_attempt >= obs_reconnect_interval) {
-			//	printf("INFO: Trying to reconnect to OBS...\n");
-			//	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
-			//	last_obs_con_attempt = now;
-			//}
+			time_t now = time(NULL);
+			if(now - last_obs_con_attempt >= obs_reconnect_interval) {
+				printf("INFO: Trying to reconnect to OBS...\n");
+				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+				last_obs_con_attempt = now;
+			}
 		} else if (!replay_buffer_status) {
 			time_t now = time(NULL);
 			if(now - last_replay_buffer_attempt >= replay_buffer_activation_interval) {
@@ -483,10 +483,10 @@ int main(int argc, char *argv[]) {
 	create_replay_dirs();
 
 	// WebSocket as Client(OBS) stuff
-	//mg_mgr_init(&mgr_obs);
-	//mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
-	//last_obs_con_attempt = time(NULL);
-	//printf("INFO: Trying to connect to OBS...\n");
+	mg_mgr_init(&mgr_obs);
+	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+	last_obs_con_attempt = time(NULL);
+	printf("INFO: Trying to connect to OBS...\n");
 
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);
