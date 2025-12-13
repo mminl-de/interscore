@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_rentnerend/MessageType.dart';
 
+//import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+
+import 'package:flutter_rentnerend/MessageType.dart';
 import 'package:flutter_rentnerend/lib.dart';
 import 'package:flutter_rentnerend/md.dart';
 import 'package:flutter_rentnerend/websocket.dart';
-
 
 class InputWindow extends StatefulWidget {
 	const InputWindow({super.key, required this.md});
@@ -19,6 +21,8 @@ class InputWindow extends StatefulWidget {
 }
 
 class _InputWindowState extends State<InputWindow> {
+	// TODO
+	final player = AudioPlayer();
 	late ValueNotifier<Matchday> mdl;
 	InterscoreWS? ws;
 	Timer? ticker;
@@ -40,8 +44,8 @@ class _InputWindowState extends State<InputWindow> {
 	Future<void> startWS() async {
 		this.ws = InterscoreWS(mdl);
 		//ws?.initServer("ws://0.0.0.0:6464");
-		await ws?.initClient("ws://mminl.de:8081");
-		//await ws?.initClient("ws://localhost:8081");
+		//await ws?.initClient("ws://mminl.de:8081");
+		await ws?.initClient("ws://localhost:8081");
 		ws?.client?.sendSignal(MessageType.DATA_JSON);
 		debugPrint("${ws?.clientConnected}");
 		while(!(ws?.client?.boss ?? false) && (ws?.clientConnected ?? false)) {
@@ -86,22 +90,49 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void startTimer() {
-		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+		debugPrint("STARTING TIMER BROOOOOOOOOO");
+		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
+			debugPrint("PERIODCIXICJI TIMER BROOOOOOOOOO");
 			final Matchday md = mdl.value;
-			if(!md.meta.paused) {
-				if (md.meta.currentTime == 0){
-					mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-					ws?.sendSignal(MessageType.DATA_PAUSE_ON);
-				} else {
+			if (!md.meta.paused) {
+				if (md.meta.currentTime != 0) {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
 					ws?.sendSignal(MessageType.DATA_TIME);
+				}
+				if (mdl.value.meta.currentTime == 0) {
+					debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+					mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+					ws?.sendSignal(MessageType.DATA_PAUSE_ON);
 
-					if(mdl.value.meta.currentTime == 0) {
-						mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-						ws?.sendSignal(MessageType.DATA_PAUSE_ON);
-					}
+					// TODO FINAL so far, on Linux, you need this for audio to work:
+					//     gst-plugins-base
+					//     gst-plugins-good
+					//     gst-plugins-bad
+					//     gst-plugins-ugly
+					//     gst-plugins-libav
+					// mb make it self-contained
+					await player.play(AssetSource("sound_game_end.mp3"));
+					//player.setUrl("file://../assets/sound_game_end_shorter.wav");
+					//await player.play();
 				}
 
+				//if (md.meta.currentTime == 0) {
+				//	debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+				//	mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
+				//	ws?.sendSignal(MessageType.DATA_PAUSE_ON);
+
+				//	// TODO NOW
+				//	//player.setUrl("asset://../assets/sound_game_end_shorter.wav");
+				//	await player.play(UrlSource("https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3"));
+				//} else {
+				//	mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+				//	ws?.sendSignal(MessageType.DATA_TIME);
+
+				//	if(mdl.value.meta.currentTime == 0) {
+				//		mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+				//		ws?.sendSignal(MessageType.DATA_PAUSE_ON);
+				//	}
+				//}
 			}
 		});
 	}
@@ -355,6 +386,7 @@ class _InputWindowState extends State<InputWindow> {
 			canPop: false,
 			onPopInvokedWithResult: (didPop, _) async {
 				if(didPop) return;
+				// TODO wtf
 				final bool shouldClose = await onWindowClose();
 				if(shouldClose == true)
 					Navigator.of(context).pop();
