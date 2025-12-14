@@ -22,6 +22,7 @@ RUN pacman -Sy --noconfirm \
 	ffmpeg \
 	git \
 	wget \
+	chromium fontconfig freetype2 ttf-dejavu ttf-liberation noto-fonts \
 	pcre geoip mailcap mercurial perl-gd perl-io-socket-ssl perl-fcgi perl-cache-memcached memcached inetutils \
     && pacman -Scc --noconfirm
 
