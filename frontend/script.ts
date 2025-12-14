@@ -1,7 +1,7 @@
 // TODO NOW implement update_queries
-import { z } from "zod";
+import { z } from "zod"; // TODO CONSIDER
 
-import { MessageType } from "../MessageType.js"
+import { MessageType } from "./MessageType.ts"
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // MessageType.ts contains only the enum MessageType and is exported, so backend
 // and rentnerend can use it as well (through #define magic)
@@ -11,7 +11,6 @@ import { MessageType } from "../MessageType.js"
 // TODO FINAL check if each handle is used
 // TODO rewrite string reading
 // TODO decide what to do when rentnerend goes to ENDE ENDE (add gameindex and handle it everywhere?)
-
 
 let socket: WebSocket
 let reconnect_timer: number | null = null;
@@ -68,10 +67,10 @@ let shown = {
 interface Color { r: number, g: number, b: number }
 
 const PenaltySchema = z.object({
-  shooting: z.object({
-    team: z.number(),
-    player: z.number(),
-  }),
+	shooting: z.object({
+		team: z.number(),
+		player: z.number(),
+	}),
 });
 const GamePartTimedSchema = z.object({
 	type: z.literal("timed"),
@@ -103,125 +102,125 @@ const GamePartSchema = z.discriminatedUnion("type", [
 ]);
 
 export const PlayerSchema = z.object({
-  name: z.string(),
-  role: z.string(),
+	name: z.string(),
+	role: z.string(),
 });
 
 export const TeamSchema = z.object({
-  name: z.string(),
-  logo_uri: z.string(),
-  color: z.string(),
-  players: z.array(PlayerSchema),
+	name: z.string(),
+	logo_uri: z.string(),
+	color: z.string(),
+	players: z.array(PlayerSchema),
 });
 
 export const GroupSchema = z.object({
-  name: z.string(),
-  members: z.array(z.string()),
+	name: z.string(),
+	members: z.array(z.string()),
 });
 
 const GameQueryGroupPlaceSchema = z.object({
-    type: z.literal("groupPlace"),
-    group: z.string(),
-    place: z.number(),
+	type: z.literal("groupPlace"),
+	group: z.string(),
+	place: z.number(),
 });
 
 const GameQueryGameWinnerSchema = z.object({
-    type: z.literal("gameWinner"),
-    gameIndex: z.number(),
+	type: z.literal("gameWinner"),
+	gameIndex: z.number(),
 });
 
 const GameQueryGameLoserSchema = z.object({
-    type: z.literal("gameLoser"),
-    gameIndex: z.number(),
+	type: z.literal("gameLoser"),
+	gameIndex: z.number(),
 });
 
 export const GameQuerySchema = z.discriminatedUnion("type", [
-    GameQueryGroupPlaceSchema,
-    GameQueryGameWinnerSchema,
-    GameQueryGameLoserSchema,
+	GameQueryGroupPlaceSchema,
+	GameQueryGameWinnerSchema,
+	GameQueryGameLoserSchema,
 ]);
 
 export const MissingInfoSchema = z.object({
-    reason: z.string(),
+	reason: z.string(),
 });
 
 const GameTeamSlotByNameSchema = z.object({
-    type: z.literal("byName"),
-    name: z.string(),
-    missing: MissingInfoSchema.nullable().optional(),
+	type: z.literal("byName"),
+	name: z.string(),
+	missing: MissingInfoSchema.nullable().optional(),
 });
 
 const GameTeamSlotByQuerySchema = z.object({
-    type: z.literal("byQuery"),
-    query: GameQuerySchema,
-    missing: MissingInfoSchema.nullable().optional(),
+	type: z.literal("byQuery"),
+	query: GameQuerySchema,
+	missing: MissingInfoSchema.nullable().optional(),
 });
 
 const GameTeamSlotByQueryResolvedSchema = z.object({
-    type: z.literal("byQueryResolved"),
-    name: z.string(),
-    q: GameTeamSlotByQuerySchema,
+	type: z.literal("byQueryResolved"),
+	name: z.string(),
+	q: GameTeamSlotByQuerySchema,
 });
 
 export const GameTeamSlotSchema = z.discriminatedUnion("type", [
-    GameTeamSlotByNameSchema,
-    GameTeamSlotByQuerySchema,
-    GameTeamSlotByQueryResolvedSchema,
+	GameTeamSlotByNameSchema,
+	GameTeamSlotByQuerySchema,
+	GameTeamSlotByQueryResolvedSchema,
 ]);
 
 export const GameActionPlayerInvolvedSchema = z.object({
-    name: z.string(),
-    role: z.string(),
+	name: z.string(),
+	role: z.string(),
 });
 
 export const GameFormatSchema = z.object({
-    name: z.string(),
-    decider: z.boolean().default(false),
+	name: z.string(),
+	decider: z.boolean().default(false),
 });
 
 const GameActionBaseSchema = z.object({
-    id: z.number(),
-    time_game: z.number().nullable().default(null),
-    timespan_game: z.number().nullable().default(null),
-    time_unix: z.number().nullable().default(null),
-    timespan_unix: z.number().nullable().default(null),
-    players_involved: z.array(GameActionPlayerInvolvedSchema).nullable().default(null),
-    description: z.string().nullable().default(null),
-    done: z.boolean().default(true),
+	id: z.number(),
+	time_game: z.number().nullable().default(null),
+	timespan_game: z.number().nullable().default(null),
+	time_unix: z.number().nullable().default(null),
+	timespan_unix: z.number().nullable().default(null),
+	players_involved: z.array(GameActionPlayerInvolvedSchema).nullable().default(null),
+	description: z.string().nullable().default(null),
+	done: z.boolean().default(true),
 });
 
 const GameActionGoalSchema = GameActionBaseSchema.extend({
-    type: z.literal("goal"),
-    change: z.object({
-        type: z.literal("score"),
-        score: z.object({
-            '1': z.number().default(0),
-            '2': z.number().default(0),
-        }),
-    }),
-    triggers_action: z.number().nullable().default(null),
+	type: z.literal("goal"),
+	change: z.object({
+		type: z.literal("score"),
+		score: z.object({
+			'1': z.number().default(0),
+			'2': z.number().default(0),
+		}),
+	}),
+	triggers_action: z.number().nullable().default(null),
 });
 
 const GameActionFoulSchema = GameActionBaseSchema.extend({
-    type: z.literal("foul"),
-    triggers_action: z.number().nullable().default(null),
+	type: z.literal("foul"),
+	triggers_action: z.number().nullable().default(null),
 });
 
 const GameActionPenaltySchema = GameActionBaseSchema.extend({
-    type: z.literal("penalty"),
-    // No 'triggers_action' field here, just using base fields
+	type: z.literal("penalty"),
+	// No 'triggers_action' field here, just using base fields
 });
 
 const GameActionOutballSchema = GameActionBaseSchema.extend({
-    type: z.literal("outball"),
-    team: z.number().refine(n => n === 1 || n === 2), // Ensure team is 1 or 2
+	type: z.literal("outball"),
+	team: z.number().refine(n => n === 1 || n === 2), // Ensure team is 1 or 2
 });
 
 export const GameActionSchema = z.discriminatedUnion("type", [
-    GameActionGoalSchema,
-    GameActionFoulSchema,
-    GameActionPenaltySchema,
-    GameActionOutballSchema,
+	GameActionGoalSchema,
+	GameActionFoulSchema,
+	GameActionPenaltySchema,
+	GameActionOutballSchema,
 ]);
 
 const FormatSchema  = z.object({
@@ -239,13 +238,13 @@ const MetaSchema = z.object({
 });
 
 export const GameSchema = z.object({
-    name: z.string(),
-    '1': GameTeamSlotSchema,
-    '2': GameTeamSlotSchema,
-    groups: z.array(z.string()).default([]),
-    format: GameFormatSchema,
-    decider: z.boolean().default(false),
-    actions: z.array(z.any()).default([]),
+	name: z.string(),
+	'1': GameTeamSlotSchema,
+	'2': GameTeamSlotSchema,
+	groups: z.array(z.string()).default([]),
+	format: GameFormatSchema,
+	decider: z.boolean().default(false),
+	actions: z.array(z.any()).default([]),
 });
 
 const MatchdaySchema = z.object({
@@ -850,7 +849,8 @@ function connect() {
 	}
 
 	socket.onmessage = (event: MessageEvent) => {
-		console.debug(`Received: ${event.data}`);
+		console.log(`Received smth`);
+		console.log(`now Received: ${event.data}`);
 		if (!(event.data instanceof ArrayBuffer)) {
 			console.error("The backend didn't send proper binary data. There's nothing we can do...");
 			return;
@@ -858,18 +858,22 @@ function connect() {
 
 		const dv = new DataView(event.data as ArrayBuffer);
 		const mode = dv.getUint8(0);
+		console.log(`mode: ${mode}, ${MessageType.DATA_WIDGET_SCOREBOARD_ON.valueOf()}`);
 
 		switch (mode) {
-			case MessageType.DATA_WIDGET_SCOREBOARD_ON: {
+			case MessageType.DATA_WIDGET_SCOREBOARD_ON.valueOf(): {
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
+				console.log(`show: ${show}`);
 				shown.scoreboard = show;
 				scoreboard.style.opacity = "0"; // TODO READ why is this line present on both show and hide
 				if(show) {
 					scoreboard.style.display = "inline-flex";
 					setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW);
+					console.log(`writing scoreboard!`);
 					write_scoreboard();
 				} else
 					setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE);
+				update_ui()
 				break
 			} case MessageType.DATA_WIDGET_GAMEPLAN_ON: {
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
@@ -881,6 +885,7 @@ function connect() {
 					write_gameplan();
 				} else
 					setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE);
+				update_ui()
 				break
 			} case MessageType.DATA_WIDGET_LIVETABLE_ON: {
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
@@ -892,6 +897,7 @@ function connect() {
 					write_livetable();
 				} else
 					setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE);
+				update_ui()
 				break
 			} case MessageType.DATA_WIDGET_GAMESTART_ON: {
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
@@ -903,6 +909,7 @@ function connect() {
 					write_gamestart();
 				} else
 					setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE);
+				update_ui()
 				break
 			} case MessageType.DATA_WIDGET_AD_ON: { // TODO does this work?
 				const show: boolean = dv.getUint8(1) == 1 ? true : false;
@@ -913,6 +920,7 @@ function connect() {
 					setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW);
 				} else
 					setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
+				update_ui()
 				break
 			//} case MessageType.DATA_GAME_ACTION: {
 			//	const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
