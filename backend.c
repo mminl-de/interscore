@@ -107,7 +107,13 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 		printf("WARN: client is not connected, couldnt send Message: '%*s'\n", len, message);
 		return false;
 	}
-	return mg_ws_send(con, message, len, op) == (size_t) len;
+
+	const unsigned long sent = mg_ws_send(con, message, len, op);
+	if (sent != (unsigned long) len) {
+		fprintf(stderr, "ERR: Expected to send %dB, got %luB\n", len, sent);
+		return false;
+	}
+	return true;
 }
 
 bool create_replay_dirs() {
@@ -205,7 +211,9 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		default:
 			for(struct Client *c = clients.first; c != NULL; c = c->next) {
 				if (c->con == clients.boss) continue;
-				ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
+				printf("sending to :%lu\n", c->con->id);
+				const bool ret = ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
+				if (!ret) printf("\n\n\nOH NO BROOOOO SOMETHING FAILED BROOOO\n");
 			}
 			break;
 	}
