@@ -173,7 +173,7 @@
 		{
 			"name": "GIFHORN I",
 			"logo_uri": "stein.png",
-			"color": "#bedbed",
+			"color": "#b50d48",
 			"players": [
 				{
 					"name": "Christian Kramer",
@@ -188,7 +188,7 @@
 		{
 			"name": "NORDSHAUSEN",
 			"logo_uri": "tann.png",
-			"color": "#bedbed",
+			"color": "#434343",
 			"players": [
 				{
 					"name": "Christian Gallinger",
@@ -203,7 +203,7 @@
 		{
 			"name": "OBERNEULAND",
 			"logo_uri": "leipzig.png",
-			"color": "#bedbed",
+			"color": "#007fe0",
 			"players": [
 				{
 					"name": "Jörn Thranitz",
@@ -218,7 +218,7 @@
 		{
 			"name": "HALLE",
 			"logo_uri": "nordshausen.png",
-			"color": "#bedbed",
+			"color": "#d72d2d",
 			"players": [
 				{
 					"name": "Marvin Kaltofen",
@@ -233,7 +233,7 @@
 		{
 			"name": "GIFHORN II",
 			"logo_uri": "nordshausen.png",
-			"color": "#bedbed",
+			"color": "#b50d48",
 			"players": [
 				{
 					"name": "Maxemilian Nilßon",
