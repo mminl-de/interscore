@@ -304,7 +304,7 @@ function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
 }
 
 // team=0 für Team 1, team=1 für Team 2
-function getScores(g: Game): [scoreT1: number, scoreT2: number] {
+function get_scores(g: Game): [scoreT1: number, scoreT2: number] {
 	console.log(`getting Score for Game:` + JSON.stringify(g));
 	return g.actions.reduce<[number, number]>((acc: [t1: number,t2: number], a: GameAction) => {
 		if (a.type === "goal") return [acc[0] + (a.change.score['1'] || 0), acc[1] + (a.change.score['2'] || 0)];
@@ -413,12 +413,12 @@ function write_scoreboard() {
 	//	else scoreboard_logo_2.src = "../assets/fallback.png"
 	//})
 
-	const scores: [number, number] = getScores(game);
+	const scores: [number, number] = get_scores(game);
 	console.log(`scores: ${scores}`);
 	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString()
 	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString()
 
-	const default_col: string = col2str({r: 255, g: 255, b: 255});
+	const default_col = col2str({r: 255, g: 255, b: 255});
 
 	const left_col = teams[0]?.color ?? default_col;
 	const right_col = teams[1]?.color ?? default_col;
@@ -433,22 +433,23 @@ function write_scoreboard() {
 }
 
 function write_gameplan() {
-	while (gameplan.children.length > 1)
-	gameplan.removeChild(gameplan.lastChild!)
+	while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 
-	const game_n = md.games.length
-	const cur = md.meta.game_i //TODO Index ab 0 so richtig?
+	const game_n = md.games.length;
+	const cur = md.meta.game_i // TODO Index ab 0 so richtig?
 
 	md.games.forEach((g, i) => {
 		const teams = get_teams(g);
-		const scores = getScores(g);
+		const scores = get_scores(g);
 
-		const default_col: string = col2str({r: 255, g: 255, b: 255});
+		const default_col = "white";
 
 		const left_col = teams[0]?.color ?? default_col;
 		const right_col = teams[1]?.color ?? default_col;
+		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!)
 
 		let line = document.createElement("div");
+		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!)
 		line.classList.add("line");
 
 		let t1 = document.createElement("div");
@@ -598,6 +599,9 @@ function write_gamestart() {
 		gamestart_next_t2.innerHTML = teams_next[1]?.name.toString() ?? "[???]";
 		gamestart_next_t2.style.background =
 			gradient2str(str2col(right_col_next), str2coldark(right_col_next));
+		// TODO NOW CONSIDER
+		gamestart_next_t1.style.color = color_font_contrast(str2col(gamestart_next_t1.style.backgroundColor));
+		gamestart_next_t2.style.color = color_font_contrast(str2col(gamestart_next_t2.style.backgroundColor));
 	}
 }
 
@@ -659,14 +663,15 @@ function write_livetable() {
 			name: t.name.toString(),
 			points: (() => {
 				let p: number = 0;
-				for (let j = 0; j <= md.meta.game_i; j++) { // TODO Count the game right now?
+				// TODO NOW CONSIDER <= --> <
+				for (let j = 0; j < md.meta.game_i; j++) { // TODO Count the game right now?
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) {
-						p += (getScores(g)[0] - getScores(g)[1]) ? 3 : 0;
-						p += (getScores(g)[0] - getScores(g)[1] === 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1]) ? 3 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 					} else if (resolve_GameTeamSlot(g[2]) === t) {
-						p += (getScores(g)[0] - getScores(g)[1] < 0) ? 3 : 0;
-						p += (getScores(g)[0] - getScores(g)[1] === 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 3 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 					}
 				}
 				return p
@@ -684,9 +689,9 @@ function write_livetable() {
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] > 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
 					else if (resolve_GameTeamSlot(g[2]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] < 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
 				}
 				return p
 			}) (),
@@ -695,9 +700,9 @@ function write_livetable() {
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] === 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 					else if (resolve_GameTeamSlot(g[2]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] === 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 				}
 				return p
 			}) (),
@@ -706,9 +711,9 @@ function write_livetable() {
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] < 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
 					else if (resolve_GameTeamSlot(g[2]) === t)
-						p += (getScores(g)[0] - getScores(g)[1] > 0) ? 1 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
 				}
 				return p
 			}) (),
@@ -716,8 +721,8 @@ function write_livetable() {
 				let p: number = 0
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
-					if (resolve_GameTeamSlot(g[1]) === t) p += getScores(g)[0];
-					else if (resolve_GameTeamSlot(g[2]) === t) p += getScores(g)[1];
+					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
+					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[1];
 				}
 				return p
 			}) (),
@@ -725,8 +730,8 @@ function write_livetable() {
 				let p: number = 0
 				for (let j = 0; j <= md.meta.game_i; j++) {
 					const g: Game = md.games[j];
-					if (resolve_GameTeamSlot(g[1]) === t) p += getScores(g)[1];
-					else if (resolve_GameTeamSlot(g[2]) === t) p += getScores(g)[0];
+					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
+					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[0];
 				}
 				return p
 			}) (),
