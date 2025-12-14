@@ -58,6 +58,12 @@ class _InputWindowState extends State<InputWindow> {
 			await Future.delayed(Duration(seconds: 1));
 		}
 		debugPrint("finished initializing");
+
+		// TODO NOW NOW CONSIDER
+		Timer.periodic(const Duration(seconds: 10), (_) async {
+			await ws?.initClient("ws://mminl.de:8081");
+			ws?.client?.sendSignal(MessageType.DATA_JSON);
+		});
 	}
 
 	@override
@@ -97,7 +103,6 @@ class _InputWindowState extends State<InputWindow> {
 	void startTimer() {
 		debugPrint("STARTING TIMER BROOOOOOOOOO");
 		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
-			debugPrint("PERIODCIXICJI TIMER BROOOOOOOOOO");
 			final Matchday md = mdl.value;
 			if (!md.meta.paused) {
 				if (md.meta.currentTime != 0) {
