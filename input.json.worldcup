@@ -1,0 +1,2999 @@
+{
+  "meta": {
+    "game_i": 26,
+    "sides_inverted": true,
+    "formats": [
+      {
+        "name": "4M Schießen Best of 4",
+        "gameparts": [
+          {
+            "name": "1. Shoot T1",
+            "penalty": {
+              "shooting": {
+                "team": 0,
+                "player": 0
+              }
+            },
+            "type": "penalty"
+          },
+          {
+            "name": "1. Shoot T2",
+            "penalty": {
+              "shooting": {
+                "team": 1,
+                "player": 0
+              }
+            },
+            "type": "penalty"
+          },
+          {
+            "name": "2. Shoot T1",
+            "penalty": {
+              "shooting": {
+                "team": 0,
+                "player": 1
+              }
+            },
+            "type": "penalty"
+          },
+          {
+            "name": "2. Shoot T2",
+            "penalty": {
+              "shooting": {
+                "team": 1,
+                "player": 1
+              }
+            },
+            "type": "penalty"
+          }
+        ]
+      },
+      {
+        "name": "4M Schießen Overtime Part 1",
+        "gameparts": [
+          {
+            "name": "Shoot T1",
+            "penalty": {
+              "shooting": {
+                "team": 0,
+                "player": 0
+              }
+            },
+            "type": "penalty"
+          },
+          {
+            "name": "Shoot T2",
+            "penalty": {
+              "shooting": {
+                "team": 1,
+                "player": 0
+              }
+            },
+            "type": "penalty"
+          }
+        ]
+      },
+      {
+        "name": "4M Schießen Overtime Part 2",
+        "gameparts": [
+          {
+            "name": "Shoot T1",
+            "penalty": {
+              "shooting": {
+                "team": 0,
+                "player": 1
+              }
+            },
+            "type": "penalty"
+          },
+          {
+            "name": "Shoot T2",
+            "penalty": {
+              "shooting": {
+                "team": 1,
+                "player": 1
+              }
+            },
+            "type": "penalty"
+          }
+        ]
+      },
+      {
+        "name": "4M Schießen Overtime",
+        "gameparts": [
+          {
+            "format": "4M Schießen Overtime Part 2",
+            "decider": true,
+            "type": "format"
+          },
+          {
+            "format": "4M Schießen Overtime Part 2",
+            "decider": true,
+            "type": "format"
+          }
+        ]
+      },
+      {
+        "name": "4M Schießen",
+        "gameparts": [
+          {
+            "format": "4M Schießen Best of 4",
+            "type": "format"
+          },
+          {
+            "format": "4M Schießen Overtime",
+            "repeat": true,
+            "decider": true,
+            "type": "format"
+          }
+        ]
+      },
+      {
+        "name": "Radball Elite",
+        "gameparts": [
+          {
+            "name": "1. HZ",
+            "length": 420,
+            "type": "timed"
+          },
+          {
+            "name": "Halbzeitpause",
+            "length": 120,
+            "sides_inverted": true,
+            "type": "timed"
+          },
+          {
+            "name": "2. HZ",
+            "length": 420,
+            "sides_inverted": true,
+            "type": "timed"
+          },
+          {
+            "name": "Halbzeitpause",
+            "length": 120,
+            "decider": true,
+            "sides_inverted": true,
+            "type": "timed"
+          },
+          {
+            "name": "3. HZ",
+            "length": 420,
+            "decider": true,
+            "sides_inverted": true,
+            "type": "timed"
+          },
+          {
+            "format": "4M Schießen",
+            "decider": true,
+            "type": "format"
+          }
+        ]
+      }
+    ]
+  },
+  "teams": [
+    {
+      "name": "STEIN",
+      "logo_uri": "stein.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Kai Fritsche",
+          "role": "keeper"
+        },
+        {
+          "name": "Lenie Schwarzbauer",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "ZLIN",
+      "logo_uri": "tann.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Luca Schmitt",
+          "role": "keeper"
+        },
+        {
+          "name": "Patrick",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "SULZ",
+      "logo_uri": "leipzig.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Paul Fiebig",
+          "role": "keeper"
+        },
+        {
+          "name": "Max Hermann",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "MOSNANG",
+      "logo_uri": "nordshausen.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Andy Reichenbach",
+          "role": "keeper"
+        },
+        {
+          "name": "Manuel Kopp",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "DORLISHEIM",
+      "logo_uri": "nordshausen.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Christian Galinger",
+          "role": "keeper"
+        },
+        {
+          "name": "Laras Degenhardt",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "ALTDORF",
+      "logo_uri": "gifhorn.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Corvin Rowold",
+          "role": "keeper"
+        },
+        {
+          "name": "Christian Kramer",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "DORNBIRN",
+      "logo_uri": "gifhorn.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Jan Rowold",
+          "role": "keeper"
+        },
+        {
+          "name": "Maxemilian Nilßon",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "GROẞKOSCHEN",
+      "logo_uri": "reideburg.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Paul Berndt",
+          "role": "keeper"
+        },
+        {
+          "name": "Max Berndt",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "CRONENBURG",
+      "logo_uri": "reideburg.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Paul Berndt",
+          "role": "keeper"
+        },
+        {
+          "name": "Max Berndt",
+          "role": "field"
+        }
+      ]
+    },
+    {
+      "name": "SANGERHAUSEN",
+      "logo_uri": "reideburg.png",
+      "color": "#bedbed",
+      "players": [
+        {
+          "name": "Paul Berndt",
+          "role": "keeper"
+        },
+        {
+          "name": "Max Berndt",
+          "role": "field"
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "A",
+      "members": [
+        "STEIN",
+        "ZLIN",
+        "SULZ",
+        "MOSNANG",
+        "DORLISHEIM"
+      ]
+    },
+    {
+      "name": "B",
+      "members": [
+        "ALTDORF",
+        "DORNBIRN",
+        "CRONENBURG",
+        "SANGERHAUSEN",
+        "GROẞKOSCHEN"
+      ]
+    }
+  ],
+  "games": [
+    {
+	  "name": "1. Spiel Gruppe A",
+      "1": {
+        "name": "STEIN",
+        "missing": {
+          "reason": "Verspätung"
+        },
+        "type": "byName"
+      },
+      "2": {
+        "name": "DORLISHEIM",
+        "missing": {
+          "reason": "Krankheit"
+        },
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "time_game": 34,
+          "players_involved": [
+            {
+              "name": "CHRISTIAN KRAMER",
+              "role": "scorer"
+            },
+            {
+              "name": "Luca Schmitt",
+              "role": "keeper"
+            },
+            {
+              "name": "Corvin Rowold",
+              "role": "ineligible"
+            },
+            {
+              "name": "Patrick",
+              "role": "defender"
+            }
+          ],
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "description": "Unhaltbar in die obere rechte Ecke",
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "time_game": 60,
+          "players_involved": [
+            {
+              "name": "CHRISTIAN KRAMER",
+              "role": "fouler"
+            },
+            {
+              "name": "Luca Schmitt",
+              "role": "fouled"
+            },
+            {
+              "name": "Patrick Meier",
+              "role": "referee"
+            }
+          ],
+          "triggers_action": 2,
+          "description": "Christian Kramer hält Luca Schmitt mehrere Sekunden fest, Patrick Meier entscheided auf 4 Meter",
+          "type": "foul"
+        },
+        {
+          "id": 2,
+          "time_game": 60,
+          "timespan_game": 11,
+          "players_involved": [
+            {
+              "name": "Corvin Rowold",
+              "role": "keeper"
+            },
+            {
+              "name": "Luca Schmitt",
+              "role": "shooter"
+            }
+          ],
+          "description": "Luca Schmitt verschießt den 4 Meter gegen die Latte ins Aus",
+          "type": "penalty"
+        },
+        {
+          "id": 3,
+          "time_game": 72,
+          "team": 1,
+          "done": false,
+          "type": "outball"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 11,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "2. Spiel Gruppe A",
+      "1": {
+        "name": "ZLIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SULZ",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "3. Spiel Gruppe A",
+      "1": {
+        "name": "MOSNANG",
+        "type": "byName"
+      },
+      "2": {
+        "name": "DORLISHEIM",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 11,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "4. Spiel Gruppe A",
+      "1": {
+        "name": "STEIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SULZ",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 11,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 12,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 13,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 14,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 15,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "5. Spiel Gruppe A",
+      "1": {
+        "name": "ZLIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "MOSNANG",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "6. Spiel Gruppe A",
+      "1": {
+        "name": "SULZ",
+        "type": "byName"
+      },
+      "2": {
+        "name": "DORLISHEIM",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "7. Spiel Gruppe A",
+      "1": {
+        "name": "STEIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "MOSNANG",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "8. Spiel Gruppe A",
+      "1": {
+        "name": "ZLIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "DORLISHEIM",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "9. Spiel Gruppe A",
+      "1": {
+        "name": "SULZ",
+        "type": "byName"
+      },
+      "2": {
+        "name": "MOSNANG",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "10. Spiel Gruppe A",
+      "1": {
+        "name": "STEIN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "ZLIN",
+        "type": "byName"
+      },
+      "groups": [
+        "A"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "1. Spiel Gruppe B",
+      "1": {
+        "name": "ALTDORF",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SANGERHAUSEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 11,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 12,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 13,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 14,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 15,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "2. Spiel Gruppe B",
+      "1": {
+        "name": "DORNBIRN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "GROẞKOSCHEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "3. Spiel Gruppe B",
+      "1": {
+        "name": "CRONENBURG",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SANGERHAUSEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "4. Spiel Gruppe B",
+      "1": {
+        "name": "ALTDORF",
+        "type": "byName"
+      },
+      "2": {
+        "name": "GROẞKOSCHEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "5. Spiel Gruppe B",
+      "1": {
+        "name": "DORNBIRN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "CRONENBURG",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "6. Spiel Gruppe B",
+      "1": {
+        "name": "GROẞKOSCHEN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SANGERHAUSEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "7. Spiel Gruppe B",
+      "1": {
+        "name": "ALTDORF",
+        "type": "byName"
+      },
+      "2": {
+        "name": "CRONENBURG",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "8. Spiel Gruppe B",
+      "1": {
+        "name": "DORNBIRN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "SANGERHAUSEN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "9. Spiel Gruppe B",
+      "1": {
+        "name": "GROẞKOSCHEN",
+        "type": "byName"
+      },
+      "2": {
+        "name": "CRONENBURG",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+	  "name": "10. Spiel Gruppe B",
+      "1": {
+        "name": "ALTDORF",
+        "type": "byName"
+      },
+      "2": {
+        "name": "DORNBIRN",
+        "type": "byName"
+      },
+      "groups": [
+        "B"
+      ],
+      "format": {
+        "name": "Radball Elite"
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "Spiel um Platz 9",
+      "1": {
+        "name": "ZLIN",
+        "q": {
+          "query": {
+            "group": "A",
+            "place": 4,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "CRONENBURG",
+        "q": {
+          "query": {
+            "group": "B",
+            "place": 4,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "1. Halbfinale",
+      "1": {
+        "name": "STEIN",
+        "q": {
+          "query": {
+            "group": "A",
+            "place": 0,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "ALTDORF",
+        "q": {
+          "query": {
+            "group": "B",
+            "place": 1,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "2. Halbfinale",
+      "1": {
+        "name": "MOSNANG",
+        "q": {
+          "query": {
+            "group": "A",
+            "place": 1,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "GROẞKOSCHEN",
+        "q": {
+          "query": {
+            "group": "B",
+            "place": 0,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "Spiel um Platz 7",
+      "1": {
+        "name": "DORLISHEIM",
+        "q": {
+          "query": {
+            "group": "A",
+            "place": 3,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "SANGERHAUSEN",
+        "q": {
+          "query": {
+            "group": "B",
+            "place": 3,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "Spiel um Platz 5",
+      "1": {
+        "name": "SULZ",
+        "q": {
+          "query": {
+            "group": "A",
+            "place": 2,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "DORNBIRN",
+        "q": {
+          "query": {
+            "group": "B",
+            "place": 2,
+            "type": "groupPlace"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 5,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 6,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 7,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 8,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 9,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 10,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 11,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "Spiel um Platz 3",
+      "1": {
+        "name": "ALTDORF",
+        "q": {
+          "query": {
+            "gameIndex": 21,
+            "type": "gameLoser"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "MOSNANG",
+        "q": {
+          "query": {
+            "gameIndex": 22,
+            "type": "gameLoser"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    },
+    {
+      "name": "Finale",
+      "1": {
+        "name": "STEIN",
+        "q": {
+          "query": {
+            "gameIndex": 21,
+            "type": "gameWinner"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "2": {
+        "name": "GROẞKOSCHEN",
+        "q": {
+          "query": {
+            "gameIndex": 22,
+            "type": "gameWinner"
+          },
+          "type": "byQuery"
+        },
+        "type": "byQueryResolved"
+      },
+      "format": {
+        "name": "Radball Elite",
+        "decider": true
+      },
+      "actions": [
+        {
+          "id": 0,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 1,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 2,
+          "change": {
+            "score": {
+              "2": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 3,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        },
+        {
+          "id": 4,
+          "change": {
+            "score": {
+              "1": 1
+            }
+          },
+          "type": "goal"
+        }
+      ]
+    }
+  ]
+}
