@@ -51,7 +51,7 @@ const decoder = new TextDecoder("utf-8")
 const CARD_SHOW_LENGTH = 7_000
 const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
-const TIMEOUT_SHOW = 10
+const TIMEOUT_SHOW = 200
 const TIMEOUT_HIDE = 500
 const DARKER_COLOR_BIAS: Color = { r: 30, g: 70, b: 100 } // TODO TEST
 const COLOR_CONTRAST_THRESHOLD = 191
@@ -401,8 +401,13 @@ function write_scoreboard() {
 
 	const teams = get_teams(game);
 
+	console.log(teams);
+	console.log(`TEAM 1: ${teams[0]?.name}`);
+	console.log(`TEAM 2: ${teams[1]?.name}`);
 	scoreboard_t1.innerHTML = teams[0]?.name ?? '[???]';
 	scoreboard_t2.innerHTML = teams[1]?.name ?? '[???]';
+	console.log(`HTML T1: ${scoreboard_t1.innerHTML}`);
+	console.log(`HTML T2: ${scoreboard_t2.innerHTML}`);
 
 	//file_exists("../" + teams[0]?.logo_uri).then((exists: boolean) => {
 	//	if (exists) scoreboard_logo_1.src = "../" + teams[0]?.logo_uri
@@ -599,7 +604,6 @@ function write_gamestart() {
 		gamestart_next_t2.innerHTML = teams_next[1]?.name.toString() ?? "[???]";
 		gamestart_next_t2.style.background =
 			gradient2str(str2col(right_col_next), str2coldark(right_col_next));
-		// TODO NOW CONSIDER
 		gamestart_next_t1.style.color = color_font_contrast(str2col(gamestart_next_t1.style.backgroundColor));
 		gamestart_next_t2.style.color = color_font_contrast(str2col(gamestart_next_t2.style.backgroundColor));
 	}
@@ -663,7 +667,6 @@ function write_livetable() {
 			name: t.name.toString(),
 			points: (() => {
 				let p: number = 0;
-				// TODO NOW CONSIDER <= --> <
 				for (let j = 0; j < md.meta.game_i; j++) { // TODO Count the game right now?
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) {
@@ -678,7 +681,7 @@ function write_livetable() {
 			}) (),
 			played: (() => {
 				let p: number = 0
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t || resolve_GameTeamSlot(g[2]) === t) p++;
 				}
@@ -686,7 +689,7 @@ function write_livetable() {
 			}) (),
 			won: (() => {
 				let p: number = 0;
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
@@ -697,7 +700,7 @@ function write_livetable() {
 			}) (),
 			tied: (() => {
 				let p: number = 0
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
@@ -708,7 +711,7 @@ function write_livetable() {
 			}) (),
 			lost: (() => {
 				let p: number = 0
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
@@ -719,7 +722,7 @@ function write_livetable() {
 			}) (),
 			goals: (() => {
 				let p: number = 0
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[1];
@@ -728,7 +731,7 @@ function write_livetable() {
 			}) (),
 			goals_taken: (() => {
 				let p: number = 0
-				for (let j = 0; j <= md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[0];
@@ -849,13 +852,34 @@ function connect() {
 	socket.binaryType = "arraybuffer";
 
 	socket.onopen = () => {
+		function toStr(v) {
+			if (typeof v === "string") return v;
+			if (v instanceof Error) return v.stack || v.message;
+			try {
+				return JSON.stringify(v);
+			} catch {
+				return String(v);
+			}
+		}
+		const origLog = console.log;
+		const origErr = console.error;
+		console.log = (...args) => {
+			socket.send(args.map(toStr).join(" "));
+			origLog(...args); // optional
+		};
+
+		console.error = (...args) => {
+			socket.send("[ERROR] " + args.map(toStr).join(" "));
+			origErr(...args); // optional
+		};
+
 		console.log("Connected to WebSocket server!");
 		socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
 	}
 
 	socket.onmessage = (event: MessageEvent) => {
-		console.log(`Received smth`);
-		console.log(`now Received: ${event.data}`);
+		console.log(`Received: stuff`);
+		console.log(`Received: ${event.data}`);
 		if (!(event.data instanceof ArrayBuffer)) {
 			console.error("The backend didn't send proper binary data. There's nothing we can do...");
 			return;
