@@ -504,30 +504,7 @@ int main(int argc, char *argv[]) {
 
 	printf("INFO: Server loaded!\n");
 
-	while (running) {
-		switch (getchar()) {
-			case 'o':
-				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
-				printf("INFO: Trying to connect to OBS...\n");
-				break;
-			case '?':
-				printf(
-					"======= Keyboard options =======\n"
-					"o  connect to obs\n"
-					"\n"
-					"?  print help\n"
-					"q  quit\n"
-					"================================\n"
-				);
-				break;
-			case 'q':
-				running = false;
-				break;
-			case '\n': break;
-			default:
-				fprintf(stderr, "WARN: Invalid input!\n");
-		}
-	}
+	while (running);
 
 	// WebSocket stuff, again
 	if (pthread_join(thread, NULL) != 0) fprintf(stderr, "ERROR: Failed to join thread!\n");
