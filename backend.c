@@ -19,15 +19,15 @@
 #include "MessageType.ts"
 #undef export
 
-struct Client {
+typedef struct {
 	struct mg_connection *con;
 	struct Client *next;
-};
+} Client;
 
-struct ClientsList {
-	struct Client *first;
+typedef struct {
+	Client *first;
 	struct mg_connection *boss;
-};
+} ClientsList;
 
 // Meta
 #define EXIT 'q'
@@ -38,24 +38,25 @@ struct ClientsList {
 #define URL_OBS_DEFAULT "http://0.0.0.0:4444"
 #define REPLAY_PATH_DEFAULT "/home/obsuser/replays"
 
+#define OBS_RECONNECT_INTERVAL 5 // seconds
+
 char *url_server = NULL;
 char *url_obs = NULL;
 char *replay_path = NULL;
 
 void obs_switch_scene(void *scene_name);
-// Return if successful 1 is successfull
+// Return if successful 1 is successfull // TODO what
 bool obs_replay_start();
 
 int gameindex = 0;
 int replays_count[1]; //TODO find out length efficiently
 
 bool running = true;
-// We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-struct ClientsList clients = {.first = NULL, .boss = NULL};
+// We pretty much have to do this in global scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
+ClientsList clients = {.first = NULL, .boss = NULL};
 struct mg_connection *con_obs = NULL;
 struct mg_mgr mgr_svr, mgr_obs;
 time_t last_obs_con_attempt = 0;
-const int obs_reconnect_interval = 5; // in sec
 
 bool replays_instant_working = true;
 bool replays_game_working = true;
@@ -69,24 +70,24 @@ void die(char *error, int retval) {
 
 // 0 is success
 int copy_file(const char *src, const char *dst) {
-    int source = open(src, O_RDONLY);
-    if (source < 0) return -1;
+	int source = open(src, O_RDONLY);
+	if (source < 0) return -1;
 
-    int dest = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (dest < 0) {
-        close(source);
-        return -1;
-    }
+	int dest = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (dest < 0) {
+		close(source);
+		return -1;
+	}
 
-    struct stat stat_source;
-    fstat(source, &stat_source);
+	struct stat stat_source;
+	fstat(source, &stat_source);
 
-    off_t bytes_copied = 0;
-    ssize_t result = sendfile(dest, source, &bytes_copied, stat_source.st_size);
+	off_t bytes_copied = 0;
+	ssize_t result = sendfile(dest, source, &bytes_copied, stat_source.st_size);
 
-    close(source);
-    close(dest);
-    return result;
+	close(source);
+	close(dest);
+	return result;
 }
 
 void obs_send_cmd(const char *s) {
@@ -206,7 +207,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			// Now we go into default
 			__attribute__((fallthrough)); // silence compiler warning
 		default:
-			for(struct Client *c = clients.first; c != NULL; c = c->next) {
+			for(Client *c = clients.first; c != NULL; c = c->next) {
 				if (c->con == clients.boss) continue;
 				printf("sending to :%lu\n", c->con->id);
 				const bool ret = ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
@@ -218,7 +219,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 
 void obs_switch_scene(void *scene_name) {
 	char cmd[strlen(scene_name)+256];
-    snprintf(cmd, sizeof(cmd), "{\"op\": 6, \"d\": {\"requestType\": \"SetCurrentProgramScene\", \"requestId\": \"switch_scene\", \"requestData\": {\"sceneName\": \"%s\"}}}", (char *)scene_name);
+	snprintf(cmd, sizeof(cmd), "{\"op\": 6, \"d\": {\"requestType\": \"SetCurrentProgramScene\", \"requestId\": \"switch_scene\", \"requestData\": {\"sceneName\": \"%s\"}}}", (char *)scene_name);
 	obs_send_cmd(cmd);
 }
 
@@ -297,16 +298,16 @@ bool obs_replay_start() {
 void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 	switch(ev) {
 	case MG_EV_CONNECT:
-        printf("INFO: Connected to OBS WebSocket server\n");
+		printf("INFO: Connected to OBS WebSocket server\n");
 		break;
 	case MG_EV_WS_OPEN:
-        printf("INFO: OBS WebSocket handshake completed\n");
-        con_obs = con;  // Save the connection
+		printf("INFO: OBS WebSocket handshake completed\n");
+		con_obs = con;  // Save the connection
 		obs_send_cmd("{\"op\": 1, \"d\": {\"rpcVersion\": 1, \"eventSubscriptions\": 255}}");
 		//obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
 		break;
 	case MG_EV_WS_MSG: {
-        struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
+		struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
 		char *msg = malloc(wm->data.len+1);
 		memcpy(msg, wm->data.buf, wm->data.len);
 		msg[wm->data.len] = '\0';
@@ -327,7 +328,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		break;
 	}
 	case MG_EV_CLOSE:
-        printf("INFO: OBS WebSocket connection closed\n");
+		printf("INFO: OBS WebSocket connection closed\n");
 		last_obs_con_attempt = time(NULL);
 		con_obs = NULL;
 		break;
@@ -358,13 +359,13 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		case MG_EV_CLOSE: {
 			if(clients.boss == con) clients.boss = NULL;
 			if(clients.first->con == con) {
-				struct Client *tmp = clients.first->next;
+				Client *tmp = clients.first->next;
 				free(clients.first);
 				clients.first = tmp;
 			} else {
-				for(struct Client *c = clients.first; c->next != NULL; c = c->next) {
+				for(Client *c = clients.first; c->next != NULL; c = c->next) {
 					if(c->next->con == con) {
-						struct Client *tmp = c->next->next;
+						Client *tmp = c->next->next;
 						free(c->next);
 						c->next = tmp;
 						break;
@@ -376,12 +377,12 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		}
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
-			struct Client *new = malloc(sizeof(struct Client));
+			Client *new = malloc(sizeof(struct Client));
 			*new = (struct Client){ .con = con, .next = NULL };
 
 			if(clients.first == NULL) clients.first = new;
 			else
-				for(struct Client *c = clients.first; c != NULL; c = c->next)
+				for(Client *c = clients.first; c != NULL; c = c->next)
 					if(c->next == NULL) { c->next = new; break; }
 
 			//TODO check if upgrade is successfull
@@ -424,7 +425,7 @@ void *mongoose_update(void *) {
 		mg_mgr_poll(&mgr_obs, 20);
 		if (!con_obs) {
 			time_t now = time(NULL);
-			if(now - last_obs_con_attempt >= obs_reconnect_interval) {
+			if(now - last_obs_con_attempt >= OBS_RECONNECT_INTERVAL) {
 				printf("INFO: Trying to reconnect to OBS...\n");
 				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				last_obs_con_attempt = now;
