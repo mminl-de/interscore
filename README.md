@@ -45,6 +45,9 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 # TODO
 
 ## meta
+- rename rentnerend to controller
+- rename backend to echo or server or something:
+	- since backend doesn't fulfill the same task as it used to
 - FINAL^2 assets folder in seperate repo (only logos)
 - FINAL^4 abstract program further to support other sports
 	- Count time up instead of down (e.g. football)

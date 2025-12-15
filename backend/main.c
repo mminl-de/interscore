@@ -16,7 +16,7 @@
 // while typescript can just use the file. This way we only have to keep track
 // of one enum definition instead of 3
 #define export
-#include "MessageType.ts"
+#include "../MessageType.ts"
 #undef export
 
 typedef struct _Client {
@@ -30,10 +30,6 @@ typedef struct {
 } ClientsList;
 
 // Meta
-#define EXIT 'q'
-#define CONNECT_OBS 'o'
-#define PRINT_HELP '?'
-
 #define URL_SERVER_DEFAULT "ws://0.0.0.0:8081"
 #define URL_OBS_DEFAULT "http://0.0.0.0:4444"
 #define REPLAY_PATH_DEFAULT "/home/obsuser/replays"
@@ -115,7 +111,7 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 }
 
 bool create_replay_dirs() {
-	// Create Replay Paths if not already existing
+	// Create replay paths if not already existing
 	if (mkdir(replay_path, 0755) == -1 && errno != EEXIST) {
 		printf("WARN: Cant create replay directory %s: %s\n", replay_path, strerror(errno));
 		replays_instant_working = false;
@@ -476,15 +472,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	// If arguments were not provided we use defaults
-	if (url_server == NULL) {
+	if (!url_server) {
 		url_server = malloc(sizeof(URL_SERVER_DEFAULT) + 1);
 		strcpy(url_server, URL_SERVER_DEFAULT);
 	}
-	if (url_obs == NULL) {
+	if (!url_obs) {
 		url_obs = malloc(sizeof(URL_OBS_DEFAULT) + 1);
 		strcpy(url_obs, URL_OBS_DEFAULT);
 	}
-	if (replay_path == NULL) {
+	if (!replay_path) {
 		replay_path = malloc(sizeof(REPLAY_PATH_DEFAULT) + 1);
 		strcpy(replay_path, REPLAY_PATH_DEFAULT);
 	}
@@ -510,11 +506,11 @@ int main(int argc, char *argv[]) {
 
 	while (running) {
 		switch (getchar()) {
-			case CONNECT_OBS:
+			case 'o':
 				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				printf("INFO: Trying to connect to OBS...\n");
 				break;
-			case PRINT_HELP:
+			case '?':
 				printf(
 					"======= Keyboard options =======\n"
 					"o  connect to obs\n"
@@ -524,12 +520,12 @@ int main(int argc, char *argv[]) {
 					"================================\n"
 				);
 				break;
-			case EXIT:
+			case 'q':
 				running = false;
 				break;
 			case '\n': break;
 			default:
-				printf("WARN: Invalid input!\n");
+				fprintf(stderr, "WARN: Invalid input!\n");
 		}
 	}
 

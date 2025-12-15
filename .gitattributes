@@ -1,2 +1,2 @@
 # github-readme-stats shouldn't think that _we_ actually wrote the mongoose code
-mongoose/* linguist-vendored
+backend/mongoose/* linguist-vendored

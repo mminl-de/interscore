@@ -1,29 +1,13 @@
-SRC ?= backend.c mongoose/mongoose.c
-OUT ?= backend
-CFLAGS ?= -Wall -Wextra -Wpedantic -Wunused -Wunreachable-code -Wunused-macros -fshort-enums
-WIN_LIBS ?= -ljson-c -lwinpthread -lws2_32 -liphlpapi -luserenv
-CC ?= cc
-CXX ?= c++
-
 b-install:
-	$(CC) -o $(OUT) $(SRC) \
-	-Oz $(CFLAGS) -s \
-	-ljson-c \
-
+	${MAKE} --no-print-directory -C backend install
 b-debug:
-	$(CC) -o $(OUT) $(SRC) \
-	$(CFLAGS) -g \
-	-ljson-c
-
+	${MAKE} --no-print-directory -C backend debug
 b-fast:
-	$(CC) -o $(OUT) $(SRC) \
-	-fshort-enums \
-	-lm -ljson-c \
-	-D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto
-
+	${MAKE} --no-print-directory -C backend fast
 b-run:
-	./$(OUT)
+	${MAKE} --no-print-directory -C backend run
 
+# TODO CONSIDER DEPRECATE
 r-fast:
 	${MAKE} --no-print-directory -C rentnerend fast
 
