@@ -19,9 +19,9 @@
 #include "MessageType.ts"
 #undef export
 
-typedef struct {
+typedef struct _Client {
 	struct mg_connection *con;
-	struct Client *next;
+	struct _Client *next;
 } Client;
 
 typedef struct {
@@ -53,7 +53,7 @@ int replays_count[1]; //TODO find out length efficiently
 
 bool running = true;
 // We pretty much have to do this in global scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
-ClientsList clients = {.first = NULL, .boss = NULL};
+ClientsList clients = { .first = NULL, .boss = NULL };
 struct mg_connection *con_obs = NULL;
 struct mg_mgr mgr_svr, mgr_obs;
 time_t last_obs_con_attempt = 0;
@@ -92,7 +92,7 @@ int copy_file(const char *src, const char *dst) {
 
 void obs_send_cmd(const char *s) {
 	printf("DEBUG: Sending OBS a Message: %s\n", s);
-	if(con_obs == NULL) {
+	if (con_obs == NULL) {
 		printf("WARN: Cant send command, OBS is not connected!\n");
 		return;
 	}
@@ -167,23 +167,23 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			break;
 		}
 		case DATA_OBS_STREAM_ON: {
-			if(msg_len < 2) {
+			if (msg_len < 2) {
 				printf("WARN: Received DATA_OBS_STREAM_ON without data about the Status\n");
 				break;
 			}
-			if(msg[1])
+			if (msg[1])
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
 			else
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
 			break;
 		}
 		case DATA_OBS_REPLAY_ON: {
-			if(!replays_instant_working) break;
-			if(msg_len < 2) {
+			if (!replays_instant_working) break;
+			if (msg_len < 2) {
 				printf("WARN: Received DATA_OBS_STREAM_ON without data about the Status\n");
 				break;
 			}
-			if(msg[1])
+			if (msg[1])
 				// Tell OBS to save replay buffer
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
 			else
@@ -191,8 +191,8 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			break;
 		}
 		case IM_THE_BOSS:
-			if(msg_len < 2 || !msg[1]) { printf("Boss sent illegal message\n"); break;}
-			if(clients.boss != NULL) {
+			if (msg_len < 2 || !msg[1]) { printf("Boss sent illegal message\n"); break;}
+			if (clients.boss != NULL) {
 				printf("WARN: Con %lu is trying to be boss, but %lu is already!\n", con->id, clients.boss->id);
 				break;
 			}
@@ -207,7 +207,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			// Now we go into default
 			__attribute__((fallthrough)); // silence compiler warning
 		default:
-			for(Client *c = clients.first; c != NULL; c = c->next) {
+			for (Client *c = clients.first; c != NULL; c = c->next) {
 				if (c->con == clients.boss) continue;
 				printf("sending to :%lu\n", c->con->id);
 				const bool ret = ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
@@ -264,7 +264,7 @@ bool obs_replay_start() {
 	// Now we save the instantreplay to its game replay folder
 	//
 	printf("DEBUG: OBS_REPLAY_START 4\n");
-	if(!replays_game_working) return true;
+	if (!replays_game_working) return true;
 
 	printf("DEBUG: OBS_REPLAY_START 5\n");
 	// Create gamepath (even if already existent bc its easier)
@@ -281,12 +281,12 @@ bool obs_replay_start() {
 	char gamereplaypath[strlen(gamepath) + strlen("/replay_00.mkv")];
 	sprintf(gamereplaypath, "%s/replay_00.mkv", gamepath);
 	int replay_count;
-	for(replay_count = 0; !access(gamereplaypath, F_OK) ; replay_count++)
+	for (replay_count = 0; !access(gamereplaypath, F_OK) ; replay_count++)
 		sprintf(gamereplaypath, "%s/replay_%02d.mkv", gamepath, replay_count+1);
 
 	printf("DEBUG: OBS_REPLAY_START 7\n");
 	// copy replay to the gamepath
-	if(copy_file(instantreplay_path, gamereplaypath) != 0) {
+	if (copy_file(instantreplay_path, gamereplaypath) != 0) {
 		fprintf(stderr, "WARN: Cant copy replay into game folder: '%s' -> '%s'\n", instantreplay_path, gamereplaypath);
 		return true;
 	}
@@ -316,12 +316,12 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		// {"d":{"eventData":{"savedReplayPath":"/home/obsuser/instantreplay.mkv"},"eventIntent":64,"eventType":"ReplayBufferSaved"},"op":5}
 			printf("DEBUG: Got positive SaveReplayBuffer response\n");
 			obs_replay_start();
-		} else if(strstr(msg, "\"requestType\":\"StartReplayBuffer\"")) {
+		} else if (strstr(msg, "\"requestType\":\"StartReplayBuffer\"")) {
 			// If the StartReplayBuffer is 100(started)/500(already started) we double check with a GetReplayBufferStatus request
 			// because especially 100 can be a fucking lie and doesnt mean shit. GetReplayBufferStatus is reliable (see next else if)
-			if(strstr(msg, "\"result\":true") || strstr(msg, "\"code\":500"))
+			if (strstr(msg, "\"result\":true") || strstr(msg, "\"code\":500"))
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"GetReplayBufferStatus\", \"requestId\": \"what_buffer\"}}");
-		} else if(strstr(msg, "\"requestType:\":\"GetReplayBufferStatus\"")) {
+		} else if (strstr(msg, "\"requestType:\":\"GetReplayBufferStatus\"")) {
 			replay_buffer_status = strstr(msg, "\"outputActive\":true");
 			printf("INFO: OBS Replay buffer is now: %s\n", replay_buffer_status ? "on" : "off");
 		}
@@ -357,14 +357,14 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			printf("INFO: New client connected!\n");
 			break;
 		case MG_EV_CLOSE: {
-			if(clients.boss == con) clients.boss = NULL;
-			if(clients.first->con == con) {
+			if (clients.boss == con) clients.boss = NULL;
+			if (clients.first->con == con) {
 				Client *tmp = clients.first->next;
 				free(clients.first);
 				clients.first = tmp;
 			} else {
-				for(Client *c = clients.first; c->next != NULL; c = c->next) {
-					if(c->next->con == con) {
+				for (Client *c = clients.first; c->next != NULL; c = c->next) {
+					if (c->next->con == con) {
 						Client *tmp = c->next->next;
 						free(c->next);
 						c->next = tmp;
@@ -377,13 +377,13 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		}
 		case MG_EV_HTTP_MSG: {
 			struct mg_http_message *hm = p;
-			Client *new = malloc(sizeof(struct Client));
-			*new = (struct Client){ .con = con, .next = NULL };
+			Client *new = malloc(sizeof(Client));
+			*new = (Client) { .con = con, .next = NULL };
 
-			if(clients.first == NULL) clients.first = new;
+			if (clients.first == NULL) clients.first = new;
 			else
-				for(Client *c = clients.first; c != NULL; c = c->next)
-					if(c->next == NULL) { c->next = new; break; }
+				for (Client *c = clients.first; c != NULL; c = c->next)
+					if (c->next == NULL) { c->next = new; break; }
 
 			//TODO check if upgrade is successfull
 			mg_ws_upgrade(con, hm, NULL);
@@ -425,14 +425,14 @@ void *mongoose_update(void *) {
 		mg_mgr_poll(&mgr_obs, 20);
 		if (!con_obs) {
 			time_t now = time(NULL);
-			if(now - last_obs_con_attempt >= OBS_RECONNECT_INTERVAL) {
+			if (now - last_obs_con_attempt >= OBS_RECONNECT_INTERVAL) {
 				printf("INFO: Trying to reconnect to OBS...\n");
 				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				last_obs_con_attempt = now;
 			}
 		} else if (!replay_buffer_status) {
 			time_t now = time(NULL);
-			if(now - last_replay_buffer_attempt >= replay_buffer_activation_interval) {
+			if (now - last_replay_buffer_attempt >= replay_buffer_activation_interval) {
 				printf("INFO: Trying to activate the OBS Replay Buffer...\n");
 				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartReplayBuffer\", \"requestId\": \"start_buffer\"}}");
 				last_replay_buffer_attempt = now;
@@ -454,13 +454,13 @@ int main(int argc, char *argv[]) {
 			url_server = malloc(strlen(argv[i+1]) + 1);
 			strcpy(url_server, argv[i+1]);
 			i++;
-		} else if(!strcmp(argv[i], "--url-obs")) {
+		} else if (!strcmp(argv[i], "--url-obs")) {
 			if (argc <= i+1)
 				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
 			url_obs = malloc(strlen(argv[i+1]) + 1);
 			strcpy(url_obs, argv[i+1]);
 			i++;
-		} else if(!strcmp(argv[i], "--replay-path")) {
+		} else if (!strcmp(argv[i], "--replay-path")) {
 			if (argc <= i+1)
 				die("Syntax: --replay-path <url> needs an path...", EXIT_FAILURE);
 			// If the path has a trailing '/' we remove it
