@@ -404,33 +404,56 @@ class _InputWindowState extends State<InputWindow> {
 				final bool shouldClose = await onWindowClose();
 				if(shouldClose == true) Navigator.of(context).pop();
 			},
-			child: Shortcuts(
-				shortcuts: {
-					LogicalKeySet(LogicalKeyboardKey.space): const TogglePauseIntent(),
-				},
-				child: Actions(
-					actions: {
-						TogglePauseIntent: CallbackAction<TogglePauseIntent>(
-							onInvoke: (_) { togglePause(mdl.value); return null; },
-						),
+			child: CallbackShortcuts(
+				bindings: {
+					LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(),
+					LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
+					LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
+					LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1),
+					LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyL): () {
+						Matchday next;
+						while((next = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1)) != mdl.value)
+							mdl.value = next;
 					},
-					child: Focus(
-						autofocus: true,
-						child: Scaffold(
-							appBar: AppBar(title: const Text('Input Window')),
-							body: ValueListenableBuilder<Matchday>(
-								valueListenable: mdl,
-								builder: (context, md, _) {
-									return Column(
-										children: [
-											blockTeams(screenWidth, blockTeamsHeight, md),
-											blockGoals(screenWidth, blockGoalsHeight, md),
-											blockTime(screenWidth, blockTimeHeight, md),
-											blockWidgets(screenWidth, blockWidgetsHeight, md)
-										]
-									);
-								}
-							)
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowRight): () {
+						Matchday next;
+						while((next = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1)) != mdl.value)
+							mdl.value = next;
+					},
+					LogicalKeySet(LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-1),
+					LogicalKeySet(LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-1),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-20),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-20),
+					LogicalKeySet(LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(1),
+					LogicalKeySet(LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(1),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(20),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(20),
+					LogicalKeySet(LogicalKeyboardKey.digit1): () => mdl.value = mdl.value.goalRemoveLast(1),
+					LogicalKeySet(LogicalKeyboardKey.digit2): () => mdl.value = mdl.value.goalAdd(1),
+					LogicalKeySet(LogicalKeyboardKey.digit3): () => mdl.value = mdl.value.goalRemoveLast(2),
+					LogicalKeySet(LogicalKeyboardKey.digit4): () => mdl.value = mdl.value.goalAdd(2),
+					LogicalKeySet(LogicalKeyboardKey.keyS): () => mdl.value = mdl.value.setSidesInverted(!mdl.value.meta.sidesInverted),
+				},
+				child: Focus(
+					autofocus: true,
+					child: Scaffold(
+						appBar: AppBar(title: const Text('Input Window')),
+						body: ValueListenableBuilder<Matchday>(
+							valueListenable: mdl,
+							builder: (context, md, _) {
+								return Column(
+									children: [
+										blockTeams(screenWidth, blockTeamsHeight, md),
+										blockGoals(screenWidth, blockGoalsHeight, md),
+										blockTime(screenWidth, blockTimeHeight, md),
+										blockWidgets(screenWidth, blockWidgetsHeight, md)
+									]
+								);
+							}
 						)
 					)
 				)
