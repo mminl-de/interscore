@@ -2,15 +2,15 @@
 import { z } from "zod"; // TODO CONSIDER
 
 import { MessageType } from "./MessageType.ts"
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // MessageType.ts contains only the enum MessageType and is exported, so backend
 // and rentnerend can use it as well (through #define magic)
 
 // TODO NOTE dont ever hardcode styles :pray:
-// TODO FINAL OPTIMIZE our shame
 // TODO FINAL check if each handle is used
 // TODO rewrite string reading
 // TODO decide what to do when rentnerend goes to ENDE ENDE (add gameindex and handle it everywhere?)
+// TODO FINAL OPTIMIZE our shame
 
 let socket: WebSocket
 let reconnect_timer: number | null = null;
@@ -48,7 +48,6 @@ const livetable = document.querySelector(".livetable")! as HTMLElement
 // Important variables for `read_c_string`
 const decoder = new TextDecoder("utf-8")
 
-const CARD_SHOW_LENGTH = 7_000
 const SCROLL_DURATION = 7_000
 const TIME_UPDATE_INTERVAL_MS = 1_000
 const TIMEOUT_SHOW = 200
@@ -64,8 +63,9 @@ let shown = {
 	ad: false
 }
 
-interface Color { r: number, g: number, b: number }
+type Color = { r: number, g: number, b: number }
 
+// TODO CONSIDER should you put z.<datatype>() in a constant to avoid re-eval?
 const PenaltySchema = z.object({
 	shooting: z.object({
 		team: z.number(),
@@ -300,7 +300,7 @@ function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
 		}
 	})()
 
-	return md.teams.find((g) => g.name == team_name) ?? null;
+	return md.teams.find(g => g.name == team_name) ?? null;
 }
 
 // team=0 für Team 1, team=1 für Team 2
@@ -385,14 +385,15 @@ function query_set_to_string(query: GameQuery): string {
 	}
 }
 
-async function file_exists(url: string): Promise<boolean> {
-	try {
-		const response = await fetch(url, { method: "HEAD" })
-		return response.ok
-	} catch (err) {
-		return false
-	}
-}
+// TODO CONSIDER REMOVE
+//async function file_exists(url: string): Promise<boolean> {
+//	try {
+//		const response = await fetch(url, { method: "HEAD" })
+//		return response.ok
+//	} catch (err) {
+//		return false
+//	}
+//}
 
 function write_scoreboard() {
 	const game = md.games[md.meta.game_i]
@@ -639,7 +640,7 @@ function write_gamestart() {
 //}
 
 // TODO Does this need to be ?
-interface LivetableLine {
+type LivetableLine = {
 	name: string,
 	points: number,
 	played: number,
@@ -861,6 +862,7 @@ function connect() {
 				return String(v);
 			}
 		}
+		// TODO NOW wtf is origLog?
 		const origLog = console.log;
 		const origErr = console.error;
 		console.log = (...args) => {
@@ -994,7 +996,7 @@ function connect() {
 
 	socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
 	socket.onclose = () => {
-		console.log("WebSocket connection closed! Reconnecting in 3s");
+		console.warn("WebSocket connection closed! Reconnecting in 3s");
 		reconnect_timer = window.setTimeout(connect, 3_000);
 	}
 }

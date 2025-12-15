@@ -19,10 +19,6 @@
 #include "MessageType.ts"
 #undef export
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-
 struct Client {
 	struct mg_connection *con;
 	struct Client *next;
@@ -42,16 +38,16 @@ struct ClientsList {
 #define URL_OBS_DEFAULT "http://0.0.0.0:4444"
 #define REPLAY_PATH_DEFAULT "/home/obsuser/replays"
 
-char *URL_SERVER = NULL;
-char *URL_OBS = NULL;
-char *REPLAY_PATH = NULL;
+char *url_server = NULL;
+char *url_obs = NULL;
+char *replay_path = NULL;
 
 void obs_switch_scene(void *scene_name);
 // Return if successful 1 is successfull
 bool obs_replay_start();
 
-u8 gameindex = 0;
-u8 replays_count[1]; //TODO find out length efficiently
+int gameindex = 0;
+int replays_count[1]; //TODO find out length efficiently
 
 bool running = true;
 // We pretty much have to do this in gloabl scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
@@ -65,6 +61,7 @@ bool replays_instant_working = true;
 bool replays_game_working = true;
 bool replay_buffer_status = false;
 
+// TODO CONSIDER should we provide the option to set retval?
 void die(char *error, int retval) {
 	fprintf(stderr, "CRIT: %s\n", error);
 	exit(retval);
@@ -118,15 +115,15 @@ bool ws_send(struct mg_connection *con, char *message, int len, int op) {
 
 bool create_replay_dirs() {
 	// Create Replay Paths if not already existing
-	if (mkdir(REPLAY_PATH, 0755) == -1 && errno != EEXIST) {
-		printf("WARN: Cant create replay directory %s: %s\n", REPLAY_PATH, strerror(errno));
+	if (mkdir(replay_path, 0755) == -1 && errno != EEXIST) {
+		printf("WARN: Cant create replay directory %s: %s\n", replay_path, strerror(errno));
 		replays_instant_working = false;
 		replays_game_working = false;
 		return false;
 	}
 
-	char last_game_path[strlen(REPLAY_PATH) + strlen("/last-game") + 1];
-	sprintf(last_game_path, "%s/last-game", REPLAY_PATH);
+	char last_game_path[strlen(replay_path) + strlen("/last-game") + 1];
+	sprintf(last_game_path, "%s/last-game", replay_path);
 	if (mkdir(last_game_path, 0755) == -1 && errno != EEXIST) {
 		printf("WARN: Cant create replay directory %s: %s\n", last_game_path, strerror(errno));
 		replays_game_working = false;
@@ -167,8 +164,8 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			char tmp[2] = {DATA_IM_BOSS, con == clients.boss};
 			ws_send(con, tmp, 2, WEBSOCKET_OP_BINARY);
 			break;
-
-		} case DATA_OBS_STREAM_ON: {
+		}
+		case DATA_OBS_STREAM_ON: {
 			if(msg_len < 2) {
 				printf("WARN: Received DATA_OBS_STREAM_ON without data about the Status\n");
 				break;
@@ -234,15 +231,15 @@ bool obs_replay_start() {
 	printf("DEBUG: OBS_REPLAY_START 0\n");
 
 	// Check if video is there
-	char instantreplay_path[strlen(REPLAY_PATH) + strlen("/instantreplay.mkv") + 1];
-	strcpy(instantreplay_path, REPLAY_PATH);
+	char instantreplay_path[strlen(replay_path) + strlen("/instantreplay.mkv") + 1];
+	strcpy(instantreplay_path, replay_path);
 	strcat(instantreplay_path, "/instantreplay.mkv");
 	if (access(instantreplay_path, F_OK) != 0) return false;
 
 	printf("DEBUG: OBS_REPLAY_START 1\n");
 	// cut video to 3sec
-	char instantreplay_path_short[strlen(REPLAY_PATH) + strlen("/instantreplay_short.mkv") + 1];
-	strcpy(instantreplay_path_short, REPLAY_PATH);
+	char instantreplay_path_short[strlen(replay_path) + strlen("/instantreplay_short.mkv") + 1];
+	strcpy(instantreplay_path_short, replay_path);
 	strcat(instantreplay_path_short, "/instantreplay_short.mkv");
 
 	printf("DEBUG: OBS_REPLAY_START 2\n");
@@ -270,8 +267,8 @@ bool obs_replay_start() {
 
 	printf("DEBUG: OBS_REPLAY_START 5\n");
 	// Create gamepath (even if already existent bc its easier)
-	char gamepath[strlen(REPLAY_PATH) + strlen("/game_00") + 1];
-	sprintf(gamepath, "%s/game_%02d", REPLAY_PATH, gameindex);
+	char gamepath[strlen(replay_path) + strlen("/game_00") + 1];
+	sprintf(gamepath, "%s/game_%02d", replay_path, gameindex);
 	if (mkdir(gamepath, 0755) == -1 && errno != EEXIST) {
 		fprintf(stderr, "WARN: Cant create replay directory %s: %s\n", gamepath, strerror(errno));
 		replays_game_working = false;
@@ -399,7 +396,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			struct mg_ws_message *m = (struct mg_ws_message *) p;
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
-			if(m->flags & WEBSOCKET_OP_TEXT) {
+			if (m->flags & WEBSOCKET_OP_TEXT) {
 				printf("FRONTEND: %.*s\n", (int) m->data.len, m->data.buf);
 			} else
 				handle_message((enum MessageType *) m->data.buf, m->data.len, con);
@@ -429,7 +426,7 @@ void *mongoose_update(void *) {
 			time_t now = time(NULL);
 			if(now - last_obs_con_attempt >= obs_reconnect_interval) {
 				printf("INFO: Trying to reconnect to OBS...\n");
-				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				last_obs_con_attempt = now;
 			}
 		} else if (!replay_buffer_status) {
@@ -453,14 +450,14 @@ int main(int argc, char *argv[]) {
 		if (!strcmp(argv[i], "--url-server")) {
 			if (argc <= i+1)
 				die("Syntax: --url-server <url> needs an url...", EXIT_FAILURE);
-			URL_SERVER = malloc(strlen(argv[i+1]) + 1);
-			strcpy(URL_SERVER, argv[i+1]);
+			url_server = malloc(strlen(argv[i+1]) + 1);
+			strcpy(url_server, argv[i+1]);
 			i++;
 		} else if(!strcmp(argv[i], "--url-obs")) {
 			if (argc <= i+1)
 				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
-			URL_OBS = malloc(strlen(argv[i+1]) + 1);
-			strcpy(URL_OBS, argv[i+1]);
+			url_obs = malloc(strlen(argv[i+1]) + 1);
+			strcpy(url_obs, argv[i+1]);
 			i++;
 		} else if(!strcmp(argv[i], "--replay-path")) {
 			if (argc <= i+1)
@@ -469,39 +466,39 @@ int main(int argc, char *argv[]) {
 			// The rest of the program expects the path to have no trailing '/'
 			if (argv[i+1][strlen(argv[i+1])-1] == '/')
 				argv[i+1][strlen(argv[i+1])-1] = '\0';
-			REPLAY_PATH = malloc(strlen(argv[i+1]) + 1);
-			strcpy(REPLAY_PATH, argv[i+1]);
+			replay_path = malloc(strlen(argv[i+1]) + 1);
+			strcpy(replay_path, argv[i+1]);
 			i++;
 		} else {
-			die("Syntax: Unknown Argument! Usage: backend <--url-server/--url-obs/--replay-path> <url/path>", EXIT_FAILURE);
+			die("Syntax: Unknown argument!\nUsage: backend --url-server/--url-obs/--replay-path <url/path>", EXIT_FAILURE);
 		}
 	}
 
-	// If Arguments were not provided we use defaults
-	if (URL_SERVER == NULL) {
-		URL_SERVER = malloc(sizeof(URL_SERVER_DEFAULT) + 1);
-		strcpy(URL_SERVER, URL_SERVER_DEFAULT);
+	// If arguments were not provided we use defaults
+	if (url_server == NULL) {
+		url_server = malloc(sizeof(URL_SERVER_DEFAULT) + 1);
+		strcpy(url_server, URL_SERVER_DEFAULT);
 	}
-	if (URL_OBS == NULL) {
-		URL_OBS = malloc(sizeof(URL_OBS_DEFAULT) + 1);
-		strcpy(URL_OBS, URL_OBS_DEFAULT);
+	if (url_obs == NULL) {
+		url_obs = malloc(sizeof(URL_OBS_DEFAULT) + 1);
+		strcpy(url_obs, URL_OBS_DEFAULT);
 	}
-	if (REPLAY_PATH == NULL) {
-		REPLAY_PATH = malloc(sizeof(REPLAY_PATH_DEFAULT) + 1);
-		strcpy(REPLAY_PATH, REPLAY_PATH_DEFAULT);
+	if (replay_path == NULL) {
+		replay_path = malloc(sizeof(REPLAY_PATH_DEFAULT) + 1);
+		strcpy(replay_path, REPLAY_PATH_DEFAULT);
 	}
 
 	create_replay_dirs();
 
 	// WebSocket as Client(OBS) stuff
 	mg_mgr_init(&mgr_obs);
-	mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+	mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 	last_obs_con_attempt = time(NULL);
 	printf("INFO: Trying to connect to OBS...\n");
 
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);
-	mg_http_listen(&mgr_svr, URL_SERVER, ev_handler_server, NULL);
+	mg_http_listen(&mgr_svr, url_server, ev_handler_server, NULL);
 	pthread_t thread;
 	if (pthread_create(&thread, NULL, mongoose_update, NULL) != 0) {
 		fprintf(stderr, "ERROR: Failed to create thread for updating the connection!");
@@ -510,11 +507,10 @@ int main(int argc, char *argv[]) {
 
 	printf("INFO: Server loaded!\n");
 
-
 	while (running) {
 		switch (getchar()) {
 			case CONNECT_OBS:
-				mg_ws_connect(&mgr_obs, URL_OBS, ev_handler_client, NULL, NULL);
+				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				printf("INFO: Trying to connect to OBS...\n");
 				break;
 			case PRINT_HELP:
@@ -537,14 +533,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	// WebSocket stuff, again
-	if (pthread_join(thread, NULL) != 0)
-		fprintf(stderr, "ERROR: Failed to join thread!\n");
+	if (pthread_join(thread, NULL) != 0) fprintf(stderr, "ERROR: Failed to join thread!\n");
 
 cleanup:
 	mg_mgr_free(&mgr_svr);
 	mg_mgr_free(&mgr_obs);
-	free(URL_OBS);
-	free(URL_SERVER);
-	free(REPLAY_PATH);
+	free(url_obs);
+	free(url_server);
+	free(replay_path);
 	return 0;
 }
