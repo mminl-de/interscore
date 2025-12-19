@@ -10,6 +10,7 @@ DATA_WIDGET_AD_ON,dnl Additional: boolean on(1)/off(0)
 DATA_OBS_STREAM_ON,dnl Additional: boolean on(1)/off(0)
 DATA_OBS_REPLAY_ON,dnl Additional: boolean on(1)/off(0)
 DATA_SIDES_SWITCHED,dnl Additional: boolean switched(1)/not switched(0)
+DATA_GAME,dnl Additional: Game as json
 DATA_GAME_ACTION,dnl Additional: Game Action as json
 DATA_GAMEINDEX,dnl Additional: u8 = Gameindex)
 DATA_GAMEPART,dnl Additional: u8/boolean = halftime 0 bzw 1)
@@ -28,6 +29,7 @@ PLS_SEND_WIDGET_AD_ON,
 PLS_SEND_OBS_STREAM_ON,
 PLS_SEND_OBS_REPLAY_ON,
 PLS_SEND_SIDES_SWITCHED,
+PLS_SEND_GAME,dnl Additional: uint = id of wanted game action
 PLS_SEND_GAME_ACTION,dnl Additional: uint = id of wanted game action
 PLS_SEND_GAMEINDEX,
 PLS_SEND_GAMEPART,
