@@ -195,7 +195,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			__attribute__((fallthrough)); // silence compiler warning
 		default:
 			for (Client *c = clients.first; c != NULL; c = c->next) {
-				if (c->con == clients.boss) continue;
+				if (c->con == clients.boss && *msg != DATA_GAME) continue;
 				printf("sending to :%lu\n", c->con->id);
 				ws_send(c->con, (char *)msg, msg_len);
 			}
