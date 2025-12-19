@@ -44,10 +44,9 @@ void obs_switch_scene(void *scene_name);
 // Return if successful 1 is successfull // TODO what
 bool obs_replay_start();
 
+bool obs_enabled = true;
 int gameindex = 0;
-int replays_count[1]; //TODO find out length efficiently
 
-bool running = true;
 // We pretty much have to do this in global scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 ClientsList clients = { .first = NULL, .boss = NULL };
 struct mg_connection *con_obs = NULL;
@@ -58,10 +57,9 @@ bool replays_instant_working = true;
 bool replays_game_working = true;
 bool replay_buffer_status = false;
 
-// TODO CONSIDER should we provide the option to set retval?
-void die(char *error, int retval) {
-	fprintf(stderr, "CRIT: %s\n", error);
-	exit(retval);
+void die(const char *msg) {
+	fprintf(stderr, "ERROR (CRITICAL): %s\n", msg);
+	exit(EXIT_FAILURE);
 }
 
 // 0 is success
@@ -87,26 +85,22 @@ int copy_file(const char *src, const char *dst) {
 }
 
 void obs_send_cmd(const char *s) {
-	printf("DEBUG: Sending OBS a Message: %s\n", s);
-	if (con_obs == NULL) {
+	if (!obs_enabled || con_obs == NULL) {
 		printf("WARN: Cant send command, OBS is not connected!\n");
 		return;
 	}
+	printf("DEBUG: Sending OBS a Message: %s\n", s);
 	mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
 }
 
 //message is allowed to be non null-terminated. Therefor the len as arg
-bool ws_send(struct mg_connection *con, char *message, int len, int op) {
+bool ws_send(struct mg_connection *con, char *message, int len) {
 	if (con == NULL) {
 		printf("WARN: client is not connected, couldnt send Message: '%*s'\n", len, message);
 		return false;
 	}
 
-	const unsigned long sent = mg_ws_send(con, message, len, op);
-	if (sent != (unsigned long) len) {
-		fprintf(stderr, "ERR: Expected to send %dB, got %luB\n", len, sent);
-		return false;
-	}
+	mg_ws_send(con, message, len, WEBSOCKET_OP_BINARY);
 	return true;
 }
 
@@ -130,11 +124,6 @@ bool create_replay_dirs() {
 	return true;
 }
 
-void run_system(void *s) {
-	printf("INFO: Running System CMD: %s\n", (char*)s);
-	printf("INFO: CMD Return Value: %d", system((char*)s));
-}
-
 void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * con) {
 	printf("INFO: Received a Input from con %lu: %d\n", con->id, *msg);
 	switch (*msg) {
@@ -154,12 +143,12 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		case PLS_SEND_WIDGET_SCOREBOARD_ON:
 		case PLS_SEND_GAME_ACTION:
 			printf("DEBUG: clients.boss: %p\n", clients.boss);
-			ws_send(clients.boss, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
+			ws_send(clients.boss, (char *)msg, msg_len);
 			break;
 
 		case PLS_SEND_IM_BOSS: {
 			char tmp[2] = {DATA_IM_BOSS, con == clients.boss};
-			ws_send(con, tmp, 2, WEBSOCKET_OP_BINARY);
+			ws_send(con, tmp, 2);
 			break;
 		}
 		case DATA_OBS_STREAM_ON: {
@@ -194,8 +183,8 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			}
 			printf("setting boss: %p\n", con);
 			clients.boss = con;
-			char tmp[] = {DATA_IM_BOSS, true};
-			mg_ws_send(clients.boss, &tmp, 2, WEBSOCKET_OP_BINARY);
+			char tmp[2] = {DATA_IM_BOSS, true};
+			ws_send(clients.boss, tmp, 2);
 			break;
 		case DATA_GAMEINDEX:
 			printf("INFO: Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
@@ -206,8 +195,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			for (Client *c = clients.first; c != NULL; c = c->next) {
 				if (c->con == clients.boss) continue;
 				printf("sending to :%lu\n", c->con->id);
-				const bool ret = ws_send(c->con, (char *)msg, msg_len, WEBSOCKET_OP_BINARY);
-				if (!ret) printf("\n\n\nOH NO BROOOOO SOMETHING FAILED BROOOO\n");
+				ws_send(c->con, (char *)msg, msg_len);
 			}
 			break;
 	}
@@ -359,7 +347,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 				free(clients.first);
 				clients.first = tmp;
 			} else {
-				for (Client *c = clients.first; c->next != NULL; c = c->next) {
+				for (Client *c = clients.first; c->next; c = c->next) {
 					if (c->next->con == con) {
 						Client *tmp = c->next->next;
 						free(c->next);
@@ -412,13 +400,15 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 	}
 }
 
-void *mongoose_update(void *) {
+void *mongoose_update(void *_) {
 	const int replay_buffer_activation_interval = 10; // in sec
 	time_t last_replay_buffer_attempt = time(NULL);
 
-	while (running) {
+	while (true) {
 		mg_mgr_poll(&mgr_svr, 20);
 		mg_mgr_poll(&mgr_obs, 20);
+		if(!obs_enabled)
+			continue;
 		if (!con_obs) {
 			time_t now = time(NULL);
 			if (now - last_obs_con_attempt >= OBS_RECONNECT_INTERVAL) {
@@ -438,37 +428,36 @@ void *mongoose_update(void *) {
 	return NULL;
 }
 
-
 int main(int argc, char *argv[]) {
-	printf("test\n");
-
 	// Check for args
-	for (int i=1; i < argc; i++) {
-		if (!strcmp(argv[i], "--url-server")) {
-			if (argc <= i+1)
+	for (int i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--disable-obs"))
+			obs_enabled = false;
+		else if (!strcmp(argv[i], "--url-server")) {
+			if (argc <= i + 1)
 				die("Syntax: --url-server <url> needs an url...", EXIT_FAILURE);
 			url_server = malloc(strlen(argv[i+1]) + 1);
 			strcpy(url_server, argv[i+1]);
 			i++;
 		} else if (!strcmp(argv[i], "--url-obs")) {
-			if (argc <= i+1)
-				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
-			url_obs = malloc(strlen(argv[i+1]) + 1);
-			strcpy(url_obs, argv[i+1]);
+			if (argc != i + 2) die("Syntax: --url-obs needs a url...");
+			url_obs = malloc(strlen(argv[i + 1]) + 1);
+			strcpy(url_obs, argv[i + 1]);
 			i++;
 		} else if (!strcmp(argv[i], "--replay-path")) {
-			if (argc <= i+1)
-				die("Syntax: --replay-path <url> needs an path...", EXIT_FAILURE);
-			// If the path has a trailing '/' we remove it
-			// The rest of the program expects the path to have no trailing '/'
-			if (argv[i+1][strlen(argv[i+1])-1] == '/')
-				argv[i+1][strlen(argv[i+1])-1] = '\0';
-			replay_path = malloc(strlen(argv[i+1]) + 1);
-			strcpy(replay_path, argv[i+1]);
+			if (argc != i + 2) die("Syntax: --replay-path needs a path...");
+			// If the path has a trailing '/' we remove it.
+			// The rest of the program expects the path to have no trailing '/'.
+			if (argv[i + 1][strlen(argv[i + 1]) - 1] == '/')
+				argv[i + 1][strlen(argv[i + 1]) - 1] = '\0';
+			replay_path = malloc(strlen(argv[i + 1]) + 1);
+			strcpy(replay_path, argv[i + 1]);
 			i++;
-		} else {
-			die("Syntax: Unknown argument!\nUsage: backend --url-server/--url-obs/--replay-path <url/path>", EXIT_FAILURE);
-		}
+		} else die(
+			"Syntax: Unknown argument!\n"
+			"Usage: backend --disable-obs/--url-server/--url-obs/--replay-path <url/path>",
+			EXIT_FAILURE
+		);
 	}
 
 	// If arguments were not provided we use defaults
@@ -485,13 +474,15 @@ int main(int argc, char *argv[]) {
 		strcpy(replay_path, REPLAY_PATH_DEFAULT);
 	}
 
-	create_replay_dirs();
+	if (obs_enabled) {
+		create_replay_dirs();
 
-	// WebSocket as Client(OBS) stuff
-	mg_mgr_init(&mgr_obs);
-	mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
-	last_obs_con_attempt = time(NULL);
-	printf("INFO: Trying to connect to OBS...\n");
+		// WebSocket as Client(OBS) stuff
+		mg_mgr_init(&mgr_obs);
+		mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
+		last_obs_con_attempt = time(NULL);
+		printf("INFO: Trying to connect to OBS...\n");
+	}
 
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);
@@ -502,41 +493,27 @@ int main(int argc, char *argv[]) {
 		goto cleanup;
 	}
 
-	printf("INFO: Server loaded!\n");
+	printf("INFO: Server loaded!\nPress 'o' to connect to OBS Studio!");
 
-	while (running) {
-		switch (getchar()) {
-			case 'o':
-				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
-				printf("INFO: Trying to connect to OBS...\n");
-				break;
-			case '?':
-				printf(
-					"======= Keyboard options =======\n"
-					"o  connect to obs\n"
-					"\n"
-					"?  print help\n"
-					"q  quit\n"
-					"================================\n"
-				);
-				break;
-			case 'q':
-				running = false;
-				break;
-			case '\n': break;
-			default:
-				fprintf(stderr, "WARN: Invalid input!\n");
-		}
-	}
+	// TODO ASK does breaking really work here?
+	while (true);
 
 	// WebSocket stuff, again
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	if (pthread_join(thread, NULL) != 0) fprintf(stderr, "ERROR: Failed to join thread!\n");
+	printf("TODO debug stmt %d\n", __COUNTER__);
 
 cleanup:
-	mg_mgr_free(&mgr_svr);
+	printf("TODO debug stmt %d\n", __COUNTER__);
+	mg_mgr_free(&mgr_svr); // TODO NOW DEBUG segfault
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	mg_mgr_free(&mgr_obs);
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	free(url_obs);
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	free(url_server);
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	free(replay_path);
+	printf("TODO debug stmt %d\n", __COUNTER__);
 	return 0;
 }
