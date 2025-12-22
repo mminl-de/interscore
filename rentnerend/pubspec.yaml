@@ -6,11 +6,11 @@ version: 1.0.0+1 # version and build number for this application.
 
 environment:
   sdk: ^3.9.2
+  flutter: ^3.38.5
 
 dependencies:
   flutter:
     sdk: flutter
-	flutter: 3.38.5
 
   cupertino_icons: ^1.0.8
   auto_size_text: ^3.0.0
