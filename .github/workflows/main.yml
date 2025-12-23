@@ -3,7 +3,7 @@ on:
   push:
 
 jobs:
-  build:
+  linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,3 +32,26 @@ jobs:
         with:
           name: linux-build
           path: rentnerend/build/linux/x64/release/bundle/
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+          flutter-version-file: rentnerend/pubspec.yaml
+
+      - name: Codegen
+        working-directory: rentnerend
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Android APK
+        working-directory: rentnerend
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: rentnerend/build/app/outputs/flutter-apk/app-release.apk
