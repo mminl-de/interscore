@@ -20,6 +20,10 @@ jobs:
       - name: Compile m4
         run: make flutter
 
+      - name: Compile freezed
+        working-directory: rentnerend
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Build Linux
         working-directory: rentnerend
         run: flutter build linux
