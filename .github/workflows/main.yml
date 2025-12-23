@@ -72,7 +72,7 @@ jobs:
           flutter-version-file: rentnerend/pubspec.yaml
 
       - name: Install make
-        run: choco install make
+        run: choco install make m4
         shell: powershell
 
       - name: Compile m4
