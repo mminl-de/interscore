@@ -32,6 +32,7 @@ jobs:
         with:
           name: linux-build
           path: rentnerend/build/linux/x64/release/bundle/
+
   android:
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +43,9 @@ jobs:
           channel: stable
           cache: true
           flutter-version-file: rentnerend/pubspec.yaml
+
+      - name: Compile m4
+        run: make flutter
 
       - name: Codegen
         working-directory: rentnerend
@@ -55,3 +59,34 @@ jobs:
         with:
           name: android-apk
           path: rentnerend/build/app/outputs/flutter-apk/app-release.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+          flutter-version-file: rentnerend/pubspec.yaml
+
+      - name: Install make
+        run: choco install make
+        shell: powershell
+
+      - name: Compile m4
+        run: make flutter
+
+      - name: Codegen
+        working-directory: rentnerend
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows
+        working-directory: rentnerend
+        run: flutter build windows --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: rentnerend/build/windows/runner/Release/
