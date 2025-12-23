@@ -19,7 +19,7 @@ jobs:
 
       - name: Build Linux
         working-directory: rentnerend
-      - run: flutter build linux
+        run: flutter build linux
 
       - uses: actions/upload-artifact@v4
         with:
