@@ -98,9 +98,17 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Install Bun
+        run: curl -fsSL https://bun.sh/install | bash
+        # Ensure bun is on PATH
+        env:
+          BUN_INSTALL: $HOME/.bun
+
       - name: Build Docker
         working-directory: docker
-        run: make build
+        run: |
+          export PATH="$HOME/.bun/bin:$PATH"
+          make build
 
       - name: Export Docker image
         working-directory: docker
