@@ -109,6 +109,7 @@ jobs:
         run: |
           export PATH="$HOME/.bun/bin:$PATH"
           make build
+        shell: bash
 
       - name: Export Docker image
         working-directory: docker
