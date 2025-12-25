@@ -1,87 +1,73 @@
-FROM archlinux:latest
+# Stage 1: Build AUR packages
+FROM archlinux:latest AS aur-build
 
-RUN useradd -m builder
+# Base build deps
+RUN pacman -Syu --noconfirm git base-devel
 
-#OBS User erstellen
-RUN useradd -m obsuser && \
-	mkdir /home/obsuser/.config/
-
-# OBS + Tools installieren
-RUN pacman -Sy --noconfirm \
-	x11vnc \
-    xorg-server-xvfb \
-    supervisor \
-	json-c \
-	base-devel \
-	openssh autossh \
-    xz \
-    mesa \
-	python \
-	ddclient \
-	tar \
-	ffmpeg \
-	git \
-	wget \
-	chromium fontconfig freetype2 ttf-dejavu ttf-liberation noto-fonts \
-	pcre geoip mailcap mercurial perl-gd perl-io-socket-ssl perl-fcgi perl-cache-memcached memcached inetutils \
-    && pacman -Scc --noconfirm
-
-# deps for nginx-rmtp
+# Builder user
+RUN useradd -m builder \
+ 	&& echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 USER builder
 WORKDIR /home/builder
 
-RUN git clone https://aur.archlinux.org/nginx-rtmp.git \
-	&& cd nginx-rtmp \
-	&& makepkg --noconfirm --skippgpcheck --nocheck
+# Install yay
+RUN git clone https://aur.archlinux.org/yay-bin.git \
+ && cd yay-bin \
+ && makepkg -si --noconfirm
 
-USER root
-RUN pacman -U --noconfirm /home/builder/nginx-rtmp/nginx-rtmp-[0-9]*.pkg.tar.zst
-# Arbeitsverzeichnis
+# Install AUR packages
+RUN yay -Sy --noconfirm obs-studio-stable mediamtx-bin
+
+# Stage 2: Runtime image
+FROM archlinux:latest
+
+# Runtime dependencies
+RUN pacman -Syu --noconfirm \
+    supervisor \
+    ffmpeg \
+    mesa \
+    python \
+    xorg-server-xvfb \
+    x11vnc \
+ && pacman -Scc --noconfirm
+
+# Create runtime user
+RUN useradd -m obsuser
+
+# Set working directory
 WORKDIR /app
-RUN rm -rf /home/builder
 
-# mediamtx binary herunterladen
-RUN wget "https://github.com/bluenviron/mediamtx/releases/download/v1.15.3/mediamtx_v1.15.3_linux_amd64.tar.gz" && \
-	tar -xzvf mediamtx_v1.15.3_linux_amd64.tar.gz && \
-	mv mediamtx /usr/bin/
-# mediamtx.sh reinkopieren
+# Copy only runtime files from build stage
+COPY --from=aur-build /usr/bin/obs* /usr/bin/
+COPY --from=aur-build /usr/lib/ /usr/lib/
+# COPY --from=aur-build /usr/share/obs-studio/ /usr/share/obs/
+# COPY --from=aur-build /usr/share/applications/ /usr/share/applications/
+
+# Copy backend
+COPY ./backend /app/backend
+RUN chmod -R +x /app/backend
+
+# Copy frontend / assets if needed
+COPY frontend/ /home/obsuser/frontend/frontend/
+COPY assets/ /home/obsuser/frontend/assets/
+RUN chown -R obsuser:obsuser /home/obsuser/frontend \
+ && chmod -R 750 /home/obsuser/frontend
+
+# OBS config
+RUN mkdir -p /home/obsuser/.config/obs-studio/
+COPY docker/obs-config/ /home/obsuser/.config/obs-studio/
+RUN chown -R obsuser:obsuser /home/obsuser/.config/obs-studio \
+ && chmod -R 700 /home/obsuser/.config/obs-studio
+
+# mediamtx helper script
 COPY ./docker/mediamtx.sh /usr/bin/
 RUN chmod +x /usr/bin/mediamtx.sh
 
-# ddclient.sh reinkopieren
-# RUN mkdir -p /etc/ddclient/
-# COPY ./docker/ddclient.conf /etc/ddclient/ddclient.conf
-
-# OBS reinkopieren
-WORKDIR /home/obsuser
-COPY docker/obs /home/obsuser/
-RUN chmod +x /home/obsuser/obs && \
-	chown obsuser:obsuser /home/obsuser/obs
-USER obsuser
-RUN	/home/obsuser/obs --appimage-extract
-RUN mkdir -p /home/obsuser/replays
-USER root
-RUN	ln -s /home/obsuser/squashfs-root/AppRun /usr/bin/obs
-
-# OBS config reinkopieren
-COPY docker/obs-config/ /home/obsuser/.config/obs-studio/
-RUN	chown -R obsuser:obsuser /home/obsuser/.config/ && \
-	chmod -R 700 /home/obsuser/.config/
-
-# frontend reinkopieren
-RUN mkdir -p /home/obsuser/frontend/
-COPY frontend/ /home/obsuser/frontend/frontend/
-COPY assets/ /home/obsuser/frontend/assets/
-RUN	chown -R obsuser:obsuser /home/obsuser/frontend/ && \
-	chmod -R 700 /home/obsuser/frontend/
-
-# Backend reinkopieren
-COPY ./backend /app/
-RUN chmod +x /app/backend
-
-# Supervisor-Config reinkopieren
+# Supervisor config
 COPY docker/supervisord.conf /etc/supervisor.d/supervisord.conf
 
-# Standard-Command
+# Final runtime
+USER obsuser
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor.d/supervisord.conf", "-n"]
+
