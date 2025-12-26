@@ -109,7 +109,6 @@ jobs:
         run: |
           mv ~/.bun/bin/bun /usr/local/bin/bun
           make build
-        shell: bash
 
       - name: Export Docker image
         working-directory: docker
