@@ -10,6 +10,7 @@ b-run:
 js:
 	m4 -DTS MessageType.m4 > frontend/MessageType.ts
 	m4 -DTS MessageType.m4 > MessageType.ts
+	bun install --cwd frontend
 	bun build frontend/script.ts --target browser --outdir ./frontend --minify
 
 flutter:
