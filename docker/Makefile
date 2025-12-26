@@ -1,7 +1,6 @@
 STREAM_NUMBER ?= 0
 
 build:
-	bun install
 	$(MAKE) -C .. js b-fast
 	docker buildx build -t obs-ws -f Dockerfile ../
 
