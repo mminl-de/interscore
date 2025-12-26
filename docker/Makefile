@@ -2,7 +2,7 @@ STREAM_NUMBER ?= 0
 
 build:
 	$(MAKE) -C .. js b-fast
-	docker buildx build -t obs-ws -f Dockerfile ../
+	docker buildx build --load -t obs-ws -f Dockerfile ../
 
 export:
 	docker save obs-ws -o obs-ws.tar
