@@ -103,6 +103,9 @@ jobs:
           curl -fsSL https://bun.sh/install | bash
           install -m 755 ~/.bun/bin/bun /usr/local/bin/bun
 
+      - name: Install json-c
+        run: sudo apt-get install libjson-c-dev
+
       - name: Build Docker
         working-directory: docker
         run: make build
