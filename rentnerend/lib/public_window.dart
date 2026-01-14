@@ -46,12 +46,13 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final teamsTextGroup = AutoSizeGroup();
 
-		String t1name = md.currentGame.team1.whenOrNull(
+		// We invert by default
+		String t1name = md.currentGame.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame.team2.whenOrNull(
+		String t2name = md.currentGame.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
@@ -59,6 +60,11 @@ class _PublicWindowState extends State<PublicWindow> {
 		final String gameName = md.currentGame.name;
 
 		if(md.meta.sidesInverted) {
+			final tmp = t1name;
+			t1name = t2name;
+			t2name = tmp;
+		}
+		if(md.currentGamepart!.sidesInverted) {
 			final tmp = t1name;
 			t1name = t2name;
 			t2name = tmp;
@@ -89,8 +95,9 @@ class _PublicWindowState extends State<PublicWindow> {
 	Widget blockGoals(double width, double height, Matchday md) {
 		final textHeight = height;
 
-		int t1 = 1 + (md.meta.sidesInverted ? 1 : 0 );
-		int t2 = 2 - (md.meta.sidesInverted ? 1 : 0 );
+		final int inverted = ((md.meta.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
+		int t2 = 1 + inverted;
+		int t1 = 2 - inverted;
 
 		return SizedBox(
 			width: width,

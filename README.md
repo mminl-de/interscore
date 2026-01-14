@@ -92,7 +92,6 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - more keyboard binds
 	- bind Ctrl-N for create new tournament
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
-- PDF Export
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
 - FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
 - FINAL additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts):

@@ -7,24 +7,88 @@ import 'package:path_provider/path_provider.dart';
 
 import 'md.dart';
 
-Widget buttonWithIcon (BuildContext c, void Function()? onPressed, IconData icon, {bool inverted = false}){
+class ExpandableButton extends StatefulWidget {
+	final Widget child;
+	final List<Widget> children;
+	final bool inverted;
+	final bool hidden;
+
+	const ExpandableButton({
+		required this.child,
+		required this.children,
+		this.inverted = false,
+		this.hidden = false,
+		super.key,
+	});
+
+	@override
+	State<ExpandableButton> createState() => _ExpandableButtonState();
+}
+
+class _ExpandableButtonState extends State<ExpandableButton> {
+	bool open = false;
+
+	@override
+	Widget build(BuildContext context) {
+		return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+			buttonWithChild(
+				context,
+				() => setState(() => open = !open),
+				Row(children: [
+					Expanded(child: widget.child),
+					Icon(open ? Icons.expand_less : Icons.expand_more, size: 16)
+				]),
+				inverted: widget.inverted,
+				hidden: widget.hidden,
+			),
+			AnimatedSize(
+				duration: const Duration(milliseconds: 200),
+				curve: Curves.easeInOut,
+				child: open
+				? Column(children: widget.children)
+				: const SizedBox.shrink(),
+			),
+		]);
+	}
+}
+
+Widget buttonWithIcon (BuildContext c, void Function()? onPressed, IconData icon, {bool inverted = false, bool highlighted = false}){
 	const double maxHeight = 10000; // This value should be an unreachable height
 
+	return buttonWithChild(c, onPressed, FittedBox(fit: BoxFit.contain, child: Icon(icon, size: maxHeight)), inverted: inverted, highlighted: highlighted);
+}
+
+Widget buttonWithChild (BuildContext c, void Function()? onPressed, Widget child, {bool inverted = false, bool highlighted = false, bool hidden = false}){
 	final cs = Theme.of(c).colorScheme;
 
 	final style = ButtonStyle(
-		backgroundColor: WidgetStateProperty.resolveWith(
-			(states) { return inverted ? cs.primary.withValues(alpha: 0.7) : null; }),
+		backgroundColor: WidgetStateProperty.resolveWith((states) {
+			var c = inverted ? cs.primary.withValues(alpha: 0.7) : null;
+			if(!hidden) return c;
+			if(states.contains(WidgetState.hovered)) {
+				return null;
+			}
+			return Colors.transparent;
+		}),
 		foregroundColor: WidgetStateProperty.resolveWith(
 			(states) { return inverted ? cs.onPrimary : null; }),
 		padding: const WidgetStatePropertyAll(
-			EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-		),
+			EdgeInsets.symmetric(horizontal: 4, vertical: 4),	),
+		side: WidgetStateProperty.resolveWith(
+			(states) => highlighted
+				? const BorderSide(color: Colors.red, width: 2)
+				: BorderSide.none,
+		)
 	);
 
+	if(hidden)
+		return TextButton(onPressed: onPressed,
+		style: style,
+		child: child
+	);
 	return ElevatedButton(onPressed: onPressed,
 		style: style,
-		child: FittedBox(fit: BoxFit.contain, child: Icon(icon, size: maxHeight))
+		child: child
 	);
 }
 

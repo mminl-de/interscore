@@ -23,4 +23,4 @@ compile:
 	$(CC) $(ARGS) $(SRC) -o $(OUT) $(LIB)
 
 clean:
-	rm -f *.gcno *.gcda *.gcov $(OUT)
+	rm -rf *.gcno *.gcda *.gcov coverage-html $(OUT)

@@ -1,5 +1,3 @@
-
-// import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:async';
@@ -13,16 +11,29 @@ import 'md.dart';
 class _WSServer {
 	String _url;
 	final Set<WebSocket> _clients = <WebSocket>{};
+	HttpServer? _server;
 	ValueNotifier<Matchday> _mdl;
 
 	_WSServer(this._url, this._mdl);
 
+	void close() {
+		for (var client in _clients)
+			client.close();
+		_clients.clear();
+		_server?.close(force: true);
+	}
+
 	Future<void> run() async {
 		debugPrint("WS Server: Starting...");
-		// TODO how to handle failure because someone already got that port or url is illegal
-		final server = await HttpServer.bind(Uri.parse(_url).host, Uri.parse(_url).port, shared: true);
+		try {
+			_server = await HttpServer.bind(Uri.parse(_url).host, Uri.parse(_url).port, shared: true);
+		} catch (_) {
+			debugPrint("WS Server: Couldnt bind on port! Cant Start Server!");
+			_server = null;
+			return;
+		}
 
-		await for (final req in server) {
+		await for (final req in _server!) {
 			if (!WebSocketTransformer.isUpgradeRequest(req)) {
 				debugPrint("WS Server: Not WS, closing");
 				req.response.statusCode = 404;
@@ -37,7 +48,7 @@ class _WSServer {
 			// Listen is empty, because The server is write only.
 			// Writing clients should connect to the real backend!
 			client.listen((msg) {
-				debugPrint("got Message: ${msg}");
+				//debugPrint("got Message: ${msg}");
 				if(     msg[0] == MessageType.PLS_SEND_GAMEINDEX.value)
 					sendSignal(MessageType.DATA_GAMEINDEX);
 				else if(msg[0] == MessageType.PLS_SEND_GAMEPART.value)
@@ -61,9 +72,7 @@ class _WSServer {
 
 	// We broadcast to all clients connected
 	void send(List<int> data) {
-		debugPrint("WS Server: Sending: ${data}, with Type: ${data.runtimeType}");
 		for (final client in _clients) {
-			debugPrint("Sending to client!");
 			client.add(data);
 		}
 	}
@@ -78,25 +87,36 @@ class _WSClient {
 
 	_WSClient(this._url, this._mdl);
 
+	void close() {
+		_channel?.close();
+		_channel = null;
+	}
+
 	Future<void> connect() async {
-		debugPrint("Connecting to Server: {$_url}");
+		debugPrint("Connecting to Server: ${_url}");
 		try {
-			// TODO check that this is successfull and reconnect if not
 			_channel = await WebSocket.connect(_url);
-			debugPrint("Connected: {$_url}");
+			debugPrint("Connected: ${_url}");
 
 			_channel!.listen(
 				_listen,
-				onDone: () => debugPrint("WS Client: Server \'${_url}\' closed connection"),
-				onError: (err) => debugPrint("WS Client: ERR ${err}")
+				onDone: () {
+					debugPrint("WS Client: Server \'${_url}\' closed connection");
+					_channel = null;
+				},
+				onError: (err) {
+					debugPrint("WS Client: ERR ${err}");
+					_channel = null;
+				}
 			);
 		} catch (e) {
 			debugPrint("WS Client: Connection failed with error: ${e}");
+			_channel = null;
 		}
 	}
 
 	void _listen(dynamic msg) {
-		debugPrint("WS Client: Received message: ${msg}");
+		//debugPrint("WS Client: Received message: ${msg}");
 		if(msg is! List<int>) {
 			debugPrint("WS Client: Received msg with unknown type(${msg.runtimeType}): ${msg}. Ignoring...");
 			return;
@@ -106,7 +126,7 @@ class _WSClient {
 			return;
 		}
 
-		final Matchday md = _mdl.value;
+		Matchday md = _mdl.value;
 
 		// Parse the message
 		if(     msg[0] == MessageType.DATA_WIDGET_SCOREBOARD_ON.value);
@@ -116,6 +136,22 @@ class _WSClient {
 		else if(msg[0] == MessageType.DATA_WIDGET_AD_ON.value);
 		else if(msg[0] == MessageType.DATA_OBS_STREAM_ON.value);
 		else if(msg[0] == MessageType.DATA_OBS_REPLAY_ON.value);
+		else if(msg[0] == MessageType.DATA_GAME.value) {
+			Game game = Game.fromJson(jsonDecode(utf8.decode(msg.sublist(1))));
+			game = game.copyWith(protected: false);
+			int g_index = _mdl.value.games.indexWhere((g) => g.name == game.name);
+			debugPrint("Received DATA_GAME. Index: ${g_index}, protected: ${_mdl.value.games[g_index].protected}");
+			if(g_index != -1 && _mdl.value.games[g_index].protected == false) {
+				List<Game> games = List<Game>.from(_mdl.value.games);
+				games[g_index] = game;
+				_mdl.value = _mdl.value.copyWith(games: games);
+			}
+			else if(_mdl.value.meta.allowRemoteGameCreation) {
+				List<Game> games = List<Game>.from(_mdl.value.games);
+				games.add(game);
+				_mdl.value = _mdl.value.copyWith(games: games);
+			}
+		}
 		else if(msg[0] == MessageType.DATA_GAME_ACTION) {
 			_mdl.value = md.addGameAction(GameAction.fromJson(jsonDecode(msg.sublist(1).toString())));
 		}
@@ -146,14 +182,14 @@ class _WSClient {
 			this.boss = msg[1] == 1 ? true : false;
 		}
 		else if(msg[0] == MessageType.DATA_JSON.value) {
-			debugPrint("grrr?");
 			_mdl.value = Matchday.fromJson(jsonDecode(utf8.decode(msg)) as Map<String, dynamic>);
-			debugPrint("grrr^22?");
 		}
 		else if(msg[0] == MessageType.PLS_SEND_GAMEINDEX.value)
 			sendSignal(MessageType.DATA_GAMEINDEX);
 		else if(msg[0] == MessageType.PLS_SEND_GAMEPART.value)
 			sendSignal(MessageType.DATA_GAMEPART);
+		else if(msg[0] == MessageType.PLS_SEND_GAME.value)
+			sendSignal(MessageType.DATA_GAME, additionalInfo: msg[1]);
 		else if(msg[0] == MessageType.PLS_SEND_IS_PAUSE.value)
 			sendSignal(MessageType.DATA_PAUSE_ON);
 		else if(msg[0] == MessageType.PLS_SEND_TIME.value)
@@ -165,15 +201,15 @@ class _WSClient {
 
 	}
 
-	sendSignal(MessageType signal) {
-		final List<int>? msg = signalToMsg(signal, _mdl.value);
+	sendSignal(MessageType signal, {int? additionalInfo}) {
+		final List<int>? msg = signalToMsg(signal, _mdl.value, additionalInfo: additionalInfo);
 		if(msg == null) return;
 
 		send(msg);
 	}
 
 	void send(List<int> msg) {
-		debugPrint("WS Client: sending: ${msg}");
+		//debugPrint("WS Client: sending: ${msg}");
 		_channel?.add(msg);
 	}
 }
@@ -188,8 +224,12 @@ class InterscoreWS {
 	// We have to use a "factory" so the constructor can be async
 	InterscoreWS(this._mdl);
 
+	void close() {
+		server?.close();
+		client?.close();
+	}
+
 	void initServer(String url) {
-		// TODO use mdl in Server?
 		this.server = _WSServer(url, _mdl);
 		// we dont await this, because it will run forever
 		this.server?.run();
@@ -201,15 +241,21 @@ class InterscoreWS {
 		await this.client?.connect();
 	}
 
-	void sendSignal(MessageType signal) {
-		final List<int>? msg = signalToMsg(signal, _mdl.value);
+	void sendSignal(MessageType signal, {int? additionalInfo}) {
+		final List<int>? msg = signalToMsg(signal, _mdl.value, additionalInfo: additionalInfo);
 		if(msg == null) return;
 
 		send(msg);
+
+		// TODO CONSIDER only send games, not gameparts
+		// TODO TEMP this seems odd, but we dont send gameactions right now, but rather the whole json
+		// the other device doesnt accept json data though. It only acceps games. Therefor we also send the game
+		if(signal == MessageType.DATA_JSON)
+			sendSignal(MessageType.DATA_GAME, additionalInfo: _mdl.value.meta.gameIndex);
 	}
 
 	void send(List<int> msg) {
-		debugPrint("sending: ${msg}");
+		//debugPrint("sending: ${msg}");
 		server?.send(msg);
 		client?.send(msg);
 	}
@@ -219,12 +265,15 @@ class InterscoreWS {
 	}
 }
 
-List<int>? signalToMsg(MessageType msg, Matchday md) {
+List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 	debugPrint("signalToMsg: ${msg}");
 	// TODO Add all the DATA stuff, especially Widget toggeling
 	if(msg == MessageType.DATA_GAME_ACTION)
 		debugPrint("WARN: Game Actions sending is not implemented yet!");
-	else if(msg == MessageType.DATA_GAMEINDEX)
+	if(msg == MessageType.DATA_GAME) {
+		if((additionalInfo ?? md.games.length) >= md.games.length) return null;
+		return [msg.value, ... utf8.encode(jsonEncode(md.games[additionalInfo!]))];
+	} else if(msg == MessageType.DATA_GAMEINDEX)
 		return [msg.value, md.meta.gameIndex];
 	else if(msg == MessageType.DATA_GAMEPART)
 		return [msg.value, md.meta.currentGamepart];
@@ -237,7 +286,7 @@ List<int>? signalToMsg(MessageType msg, Matchday md) {
 	else if(msg == MessageType.DATA_SIDES_SWITCHED)
 		return [msg.value, md.meta.sidesInverted ? 1 : 0];
 	else if(msg == MessageType.DATA_JSON)
-		return utf8.encode(jsonEncode(md.toJson()));
+	  return utf8.encode(jsonEncode(md.toJson()));
 	else if(msg == MessageType.DATA_WIDGET_SCOREBOARD_ON)
 		return [msg.value, md.meta.widgetScoreboard ? 1 : 0];
 	else if(msg == MessageType.DATA_WIDGET_GAMEPLAN_ON)
@@ -256,5 +305,4 @@ List<int>? signalToMsg(MessageType msg, Matchday md) {
 		return [msg.value, 1];
 	else
 		return [msg.value];
-	return null;
 }

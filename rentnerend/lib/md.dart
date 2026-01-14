@@ -1,4 +1,7 @@
 // ignore_for_file: invalid_annotation_target
+import 'dart:ffi';
+
+import 'package:flutter_rentnerend/input_window.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -28,21 +31,22 @@ class Matchday with _$Matchday {
 	}
 
 	Format? get currentFormat {
-		final String? name = currentGame.format.name;
-		if (name == null) return null;
-		return meta.formats.firstWhereOrNull(
-			(f) => f.name == name
-		);
+		Format? f = formatFromName(currentGame.format.name);
+		if(f == null) return null;
+		return f.copyWith(gameparts: f.gameparts.where((gp) => (!gp.decider || currentGame.format.decider)).toList());
 	}
 
-	GamePart? get currentGamePart {
-		final Format? format = currentFormat;
-		if (format == null) return null;
-		if (meta.currentGamepart >= format.gameparts.length) return null;
-		return format.gameparts[meta.currentGamepart];
+	Format? get currentFormatUnwrapped {
+		Format? f = currentFormat;
+		if(f == null) return null;
+		return formatUnwrap(f);
 	}
 
-	Matchday setGameIndex(int index) {
+	Gamepart? get currentGamepart {
+		return gamepartFromIndex(meta.currentGamepart);
+	}
+
+	Matchday setGameIndex(int index, {bool applySideEffects = true}) {
 		if (index < 0 || index >= games.length) return this;
 		debugPrint("Setting Gameindex: ${meta.gameIndex} -> ${index}");
 		// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
@@ -67,8 +71,10 @@ class Matchday with _$Matchday {
 				team2: t2,
 			);
 		}
-
-		return copyWith(games: new_games, meta: meta.copyWith(gameIndex: index));
+		Matchday md = copyWith(games: new_games, meta: meta.copyWith(gameIndex: index));
+		if(applySideEffects && md.meta.paused && md.meta.currentTime == 0)
+			md = md.setCurrentGamepart(0);
+		return md;
 	}
 
 	Matchday setSidesInverted(bool inverted) {
@@ -137,8 +143,8 @@ class Matchday with _$Matchday {
 
 	// Time can be positive or negative
 	Matchday timeReset() {
-		if (currentGamePart == null) return this;
-		int? defTime = currentGamePart!.whenOrNull(timed: (_, len, _, _, _) => len);
+		if (currentGamepart == null) return this;
+		int? defTime = currentGamepart!.whenOrNull(timed: (_, len, _, _, _) => len);
 		if (defTime == null) return this;
 		return copyWith(meta: meta.copyWith(currentTime: defTime));
 	}
@@ -148,10 +154,21 @@ class Matchday with _$Matchday {
 		return copyWith(meta: meta.copyWith(paused: pause));
 	}
 
-	Matchday setCurrentGamepart(int part) {
-		// TODO add checks for out of bounds
-		if (part < 0) return this;
-		return copyWith(meta: meta.copyWith(currentGamepart: part));
+	Matchday setCurrentGamepart(int index, {bool applySideEffect = true}) {
+		Gamepart? gp = gamepartFromIndex(index);
+		if(gp == null) return this;
+		Matchday md = this;
+		if(applySideEffect) {
+			md = gp.maybeWhen(
+				timed: (_, len, _, _, _) {
+					if(meta.paused)
+						return copyWith(meta: meta.copyWith(currentTime: len));
+					else return this;
+				},
+				orElse: () => this
+			);
+		}
+		return md.copyWith(meta: md.meta.copyWith(currentGamepart: index));
 	}
 
 	// Returns a Map with Team and an associated integer to it.
@@ -245,6 +262,25 @@ class Matchday with _$Matchday {
 	Group? groupFromName(String name) {
 		return this.groups.firstWhere((group) => name == group.name);
 	}
+
+	Format? formatFromName(String name) {
+		return this.meta.formats.firstWhere((format) => name == format.name);
+	}
+
+	Format? formatUnwrap(Format f) {
+		return f.copyWith(gameparts: f.gameparts.expand((gp) => gp.maybeWhen(
+			format: (name, _, _, _) => formatUnwrap(formatFromName(name)!)!.gameparts,
+			orElse: () => [ gp ]
+		)).toList());
+	}
+
+	Gamepart? gamepartFromIndex(int index) {
+		final Format? f = currentFormatUnwrapped;
+		if (f == null) return null;
+		if (index < 0) return null;
+		if (index >= f.gameparts.length) return null;
+		return f.gameparts[index];
+	}
 }
 
 @freezed
@@ -259,6 +295,7 @@ class Meta with _$Meta {
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
 		@JsonKey(name: 'cur_time', toJson: intOrNullNot0) @Default(0) int currentTime,
+		@JsonKey(name: 'allow_remote_game_creation', toJson: boolOrNullTrue) @Default(false) bool allowRemoteGameCreation,
 		@Default(false) bool widgetScoreboard,
 		@Default(false) bool widgetGameplan,
 		@Default(false) bool widgetLiveplan,
@@ -284,6 +321,7 @@ class Game with _$Game {
 		List<String>? groups,
 		required GameFormat format,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
+		@Default(true) bool protected,
 		List<GameAction>? actions,
 	}) = _Game;
 
@@ -549,40 +587,40 @@ class Group with _$Group {
 @freezed
 class Format with _$Format {
 	@JsonSerializable(includeIfNull: false)
-	const factory Format(String name, List<GamePart> gameparts) = _Format;
+	const factory Format(String name, List<Gamepart> gameparts) = _Format;
 
 	factory Format.fromJson(Map<String, dynamic> json) => _$FormatFromJson(json);
 }
 
 @Freezed(unionKey: 'type')
-class GamePart with _$GamePart {
+class Gamepart with _$Gamepart {
 	@JsonSerializable(includeIfNull: false)
-	const factory GamePart.timed({
+	const factory Gamepart.timed({
 		required String name,
 		required int length,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
-	}) = _GamePartTimed;
+	}) = _GamepartTimed;
 
 	@JsonSerializable(includeIfNull: false)
-	const factory GamePart.format({
+	const factory Gamepart.format({
 		required String format, // nested reference to another format
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
-	}) = _GamePartFormat;
+	}) = _GamepartFormat;
 
 	@JsonSerializable(includeIfNull: false)
-	const factory GamePart.penalty({
+	const factory Gamepart.penalty({
 		required String name,
 		required Penalty penalty,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
-	}) = _GamePartPenalty;
+	}) = _GamepartPenalty;
 
-	factory GamePart.fromJson(Map<String, dynamic> json) => _$GamePartFromJson(json);
+	factory Gamepart.fromJson(Map<String, dynamic> json) => _$GamepartFromJson(json);
 }
 @freezed
 class Penalty with _$Penalty {
