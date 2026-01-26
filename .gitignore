@@ -11,7 +11,17 @@ rentnerend/pubspec.lock
 frontend/bun.lockb
 frontend/node_modules/
 frontend/script.js
-interscore
 project.seer
 replays/
 win-pacman/msys2-root/
+
+# Dead weight
+rentnerend/macos
+
+# Binaries
+interscore
+rentnerend/interscore-old
+rentnerend/interscore-server
+
+# TODO
+flutter_rentnerend

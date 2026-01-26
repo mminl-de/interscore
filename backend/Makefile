@@ -6,7 +6,8 @@ CFLAGS ?= -std=c23 -Wall -Wextra -Wpedantic -Wunused -Wunreachable-code -Wunused
 install:
 	$(CC) -o $(OUT) $(SRC) \
 	-Oz $(CFLAGS) -s \
-	-ljson-c
+	-ljson-c \
+	-D MG_TLS=MG_TLS_OPENSSL
 debug:
 	$(CC) -o $(OUT) $(SRC) \
 	$(CFLAGS) -g \
