@@ -92,7 +92,6 @@ class _InputWindowState extends State<InputWindow> {
 			if (!mounted) return;
 
 			if(ws.client == null || !ws.clientConnected) {
-				debugPrint("Reconnecting...");
 				await connectWS();
 			}
 		});

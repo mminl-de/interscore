@@ -110,7 +110,7 @@ class _WSClient {
 				}
 			);
 		} catch (e) {
-			debugPrint("WS Client: Connection failed with error: ${e}");
+			// debugPrint("WS Client: Connection failed with error: ${e}");
 			_channel = null;
 		}
 	}
