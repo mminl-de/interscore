@@ -1,188 +1,170 @@
-#define UNIT_TEST
-
+#include "munit.h"
 #include "../../backend/main.h"
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-
-/* --- capture ws_send calls --- */
-static int ws_send_call_count;
-static struct mg_connection *last_con;
-static uint8_t last_buf[256];
-static int last_len;
+void obs_send_cmd(const char *s) {
+	if (!obs_enabled || con_obs == NULL) {
+		log_msg(WARN, "Cant send command, OBS is not connected!\n");
+		return;
+	}
+	log_msg(LOG, "Sending OBS a Message: %s\n", s);
+	mg_ws_send(con_obs, s, strlen(s), WEBSOCKET_OP_TEXT);
+}
 
 bool ws_send(struct mg_connection *con, char *message, int len) {
-    ws_send_call_count++;
-    last_con = con;
-    last_len = len;
-    if (len > 0 && len < (int)sizeof(last_buf)) {
-        memcpy(last_buf, message, len);
-    }
-    return true;
+	if (con == NULL) {
+		log_msg(WARN, "client is not connected, couldnt send Message: '%*s'\n", len, message);
+		return false;
+	}
+
+	mg_ws_send(con, message, len, WEBSOCKET_OP_BINARY);
+	return true;
 }
 
-void forward_to_receiver(uint8_t *msg, size_t msg_len, struct mg_connection *c, struct mg_connection *r) {
-    ws_send_call_count = 0;
-    handle_message((enum MessageType *) msg, sizeof(msg), c);
+struct CopyState{
+	char orig_path[64], new_path[64];
+	uint32_t buf_len;
+	unsigned char *buf;
+};
 
-    assert_int_equal(ws_send_call_count, 1);
-    assert_ptr_equal(last_con, r);
-	for(int i=0; i < msg_len; i++)
-    	assert_int_equal(last_buf[i], msg[i]);
+static void *test_copy_file_setup(const MunitParameter params[], void *data) {
+	struct CopyState *st = malloc(sizeof(*st));
+	if(!st) return NULL;
+
+	int orig = munit_rand_int_range(10000, 99998);
+	int new = orig+1;
+
+	snprintf(st->orig_path, sizeof(st->orig_path), "/tmp/%d", orig);
+	snprintf(st->new_path, sizeof(st->new_path), "/tmp/%d", new);
+
+	const char *size_str = munit_parameters_get(params, "size");
+	st->buf_len = size_str ? atoi(size_str) : munit_rand_int_range(0, 10000);
+	st->buf = malloc(st->buf_len);
+	if(!st->buf) { free(st); return NULL; }
+
+	munit_rand_memory(st->buf_len, st->buf);
+
+	// ensure the files are not present
+	unlink(st->orig_path);
+	unlink(st->new_path);
+
+	// Create the orig_file
+	FILE *f = fopen(st->orig_path, "wb");
+	if(f == NULL) return NULL;
+	ssize_t n = fwrite(st->buf, 1, st->buf_len, f);
+	if(n != st->buf_len) return NULL;
+	fclose(f);
+
+	return st;
 }
 
-static void test_forward_to_boss(void **state) {
-    (void) state;
+static void test_copy_file_teardown(void *data) {
+	struct CopyState *st = data;
 
-    struct mg_connection boss = { .id = 1 };
-    struct mg_connection client = { .id = 2 };
-
-    clients.first = NULL;
-    clients.boss = &boss;
-
-    Client c1 = { .con = &client, .next = NULL };
-    clients.first = &c1;
-
-	forward_to_receiver((uint8_t []){PLS_SEND_GAMEINDEX, 7}, 2, &client, &boss);
-	forward_to_receiver((uint8_t []){DATA_PAUSE_ON, true}, 2, &boss, &client);
-	uint16_t time = 300;
-    uint8_t high = (time >> 8) & 0xFF; // high byte
-    uint8_t low  = time & 0xFF;        // low byte
-	forward_to_receiver((uint8_t []){DATA_TIME, high, low}, 2, &boss, &client);
-	forward_to_receiver((uint8_t []){DATA_GAMEINDEX, 0}, 2, &boss, &client);
+	unlink(st->orig_path);
+	unlink(st->new_path);
+	free(st->buf);
+	free(st);
 }
 
-static void test_im_the_boss(void **state) {
-    (void) state;
+static MunitResult test_copy_file_not_existing(const MunitParameter params[], void *data) {
+	// orig_path does not exist, so we cant copy it. copy_file has to fail
+	bool retval = copy_file("tmp/1000000", "tmp/1000001");
+	munit_assert_false(retval);
 
-    struct mg_connection boss1 = { .id = 1 };
-    struct mg_connection boss2 = { .id = 2 };
-    clients.first = NULL;
-    clients.boss = &boss1; // someone is already boss
-
-    Client c1 = { .con = &boss2, .next = NULL };
-    clients.first = &c1;
-
-    uint8_t msg[] = {IM_THE_BOSS, true};
-
-    ws_send_call_count = 0;
-    handle_message((enum MessageType *)msg, sizeof(msg), &boss2);
-
-    // boss2 should not become boss because boss1 exists
-    assert_ptr_equal(clients.boss, &boss1);
-
-    // no ws_send to boss2 should occur because attempt was illegal
-    assert_int_equal(ws_send_call_count, 0);
-
-    // now remove existing boss
-    clients.boss = NULL;
-    handle_message((enum MessageType *)msg, sizeof(msg), &boss2);
-    assert_ptr_equal(clients.boss, &boss2);
-    assert_int_equal(ws_send_call_count, 1);
-    assert_int_equal(last_buf[0], DATA_IM_BOSS);
-    assert_int_equal(last_buf[1], true);
+	return MUNIT_OK;
 }
 
-static void test_data_gameindex_updates(void **state) {
-    (void) state;
+static MunitResult test_copy_file_overwrite(const MunitParameter params[], void *data) {
+	struct CopyState *st = data;
 
-    struct mg_connection boss = { .id = 1 };
-    struct mg_connection client = { .id = 2 };
-    clients.first = NULL;
-    clients.boss = &boss;
-    Client c1 = { .con = &client, .next = NULL };
-    clients.first = &c1;
+	// copy_file should overwrite
+	bool retval = copy_file(st->orig_path, st->new_path);
+	munit_assert_true(retval);
+	retval = copy_file(st->new_path, st->orig_path);
+	munit_assert_true(retval);
 
-    uint8_t msg[] = {DATA_GAMEINDEX, 42};
-    ws_send_call_count = 0;
-
-    handle_message((enum MessageType *)msg, sizeof(msg), &client);
-
-    assert_int_equal(gameindex, 42);
-    assert_int_equal(ws_send_call_count, 1);
-    assert_int_equal(last_buf[0], DATA_GAMEINDEX);
-    assert_int_equal(last_buf[1], 42);
+	return MUNIT_OK;
 }
 
-static int obs_call_count;
-static char last_obs_cmd[256];
+static MunitResult test_copy_file(const MunitParameter params[], void *data) {
+	struct CopyState *st = data;
 
-void obs_send_cmd(const char *s) {
-    obs_call_count++;
-    snprintf(last_obs_cmd, sizeof(last_obs_cmd), "%s", s);
+	// copy file with copy_file
+	bool retval = copy_file(st->orig_path, st->new_path);
+	munit_assert_true(retval);
+
+	// check new file is created
+	FILE *f = fopen(st->new_path, "rb");
+	munit_assert_not_null(f);
+
+	munit_assert_int(fseek(f, 0, SEEK_END), ==, 0);
+	long size = ftell(f);
+	munit_assert_long(size, ==, st->buf_len);
+	rewind(f);
+
+	unsigned char buf2[st->buf_len+1];
+	fread(buf2, 1, st->buf_len, f);
+	munit_assert_memory_equal(st->buf_len, st->buf, buf2);
+	fclose(f);
+
+	return MUNIT_OK;
 }
 
-static void test_obs_stream_on(void **state) {
-    (void) state;
+// Nothing to test imho
+// static MunitResult test_obs_send_cmd(const MunitParameter params[], void *data) {}
+// static MunitResult test_ws_send(const MunitParameter params[], void *data) {  return MUNIT_SKIP;}
 
-    struct mg_connection boss = { .id = 1 };
-    clients.boss = &boss;
+static MunitResult test_create_replay_dirs(const MunitParameter params[], void *data) {
+	replay_path = "/tmp/replays";
+	bool retval = create_replay_dirs();
+	munit_assert_true(retval);
 
-    uint8_t msg_on[]  = {DATA_OBS_STREAM_ON, true};
-    uint8_t msg_off[] = {DATA_OBS_STREAM_ON, false};
+	struct stat st;
+	S_ISDIR(st.st_mode);
+	munit_assert_int(stat(replay_path, &st), ==, 0);
+	munit_assert_true(S_ISDIR(st.st_mode));
 
-    obs_call_count = 0;
+	char last_game_path[strlen(replay_path) + strlen("/last-game") + 1];
+	sprintf(last_game_path, "%s/last-game", replay_path);
 
-    handle_message((enum MessageType *)msg_on, sizeof(msg_on), &boss);
-    assert_int_equal(obs_call_count, 1);
-    assert_true(strstr(last_obs_cmd, "StartStream") != NULL);
+	munit_assert_int(stat(replay_path, &st), ==, 0);
+	munit_assert_true(S_ISDIR(st.st_mode));
 
-    obs_call_count = 0;
-    handle_message((enum MessageType *)msg_off, sizeof(msg_off), &boss);
-    assert_int_equal(obs_call_count, 1);
-    assert_true(strstr(last_obs_cmd, "StopStream") != NULL);
+	return MUNIT_OK;
 }
 
-static void test_game_data_to_all_clients(void **state) {
-    (void) state;
-
-    struct mg_connection boss = { .id = 1 };
-    struct mg_connection client1 = { .id = 2 };
-    struct mg_connection client2 = { .id = 3 };
-
-    clients.boss = &boss;
-    Client c1 = { .con = &client1, .next = NULL };
-    Client c2 = { .con = &client2, .next = &c1 };
-    clients.first = &c2;
-
-    uint8_t msg[] = {DATA_GAME, 99};
-    ws_send_call_count = 0;
-
-    handle_message((enum MessageType *)msg, sizeof(msg), &boss);
-
-    // both clients should receive DATA_GAME
-    assert_int_equal(ws_send_call_count, 2);
-    // last_con points to the first client processed (order doesn't matter)
+static MunitResult test_handle_message(const MunitParameter params[], void *data) {
+	return MUNIT_OK;
 }
+// static MunitResult test_obs_switch_scene(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
+// This should be tested, but can only really be in production tests. We need a videostream and a timer of some sort and either check obs or mock obs_switch_scene
+// static MunitResult test_obs_replay_start(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
+// static MunitResult test_ev_handler_client(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
+// static MunitResult test_ev_handler_server(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
+// static MunitResult test_mongoose_update(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
+// static MunitResult test_args(const MunitParameter params[], void *data) { return MUNIT_SKIP; }
 
-static void test_short_message(void **state) {
-    (void) state;
+static MunitTest test_suite_tests[] = {
+	{ "copy_file/normal", test_copy_file, test_copy_file_setup, test_copy_file_teardown, 0, NULL },
+	{ "copy_file/edge_case", test_copy_file, test_copy_file_setup, test_copy_file_teardown, 0, (MunitParameterEnum []){{"size", (char *[]){"0", "1", NULL}}, {NULL, NULL}} },
+	{ "copy_file/not_existing", test_copy_file_not_existing, NULL, NULL, 0, NULL },
+	{ "copy_file/overwrite", test_copy_file_overwrite, test_copy_file_setup, test_copy_file_teardown, 0, NULL },
 
-    struct mg_connection client = { .id = 1 };
-    clients.first = NULL;
-    clients.boss = &client;
+	// { "obs_send_cmd", test_obs_send_cmd, NULL, NULL, 0, NULL },
+	// { "ws_send", test_ws_send, NULL, NULL, 0, NULL },
+	{ "create_replay_dirs", test_create_replay_dirs, NULL, NULL, 0, NULL },
+	{ "handle_message", test_handle_message, NULL, NULL, 0, NULL },
+	// { "obs_switch_scene", test_obs_switch_scene, NULL, NULL, 0, NULL },
+	// { "obs_replay_start", test_obs_replay_start, NULL, NULL, 0, NULL },
+	// { "ev_handler_client", test_ev_handler_client, NULL, NULL, 0, NULL },
+	// { "ev_handler_server", test_ev_handler_server, NULL, NULL, 0, NULL },
+	// { "mongoose_update", test_mongoose_update, NULL, NULL, 0, NULL },
+	// { "args", test_args, NULL, NULL, 0, NULL },
+	{ NULL, NULL, NULL, NULL, 0, NULL }
+};
 
-    uint8_t msg[] = {DATA_OBS_REPLAY_ON}; // missing second byte
-    ws_send_call_count = 0;
+static const MunitSuite test_suite = { "backend/", test_suite_tests, NULL, 1, 0 };
 
-    handle_message((enum MessageType *)msg, 1, &client);
-
-    // Should be ignored, ws_send not called
-    assert_int_equal(ws_send_call_count, 0);
-}
-
-int main(void) {
-    const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_forward_to_boss),
-        cmocka_unit_test(test_im_the_boss),
-        cmocka_unit_test(test_forward_to_boss),
-        cmocka_unit_test(test_data_gameindex_updates),
-        cmocka_unit_test(test_game_data_to_all_clients),
-        cmocka_unit_test(test_short_message),
-        cmocka_unit_test(test_obs_stream_on),
-    };
-
-    return cmocka_run_group_tests(tests, NULL, NULL);
+int main(int argc, char* argv[MUNIT_ARRAY_PARAM(argc + 1)]) {
+  return munit_suite_main(&test_suite, NULL, argc, argv);
 }

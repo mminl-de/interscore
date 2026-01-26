@@ -1,5 +1,5 @@
 // TODO rewrite in zig :(
-#define UNIT_TEST
+// #define UNIT_TEST
 
 #include "main.h"
 
@@ -48,26 +48,36 @@ void log_msg(LogLevel level, const char *fmt, ...) {
     printf("\n");
 }
 
-// 0 is success
-int copy_file(const char *src, const char *dst) {
-	int source = open(src, O_RDONLY);
-	if (source < 0) return -1;
+bool copy_file(const char *src, const char *dst) {
+    int in = open(src, O_RDONLY);
+    if (in < 0) return false;
 
-	int dest = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (dest < 0) {
-		close(source);
-		return -1;
-	}
+    int out = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (out < 0) goto fail_in;
 
-	struct stat stat_source;
-	fstat(source, &stat_source);
+    char buf[8192];
+    ssize_t r;
 
-	off_t bytes_copied = 0;
-	ssize_t result = sendfile(dest, source, &bytes_copied, stat_source.st_size);
+    while ((r = read(in, buf, sizeof(buf))) > 0) {
+        ssize_t off = 0;
+        while (off < r) {
+            ssize_t w = write(out, buf + off, r - off);
+            if (w <= 0) goto fail;
+            off += w;
+        }
+    }
 
-	close(source);
-	close(dest);
-	return result;
+    if (r < 0) goto fail;
+
+    close(in);
+    close(out);
+    return true;
+
+fail:
+    close(out);
+fail_in:
+    close(in);
+    return false;
 }
 
 #ifndef UNIT_TEST
@@ -204,21 +214,17 @@ bool obs_replay_start() {
 	const float replay_speed = 0.75;
 	const int base_delay = 1000; // ms
 
-	log_msg(LOG, "OBS_REPLAY_START 0\n");
-
 	// Check if video is there
 	char instantreplay_path[strlen(replay_path) + strlen("/instantreplay.mkv") + 1];
 	strcpy(instantreplay_path, replay_path);
 	strcat(instantreplay_path, "/instantreplay.mkv");
 	if (access(instantreplay_path, F_OK) != 0) return false;
 
-	log_msg(LOG, "OBS_REPLAY_START 1\n");
 	// cut video to 3sec
 	char instantreplay_path_short[strlen(replay_path) + strlen("/instantreplay_short.mkv") + 1];
 	strcpy(instantreplay_path_short, replay_path);
 	strcat(instantreplay_path_short, "/instantreplay_short.mkv");
 
-	log_msg(LOG, "OBS_REPLAY_START 2\n");
 	char cmd[512 + strlen(instantreplay_path) * 2];
 	snprintf(cmd, sizeof(cmd), "ffmpeg -y -sseof -%d -i \"%s\" -c:v libx264 -preset veryfast -c:a aac \"%s\"", replay_len, instantreplay_path, instantreplay_path_short);
 	if (system(cmd) != 0) {
@@ -228,7 +234,6 @@ bool obs_replay_start() {
 
 	// TODO DECIDE check if video is exactly the length we want?
 
-	log_msg(LOG, "OBS_REPLAY_START 3\n");
 	// change scene to replay
 	//obs_switch_scene("replay");
 	mg_timer_add(&mgr_obs, base_delay, 0, obs_switch_scene, "replay");
@@ -238,10 +243,8 @@ bool obs_replay_start() {
 	//
 	// Now we save the instantreplay to its game replay folder
 	//
-	log_msg(LOG, "OBS_REPLAY_START 4\n");
 	if (!replays_game_working) return true;
 
-	log_msg(LOG, "OBS_REPLAY_START 5\n");
 	// Create gamepath (even if already existent bc its easier)
 	char gamepath[strlen(replay_path) + strlen("/game_00") + 1];
 	sprintf(gamepath, "%s/game_%02d", replay_path, gameindex);
@@ -251,7 +254,6 @@ bool obs_replay_start() {
 		return true;
 	}
 
-	log_msg(LOG, "OBS_REPLAY_START 6\n");
 	// Check how many replays there are already
 	char gamereplaypath[strlen(gamepath) + strlen("/replay_00.mkv")];
 	sprintf(gamereplaypath, "%s/replay_00.mkv", gamepath);
@@ -259,14 +261,12 @@ bool obs_replay_start() {
 	for (replay_count = 0; !access(gamereplaypath, F_OK) ; replay_count++)
 		sprintf(gamereplaypath, "%s/replay_%02d.mkv", gamepath, replay_count+1);
 
-	log_msg(LOG, "OBS_REPLAY_START 7\n");
 	// copy replay to the gamepath
-	if (copy_file(instantreplay_path, gamereplaypath) != 0) {
+	if (!copy_file(instantreplay_path, gamereplaypath)) {
 		log_msg(WARN, "Cant copy replay into game folder: '%s' -> '%s'\n", instantreplay_path, gamereplaypath);
 		return true;
 	}
 
-	log_msg(LOG, "OBS_REPLAY_START 8\n");
 	return true;
 }
 
@@ -369,12 +369,12 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			log_msg(LOG, "New connection opened!\n");
 			break;
 		case MG_EV_WS_MSG: {
-			struct mg_ws_message *m = (struct mg_ws_message *) p;
+			struct mg_ws_message *m = p;
 			// Renterend either sends a button press as a u8 number or a json-string
 			// which always begins with '{'
-			if (m->flags & WEBSOCKET_OP_TEXT) {
-				log_msg(LOG, "FRONTEND: %.*s\n", (int) m->data.len, m->data.buf);
-			} else
+			if (m->flags & WEBSOCKET_OP_TEXT)
+				log_msg(WARN, "Received unknown message: %.*s\n", (int) m->data.len, m->data.buf);
+			else
 				handle_message((enum MessageType *) m->data.buf, m->data.len, con);
 			break;
 		}

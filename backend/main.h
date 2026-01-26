@@ -42,7 +42,7 @@ typedef enum { NONE, LOG, WARN, ERROR } LogLevel;
 
 void die(char *error, int retval);
 void log_msg(LogLevel level, const char *fmt, ...);
-int copy_file(const char *src, const char *dst);
+bool copy_file(const char *src, const char *dst);
 void obs_send_cmd(const char *s);
 bool ws_send(struct mg_connection *con, char *message, int len);
 bool create_replay_dirs();
