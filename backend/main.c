@@ -333,7 +333,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 			break;
 		case MG_EV_CLOSE: {
 			if (clients.boss == con) clients.boss = NULL;
-			if (clients.first->con == con) {
+			if (clients.first && clients.first->con == con) {
 				Client *tmp = clients.first->next;
 				free(clients.first);
 				clients.first = tmp;
@@ -496,8 +496,6 @@ int main(int argc, char *argv[]) {
 	args(argc, argv);
 
 	init_obs();
-
-	init_server();
 
 	if(!init_server()) goto cleanup;
 
