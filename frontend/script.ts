@@ -313,11 +313,10 @@ function get_scores(g: Game): [scoreT1: number, scoreT2: number] {
 }
 
 // Returns Teams in correct left/right direction (as the scoreboard would write it)
-function get_teams(g: Game): [t1: Team | null,t2: Team | null] {
+function get_teams(g: Game): [t1: Team | null, t2: Team | null] {
 	const team_left = resolve_GameTeamSlot(g[1]);
 	const team_right = resolve_GameTeamSlot(g[2]);
 	return md.meta.sides_inverted ? [team_right, team_left] : [team_left, team_right];
-
 }
 
 function json_parse(s: string): Matchday {
@@ -464,26 +463,24 @@ function write_scoreboard() {
 function write_gameplan() {
 	while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 
-	const game_n = md.games.length;
 	const cur = md.meta.game_i; // TODO Index ab 0 so richtig?
 
-	md.games.forEach((g, i) => {
-		const teams = get_teams(g);
+	md.games.forEach((g: Game, i: number) => {
+		const team_left = resolve_GameTeamSlot(g[1]);
+		const team_right = resolve_GameTeamSlot(g[2]);
 		const scores = get_scores(g);
 
 		const default_col = "white";
 
-		const left_col = teams[0]?.color ?? default_col;
-		const right_col = teams[1]?.color ?? default_col;
-		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
+		const left_col = team_left?.color ?? default_col;
+		const right_col = team_right?.color ?? default_col;
 
 		let line = document.createElement("div");
-		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 		line.classList.add("line");
 
 		let t1 = document.createElement("div");
 		t1.classList.add("bordered", "t1");
-		t1.innerHTML = teams[0]?.name.toString() ?? "[???]";
+		t1.innerHTML = team_left?.name.toString() ?? "[???]";
 		t1.style.background = gradient2str(str2col(left_col), str2coldark(left_col));
 		t1.style.color = color_font_contrast(str2coldark(left_col));
 		line.appendChild(t1);
@@ -500,9 +497,9 @@ function write_gameplan() {
 
 		let t2 = document.createElement("div");
 		t2.classList.add("bordered", "t2");
-		t2.innerHTML = teams[1]?.name.toString() ?? "[???]";
-		t2.style.background = gradient2str(str2col(right_col), str2col(right_col));
-		t1.style.color = color_font_contrast(str2coldark(left_col));
+		t2.innerHTML = team_right?.name.toString() ?? "[???]";
+		t2.style.background = gradient2str(str2coldark(right_col), str2col(right_col));
+		t2.style.color = color_font_contrast(str2coldark(right_col));
 		line.appendChild(t2);
 
 		if (cur < i) {
@@ -541,7 +538,7 @@ function write_gameplan() {
 		requestAnimationFrame(step);
 	}
 
-	if (game_n > 10) {
+	if (md.games.length > 10) {
 		gameplan.parentElement?.classList.add("masked")
 		setTimeout(() => {
 			smooth_scroll_to(scroller.scrollHeight, SCROLL_DURATION)
@@ -921,6 +918,7 @@ function connect() {
 					console.log(`writing scoreboard!`);
 				} else
 					setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE);
+				// TODO FINAL CONSIDER REPLACE write_scoreboard() etc...
 				update_ui();
 				break;
 			}
