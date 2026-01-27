@@ -344,8 +344,31 @@ function gradient2str(l: Color, r: Color): string {
 		`rgb(${r.r}, ${r.g}, ${r.b}) 50%)`
 }
 
+//function color_font_contrast(c: Color): string {
+//	return (Math.max(c.r, c.g, c.b) > COLOR_CONTRAST_THRESHOLD) ? "black" : "white"
+//}
+
+// Inspired by the WCAG contrast ratio method
 function color_font_contrast(c: Color): string {
-	return (Math.max(c.r, c.g, c.b) > COLOR_CONTRAST_THRESHOLD) ? "black" : "white"
+	// Convert sRGB to linear
+	const to_linear = (c: number) => {
+		c /= 255
+		return c <= 0.03928
+			? c / 12.92
+			: Math.pow((c + 0.055) / 1.055, 2.4)
+	};
+
+	// Relative luminance
+	const L =
+		0.2126 * to_linear(c.r) +
+			0.7152 * to_linear(c.g) +
+			0.0722 * to_linear(c.b)
+
+	// Contrast ratios vs black and white
+	const contrast_black = (L + 0.05) / 0.05
+	const contrast_white = (1.05) / (L + 0.05)
+
+	return contrast_white > contrast_black ? "white" : "black"
 }
 
 // Converts a hexcolor string formatted like #rrggbb into a `Color` instance.

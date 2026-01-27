@@ -98,7 +98,8 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Future<void> connectWS() async {
-		await ws.initClient("ws://mminl.de:8081");
+		// TODO NOW
+		await ws.initClient("ws://localhost:8081");
 		if(!ws.clientConnected) return;
 		//await ws.initClient("ws://localhost:8081");
 		ws.client!.sendSignal(MessageType.DATA_JSON);
@@ -605,13 +606,13 @@ class _InputWindowState extends State<InputWindow> {
 							builder: (context, md, _) {
 								return Column(
 									children: [
-										//Expanded(flex: 18, child: blockTeams(md, recAct)),
-										//Expanded(flex: 25, child: blockGoals(md, recAct)),
-										//Expanded(flex: 35, child: blockTime(md, recAct)),
-										//Expanded(flex: 22, child: blockWidgets(md, recAct))
-										Expanded(flex: 25, child: blockTeams(md, recAct)),
-										Expanded(flex: 33, child: blockGoals(md, recAct)),
-										Expanded(flex: 42, child: blockTime(md, recAct)),
+										Expanded(flex: 18, child: blockTeams(md, recAct)),
+										Expanded(flex: 25, child: blockGoals(md, recAct)),
+										Expanded(flex: 35, child: blockTime(md, recAct)),
+										Expanded(flex: 22, child: blockWidgets(md, recAct))
+										//Expanded(flex: 25, child: blockTeams(md, recAct)),
+										//Expanded(flex: 33, child: blockGoals(md, recAct)),
+										//Expanded(flex: 42, child: blockTime(md, recAct)),
 									]
 								);
 							}

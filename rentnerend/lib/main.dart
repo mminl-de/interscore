@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 
 import "public_window.dart";
 import "input_window.dart";
+import "controller_window.dart";
 import "md.dart";
 import "lib.dart";
 import "websocket.dart";
@@ -47,7 +48,7 @@ class _MyAppState extends State<MyApp> {
 									ElevatedButton(
 										child: const Text('Load Input Window'),
 										onPressed: () async {
-											final json = await inputJsonLoad();
+											final json = await inputJsonLoad(context);
 											if(json == null) {debugPrint("json does not exist"); return;}
 											try { this.md = Matchday.fromJson(jsonDecode(json));
 											} catch (e, st){ debugPrint("JSON parsing Error: $e\nStack:\n$st"); return;}
@@ -82,13 +83,33 @@ class _MyAppState extends State<MyApp> {
 											);
 										},
 									), ElevatedButton(
+										child: const Text('Controller'),
+										onPressed: () async {
+											// Create a default Matchday
+											final md = Matchday(Meta(formats: []), [], [], []);
+											ValueNotifier<Matchday> mdl = ValueNotifier(md);
+											final ws = InterscoreWS(mdl);
+											// TODO normally mminl.de!
+											await ws.initClient("ws://localhost:8081");
+
+											ws.sendSignal(MessageType.PLS_SEND_JSON);
+
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return mdl.value == md;
+											});
+											Navigator.push(
+												context,
+												MaterialPageRoute<void>(
+													builder: (context) => ControllerWindow(mdl: mdl, ws: ws)
+												)
+											);
+										},
+									), ElevatedButton(
 										child: const Text('Load JSON Creator'),
 										onPressed: () {},
 									), ElevatedButton(
 										child: const Text('Load from Cycleball.eu'),
-										onPressed: () {},
-									), ElevatedButton(
-										child: const Text('Connect to existing livestream'),
 										onPressed: () {},
 									), ElevatedButton(
 										child: const Text('Exit'),

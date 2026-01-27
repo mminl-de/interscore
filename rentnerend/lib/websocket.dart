@@ -84,6 +84,7 @@ class _WSClient {
 	final ValueNotifier<Matchday> _mdl;
 	WebSocket? _channel;
 	bool boss = false; // This says, if we are the boss for the server
+	final ValueNotifier<bool> connected = ValueNotifier(false);
 
 	_WSClient(this._url, this._mdl);
 
@@ -97,15 +98,18 @@ class _WSClient {
 		try {
 			_channel = await WebSocket.connect(_url);
 			debugPrint("Connected: ${_url}");
+			connected.value = true;
 
 			_channel!.listen(
 				_listen,
 				onDone: () {
 					debugPrint("WS Client: Server \'${_url}\' closed connection");
+					connected.value = false;
 					_channel = null;
 				},
 				onError: (err) {
 					debugPrint("WS Client: ERR ${err}");
+					connected.value = false;
 					_channel = null;
 				}
 			);
@@ -220,6 +224,7 @@ class InterscoreWS {
 	// This is needed, so Matchday can be updated and trigger a UI redraw
 	// Also we need the Matchday informations in sendSignal() to send them
 	late final ValueNotifier<Matchday> _mdl;
+	ValueNotifier<bool>? get connection => client?.connected;
 
 	// We have to use a "factory" so the constructor can be async
 	InterscoreWS(this._mdl);
