@@ -1,7 +1,7 @@
 // TODO NOW implement update_queries
 import { z } from "zod"; // TODO CONSIDER
 
-import { MessageType } from "./MessageType.ts"
+import { MessageType } from "./MessageType.ts";
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // MessageType.ts contains only the enum MessageType and is exported, so backend
 // and rentnerend can use it as well (through #define magic)
@@ -12,58 +12,58 @@ import { MessageType } from "./MessageType.ts"
 // TODO decide what to do when rentnerend goes to ENDE ENDE (add gameindex and handle it everywhere?)
 // TODO FINAL OPTIMIZE our shame
 
-let socket: WebSocket
+let socket: WebSocket;
 let reconnect_timer: number | null = null;
 
-const scoreboard = document.querySelector(".scoreboard")! as HTMLElement
-const scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement
-const scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement
-const scoreboard_s1 = scoreboard.querySelector(".s1")!
-const scoreboard_s2 = scoreboard.querySelector(".s2")!
-const scoreboard_logo_1 = scoreboard.querySelector(".logo-1")! as HTMLImageElement
-const scoreboard_logo_2 = scoreboard.querySelector(".logo-2")! as HTMLImageElement
-const scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement
-const scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!
-const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!
+const scoreboard = document.querySelector(".scoreboard")! as HTMLElement;
+const scoreboard_t1 = scoreboard.querySelector(".t1")! as HTMLElement;
+const scoreboard_t2 = scoreboard.querySelector(".t2")! as HTMLElement;
+const scoreboard_s1 = scoreboard.querySelector(".s1")!;
+const scoreboard_s2 = scoreboard.querySelector(".s2")!;
+const scoreboard_logo_1 = scoreboard.querySelector(".logo-1")! as HTMLImageElement;
+const scoreboard_logo_2 = scoreboard.querySelector(".logo-2")! as HTMLImageElement;
+const scoreboard_time_bar = scoreboard.querySelector(".time-container .bar")! as HTMLElement;
+const scoreboard_time_minutes = scoreboard.querySelector(".time .minutes")!;
+const scoreboard_time_seconds = scoreboard.querySelector(".time .seconds")!;
 
-const gameplan = document.querySelector(".gameplan")! as HTMLElement
-const scroller = document.querySelector(".gameplan-container .scroller")! as HTMLElement
+const gameplan = document.querySelector(".gameplan")! as HTMLElement;
+const scroller = document.querySelector(".gameplan-container .scroller")! as HTMLElement;
 
-const gamestart = document.querySelector(".gamestart")! as HTMLElement
-const gamestart_t1 = gamestart.querySelector(".t1")! as HTMLElement
-const gamestart_t2 = gamestart.querySelector(".t2")! as HTMLElement
-const gamestart_next = gamestart.querySelector(".next")! as HTMLElement
-const gamestart_next_t1 = gamestart_next.querySelector(".t1")! as HTMLElement
-const gamestart_next_t2 = gamestart_next.querySelector(".t2")! as HTMLElement
+const gamestart = document.querySelector(".gamestart")! as HTMLElement;
+const gamestart_t1 = gamestart.querySelector(".t1")! as HTMLElement;
+const gamestart_t2 = gamestart.querySelector(".t2")! as HTMLElement;
+const gamestart_next = gamestart.querySelector(".next")! as HTMLElement;
+const gamestart_next_t1 = gamestart_next.querySelector(".t1")! as HTMLElement;
+const gamestart_next_t2 = gamestart_next.querySelector(".t2")! as HTMLElement;
 
-const card = document.querySelector(".card")! as HTMLElement
-const card_graphic = card.querySelector(".card-graphic")! as HTMLElement
-const card_receiver = card.querySelector(".card-receiver")!
-const card_message = card.querySelector(".card-message")!
+const card = document.querySelector(".card")! as HTMLElement;
+const card_graphic = card.querySelector(".card-graphic")! as HTMLElement;
+const card_receiver = card.querySelector(".card-receiver")!;
+const card_message = card.querySelector(".card-message")!;
 
-const ad = document.querySelector(".ad")! as HTMLElement
+const ad = document.querySelector(".ad")! as HTMLElement;
 
-const livetable = document.querySelector(".livetable")! as HTMLElement
+const livetable = document.querySelector(".livetable")! as HTMLElement;
 
 // Important variables for `read_c_string`
-const decoder = new TextDecoder("utf-8")
+const decoder = new TextDecoder("utf-8");
 
-const SCROLL_DURATION = 7_000
-const TIME_UPDATE_INTERVAL_MS = 1_000
-const TIMEOUT_SHOW = 200
-const TIMEOUT_HIDE = 500
-const DARKER_COLOR_BIAS: Color = { r: 30, g: 70, b: 100 } // TODO TEST
-const COLOR_CONTRAST_THRESHOLD = 191
+const SCROLL_DURATION = 7_000;
+const TIME_UPDATE_INTERVAL_MS = 1_000;
+const TIMEOUT_SHOW = 200;
+const TIMEOUT_HIDE = 500;
+const DARKER_COLOR_BIAS: Color = { r: 30, g: 70, b: 100 }; // TODO TEST
 
+// TODO FINAL CONSIDER bitmap lmao
 let shown = {
 	scoreboard: false,
 	gameplan: false,
-	liveplan: false,
+	livetable: false,
 	gamestart: false,
 	ad: false
-}
+};
 
-type Color = { r: number, g: number, b: number }
+type Color = { r: number, g: number, b: number };
 
 // TODO CONSIDER should you put z.<datatype>() in a constant to avoid re-eval?
 const PenaltySchema = z.object({
@@ -277,7 +277,7 @@ let md: Matchday = {
 	games: [],
 	groups: [],
 	teams: []
-}
+};
 
 function cur_game(): (Game | null) {
 	return md.games[md.meta.game_i];
@@ -298,7 +298,7 @@ function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
 			case "byQuery": return null;
 			case "byQueryResolved": return gts.name;
 		}
-	})()
+	})();
 
 	return md.teams.find(g => g.name == team_name) ?? null;
 }
@@ -341,7 +341,7 @@ function json_parse(s: string): Matchday {
 
 function gradient2str(l: Color, r: Color): string {
 	return `linear-gradient(90deg, rgb(${l.r}, ${l.g}, ${l.b}) 0%,` +
-		`rgb(${r.r}, ${r.g}, ${r.b}) 50%)`
+		`rgb(${r.r}, ${r.g}, ${r.b}) 50%)`;
 }
 
 //function color_font_contrast(c: Color): string {
@@ -362,13 +362,13 @@ function color_font_contrast(c: Color): string {
 	const L =
 		0.2126 * to_linear(c.r) +
 			0.7152 * to_linear(c.g) +
-			0.0722 * to_linear(c.b)
+			0.0722 * to_linear(c.b);
 
 	// Contrast ratios vs black and white
-	const contrast_black = (L + 0.05) / 0.05
-	const contrast_white = (1.05) / (L + 0.05)
+	const contrast_black = (L + 0.05) / 0.05;
+	const contrast_white = (1.05) / (L + 0.05);
 
-	return contrast_white > contrast_black ? "white" : "black"
+	return contrast_white > contrast_black ? "white" : "black";
 }
 
 // Converts a hexcolor string formatted like #rrggbb into a `Color` instance.
@@ -377,7 +377,7 @@ function str2col(hexcode: string): Color {
 		r: parseInt(hexcode.slice(1, 3), 16),
 		g: parseInt(hexcode.slice(3, 5), 16),
 		b: parseInt(hexcode.slice(5, 7), 16)
-	}
+	};
 }
 
 // Computes a darker shade of the described color (#rrggbb) and formats it as a
@@ -387,7 +387,7 @@ function str2coldark(hexcode: string): Color {
 		r: Math.max(0, parseInt(hexcode.slice(1, 3), 16) - DARKER_COLOR_BIAS.r),
 		g: Math.max(0, parseInt(hexcode.slice(3, 5), 16) - DARKER_COLOR_BIAS.g),
 		b: Math.max(0, parseInt(hexcode.slice(5, 7), 16) - DARKER_COLOR_BIAS.b)
-	}
+	};
 }
 
 function col2str(c: Color): string {
@@ -419,7 +419,7 @@ function query_set_to_string(query: GameQuery): string {
 //}
 
 function write_scoreboard() {
-	const game = md.games[md.meta.game_i]
+	const game = md.games[md.meta.game_i];
 	//console.log(md.meta.game_i);
 	console.log(md);
 
@@ -444,8 +444,8 @@ function write_scoreboard() {
 
 	const scores: [number, number] = get_scores(game);
 	console.log(`scores: ${scores}`);
-	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString()
-	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString()
+	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString();
+	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString();
 
 	const default_col = col2str({r: 255, g: 255, b: 255});
 
@@ -453,19 +453,19 @@ function write_scoreboard() {
 	const right_col = teams[1]?.color ?? default_col;
 
 	scoreboard_t1.style.background = gradient2str(str2col(left_col), str2coldark(left_col));
-	scoreboard_t1.style.color = color_font_contrast(str2coldark(left_col))
-	scoreboard_t2.style.background = gradient2str(str2coldark(right_col), str2col(right_col))
-	scoreboard_t2.style.color = color_font_contrast(str2coldark(right_col))
+	scoreboard_t1.style.color = color_font_contrast(str2coldark(left_col));
+	scoreboard_t2.style.background = gradient2str(str2coldark(right_col), str2col(right_col));
+	scoreboard_t2.style.color = color_font_contrast(str2coldark(right_col));
 
-	update_timer_html()
-	update_scoreboard_timer()
+	update_timer_html();
+	update_scoreboard_timer();
 }
 
 function write_gameplan() {
 	while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 
 	const game_n = md.games.length;
-	const cur = md.meta.game_i // TODO Index ab 0 so richtig?
+	const cur = md.meta.game_i; // TODO Index ab 0 so richtig?
 
 	md.games.forEach((g, i) => {
 		const teams = get_teams(g);
@@ -475,10 +475,10 @@ function write_gameplan() {
 
 		const left_col = teams[0]?.color ?? default_col;
 		const right_col = teams[1]?.color ?? default_col;
-		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!)
+		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 
 		let line = document.createElement("div");
-		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!)
+		while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 		line.classList.add("line");
 
 		let t1 = document.createElement("div");
@@ -506,50 +506,48 @@ function write_gameplan() {
 		line.appendChild(t2);
 
 		if (cur < i) {
-			line.style.opacity = "0.9"
-			s1.innerHTML = "?"
-			s2.innerHTML = "?"
-			t1.style.color = "#bebebe"
-			t2.style.color = "#bebebe"
-			s1.style.color = "#bebebe"
-			s2.style.color = "#bebebe"
-			s1.style.backgroundColor = "black"
-			s2.style.backgroundColor = "black"
+			line.style.opacity = "0.9";
+			s1.innerHTML = "?";
+			s2.innerHTML = "?";
+			t1.style.color = "#bebebe";
+			t2.style.color = "#bebebe";
+			s1.style.color = "#bebebe";
+			s2.style.color = "#bebebe";
+			s1.style.backgroundColor = "black";
+			s2.style.backgroundColor = "black";
 		}
 
-		gameplan.appendChild(line)
+		gameplan.appendChild(line);
 	});
 
 	// TODO
-	function smoothScrollTo(targetY: number, duration: number = 2_000) {
-		const startY = scroller.scrollTop
-		const deltaY = targetY - startY
-		const startTime = performance.now()
+	function smooth_scroll_to(target_y: number, duration: number = 2_000) {
+		const start_y = scroller.scrollTop;
+		const delta_y = target_y - start_y;
+		const start_time = performance.now();
 
-		function step(currentTime: number) {
-			const elapsed = currentTime - startTime
-			const progress = Math.min(elapsed / duration, 1)
+		function step(cur_time: number) {
+			const elapsed = cur_time - start_time;
+			const progress = Math.min(elapsed / duration, 1);
 			const eased = progress < 0.5
 				? 2 * progress * progress // easeIn
-				: -1 + (4 - 2 * progress) * progress // easeOut
+				: -1 + (4 - 2 * progress) * progress; // easeOut
 
-			scroller.scrollTop = startY + deltaY * eased
+			scroller.scrollTop = start_y + delta_y * eased;
 
-			if (progress < 1) {
-				requestAnimationFrame(step)
-			}
+			if (progress < 1) requestAnimationFrame(step);
 		}
 
-		requestAnimationFrame(step)
+		requestAnimationFrame(step);
 	}
 
 	if (game_n > 10) {
 		gameplan.parentElement?.classList.add("masked")
 		setTimeout(() => {
-			smoothScrollTo(scroller.scrollHeight, SCROLL_DURATION)
+			smooth_scroll_to(scroller.scrollHeight, SCROLL_DURATION)
 
 			setTimeout(() => {
-				smoothScrollTo(0, SCROLL_DURATION)
+				smooth_scroll_to(0, SCROLL_DURATION)
 			}, SCROLL_DURATION + 2_000) // duration + delay
 		}, 2_000)
 	}
@@ -605,19 +603,19 @@ function write_gamestart() {
 	t2_name_el.style.color = color_font_contrast(str2coldark(right_col_cur));
 	t2_name_el.innerHTML = teams_cur[1]?.name.toString() ?? "[???]";
 
-	const t2_keeper_el = document.createElement("div")
-	t2_keeper_el.classList.add("bordered", "player")
-	t2_keeper_el.style.backgroundColor = "#bebebe"
-	t2_keeper_el.innerHTML = t2_keeper
+	const t2_keeper_el = document.createElement("div");
+	t2_keeper_el.classList.add("bordered", "player");
+	t2_keeper_el.style.backgroundColor = "#bebebe";
+	t2_keeper_el.innerHTML = t2_keeper;
 
-	const t2_field_el = document.createElement("div")
-	t2_field_el.classList.add("bordered", "player")
-	t2_field_el.style.backgroundColor = "#bebebe"
-	t2_field_el.innerHTML = t2_field
+	const t2_field_el = document.createElement("div");
+	t2_field_el.classList.add("bordered", "player");
+	t2_field_el.style.backgroundColor = "#bebebe";
+	t2_field_el.innerHTML = t2_field;
 
-	gamestart_t2.appendChild(t2_name_el)
-	gamestart_t2.appendChild(t2_keeper_el)
-	gamestart_t2.appendChild(t2_field_el)
+	gamestart_t2.appendChild(t2_name_el);
+	gamestart_t2.appendChild(t2_keeper_el);
+	gamestart_t2.appendChild(t2_field_el);
 
 	if (teams_next[0] == null && teams_next[1] == null) gamestart_next.style.display = "none";
 	else {
@@ -674,13 +672,12 @@ type LivetableLine = {
 	goals_taken: number,
 	color_right: Color,
 	color_left: Color
-}
+};
 
 // TODO make this function not suck
 // (dont call everything 100 times, we do basically the same thing for every field)
 function write_livetable() {
-	while (livetable.children.length > 2)
-		livetable.removeChild(livetable.lastChild!);
+	while (livetable.children.length > 2) livetable.removeChild(livetable.lastChild!);
 
 	const team_n = md.teams.length;
 	let teams: LivetableLine[] = [];
@@ -701,16 +698,16 @@ function write_livetable() {
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 					}
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			played: (() => {
-				let p: number = 0
+				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t || resolve_GameTeamSlot(g[2]) === t) p++;
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			won: (() => {
 				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
@@ -720,10 +717,10 @@ function write_livetable() {
 					else if (resolve_GameTeamSlot(g[2]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			tied: (() => {
-				let p: number = 0
+				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
@@ -731,10 +728,10 @@ function write_livetable() {
 					else if (resolve_GameTeamSlot(g[2]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			lost: (() => {
-				let p: number = 0
+				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
@@ -742,28 +739,28 @@ function write_livetable() {
 					else if (resolve_GameTeamSlot(g[2]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			goals: (() => {
-				let p: number = 0
+				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[1];
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			goals_taken: (() => {
-				let p: number = 0
+				let p: number = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[0];
 				}
-				return p
-			}) (),
+				return p;
+			})(),
 			color_right: str2col(t.color),
-			color_left: str2coldark(t.color),
+			color_left: str2coldark(t.color)
 		});
 	});
 
@@ -775,9 +772,9 @@ function write_livetable() {
 		if (b.won !== a.won) return b.won - a.won;
 		if (b.played !== a.played) return b.played - a.played;
 		return a.name.localeCompare(b.name);
-	})
+	});
 
-	for (let team_i = 0; team_i < team_n; ++team_i) {
+	for (let team_i = 0; team_i < team_n; team_i++) {
 		const line = document.createElement("div");
 		line.classList.add("line");
 
@@ -827,7 +824,7 @@ function write_livetable() {
 	}
 }
 
-let countdown = 0; //TODO ASK what is this?
+let countdown = 0; // TODO ASK what is this?
 
 // Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
 function async_handle_time() {
@@ -840,7 +837,7 @@ function async_handle_time() {
 		if (md.meta.cur_time <= 1) clearInterval(countdown);
 
 		console.log("tick one down now: ", md.meta.cur_time);
-		--md.meta.cur_time;
+		md.meta.cur_time--;
 
 		update_timer_html();
 	}, TIME_UPDATE_INTERVAL_MS);
@@ -849,7 +846,7 @@ function async_handle_time() {
 function update_scoreboard_timer() {
 	if (md.meta.cur_time === -1) return;
 	const gp = cur_gamepart();
-	if(gp?.type != "timed") return;
+	if (gp?.type != "timed") return;
 	const bar_width = Math.min(100, Math.max(0, (md.meta.cur_time / gp.length) * 100));
 	scoreboard_time_bar.style.width = bar_width + "%";
 }
@@ -866,9 +863,9 @@ function update_ui() {
 	console.log("updating ui")
 	if (shown.scoreboard) write_scoreboard();
 	if (shown.gameplan) write_gameplan();
-	if (shown.liveplan) write_livetable();
+	if (shown.livetable) write_livetable();
 	if (shown.gamestart) write_gamestart();
-	if (shown.ad) return; //write_ad() //TODO This does not exist, right?
+	if (shown.ad) return; // write_ad() //TODO This does not exist, right?
 }
 
 function connect() {
@@ -876,7 +873,7 @@ function connect() {
 	socket.binaryType = "arraybuffer";
 
 	socket.onopen = () => {
-		function toStr(v) {
+		function to_string(v: any) {
 			if (typeof v === "string") return v;
 			if (v instanceof Error) return v.stack || v.message;
 			try {
@@ -889,12 +886,12 @@ function connect() {
 		const origLog = console.log;
 		const origErr = console.error;
 		console.log = (...args) => {
-			socket.send(args.map(toStr).join(" "));
+			socket.send(args.map(to_string).join(" "));
 			origLog(...args); // optional
 		};
 
 		console.error = (...args) => {
-			socket.send("[ERROR] " + args.map(toStr).join(" "));
+			socket.send("[ERROR] " + args.map(to_string).join(" "));
 			origErr(...args); // optional
 		};
 
@@ -912,103 +909,94 @@ function connect() {
 
 		const dv = new DataView(event.data as ArrayBuffer);
 		const mode = dv.getUint8(0);
-		console.log(`mode: ${mode}, ${MessageType.DATA_WIDGET_SCOREBOARD_ON.valueOf()}`);
+		console.log(`mode: ${mode}, ${MessageType.DATA_WIDGET_SCOREBOARD_ON}`);
 
 		switch (mode) {
-			case MessageType.DATA_WIDGET_SCOREBOARD_ON.valueOf(): {
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				console.log(`show: ${show}`);
-				shown.scoreboard = show;
+			case MessageType.DATA_WIDGET_SCOREBOARD_ON: {
+				console.log(`show: ${shown.scoreboard}`);
 				scoreboard.style.opacity = "0"; // TODO READ why is this line present on both show and hide
-				if(show) {
+				if (shown.scoreboard = dv.getUint8(1) == 1) {
 					scoreboard.style.display = "inline-flex";
 					setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW);
 					console.log(`writing scoreboard!`);
-					write_scoreboard();
 				} else
 					setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE);
-				update_ui()
-				break
-			} case MessageType.DATA_WIDGET_GAMEPLAN_ON: {
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				shown.gameplan = show;
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_WIDGET_GAMEPLAN_ON: {
 				gameplan.style.opacity = "0";
-				if(show) {
+				if (shown.gameplan = dv.getUint8(1) == 1) {
 					gameplan.style.display = "inline-flex";
 					setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW);
-					write_gameplan();
 				} else
 					setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE);
-				update_ui()
-				break
-			} case MessageType.DATA_WIDGET_LIVETABLE_ON: {
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				shown.liveplan = show;
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_WIDGET_LIVETABLE_ON: {
 				livetable.style.opacity = "0";
-				if(show) {
+				if (shown.livetable = dv.getUint8(1) == 1) {
 					livetable.style.display = "inline-flex";
 					setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW);
-					write_livetable();
 				} else
 					setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE);
-				update_ui()
-				break
-			} case MessageType.DATA_WIDGET_GAMESTART_ON: {
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				shown.gamestart = show;
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_WIDGET_GAMESTART_ON: {
 				gamestart.style.opacity = "0";
-				if(show) {
+				if (shown.gamestart = dv.getUint8(1) == 1) {
 					gamestart.style.display = "flex";
 					setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW);
-					write_gamestart();
 				} else
 					setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE);
-				update_ui()
-				break
-			} case MessageType.DATA_WIDGET_AD_ON: { // TODO does this work?
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				shown.ad = show;
-				if(show) {
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_WIDGET_AD_ON: { // TODO does this work?
+				if (shown.ad = dv.getUint8(1) == 1) {
 					ad.style.opacity = "0";
 					ad.style.display = "block";
 					setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW);
 				} else
-					setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE)
-				update_ui()
-				break
-			//} case MessageType.DATA_GAME_ACTION: {
+					setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE);
+				update_ui();
+				break;
+			}
+			//case MessageType.DATA_GAME_ACTION: {
 			//	const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
 			//	console.log(str);
 			//	cur_game()?.actions.push(GameActionSchema.parse(str)); // TODO what if this fails somehow?
 			//	update_ui()
 			//	break
-			} case MessageType.DATA_SIDES_SWITCHED:
-				const show: boolean = dv.getUint8(1) == 1 ? true : false;
-				md.meta.sides_inverted = show;
-				update_ui()
-				break
-			case MessageType.DATA_TIME:
-				console.log("Received DATA time: ", dv.getUint16(1, false))
-				md.meta.cur_time = dv.getUint16(1, false)
-				update_ui()
-				break
-			case MessageType.DATA_PAUSE_ON:
-				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1)
-				md.meta.paused = dv.getUint8(1) === 1
-				break
+			//}
 			case MessageType.DATA_GAMEINDEX:
 				// ^ TODO CONSIDER RENAME
-				console.log("Received DATA Gameindex: ", dv.getUint8(1))
-				md.meta.game_i = dv.getUint8(1)
-				update_ui()
-				break
+				console.log("Received DATA Gameindex: ", dv.getUint8(1));
+				md.meta.game_i = dv.getUint8(1);
+				update_ui();
+				break;
+			case MessageType.DATA_PAUSE_ON:
+				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1);
+				md.meta.paused = dv.getUint8(1) === 1;
+				break;
+			case MessageType.DATA_TIME:
+				console.log("Received DATA time: ", dv.getUint16(1, false));
+				md.meta.cur_time = dv.getUint16(1, false);
+				update_ui();
+				break;
+			case MessageType.DATA_SIDES_SWITCHED:
+				md.meta.sides_inverted = dv.getUint8(1) == 1;
+				update_ui();
+				break;
 			case MessageType.DATA_JSON:
 				// ^ TODO CONSIDER RENAME
-				console.log("Received DATA JSON")
-				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
-				md = json_parse(str)
-				update_ui()
-				break
+				console.log("Received DATA JSON");
+				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength));
+				md = json_parse(str);
+				update_ui();
+				break;
 			//case MessageType.SCOREBOARD_SET_TIMER:
 			// TODO This is actually useful, implement in rentnerend
 			// TODO make this work
@@ -1017,7 +1005,7 @@ function connect() {
 		}
 	}
 
-	socket.onerror = (error: Event) => console.error("WebSocket Error: ", error)
+	socket.onerror = (error: Event) => console.error("WebSocket Error: ", error);
 	socket.onclose = () => {
 		console.warn("WebSocket connection closed! Reconnecting in 3s");
 		reconnect_timer = window.setTimeout(connect, 3_000);
@@ -1026,7 +1014,7 @@ function connect() {
 
 connect();
 async_handle_time();
-console.log("Client loaded!")
+console.log("Client loaded!");
 
 // For debugging
 //function hotReloadCSS() {
