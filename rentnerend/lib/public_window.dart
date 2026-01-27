@@ -20,7 +20,6 @@ class PublicWindow extends StatefulWidget {
 class _PublicWindowState extends State<PublicWindow> {
 	late ValueNotifier<Matchday> mdl;
 	late InterscoreWS ws;
-	Timer? ticker;
 
 	@override
 	void initState() {
@@ -38,6 +37,7 @@ class _PublicWindowState extends State<PublicWindow> {
 
 	@override
 	void dispose() {
+		ws.close();
 		mdl.dispose();
 
 		super.dispose();
