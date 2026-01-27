@@ -99,19 +99,51 @@ Color colorFromHexString(String hex) {
 	return Color(int.parse(hex, radix:16));
 }
 
-Future<String?> inputJsonLoad() async {
+Future<bool?> askUseStateFile(BuildContext context) {
+	return showDialog<bool>(
+		context: context,
+		builder: (_) => AlertDialog(
+			title: const Text('Load Autosave?'),
+			content: const Text(
+				'An autosave file was found. This indicates the program did not close correctly last time.\nDo you want to load it or delete and load input.json?'
+			),
+			actions: [
+				TextButton(
+					onPressed: () => Navigator.pop(context, true),
+					child: const Text('Load Autosave'),
+				),
+				ElevatedButton(
+					onPressed: () => Navigator.pop(context, false),
+					child: const Text('Load input.json'),
+				),
+			],
+		),
+	);
+}
+
+Future<String?> inputJsonLoad(BuildContext context) async {
 	final cacheDir = await getApplicationCacheDirectory();
 	final docDir = await getApplicationDocumentsDirectory();
-	File file;
 	// if we have a state file, we load it instead of the original input file
 	// State files get removed when closing the program normally
 	debugPrint("cache path: ${cacheDir.path}/interscore/matchday_state.json");
 	debugPrint("doc path: ${docDir.path}/interscore/input.json");
-	file = File('${cacheDir.path}/interscore/matchday_state.json');
-	if(!file.existsSync()) {
-		createDir('${docDir.path}/interscore/');
-		file = File('${docDir.path}/interscore/input.json');
-	}
+
+	final File stateFile = File('${cacheDir.path}/interscore/matchday_state.json');
+	final File inputFile = File('${docDir.path}/interscore/input.json');
+	File file;
+
+	if (stateFile.existsSync()) {
+		final useState = await askUseStateFile(context);
+		if (useState == null) return null; // dialog dismissed
+		file = useState ? stateFile : inputFile;
+	} else
+		file = inputFile;
+
+	// if(!file.existsSync()) {
+	// 	createDir('${docDir.path}/interscore/');
+	// 	file = File('${docDir.path}/interscore/input.json');
+	// }
 
 	if (!file.existsSync()) return null;
 
