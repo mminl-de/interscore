@@ -28,6 +28,12 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		mdl = widget.mdl;
 		ws = widget.ws;
+
+		ws.connection?.addListener(() {
+			if (!ws.connection!.value && mounted) {
+				Navigator.of(context).pop();
+			}
+		});
 	}
 
 	@override
