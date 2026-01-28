@@ -389,11 +389,6 @@ function str2coldark(hexcode: string): Color {
 	};
 }
 
-function col2str(c: Color): string {
-	const toHex = (n: number) => n.toString(16).padStart(2, "0");
-	return `#${toHex(c.r)}${toHex(c.g)}${toHex(c.b)}`;
-}
-
 function query_set_to_string(query: GameQuery): string {
 	switch (query.type) {
 		//case "TEAM":
@@ -446,8 +441,7 @@ function write_scoreboard() {
 	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString();
 	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString();
 
-	const default_col = col2str({r: 255, g: 255, b: 255});
-
+	const default_col = "white";
 	const left_col = teams[0]?.color ?? default_col;
 	const right_col = teams[1]?.color ?? default_col;
 
@@ -471,7 +465,6 @@ function write_gameplan() {
 		const scores = get_scores(g);
 
 		const default_col = "white";
-
 		const left_col = team_left?.color ?? default_col;
 		const right_col = team_right?.color ?? default_col;
 
@@ -539,22 +532,22 @@ function write_gameplan() {
 	}
 
 	if (md.games.length > 10) {
-		gameplan.parentElement?.classList.add("masked")
+		gameplan.parentElement?.classList.add("masked");
 		setTimeout(() => {
-			smooth_scroll_to(scroller.scrollHeight, SCROLL_DURATION)
+			smooth_scroll_to(scroller.scrollHeight, SCROLL_DURATION);
 
 			setTimeout(() => {
-				smooth_scroll_to(0, SCROLL_DURATION)
-			}, SCROLL_DURATION + 2_000) // duration + delay
-		}, 2_000)
+				smooth_scroll_to(0, SCROLL_DURATION);
+			}, SCROLL_DURATION + 2_000); // duration + delay
+		}, 2_000);
 	}
 }
 
 function write_gamestart() {
-	gamestart_t1.innerHTML = ""
-	gamestart_t2.innerHTML = ""
+	gamestart_t1.innerHTML = "";
+	gamestart_t2.innerHTML = "";
 
-	const default_col: string = col2str({r: 255, g: 255, b: 255});
+	const default_col = "white";
 
 	const teams_cur = get_teams(md.games[md.meta.game_i] ?? null);
 	const left_col_cur = teams_cur[0]?.color ?? default_col;
@@ -565,7 +558,7 @@ function write_gamestart() {
 	const t2_keeper = teams_cur[1]?.players.find((p) => p.role === "keeper")?.name ?? "[???]";
 	const t2_field = teams_cur[1]?.players.find((p) => p.role === "field")?.name ?? "[???]";
 
-	const teams_next = get_teams(md.games[md.meta.game_i+1] ?? null);
+	const teams_next = get_teams(md.games[md.meta.game_i + 1] ?? null);
 	const left_col_next = teams_next[0]?.color ?? default_col;
 	const right_col_next = teams_next[1]?.color ?? default_col;
 
@@ -676,7 +669,6 @@ type LivetableLine = {
 function write_livetable() {
 	while (livetable.children.length > 2) livetable.removeChild(livetable.lastChild!);
 
-	const team_n = md.teams.length;
 	let teams: LivetableLine[] = [];
 
 	md.teams.forEach((t) => {
@@ -684,11 +676,11 @@ function write_livetable() {
 		teams.push({
 			name: t.name.toString(),
 			points: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) { // TODO Count the game right now?
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) {
-						p += (get_scores(g)[0] - get_scores(g)[1]) ? 3 : 0;
+						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 3 : 0;
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
 					} else if (resolve_GameTeamSlot(g[2]) === t) {
 						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 3 : 0;
@@ -698,7 +690,7 @@ function write_livetable() {
 				return p;
 			})(),
 			played: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t || resolve_GameTeamSlot(g[2]) === t) p++;
@@ -706,7 +698,7 @@ function write_livetable() {
 				return p;
 			})(),
 			won: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
@@ -717,7 +709,7 @@ function write_livetable() {
 				return p;
 			})(),
 			tied: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
@@ -728,7 +720,7 @@ function write_livetable() {
 				return p;
 			})(),
 			lost: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
@@ -739,7 +731,7 @@ function write_livetable() {
 				return p;
 			})(),
 			goals: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
@@ -748,7 +740,7 @@ function write_livetable() {
 				return p;
 			})(),
 			goals_taken: (() => {
-				let p: number = 0;
+				let p = 0;
 				for (let j = 0; j < md.meta.game_i; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
@@ -771,7 +763,7 @@ function write_livetable() {
 		return a.name.localeCompare(b.name);
 	});
 
-	for (let team_i = 0; team_i < team_n; team_i++) {
+	for (let team_i = 0; team_i < md.teams.length; team_i++) {
 		const line = document.createElement("div");
 		line.classList.add("line");
 
