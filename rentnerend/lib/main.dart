@@ -48,7 +48,7 @@ class _MyAppState extends State<MyApp> {
 									ElevatedButton(
 										child: const Text('Load Input Window'),
 										onPressed: () async {
-											final json = await inputJsonLoad();
+											final json = await inputJsonLoad(context);
 											if(json == null) {debugPrint("json does not exist"); return;}
 											try { this.md = Matchday.fromJson(jsonDecode(json));
 											} catch (e, st){ debugPrint("JSON parsing Error: $e\nStack:\n$st"); return;}

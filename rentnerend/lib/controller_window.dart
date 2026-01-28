@@ -96,13 +96,9 @@ class _InputControllerState extends State<ControllerWindow> {
 						builder: (context, md, _) {
 							return Column(
 								children: [
-									// Expanded(flex: 18, child: blockTeams(md)),
-									// Expanded(flex: 25, child: blockGoals(md)),
-									// Expanded(flex: 35, child: blockTime(md)),
 									Expanded(flex: 100, child: blockWidgets(md))
-									//Expanded(flex: 25, child: blockTeams(md, recAct)),
-									//Expanded(flex: 33, child: blockGoals(md, recAct)),
-									//Expanded(flex: 42, child: blockTime(md, recAct)),
+									// Log messages
+									// OBS live stream
 								]
 							);
 						}

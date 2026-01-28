@@ -5,6 +5,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 
 import 'md.dart';
 import 'websocket.dart';
+import 'lib.dart';
 
 
 class PublicWindow extends StatefulWidget {
@@ -43,15 +44,27 @@ class _PublicWindowState extends State<PublicWindow> {
 		super.dispose();
 	}
 
-	Widget blockTeams(double width, double height, Matchday md) {
-		const double paddingHorizontal = 16.0;
-		const double paddingVertical = 0;
-		final teamNameWidth = (width-paddingHorizontal*2) / 2;
-		final gameNameHeight = height * 0.35;
-		final teamsHeight = height - gameNameHeight;
+	final teamsTextGroup = AutoSizeGroup();
 
-		final teamsTextGroup = AutoSizeGroup();
+	Widget blockTeam(String name, int goals) {
+		return Column(children: [
+			Expanded(flex: 5, child: SizedBox(width: 5)),
+			Expanded(flex: 15, child: Center(child: AutoSizeText(
+				name,
+				maxLines: 1,
+				group: teamsTextGroup,
+				style: const TextStyle(fontSize: 1000, fontWeight: FontWeight.bold, height: 0.9)
+			))),
+			Expanded(flex: 73, child: Center(child: AutoSizeText(
+				goals.toString(),
+				maxLines: 1,
+				style: const TextStyle(fontSize: 1000, height: 0.9,)
+			))),
+			Expanded(flex: 2, child: SizedBox(width: 5)),
+		]);
+	}
 
+	Widget blockTeams(Matchday md) {
 		// We invert by default
 		String t1name = md.currentGame.team2.whenOrNull(
 			byName: (name, _) => name,
@@ -62,6 +75,10 @@ class _PublicWindowState extends State<PublicWindow> {
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
+
+		final int inverted = ((md.meta.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
+		final int t1_score = md.currentGame.teamGoals(2 - inverted);
+		final int t2_score = md.currentGame.teamGoals(1 + inverted);
 
 		final String gameName = md.currentGame.name;
 
@@ -76,72 +93,45 @@ class _PublicWindowState extends State<PublicWindow> {
 			t2name = tmp;
 		}
 
-		return SizedBox(
-			height: height,
-			width: width,
-			child: Padding(padding: const EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
-				child: Column( children: [
-					SizedBox(height: gameNameHeight, child: Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-					SizedBox(height: teamsHeight, child: Row( children: [
-						SizedBox(
-							width: teamNameWidth,
-							//child: Center(child: AutoSizeText(md.games[md.meta.gameIndex].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-							child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-						),
-						SizedBox(
-							width: teamNameWidth,
-							child: Center(child: AutoSizeText(t2name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-						),
-					]))
-				])
-			)
-		);
-	}
+		final t1_color = colorFromHexString(md.teamFromName(t1name)?.color ?? "#ffffff");
+		final t2_color = colorFromHexString(md.teamFromName(t2name)?.color ?? "#ffffff");
 
-	Widget blockGoals(double width, double height, Matchday md) {
-		final textHeight = height;
-
-		final int inverted = ((md.meta.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
-		int t2 = 1 + inverted;
-		int t1 = 2 - inverted;
-
-		return SizedBox(
-			width: width,
-			height: height,
-			child: Row( children: [
-				Expanded( child: Column(children:[
-					SizedBox(height: textHeight, child: Center(child:
-						AutoSizeText(md.currentGame.teamGoals(t1).toString(),
-						maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-				])),
-				Expanded( child: Column(children:[
-					SizedBox(height: textHeight, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-				])),
-			])
-		);
-	}
-
-	Widget blockTime(double width, double height, Matchday md) {
 		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
 		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
-		return SizedBox(
-			width: width,
-			height: height,
-			child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000))),
-		);
+		return Column(children: [
+			Expanded(flex: 140, child: Container(color: Colors.black, child:
+				Center(child: AutoSizeText(
+					gameName,
+					maxLines: 1,
+					style: const TextStyle(fontSize: 1000, height: 1.5)
+				))
+			)),
+			Expanded(flex: 610, child:
+				Row(children: [
+					Expanded(flex: 150, child: Container(color: t1_color, child: blockTeam(t1name, t1_score))),
+					Expanded(flex: 2, child: Container(color: Colors.black, child: SizedBox.expand())),
+					Expanded(flex: 150, child: Container(color: t2_color, child: blockTeam(t2name, t2_score))),
+				])
+			),
+			// Expanded(flex: 1, child: SizedBox.expand()),
+			// Expanded(flex: 2, child: Container(color: Colors.green, child: SizedBox.expand())),
+			Expanded(flex: 10, child: Container(color: Colors.black, child: SizedBox.expand())),
+			Expanded(flex: 240, child: Container(color: Colors.green, child:
+				Center(child: Transform.translate(
+    offset: const Offset(0, -8), child: AutoSizeText(
+					curTimeString,
+					maxLines: 1,
+					style: const TextStyle(fontSize: 1000, height: 0.85,   fontFamily: 'RobotoMono',)
+				))
+			))),
+			// Expanded(flex: 1, child: Container(color: Colors.green, child: SizedBox.expand())),
+		]);
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		final screenHeight = MediaQuery.of(context).size.height;
-		final screenWidth = MediaQuery.of(context).size.width;
-
-		final blockTeamsHeight = screenHeight * 0.25;
-		final blockGoalsHeight = screenHeight * 0.35;
-		final blockTimeHeight = screenHeight - blockTeamsHeight - blockGoalsHeight;
-
 		// debugPrint("Matchday: ${mdl.value}\n\n");
 		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
 		return PopScope(
@@ -151,9 +141,7 @@ class _PublicWindowState extends State<PublicWindow> {
 					builder: (context, md, _) {
 						return Column(
 							children: [
-								blockTeams(screenWidth, blockTeamsHeight, md),
-								blockGoals(screenWidth, blockGoalsHeight, md),
-								blockTime(screenWidth, blockTimeHeight, md)
+								Expanded(child: blockTeams(md)),
 							]
 						);
 					}

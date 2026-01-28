@@ -495,6 +495,8 @@ int main(int argc, char *argv[]) {
 	// Check for args
 	args(argc, argv);
 
+	// This disables mongoose errors
+	// mg_log_set(MG_LL_NONE);
 	init_obs();
 
 	if(!init_server()) goto cleanup;
