@@ -8,6 +8,7 @@ import "controller_window.dart";
 import "md.dart";
 import "lib.dart";
 import "websocket.dart";
+import "ws_client.dart";
 import "MessageType.dart";
 
 Future<void> main() async {
@@ -66,8 +67,12 @@ class _MyAppState extends State<MyApp> {
 											// Create a default Matchday
 											final md = Matchday(Meta(formats: []), [], [], []);
 											ValueNotifier<Matchday> mdl = ValueNotifier(md);
-											final ws = InterscoreWS(mdl);
-											await ws.initClient("ws://0.0.0.0:6464");
+											final ws = WSClient("ws://localhost:6464", mdl);
+											await ws.connect();
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return !ws.connected.value;
+											});
 
 											ws.sendSignal(MessageType.PLS_SEND_JSON);
 
@@ -88,9 +93,13 @@ class _MyAppState extends State<MyApp> {
 											// Create a default Matchday
 											final md = Matchday(Meta(formats: []), [], [], []);
 											ValueNotifier<Matchday> mdl = ValueNotifier(md);
-											final ws = InterscoreWS(mdl);
 											// TODO normally mminl.de!
-											await ws.initClient("ws://localhost:8081");
+											final ws = WSClient("ws://mminl.de:8081", mdl);
+											await ws.connect();
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return !ws.connected.value;
+											});
 
 											ws.sendSignal(MessageType.PLS_SEND_JSON);
 

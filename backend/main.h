@@ -54,7 +54,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p);
 void *mongoose_update(void *);
 void args(int argc, char *argv[]);
 void init_obs();
-bool init_server();
+bool init_server(pthread_t *thread);
 
 extern char *url_server, *url_obs, *replay_path;
 extern int gameindex;

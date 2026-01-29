@@ -10,7 +10,7 @@ char *replay_path = NULL;
 bool obs_enabled = true;
 int gameindex = 0;
 
-LogLevel log_level = NONE;
+LogLevel log_level = LOG;
 
 // We pretty much have to do this in global scope bc at least ev_handler (TODO FINAL DECIDE is this possible/better with smaller scope)
 ClientsList clients = { .first = NULL, .boss = NULL };
@@ -38,14 +38,12 @@ void log_msg(LogLevel level, const char *fmt, ...) {
         case ERROR: level_str = "ERR"; break;
     }
 
-    printf("%s: ", level_str);
+    fprintf(stderr, "%s: ", level_str);
 
     va_list args;
     va_start(args, fmt);
-    vprintf(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
-
-    printf("\n");
 }
 
 bool copy_file(const char *src, const char *dst) {
@@ -283,7 +281,7 @@ void ev_handler_client(struct mg_connection *con, int ev, void *ev_data) {
 		break;
 	case MG_EV_WS_MSG: {
 		struct mg_ws_message *wm = (struct mg_ws_message *)ev_data;
-		char *msg = malloc(wm->data.len+1);
+		char msg[wm->data.len+1];
 		memcpy(msg, wm->data.buf, wm->data.len);
 		msg[wm->data.len] = '\0';
 		log_msg(LOG, "Received MSG from OBS:\n%s\n", msg);
@@ -398,16 +396,14 @@ void *mongoose_update(void *) {
 	while (true) {
 		mg_mgr_poll(&mgr_svr, 20);
 		mg_mgr_poll(&mgr_obs, 20);
-		if(!obs_enabled)
-			continue;
-		if (!con_obs) {
+		if (obs_enabled && !con_obs) {
 			time_t now = time(NULL);
 			if (now - last_obs_con_attempt >= OBS_RECONNECT_INTERVAL) {
-				log_msg(LOG, "Trying to reconnect to OBS...\n");
+				log_msg(LOG, "Trying to reconnect to OBS... (URL: %s)\n", url_obs);
 				mg_ws_connect(&mgr_obs, url_obs, ev_handler_client, NULL, NULL);
 				last_obs_con_attempt = now;
 			}
-		} else if (!replay_buffer_status) {
+		} else if (obs_enabled && !replay_buffer_status) {
 			time_t now = time(NULL);
 			if (now - last_replay_buffer_attempt >= replay_buffer_activation_interval) {
 				log_msg(LOG, "Trying to activate the OBS Replay Buffer...\n");
@@ -415,25 +411,29 @@ void *mongoose_update(void *) {
 				last_replay_buffer_attempt = now;
 			}
 		}
+        usleep(1000 * 50); // 50 ms
 	}
 	return NULL;
 }
 
 void args(int argc, char *argv[]) {
 	for (int i=1; i < argc; i++) {
-		if (!strcmp(argv[i], "--disable-obs"))
+		if (!strcmp(argv[i], "--disable-obs")) {
+			log_msg(LOG, "received --disable-obs as flag\n");
 			obs_enabled = false;
-		else if (!strcmp(argv[i], "--url-server")) {
+		} else if (!strcmp(argv[i], "--url-server")) {
 			if (argc <= i+1)
 				die("Syntax: --url-server <url> needs an url...", EXIT_FAILURE);
 			url_server = malloc(strlen(argv[i+1]) + 1);
 			strcpy(url_server, argv[i+1]);
+			log_msg(LOG, "received --url-server as flag, new url: %s\n", url_server);
 			i++;
 		} else if (!strcmp(argv[i], "--url-obs")) {
 			if (argc <= i+1)
 				die("Syntax: --url-obs <url> needs an url...", EXIT_FAILURE);
 			url_obs = malloc(strlen(argv[i+1]) + 1);
 			strcpy(url_obs, argv[i+1]);
+			log_msg(LOG, "received --url-obs as flag, new url: %s\n", url_obs);
 			i++;
 		} else if (!strcmp(argv[i], "--replay-path")) {
 			if (argc <= i+1)
@@ -444,6 +444,7 @@ void args(int argc, char *argv[]) {
 				argv[i+1][strlen(argv[i+1])-1] = '\0';
 			replay_path = malloc(strlen(argv[i+1]) + 1);
 			strcpy(replay_path, argv[i+1]);
+			log_msg(LOG, "received --replay-path as flag, new path: %s\n", replay_path);
 			i++;
 		} else {
 			die("Syntax: Unknown argument!\nUsage: backend --disable-obs/--url-server/--url-obs/--replay-path <url/path>", EXIT_FAILURE);
@@ -477,12 +478,11 @@ void init_obs() {
 	log_msg(LOG, "Trying to connect to OBS...\n");
 }
 
-bool init_server() {
+bool init_server(pthread_t *thread) {
 	// WebSocket server stuff
 	mg_mgr_init(&mgr_svr);
 	mg_http_listen(&mgr_svr, url_server, ev_handler_server, NULL);
-	pthread_t thread;
-	if (pthread_create(&thread, NULL, mongoose_update, NULL) != 0) {
+	if (pthread_create(thread, NULL, mongoose_update, NULL) != 0) {
 		log_msg(ERROR, "Failed to create thread for updating the connection!");
 		return false;
 	}
@@ -497,14 +497,15 @@ int main(int argc, char *argv[]) {
 
 	// This disables mongoose errors
 	// mg_log_set(MG_LL_NONE);
+	mg_log_set(MG_LL_DEBUG);
 	init_obs();
 
-	if(!init_server()) goto cleanup;
+	pthread_t thread;
+	if(!init_server(&thread)) goto cleanup;
 
-	while (true);
+	pthread_join(thread, NULL);
 
 	// WebSocket stuff, again
-	// if (pthread_join(thread, NULL) != 0) log_msg(ERROR, "Failed to join thread!\n");
 
 cleanup:
 	mg_mgr_free(&mgr_svr);

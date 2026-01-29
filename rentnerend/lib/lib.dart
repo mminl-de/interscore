@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 
+import 'MessageType.dart';
 import 'md.dart';
 
 class ExpandableButton extends StatefulWidget {
@@ -260,6 +261,49 @@ List<int> u16ToBytes(int value, {bool littleEndian = false}) {
   return littleEndian
       ? [low, high]
       : [high, low];
+}
+
+
+List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
+	debugPrint("signalToMsg: ${msg}");
+	// TODO Add all the DATA stuff, especially Widget toggeling
+	if(msg == MessageType.DATA_GAME_ACTION)
+		debugPrint("WARN: Game Actions sending is not implemented yet!");
+	if(msg == MessageType.DATA_GAME) {
+		if((additionalInfo ?? md.games.length) >= md.games.length) return null;
+		return [msg.value, ... utf8.encode(jsonEncode(md.games[additionalInfo!]))];
+	} else if(msg == MessageType.DATA_GAMEINDEX)
+		return [msg.value, md.meta.gameIndex];
+	else if(msg == MessageType.DATA_GAMEPART)
+		return [msg.value, md.meta.currentGamepart];
+	else if(msg == MessageType.DATA_PAUSE_ON)
+		return [msg.value, md.meta.paused ? 1 : 0];
+	else if(msg == MessageType.DATA_TIME)
+		return [msg.value, ... u16ToBytes(md.meta.currentTime)];
+	else if(msg == MessageType.DATA_GAMESCOUNT)
+		return [msg.value, md.games.length];
+	else if(msg == MessageType.DATA_SIDES_SWITCHED)
+		return [msg.value, md.meta.sidesInverted ? 1 : 0];
+	else if(msg == MessageType.DATA_JSON)
+	  return utf8.encode(jsonEncode(md.toJson()));
+	else if(msg == MessageType.DATA_WIDGET_SCOREBOARD_ON)
+		return [msg.value, md.meta.widgetScoreboard ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_GAMEPLAN_ON)
+		return [msg.value, md.meta.widgetGameplan ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_LIVETABLE_ON)
+		return [msg.value, md.meta.widgetLiveplan ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_GAMESTART_ON)
+		return [msg.value, md.meta.widgetGamestart ? 1 : 0];
+	else if(msg == MessageType.DATA_WIDGET_AD_ON)
+		return [msg.value, md.meta.widgetAd ? 1 : 0];
+	else if(msg == MessageType.DATA_OBS_STREAM_ON)
+		return [msg.value, md.meta.streamStarted ? 1 : 0];
+	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
+		return [msg.value, md.meta.replayStarted ? 1 : 0];
+	else if(msg == MessageType.IM_THE_BOSS)
+		return [msg.value, 1];
+	else
+		return [msg.value];
 }
 
 // Returns if b == wanted, else null

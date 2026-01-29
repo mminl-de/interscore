@@ -1,21 +1,19 @@
 CC ?= cc
 SRC ?= main.c mongoose/mongoose.c
 OUT ?= interscore-backend # TODO find better name
-CFLAGS ?= -std=c23 -Wall -Wextra -Wpedantic -Wunused -Wunreachable-code -Wunused-macros -fshort-enums
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wunreachable-code -fshort-enums -D MG_TLS=MG_TLS_OPENSSL -lm -lssl -lcrypto -ljson-c
 
 install:
 	$(CC) -o $(OUT) $(SRC) \
-	-Oz $(CFLAGS) -s \
-	-ljson-c \
-	-D MG_TLS=MG_TLS_OPENSSL
+	-O3 $(CFLAGS) -s
+
 debug:
 	$(CC) -o $(OUT) $(SRC) \
-	$(CFLAGS) -g \
-	-ljson-c
+	$(CFLAGS) -g
+
 fast:
 	$(CC) -o $(OUT) $(SRC) \
-	-fshort-enums \
-	-lm -ljson-c \
-	-D MG_TLS=MG_TLS_OPENSSL -lssl -lcrypto
+	$(CFLAGS)
+
 run: fast
 	./$(OUT)

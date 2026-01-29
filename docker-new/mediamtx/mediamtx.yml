@@ -1,0 +1,10 @@
+rtmp: yes
+
+paths:
+  all:
+    source: publisher
+
+rtsp: false
+hls: false
+webrtc: false
+srt: false

@@ -1,5 +1,5 @@
 # Interscore
-A livestream system for Cycleball that includes an docker image with OBS, stream overlay, backend and advanced replay system as well as a software for the judges and an Android app to manage the OBS Overlay/replays etc. Judge software and mobile app will be merged in a rewrite, which is in progress. The new app will support all platforms.
+A livestream system for Cycleball that includes an docker image with OBS, stream overlay, backend and advanced replay system as well as a software for the judges.
 [cycleball.eu](https://cycleball.eu) integration and if possible REWATT support as judge software are in progress.
 
 ## About
@@ -18,7 +18,7 @@ Tournament metadata (competing teams, timer lengths, game plan) is fed using a J
 This project was made for our personal use prior to a Cycleball tournament under ridiculous deadlines. We are currently cleaning up the mess.
 
 ## Related Projects
-- Android App: https://github.com/mminl-de/interscore-remoteend
+- Android App (deprecated): https://github.com/mminl-de/interscore-remoteend
 - unofficial cycleball.eu library: https://github.com/mminl-de/cycleu
 
 ## Usage
@@ -120,7 +120,10 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 
 ## Docker
 ### Misc
-- Check if we cant get obs appimage programmatically
+- FINAL better live.mminl.de setup without ddns on host...
+- FINAL build multiple stream support
+- FINAL check if we actually use gpu rendering
+
 ### OBS
 - Make replay System work properly, test it throughly
 - Find a robust solution to combat delay (like blinking square)
@@ -128,6 +131,18 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - Better UI for replays
 - Better Transition-Animations
 - Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
+
+### TODO 1.2.26
+- Make sure the delay drift is not happening, maybe edit ffmpeg options so we get low delay rtmp stream
+- make sure we can access obs VNC from the internet (or not)
+- activate rustdesk, deactivate slock
+- replays?
+- FINAL make the streaming status button accurate
+- fix Spielplan scrolling (scollt nicht)
+- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
+- Controller auf Android ziehen und testen
+- ewige 16/127 chains im backend investigaten
+- Zuschauer UI bauen, wenn die Zeit da ist
 
 ## DEPRECATED Remoteend (rentnerend rewrite includes remoteend)
 - Add Ability to start and end replay of a game

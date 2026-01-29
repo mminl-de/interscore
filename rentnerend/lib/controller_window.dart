@@ -1,21 +1,21 @@
-import 'dart:async';
+// import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart';
 
 //import 'package:just_audio/just_audio.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+// import 'package:auto_size_text/auto_size_text.dart';
 
-import 'package:flutter_rentnerend/MessageType.dart';
-import 'package:flutter_rentnerend/lib.dart';
-import 'package:flutter_rentnerend/md.dart';
-import 'package:flutter_rentnerend/websocket.dart';
+import 'MessageType.dart';
+import 'lib.dart';
+import 'md.dart';
+import 'ws_client.dart';
 
 class ControllerWindow extends StatefulWidget {
 	const ControllerWindow({super.key, required this.mdl, required this.ws});
 
 	final ValueNotifier<Matchday> mdl;
-	final InterscoreWS ws;
+	final WSClient ws;
 
 	@override
 	State<ControllerWindow> createState() => _InputControllerState();
@@ -23,7 +23,7 @@ class ControllerWindow extends StatefulWidget {
 
 class _InputControllerState extends State<ControllerWindow> {
 	late ValueNotifier<Matchday> mdl;
-	late InterscoreWS ws;
+	late WSClient ws;
 
 	@override
 	void initState() {
@@ -32,8 +32,8 @@ class _InputControllerState extends State<ControllerWindow> {
 		mdl = widget.mdl;
 		ws = widget.ws;
 
-		ws.connection?.addListener(() {
-			if (!ws.connection!.value && mounted) {
+		ws.connected.addListener(() {
+			if (!ws.connected.value && mounted) {
 				Navigator.of(context).pop();
 			}
 		});

@@ -1,10 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 import 'md.dart';
-import 'websocket.dart';
+import 'ws_client.dart';
 import 'lib.dart';
 
 
@@ -12,7 +10,7 @@ class PublicWindow extends StatefulWidget {
 	const PublicWindow({super.key, required this.mdl, required this.ws});
 
 	final ValueNotifier<Matchday> mdl;
-	final InterscoreWS ws;
+	final WSClient ws;
 
 	@override
 	State<PublicWindow> createState() => _PublicWindowState();
@@ -20,7 +18,7 @@ class PublicWindow extends StatefulWidget {
 
 class _PublicWindowState extends State<PublicWindow> {
 	late ValueNotifier<Matchday> mdl;
-	late InterscoreWS ws;
+	late WSClient ws;
 
 	@override
 	void initState() {
@@ -29,8 +27,8 @@ class _PublicWindowState extends State<PublicWindow> {
 		mdl = widget.mdl;
 		ws = widget.ws;
 
-		ws.connection?.addListener(() {
-			if (!ws.connection!.value && mounted) {
+		ws.connected.addListener(() {
+			if (!ws.connected.value && mounted) {
 				Navigator.of(context).pop();
 			}
 		});
@@ -95,6 +93,8 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final t1_color = colorFromHexString(md.teamFromName(t1name)?.color ?? "#ffffff");
 		final t2_color = colorFromHexString(md.teamFromName(t2name)?.color ?? "#ffffff");
+		debugPrint("colors: t1: $t1_color, t2: $t2_color");
+		debugPrint("orig colors: t1: ${md.teamFromName(t1name)?.color}, t2: ${md.teamFromName(t2name)?.color}");
 
 		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
 		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');

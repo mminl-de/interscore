@@ -45,7 +45,7 @@ class _InputWindowState extends State<InputWindow> {
 
 		mdl.addListener(() {
 			inputJsonWriteState(mdl.value);
-			ws.server?.sendSignal(MessageType.DATA_JSON);
+			ws.server.sendSignal(MessageType.DATA_JSON);
 
 			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.currentGamepart) {
 				_controller.animateToItem(
@@ -83,28 +83,28 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Future<void> startWS() async {
-		this.ws = InterscoreWS(mdl);
-		ws.initServer("ws://0.0.0.0:6464");
+		// TODO normally client connects to mminl.de!
+		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
 
 		await connectWS();
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!mounted) return;
-
-			if(ws.client == null || !ws.clientConnected) {
-				await connectWS();
-			}
+			if(!ws.clientConnected) await connectWS();
 		});
 	}
 
 	Future<void> connectWS() async {
-		// TODO NOW
-		await ws.initClient("ws://localhost:8081");
+		ws.client.connect();
+		await Future.doWhile(() async {
+			await Future.delayed(Duration(milliseconds: 10));
+			return !ws.client.connected.value;
+		});
 		if(!ws.clientConnected) return;
-		//await ws.initClient("ws://localhost:8081");
-		ws.client!.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client!.boss) {
-			ws.client!.sendSignal(MessageType.IM_THE_BOSS);
+
+		ws.client.sendSignal(MessageType.DATA_JSON);
+		while(mounted && !ws.client.boss) {
+			ws.client.sendSignal(MessageType.IM_THE_BOSS);
 			await Future.delayed(Duration(seconds: 10));
 		}
 	}

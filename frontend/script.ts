@@ -858,7 +858,7 @@ function update_ui() {
 }
 
 function connect() {
-	socket = new WebSocket("ws://localhost:8081", "interscore");
+	socket = new WebSocket("ws://mminl.de:8081", "interscore");
 	socket.binaryType = "arraybuffer";
 
 	socket.onopen = () => {
