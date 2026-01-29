@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'md.dart';
 import 'ws_client.dart';
@@ -20,6 +21,10 @@ class _PublicWindowState extends State<PublicWindow> {
 	late ValueNotifier<Matchday> mdl;
 	late WSClient ws;
 
+	int _lastSecond = 0;
+	int _lastSecondTimestamp = 0;
+	late final Ticker _ticker;
+
 	@override
 	void initState() {
 		super.initState();
@@ -32,6 +37,20 @@ class _PublicWindowState extends State<PublicWindow> {
 				Navigator.of(context).pop();
 			}
 		});
+
+		mdl.addListener(() {
+			final cur = mdl.value.meta.currentTime;
+			if (cur != _lastSecond) {
+				_lastSecond = cur;
+				_lastSecondTimestamp = DateTime.now().millisecondsSinceEpoch;
+			}
+		});
+
+		_ticker = Ticker((_) {
+			if (!mdl.value.meta.paused) {
+			  setState(() {});
+			}
+  		})..start();
 	}
 
 	@override
@@ -40,6 +59,28 @@ class _PublicWindowState extends State<PublicWindow> {
 		mdl.dispose();
 
 		super.dispose();
+	}
+
+	double get smoothSeconds {
+		final Matchday md = mdl.value;
+		if (md.meta.paused) {
+		  return md.meta.currentTime.toDouble();
+		}
+
+		final now = DateTime.now().millisecondsSinceEpoch;
+		final deltaMs = now - _lastSecondTimestamp;
+
+		return md.meta.currentTime - (deltaMs / 1000.0);
+	}
+
+	double get progress {
+		final Matchday md = mdl.value;
+		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);
+		if(defTime == null) return 1.0;
+
+		final remaining = (defTime - smoothSeconds)
+		    .clamp(0.0, defTime.toDouble());
+		return remaining / defTime;
 	}
 
 	final teamsTextGroup = AutoSizeGroup();
@@ -100,6 +141,8 @@ class _PublicWindowState extends State<PublicWindow> {
 		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
+		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);
+
 		return Column(children: [
 			Expanded(flex: 140, child: Container(color: Colors.black, child:
 				Center(child: AutoSizeText(
@@ -115,18 +158,22 @@ class _PublicWindowState extends State<PublicWindow> {
 					Expanded(flex: 150, child: Container(color: t2_color, child: blockTeam(t2name, t2_score))),
 				])
 			),
-			// Expanded(flex: 1, child: SizedBox.expand()),
-			// Expanded(flex: 2, child: Container(color: Colors.green, child: SizedBox.expand())),
 			Expanded(flex: 10, child: Container(color: Colors.black, child: SizedBox.expand())),
-			Expanded(flex: 240, child: Container(color: Colors.green, child:
-				Center(child: Transform.translate(
-    offset: const Offset(0, -8), child: AutoSizeText(
-					curTimeString,
-					maxLines: 1,
-					style: const TextStyle(fontSize: 1000, height: 0.85,   fontFamily: 'RobotoMono',)
-				))
-			))),
-			// Expanded(flex: 1, child: Container(color: Colors.green, child: SizedBox.expand())),
+			Expanded(flex: 240, child: Container(color: Colors.black, child:
+				LayoutBuilder(builder: (context, constraints) {
+					final double progress = defTime == null ? 1.0 : (smoothSeconds / defTime).clamp(0.0, 1.0);
+
+					return Stack(children: [
+						Container(width: constraints.maxWidth * progress, color: Colors.green),
+						Center(child: Transform.translate(
+							offset: const Offset(0, -8), child: AutoSizeText(
+							curTimeString,
+							maxLines: 1,
+							style: const TextStyle(fontSize: 1000, height: 0.85,   fontFamily: 'RobotoMono',)
+						)))
+					]);
+				})
+			)),
 		]);
 	}
 
