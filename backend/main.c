@@ -29,7 +29,7 @@ void die(char *error, int retval) {
 }
 
 void log_msg(LogLevel level, const char *fmt, ...) {
-	if(level > log_level || level == NONE) return;
+	if(level < log_level || level == NONE) return;
 
     const char *level_str = "";
     switch (level) {
@@ -176,6 +176,12 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		}
 		case IM_THE_BOSS:
 			if (msg_len < 2 || !msg[1]) { log_msg(WARN, "Boss sent illegal message\n"); break;}
+			if (clients.boss == con) {
+				log_msg(LOG, "Con %lu is trying to be boss, but is already... Sending DATA_IM_BOSS");
+				char tmp[2] = {DATA_IM_BOSS, true};
+				ws_send(clients.boss, tmp, 2);
+				break;
+			}
 			if (clients.boss != NULL) {
 				log_msg(WARN, "Con %lu is trying to be boss, but %lu is already!\n", con->id, clients.boss->id);
 				break;
@@ -329,6 +335,7 @@ void ev_handler_server(struct mg_connection *con, int ev, void *p) {
 		case MG_EV_ACCEPT:
 			log_msg(LOG, "New client connected!\n");
 			break;
+		case MG_EV_ERROR:
 		case MG_EV_CLOSE: {
 			if (clients.boss == con) clients.boss = NULL;
 			if (clients.first && clients.first->con == con) {
@@ -496,8 +503,8 @@ int main(int argc, char *argv[]) {
 	args(argc, argv);
 
 	// This disables mongoose errors
-	// mg_log_set(MG_LL_NONE);
-	mg_log_set(MG_LL_DEBUG);
+	mg_log_set(MG_LL_NONE);
+	// mg_log_set(MG_LL_DEBUG);
 	init_obs();
 
 	pthread_t thread;

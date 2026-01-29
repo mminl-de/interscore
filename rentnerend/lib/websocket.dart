@@ -50,7 +50,7 @@ class InterscoreWS {
 	}
 
 	void send(List<int> msg) {
-		//debugPrint("sending: ${msg}");
+		debugPrint("sending: ${msg}");
 		server.send(msg);
 		client.send(msg);
 	}

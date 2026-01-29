@@ -146,7 +146,7 @@ class WSClient {
 	}
 
 	void send(List<int> msg) {
-		//debugPrint("WS Client: sending: ${msg}");
+		debugPrint("WS Client: sending: ${msg}");
 		_ws?.add(msg);
 	}
 }

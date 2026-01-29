@@ -6,17 +6,17 @@ import 'ws_client.dart';
 import 'lib.dart';
 
 
-class InfosWindow extends StatefulWidget {
-	const InfosWindow({super.key, required this.mdl, required this.ws});
+class InfoWindow extends StatefulWidget {
+	const InfoWindow({super.key, required this.mdl, required this.ws});
 
 	final ValueNotifier<Matchday> mdl;
 	final WSClient ws;
 
 	@override
-	State<InfosWindow> createState() => _PublicWindowState();
+	State<InfoWindow> createState() => _InfoWindowState();
 }
 
-class _PublicWindowState extends State<InfosWindow> {
+class _InfoWindowState extends State<InfoWindow> {
 	late ValueNotifier<Matchday> mdl;
 	late WSClient ws;
 
@@ -62,28 +62,62 @@ class _PublicWindowState extends State<InfosWindow> {
 		final int t1_score = md.currentGame.teamGoals(1);
 		final int t2_score = md.currentGame.teamGoals(2);
 
-		return Row(children: [
-			Text(curTimeString),
-			Text(t1name),
-			Text("$t1_score : $t2_score"),
-			Text(t2name)
-		]);
+		return Padding(
+			padding: EdgeInsetsGeometry.symmetric(vertical: 20, horizontal: 20),
+			child: Container(
+				decoration: BoxDecoration(
+					color: Colors.black,
+					borderRadius: BorderRadius.circular(40),
+				),
+				child: Row(children: [
+						Expanded(flex: 10, child: Center(child: Text(curTimeString))),
+						Expanded(flex: 35, child: Center(child: Text(t1name))),
+						Expanded(flex: 20, child: Center(child: Text("$t1_score : $t2_score"))),
+						Expanded(flex: 35, child: Center(child: Text(t2name)))
+				]),
+			)
+
+		);
 	}
 
 	Widget blockGame(Game g) {
-		return Row(children: [
+		String t1name = g.team1.whenOrNull(
+			byName: (name, _) => name,
+			byQueryResolved: (name, __) => name,
+		) ?? "[???]";
 
-		]);
+		String t2name = g.team2.whenOrNull(
+			byName: (name, _) => name,
+			byQueryResolved: (name, __) => name,
+		) ?? "[???]";
+
+		final int t1_score = g.teamGoals(1);
+		final int t2_score = g.teamGoals(2);
+
+		return Padding(
+			padding: EdgeInsetsGeometry.symmetric(vertical: 5, horizontal: 20),
+			child: Container(
+				decoration: BoxDecoration(
+					color: Colors.black,
+					borderRadius: BorderRadius.circular(40),
+				),
+				child: Row(children: [
+						Expanded(flex: 10, child: Center(child: Text(g.name))),
+						Expanded(flex: 35, child: Center(child: Text(t1name))),
+						Expanded(flex: 20, child: Center(child: Text("$t1_score : $t2_score"))),
+						Expanded(flex: 35, child: Center(child: Text(t2name)))
+				]),
+			)
+
+		);
 	}
 
 	Widget blockGameplan(Matchday md) {
-
+		return Column(children: md.games.map((g) => blockGame(g)).toList());
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		// debugPrint("Matchday: ${mdl.value}\n\n");
-		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
 		return PopScope(
 			child: Scaffold(
 				body: ValueListenableBuilder<Matchday>(

@@ -4,10 +4,10 @@ import "package:flutter/material.dart";
 
 import "public_window.dart";
 import "input_window.dart";
+import "info_window.dart";
 import "controller_window.dart";
 import "md.dart";
 import "lib.dart";
-import "websocket.dart";
 import "ws_client.dart";
 import "MessageType.dart";
 
@@ -111,6 +111,32 @@ class _MyAppState extends State<MyApp> {
 												context,
 												MaterialPageRoute<void>(
 													builder: (context) => ControllerWindow(mdl: mdl, ws: ws)
+												)
+											);
+										},
+									), ElevatedButton(
+										child: const Text('Info Screen'),
+										onPressed: () async {
+											// Create a default Matchday
+											final md = Matchday(Meta(formats: []), [], [], []);
+											ValueNotifier<Matchday> mdl = ValueNotifier(md);
+											final ws = WSClient("ws://mminl.de:8081", mdl);
+											await ws.connect();
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return !ws.connected.value;
+											});
+
+											ws.sendSignal(MessageType.PLS_SEND_JSON);
+
+											await Future.doWhile(() async {
+												await Future.delayed(Duration(milliseconds: 10));
+												return mdl.value == md;
+											});
+											Navigator.push(
+												context,
+												MaterialPageRoute<void>(
+													builder: (context) => InfoWindow(mdl: mdl, ws: ws)
 												)
 											);
 										},
