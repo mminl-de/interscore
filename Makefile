@@ -13,8 +13,10 @@ js:
 	bun install --cwd frontend
 	bun build frontend/script.ts --target browser --outdir ./frontend --minify
 
-f-freezed:
+f-m4:
 	m4 -DDART MessageType.m4 > rentnerend/lib/MessageType.dart
+
+f-freezed:
 	${MAKE} --no-print-directory -C rentnerend freezed
 
 f-run:

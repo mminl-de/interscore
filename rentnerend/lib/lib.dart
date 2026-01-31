@@ -263,6 +263,16 @@ List<int> u16ToBytes(int value, {bool littleEndian = false}) {
       : [high, low];
 }
 
+List<int> i64ToBytes(int value, {bool littleEndian = false}) {
+  final bytes = List<int>.filled(8, 0);
+
+  for (int i = 0; i < 8; i++) {
+    final shift = littleEndian ? i * 8 : (7 - i) * 8;
+    bytes[i] = (value >> shift) & 0xFF;
+  }
+
+  return bytes;
+}
 
 List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 	debugPrint("signalToMsg: ${msg}");
@@ -301,7 +311,7 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
 		return [msg.value, md.meta.replayStarted ? 1 : 0];
 	else if(msg == MessageType.DATA_TIMESTAMP)
-		return [msg.value, ]; // TODO NOW
+		return [msg.value, ... i64ToBytes(DateTime.now().millisecondsSinceEpoch ~/ 1000)]; // TODO NOW
 	else if(msg == MessageType.IM_THE_BOSS)
 		return [msg.value, 1];
 	else
