@@ -297,7 +297,8 @@ function cur_gamepart(): (GamePart | null) {
 }
 
 function running_time(md: Matchday): number {
-	const now = Math.floor(Date.now() - 1_000);
+	const now = Math.floor(Date.now() / 1_000);
+	console.log(`running_time:\n\tnow: ${now}\n\rlast_unpaused: ${md.meta.last_unpaused}\n\rremaining_time: ${md.meta.remaining_time}`);
 	return md.meta.remaining_time - (now + delay - md.meta.last_unpaused);
 }
 
@@ -461,6 +462,7 @@ function write_scoreboard() {
 	scoreboard_t2.style.color = color_font_contrast(str2coldark(right_col));
 
 	const rt = running_time(md);
+	console.log("TODO running_time from write_scoreboard: ", rt);
 	update_timer_html(rt);
 	update_scoreboard_timer(rt);
 }
@@ -852,6 +854,7 @@ function update_scoreboard_timer(rt: number) {
 }
 
 function update_timer_html(rt: number) {
+	console.log("TODO remaining_time from update_timer_html: ", rt);
 	const minutes = Math.floor(rt / 60).toString().padStart(2, "0");
 	const seconds = (rt % 60).toString().padStart(2, "0");
 	console.log("update timer: min: " +  minutes +  "sec: " + seconds);
