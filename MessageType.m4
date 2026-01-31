@@ -20,6 +20,8 @@ DATA_GAMESCOUNT,dnl Additional: u8 = Gamescount)
 GAME_ACTION_DELETE,dnl Additional: uint = id of game action
 IM_THE_BOSS,
 DATA_IM_BOSS,dnl Additional: bool = this client is boss
+DATA_TIMESTAMP,
+PLS_SEND_TIMESTAMP,
 PLS_SEND_IM_BOSS,
 PLS_SEND_WIDGET_SCOREBOARD_ON,
 PLS_SEND_WIDGET_GAMEPLAN_ON,

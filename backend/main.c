@@ -140,6 +140,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		case PLS_SEND_WIDGET_LIVETABLE_ON:
 		case PLS_SEND_WIDGET_SCOREBOARD_ON:
 		case PLS_SEND_GAME_ACTION:
+		case PLS_SEND_TIMESTAMP:
 		case PLS_SEND_GAME:
 			log_msg(LOG, "clients.boss: %p\n", clients.boss);
 			ws_send(clients.boss, (char *)msg, msg_len);
