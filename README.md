@@ -1,4 +1,4 @@
-# Interscore
+# Interscoreread
 A livestream system for Cycleball that includes an docker image with OBS, stream overlay, backend and advanced replay system as well as a software for the judges.
 [cycleball.eu](https://cycleball.eu) integration and if possible REWATT support as judge software are in progress.
 
@@ -55,8 +55,14 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- Count time up instead of down (e.g. football)
 
 ### rn
+- FINAL TEST:
+	- whether time flows correctly
+	- new devices joining
+	- ssh tunnel stress test
+	- scoreboard in non-game situations (like pause)
 - frontend:
 	- change md struct
+	- implement setting delay
 	- change time calculation logic
 	- implement handshake (PLS_SEND_TIMESTAMP and DATA_TIMESTAMP)
 	- update UI accordingly

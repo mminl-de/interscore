@@ -54,15 +54,6 @@ const TIMEOUT_SHOW = 200;
 const TIMEOUT_HIDE = 500;
 const DARKER_COLOR_BIAS: Color = { r: 30, g: 70, b: 100 }; // TODO TEST
 
-// TODO FINAL CONSIDER bitmap lmao
-let shown = {
-	scoreboard: false,
-	gameplan: false,
-	livetable: false,
-	gamestart: false,
-	ad: false
-};
-
 type Color = { r: number, g: number, b: number };
 
 // TODO CONSIDER should you put z.<datatype>() in a constant to avoid re-eval?
@@ -233,7 +224,8 @@ const MetaSchema = z.object({
 	cur_gamepart: z.number().default(0),
 	sides_inverted: z.boolean().default(false),
 	paused: z.boolean().default(true),
-	cur_time: z.number().default(0),
+	remaining_time: z.number().default(0),
+	last_unpaused: z.number().default(0),
 	formats: z.array(FormatSchema)
 });
 
@@ -269,7 +261,8 @@ let md: Matchday = {
 	meta: {
 		game_i: 0,
 		paused: true,
-		cur_time: 0,
+		remaining_time: 0,
+		last_unpaused: 0,
 		cur_gamepart: 0,
 		formats: [],
 		sides_inverted: false
@@ -277,6 +270,18 @@ let md: Matchday = {
 	games: [],
 	groups: [],
 	teams: []
+};
+
+// Time delay relative to the Interscore Controller
+let delay = 0;
+
+// TODO FINAL CONSIDER bitmap lmao
+let shown = {
+	scoreboard: false,
+	gameplan: false,
+	livetable: false,
+	gamestart: false,
+	ad: false
 };
 
 function cur_game(): (Game | null) {
@@ -289,6 +294,11 @@ function cur_format(): (Format | null) {
 
 function cur_gamepart(): (GamePart | null) {
 	return cur_format()?.gameparts[md.meta.cur_gamepart] ?? null;
+}
+
+function running_time(md: Matchday): number {
+	const now = Math.floor(Date.now() - 1_000);
+	return md.meta.remaining_time - (now + delay - md.meta.last_unpaused);
 }
 
 function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
@@ -450,8 +460,9 @@ function write_scoreboard() {
 	scoreboard_t2.style.background = gradient2str(str2coldark(right_col), str2col(right_col));
 	scoreboard_t2.style.color = color_font_contrast(str2coldark(right_col));
 
-	update_timer_html();
-	update_scoreboard_timer();
+	const rt = running_time(md);
+	update_timer_html(rt);
+	update_scoreboard_timer(rt);
 }
 
 function write_gameplan() {
@@ -818,31 +829,31 @@ let countdown = 0; // TODO ASK what is this?
 // Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
 function async_handle_time() {
 	clearInterval(countdown);
-	update_timer_html();
+	update_timer_html(running_time(md));
 	countdown = setInterval(() => {
-		update_scoreboard_timer();
+		const rt = running_time(md);
+		update_scoreboard_timer(rt);
 
 		if (md.meta.paused) return;
-		if (md.meta.cur_time <= 1) clearInterval(countdown);
+		if (rt <= 0) clearInterval(countdown);
 
-		console.log("tick one down now: ", md.meta.cur_time);
-		md.meta.cur_time--;
-
-		update_timer_html();
+		update_timer_html(rt);
 	}, TIME_UPDATE_INTERVAL_MS);
 }
 
-function update_scoreboard_timer() {
-	if (md.meta.cur_time === -1) return;
+function update_scoreboard_timer(rt: number) {
+	if (md.meta.remaining_time <= 0 || rt <= 0) return;
+
 	const gp = cur_gamepart();
 	if (gp?.type != "timed") return;
-	const bar_width = Math.min(100, Math.max(0, (md.meta.cur_time / gp.length) * 100));
+
+	const bar_width = Math.min(100, Math.max(0, (rt / gp.length) * 100));
 	scoreboard_time_bar.style.width = bar_width + "%";
 }
 
-function update_timer_html() {
-	const minutes = Math.floor(md.meta.cur_time / 60).toString().padStart(2, "0");
-	const seconds = (md.meta.cur_time % 60).toString().padStart(2, "0");
+function update_timer_html(rt: number) {
+	const minutes = Math.floor(rt / 60).toString().padStart(2, "0");
+	const seconds = (rt % 60).toString().padStart(2, "0");
 	console.log("update timer: min: " +  minutes +  "sec: " + seconds);
 	scoreboard_time_minutes.innerHTML = minutes;
 	scoreboard_time_seconds.innerHTML = seconds;
@@ -872,20 +883,20 @@ function connect() {
 			}
 		}
 		// TODO NOW wtf is origLog?
-		const origLog = console.log;
-		const origErr = console.error;
-		console.log = (...args) => {
-			socket.send(args.map(to_string).join(" "));
-			origLog(...args); // optional
-		};
+		// const origLog = console.log;
+		// const origErr = console.error;
+		// console.log = (...args) => {
+		// 	socket.send(args.map(to_string).join(" "));
+		// 	origLog(...args); // optional
+		// };
 
-		console.error = (...args) => {
-			socket.send("[ERROR] " + args.map(to_string).join(" "));
-			origErr(...args); // optional
-		};
+		// console.error = (...args) => {
+		// 	socket.send("[ERROR] " + args.map(to_string).join(" "));
+		// 	origErr(...args); // optional
+		// };
 
-		console.log("Connected to WebSocket server!");
-		socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
+		// console.log("Connected to WebSocket server!");
+		// socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
 	}
 
 	socket.onmessage = (event: MessageEvent) => {
@@ -968,12 +979,15 @@ function connect() {
 				update_ui();
 				break;
 			case MessageType.DATA_PAUSE_ON:
-				console.log("Received DATA is_pause: ", dv.getUint8(1) === 1);
-				md.meta.paused = dv.getUint8(1) === 1;
+				console.warn("DATA_PAUSE_ON: TODO DEPRECATED")
+				// TODO
+				// console.log("Received DATA is_pause: ", dv.getUint8(1) === 1);
+				// md.meta.paused = dv.getUint8(1) === 1;
 				break;
 			case MessageType.DATA_TIME:
 				console.log("Received DATA time: ", dv.getUint16(1, false));
-				md.meta.cur_time = dv.getUint16(1, false);
+				md.meta.remaining_time = dv.getUint16(1, false);
+				console.log("TODO remaining_time DATA_TIME: ", md.meta.remaining_time);
 				update_ui();
 				break;
 			case MessageType.DATA_SIDES_SWITCHED:
@@ -1003,6 +1017,7 @@ function connect() {
 }
 
 connect();
+console.log("TODO remaining time: ", md.meta.remaining_time);
 async_handle_time();
 console.log("Client loaded!");
 
