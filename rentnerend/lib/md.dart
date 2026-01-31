@@ -22,6 +22,14 @@ class Matchday with _$Matchday {
 
 	factory Matchday.fromJson(Map<String, dynamic> json) => _$MatchdayFromJson(json);
 
+	int currentTime() {
+		if(meta.paused) return meta.remainingTime;
+		else {
+			final unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+			return meta.remainingTime - (unixTime + meta.delay - meta.lastUnpaused);
+		}
+	}
+
 	Game get currentGame {
 		final i = meta.gameIndex;
 		return games[i];
@@ -69,7 +77,7 @@ class Matchday with _$Matchday {
 			);
 		}
 		Matchday md = copyWith(games: new_games, meta: meta.copyWith(gameIndex: index));
-		if(applySideEffects && md.meta.paused && md.meta.currentTime == 0)
+		if(applySideEffects && md.meta.paused && md.currentTime() == 0)
 			md = md.setCurrentGamepart(0);
 		return md;
 	}
@@ -134,8 +142,8 @@ class Matchday with _$Matchday {
 
 	// Time can be positive or negative
 	Matchday timeChange(int change) {
-		if (change + meta.currentTime < 0) change = -meta.currentTime;
-		return copyWith(meta: meta.copyWith(currentTime: meta.currentTime + change));
+		if (change + currentTime() < 0) change = -currentTime();
+		return copyWith(meta: meta.copyWith(remainingTime: meta.remainingTime + change));
 	}
 
 	// Time can be positive or negative
@@ -143,12 +151,17 @@ class Matchday with _$Matchday {
 		if (currentGamepart == null) return this;
 		int? defTime = currentGamepart!.whenOrNull(timed: (_, len, _, _, _) => len);
 		if (defTime == null) return this;
-		return copyWith(meta: meta.copyWith(currentTime: defTime));
+		return timeChange(defTime - currentTime());
 	}
 
 	Matchday setPause(bool pause) {
-		if (meta.paused && meta.currentTime == 0) return this;
-		return copyWith(meta: meta.copyWith(paused: pause));
+		if (meta.paused && meta.remainingTime == 0) return this;
+		if(pause)
+			return copyWith(meta: meta.copyWith(paused: pause, remainingTime: currentTime()));
+		else {
+			final unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+			return copyWith(meta: meta.copyWith(paused: pause, lastUnpaused: unixTime));
+		}
 	}
 
 	Matchday setCurrentGamepart(int index, {bool applySideEffect = true}) {
@@ -159,7 +172,7 @@ class Matchday with _$Matchday {
 			md = gp.maybeWhen(
 				timed: (_, len, _, _, _) {
 					if(meta.paused)
-						return copyWith(meta: meta.copyWith(currentTime: len));
+						return copyWith(meta: meta.copyWith(remainingTime: len));
 					else return this;
 				},
 				orElse: () => this
@@ -313,8 +326,10 @@ class Meta with _$Meta {
 		// This is still needed, because maybe the teams are standing the other way around at the beginning
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
-		@JsonKey(name: 'cur_time', toJson: intOrNullNot0) @Default(0) int currentTime,
+		@JsonKey(name: 'remaining_time') @Default(0) int remainingTime,
+		@JsonKey(name: 'last_unpaused') @Default(0) int lastUnpaused,
 		@JsonKey(name: 'allow_remote_game_creation', toJson: boolOrNullTrue) @Default(false) bool allowRemoteGameCreation,
+		@JsonKey(name: 'delay', toJson: null) @Default(0) int delay,
 		@Default(false) bool widgetScoreboard,
 		@Default(false) bool widgetGameplan,
 		@Default(false) bool widgetLiveplan,

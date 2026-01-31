@@ -39,7 +39,7 @@ class _PublicWindowState extends State<PublicWindow> {
 		});
 
 		mdl.addListener(() {
-			final cur = mdl.value.meta.currentTime;
+			final cur = mdl.value.currentTime();
 			if (cur != _lastSecond) {
 				_lastSecond = cur;
 				_lastSecondTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -64,13 +64,13 @@ class _PublicWindowState extends State<PublicWindow> {
 	double get smoothSeconds {
 		final Matchday md = mdl.value;
 		if (md.meta.paused) {
-		  return md.meta.currentTime.toDouble();
+		  return md.currentTime().toDouble();
 		}
 
 		final now = DateTime.now().millisecondsSinceEpoch;
 		final deltaMs = now - _lastSecondTimestamp;
 
-		return md.meta.currentTime - (deltaMs / 1000.0);
+		return md.currentTime() - (deltaMs / 1000.0);
 	}
 
 	double get progress {
@@ -137,8 +137,8 @@ class _PublicWindowState extends State<PublicWindow> {
 		debugPrint("colors: t1: $t1_color, t2: $t2_color");
 		debugPrint("orig colors: t1: ${md.teamFromName(t1name)?.color}, t2: ${md.teamFromName(t2name)?.color}");
 
-		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
-		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
+		final String curTimeMin = (md.currentTime() ~/ 60).toString().padLeft(2, '0');
+		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
 		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);

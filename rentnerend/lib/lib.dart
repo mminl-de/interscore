@@ -276,10 +276,10 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 		return [msg.value, md.meta.gameIndex];
 	else if(msg == MessageType.DATA_GAMEPART)
 		return [msg.value, md.meta.currentGamepart];
-	else if(msg == MessageType.DATA_PAUSE_ON)
-		return [msg.value, md.meta.paused ? 1 : 0];
-	else if(msg == MessageType.DATA_TIME)
-		return [msg.value, ... u16ToBytes(md.meta.currentTime)];
+	else if(msg == MessageType.DATA_PAUSE_ON) {
+		debugPrint("WARN: DATA_PAUSE_ON IS DEPRECATED!!!");
+	} else if(msg == MessageType.DATA_TIME)
+		return [msg.value, ... u16ToBytes(md.currentTime())];
 	else if(msg == MessageType.DATA_GAMESCOUNT)
 		return [msg.value, md.games.length];
 	else if(msg == MessageType.DATA_SIDES_SWITCHED)

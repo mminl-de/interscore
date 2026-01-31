@@ -101,7 +101,8 @@ class WSClient {
 			_mdl.value = md.setSidesInverted(msg[1] == 1 ? true : false);
 		}
 		else if(msg[0] == MessageType.DATA_PAUSE_ON.value) {
-			_mdl.value = md.setPause(msg[1] == 1 ? true : false);
+			debugPrint("WARN: Received DATA_PAUSE_ON. DEPRECATED! Not applying!");
+			// _mdl.value = md.setPause(msg[1] == 1 ? true : false);
 		}
 		else if(msg[0] == MessageType.DATA_GAMEPART.value) {
 			if (msg.length < 2) return;
@@ -109,7 +110,7 @@ class WSClient {
 		}
 		else if(msg[0] == MessageType.DATA_TIME.value) {
 			if (msg.length < 3) return;
-			int time_diff = lib.u16FromBytes(msg, 1) - md.meta.currentTime;
+			int time_diff = lib.u16FromBytes(msg, 1) - md.currentTime();
 			_mdl.value = md.timeChange(time_diff);
 		}
 		else if(msg[0] == MessageType.DATA_GAMESCOUNT.value);

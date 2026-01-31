@@ -45,8 +45,8 @@ class _InfoWindowState extends State<InfoWindow> {
 	final textGroup = AutoSizeGroup();
 
 	Widget blockCurGame(Matchday md) {
-		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
-		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
+		final String curTimeMin = (md.currentTime() ~/ 60).toString().padLeft(2, '0');
+		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
 		String t1name = md.currentGame.team1.whenOrNull(

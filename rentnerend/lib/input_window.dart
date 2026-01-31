@@ -61,15 +61,15 @@ class _InputWindowState extends State<InputWindow> {
 		_controller = FixedExtentScrollController(initialItem: mdl.value.meta.currentGamepart);
 
 		setState(() => recAct = calcRecommendedAction(mdl.value));
-		startTimer();
 
 		startWS();
+		startTimer();
 	}
 
 	RecommendedAction calcRecommendedAction(Matchday md) {
 		RecommendedAction recAct = RecommendedAction.NOTHING;
-		debugPrint("calcRecommend: paused: ${md.meta.paused}, time: ${md.meta.currentTime}, gamepart: ${md.meta.currentGamepart} (MAX: ${md.currentFormatUnwrapped!.gameparts.length - 1})");
-		if(md.meta.paused && md.meta.currentTime == 0) {
+		// debugPrint("calcRecommend: paused: ${md.meta.paused}, time: ${md.meta.currentTime}, gamepart: ${md.meta.currentGamepart} (MAX: ${md.currentFormatUnwrapped!.gameparts.length - 1})");
+		if(md.meta.paused && md.meta.remainingTime == 0) {
 			if(md.currentFormatUnwrapped!.gameparts.length - 1 == md.meta.currentGamepart ||
 			  ((md.gamepartFromIndex(md.meta.currentGamepart+1)?.decider ?? false) && md.currentGame.winner != 0))
 				recAct = RecommendedAction.GAME_NEXT;
@@ -84,7 +84,7 @@ class _InputWindowState extends State<InputWindow> {
 
 	Future<void> startWS() async {
 		// TODO normally client connects to mminl.de!
-		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
+		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://localhost:8081", mdl);
 
 		await connectWS();
 
@@ -111,7 +111,9 @@ class _InputWindowState extends State<InputWindow> {
 
 	@override
 	void dispose() {
-		stopTimer();
+		_timer?.cancel();
+		remainingTime.dispose();
+
 		_reconnectTimer?.cancel();
 
 		ws.close();
@@ -148,97 +150,19 @@ class _InputWindowState extends State<InputWindow> {
 		return true;
 	}
 
-	void startTimer() {
-		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-			_onTick();
-		});
-	}
-
-	bool _tickRunning = false;
-
-	Future<void> _onTick() async {
-		if (_tickRunning) return;
-		_tickRunning = true;
-
-		try {
-			final md = mdl.value;
-
-			if (!md.meta.paused && md.meta.currentTime > 0) {
-				mdl.value = md.copyWith(
-					meta: md.meta.copyWith(currentTime: md.meta.currentTime - 1),
-				);
-			}
-
-			if (mdl.value.meta.currentTime == 0 && !mdl.value.meta.paused) {
-				mdl.value = mdl.value.copyWith(
-					meta: mdl.value.meta.copyWith(paused: true),
-				);
-				ws.sendSignal(MessageType.DATA_PAUSE_ON);
-				await player.play(AssetSource("sound_game_end_shorter.wav"));
-			}
-		} finally {
-		  _tickRunning = false;
-		}
-	}
-
-	// void startTimer() {
-	// 	debugPrint("STARTING TIMER BROOOOOOOOOO");
-	// 	ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
-	// 		final Matchday md = mdl.value;
-	// 		if (!md.meta.paused) {
-	// 			if (md.meta.currentTime != 0) {
-	// 				mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
-	// 				// ws.sendSignal(MessageType.DATA_TIME);
-	// 			}
-	// 			if (mdl.value.meta.currentTime == 0) {
-	// 				debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
-	// 				mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-	// 				ws.sendSignal(MessageType.DATA_PAUSE_ON);
-
-	// 				// TODO FINAL so far, on Linux, you need this for audio to work:
-	// 				//     gst-plugins-base
-	// 				//     gst-plugins-good
-	// 				//     gst-plugins-bad
-	// 				//     gst-plugins-ugly
-	// 				//     gst-plugins-libav
-	// 				// mb make it self-contained
-	// 				await player.play(AssetSource("sound_game_end_shorter.wav"));
-	// 				//player.setUrl("file://../assets/sound_game_end_shorter.wav");
-	// 				//await player.play();
-	// 			}
-
-	// 			//if (md.meta.currentTime == 0) {
-	// 			//	debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
-	// 			//	mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-	// 			//	ws.sendSignal(MessageType.DATA_PAUSE_ON);
-
-	// 			//	//player.setUrl("asset://../assets/sound_game_end_shorter.wav");
-	// 			//	await player.play(UrlSource("https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3"));
-	// 			//} else {
-	// 			//	mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
-	// 			//	ws.sendSignal(MessageType.DATA_TIME);
-
-	// 			//	if(mdl.value.meta.currentTime == 0) {
-	// 			//		mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-	// 			//		ws.sendSignal(MessageType.DATA_PAUSE_ON);
-	// 			//	}
-	// 			//}
-	// 		}
-	// 	});
-	// }
-
-	void stopTimer() {
-		ticker?.cancel();
-		ticker = null;
+	void playSound() async {
+	 	// TODO FINAL so far, on Linux, you need this for audio to work:
+	 	//     gst-plugins-base
+	 	//     gst-plugins-good
+	 	//     gst-plugins-bad
+	 	//     gst-plugins-ugly
+	 	//     gst-plugins-libav
+	 	// mb make it self-contained
+		await player.play(AssetSource("sound_game_end_shorter.wav"));
 	}
 
 	void togglePause(Matchday md) {
-		// We need to reset the timer because otherwise we could disable pause
-		// and then 50ms after the Timer activates and sets timer - 1 950ms before it should
-		stopTimer();
 		mdl.value = md.setPause(!md.meta.paused);
-		ws.sendSignal(MessageType.DATA_PAUSE_ON);
-		startTimer();
 	}
 
 	// startGaepartIndex is the index of the first gamepart in the format. This is needed for nested formats
@@ -469,10 +393,17 @@ class _InputWindowState extends State<InputWindow> {
 		);
 	}
 
+	final remainingTime = ValueNotifier<int>(0);
+	Timer? _timer;
+
+	void startTimer() {
+		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+			if(remainingTime.value != mdl.value.currentTime())
+				remainingTime.value = mdl.value.currentTime();
+		});
+	}
+
 	Widget blockTime(Matchday md, RecommendedAction recAct) {
-		final String curTimeMin = (md.meta.currentTime ~/ 60).toString().padLeft(2, '0');
-		final String curTimeSec = (md.meta.currentTime % 60).toString().padLeft(2, '0');
-		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
 		final defTime = md.currentGamepart?.whenOrNull(timed: (_, len, _, _, _) => len);
 
@@ -500,17 +431,28 @@ class _InputWindowState extends State<InputWindow> {
 						))),
 						Expanded(flex: 50, child: SizedBox.expand(child: buttonWithIcon(
 							context,
-							md.meta.currentTime == defTime
+							md.currentTime() == defTime
 								? null
 								: () {
 									mdl.value = md.timeReset();
 									ws.sendSignal(MessageType.DATA_TIME);
 								},
 							Icons.autorenew,
-							inverted: md.meta.currentTime == defTime
+							inverted: md.currentTime() == defTime
 						)))
 					])),
-					Expanded(flex: 80, child: Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+
+					Expanded(flex: 80, child:
+						ValueListenableBuilder<int>(
+							valueListenable: remainingTime,
+							builder: (_, time, __) {
+								final String curTimeMin = (time ~/ 60).toString().padLeft(2, '0');
+								final String curTimeSec = (time % 60).toString().padLeft(2, '0');
+								final curTimeString = "${curTimeMin}:${curTimeSec}";
+								return Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)));
+							}
+						)
+					)
 				])),
 				Expanded(flex: 5, child: SizedBox.expand(
 					child: buttonWithIcon(context, () {

@@ -54,7 +54,8 @@ class WSServer {
 				else if(msg[0] == MessageType.PLS_SEND_GAMEPART.value)
 					sendSignal(MessageType.DATA_GAMEPART);
 				else if(msg[0] == MessageType.PLS_SEND_IS_PAUSE.value)
-					sendSignal(MessageType.DATA_PAUSE_ON);
+					debugPrint("WARN: Received PLS_SEND_IS_PAUSE. DEPRECATED! Skipping...");
+					// sendSignal(MessageType.DATA_PAUSE_ON);
 				else if(msg[0] == MessageType.PLS_SEND_TIME.value)
 					sendSignal(MessageType.DATA_TIME);
 				else if(msg[0] == MessageType.PLS_SEND_GAMESCOUNT.value)
