@@ -399,8 +399,10 @@ class _InputWindowState extends State<InputWindow> {
 
 	void startTimer() {
 		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
-			if(remainingTime.value != mdl.value.currentTime())
-				remainingTime.value = mdl.value.currentTime();
+			final curTime = mdl.value.currentTime();
+			if(curTime <= 0 && !mdl.value.meta.paused) togglePause(mdl.value);
+			if(remainingTime.value != curTime)
+				remainingTime.value = curTime;
 		});
 	}
 
