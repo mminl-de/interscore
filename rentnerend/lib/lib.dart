@@ -289,7 +289,7 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 	else if(msg == MessageType.DATA_PAUSE_ON)
 		debugPrint("WARN: DATA_PAUSE_ON IS DEPRECATED!!!");
 	else if(msg == MessageType.DATA_TIME)
-		return [msg.value, ... u16ToBytes(md.currentTime())];
+		return [msg.value, ... u16ToBytes(md.meta.remainingTime)];
 	else if(msg == MessageType.DATA_GAMESCOUNT)
 		return [msg.value, md.games.length];
 	else if(msg == MessageType.DATA_SIDES_SWITCHED)
@@ -311,7 +311,7 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
 		return [msg.value, md.meta.replayStarted ? 1 : 0];
 	else if(msg == MessageType.DATA_TIMESTAMP)
-		return [msg.value, ... i64ToBytes(DateTime.now().millisecondsSinceEpoch ~/ 1000)]; // TODO NOW
+		return [msg.value, ... i64ToBytes(DateTime.now().millisecondsSinceEpoch ~/ 1000)];
 	else if(msg == MessageType.IM_THE_BOSS)
 		return [msg.value, 1];
 	else
