@@ -162,8 +162,8 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void togglePause(Matchday md) {
-		ws.sendSignal(MessageType.DATA_JSON);
 		mdl.value = md.setPause(!md.meta.paused);
+		ws.sendSignal(MessageType.DATA_JSON);
 	}
 
 	// startGaepartIndex is the index of the first gamepart in the format. This is needed for nested formats
