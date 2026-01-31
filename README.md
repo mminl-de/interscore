@@ -45,12 +45,33 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 # TODO
 
 ## meta
+1. should requester gauge delay between request & response?
+2. should backend broadcast DATA_TIMESTAMP to everyone or only the requester?
 - rename rentnerend to controller
 - rename backend to echo or server or something:
 	- since backend doesn't fulfill the same task as it used to
 - FINAL^2 assets folder in seperate repo (only logos)
 - FINAL^4 abstract program further to support other sports
 	- Count time up instead of down (e.g. football)
+
+### rn
+- frontend:
+	- change md struct
+	- change time calculation logic
+	- implement handshake (PLS_SEND_TIMESTAMP and DATA_TIMESTAMP)
+	- update UI accordingly
+	- correctly handle pausing, unpausing and timeskipping
+- rentnerend:
+	- change md struct
+	- recv & send time handshake
+	- change time calculation logic
+	- update UI accordingly
+	- implement pausing, unpausing and timeskipping
+	- ditto for client:
+		- change md struct
+		- recv & send time handshake
+		- change time calculation logic
+		- update UI accordingly
 
 ## frontend
 - Fix Font Problems wth Umlaute in Cards section

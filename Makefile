@@ -9,7 +9,7 @@ b-run:
 
 js:
 	m4 -DTS MessageType.m4 > MessageType.ts
-	cp MessageType.ts frontend/MessageType.ts
+	cp MessageType.ts frontend/MessageType.ts # TODO
 	bun install --cwd frontend
 	bun build frontend/script.ts --target browser --outdir ./frontend --minify
 
