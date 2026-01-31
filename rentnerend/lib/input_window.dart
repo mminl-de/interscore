@@ -84,7 +84,7 @@ class _InputWindowState extends State<InputWindow> {
 
 	Future<void> startWS() async {
 		// TODO normally client connects to mminl.de!
-		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://localhost:8081", mdl);
+		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
 
 		await connectWS();
 
