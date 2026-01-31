@@ -86,6 +86,8 @@ class _InputWindowState extends State<InputWindow> {
 		// TODO normally client connects to mminl.de!
 		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
 
+		await connectWS();
+
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!mounted) return;
 			if(!ws.clientConnected) await connectWS();

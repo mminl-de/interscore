@@ -33,7 +33,8 @@ class InterscoreWS {
 	Future<void> init() async {
 		// we dont await this, because it will run forever
 		this.server.run();
-		await this.client.connect();
+		// We let the caller do this
+		// await this.client.connect();
 	}
 
 	void sendSignal(MessageType signal, {int? additionalInfo}) {
