@@ -276,9 +276,9 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 		return [msg.value, md.meta.gameIndex];
 	else if(msg == MessageType.DATA_GAMEPART)
 		return [msg.value, md.meta.currentGamepart];
-	else if(msg == MessageType.DATA_PAUSE_ON) {
+	else if(msg == MessageType.DATA_PAUSE_ON)
 		debugPrint("WARN: DATA_PAUSE_ON IS DEPRECATED!!!");
-	} else if(msg == MessageType.DATA_TIME)
+	else if(msg == MessageType.DATA_TIME)
 		return [msg.value, ... u16ToBytes(md.currentTime())];
 	else if(msg == MessageType.DATA_GAMESCOUNT)
 		return [msg.value, md.games.length];
@@ -300,6 +300,8 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
 		return [msg.value, md.meta.streamStarted ? 1 : 0];
 	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
 		return [msg.value, md.meta.replayStarted ? 1 : 0];
+	else if(msg == MessageType.DATA_TIMESTAMP)
+		return [msg.value, ]; // TODO NOW
 	else if(msg == MessageType.IM_THE_BOSS)
 		return [msg.value, 1];
 	else

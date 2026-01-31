@@ -162,6 +162,7 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void togglePause(Matchday md) {
+		ws.server.sendSignal(MessageType.DATA_JSON);
 		mdl.value = md.setPause(!md.meta.paused);
 	}
 

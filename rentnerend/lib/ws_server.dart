@@ -62,6 +62,8 @@ class WSServer {
 					sendSignal(MessageType.DATA_GAMESCOUNT);
 				else if(msg[0] == MessageType.PLS_SEND_JSON.value)
 					sendSignal(MessageType.DATA_JSON);
+				else if(msg[0] == MessageType.PLS_SEND_TIMESTAMP.value)
+					sendSignal(MessageType.DATA_TIMESTAMP);
 			}, onDone: () => _clients.remove(client), onError: (e) => debugPrint("grrr, client couldnt be connected properly!"));
 		}
 	}
