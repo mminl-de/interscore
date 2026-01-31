@@ -53,12 +53,12 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- Count time up instead of down (e.g. football)
 
 ## frontend
-- Reversing der anzeige, je nach Kameraposition (in input.json)
-- team logos for gamestart
 - Fix Font Problems wth Umlaute in Cards section
 - Widget spawn animation fixen(manchmal kaputt)
 - Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
 - Dislpay Widgets for single groups/multiple groups etc
+- FINAL^0 cards
+- FINAL^0 team logos for gamestart
 - FINAL make json_load resilient to bad input.json
 - FINAL animate line by line
 - FINAL comment all relevant CSS
@@ -83,6 +83,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
 - FINAL translations
+- FINAL² Reversing der anzeige, je nach Kameraposition (in input.json)
 
 ## rentnerend
 - URGENT widget pipelines:
