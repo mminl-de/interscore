@@ -26,7 +26,8 @@ class Matchday with _$Matchday {
 		if(meta.paused) return meta.remainingTime;
 		else {
 			final unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-			return meta.remainingTime - (unixTime + meta.delay - meta.lastUnpaused);
+			final t = meta.remainingTime - (unixTime + meta.delay - meta.lastUnpaused);
+			return t >= 0 ? t : 0;
 		}
 	}
 

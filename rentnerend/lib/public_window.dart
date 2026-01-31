@@ -63,9 +63,8 @@ class _PublicWindowState extends State<PublicWindow> {
 
 	double get smoothSeconds {
 		final Matchday md = mdl.value;
-		if (md.meta.paused) {
-		  return md.currentTime().toDouble();
-		}
+		//if (md.meta.paused)
+			return md.currentTime().toDouble();
 
 		final now = DateTime.now().millisecondsSinceEpoch;
 		final deltaMs = now - _lastSecondTimestamp;

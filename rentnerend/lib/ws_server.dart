@@ -48,7 +48,7 @@ class WSServer {
 			// Listen is empty, because The server is write only.
 			// Writing clients should connect to the real backend!
 			client.listen((msg) {
-				//debugPrint("got Message: ${msg}");
+				debugPrint("got Message: ${msg}");
 				if(     msg[0] == MessageType.PLS_SEND_GAMEINDEX.value)
 					sendSignal(MessageType.DATA_GAMEINDEX);
 				else if(msg[0] == MessageType.PLS_SEND_GAMEPART.value)
