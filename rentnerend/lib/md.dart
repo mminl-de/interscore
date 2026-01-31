@@ -180,7 +180,7 @@ class Matchday with _$Matchday {
 			int c;
 			if ((c = teamPoints(b, groupName) - teamPoints(a, groupName)) != 0) return c;
 			if ((c = teamGoalDiff(b, groupName) - teamGoalDiff(a, groupName)) != 0) return c;
-			return teamGoals(b, groupName) - teamGoals(a, groupName);
+			return teamGoalsPlus(b, groupName) - teamGoalsPlus(a, groupName);
 		});
 
 		final Map<String, int> out = {};
@@ -190,7 +190,7 @@ class Matchday with _$Matchday {
 			if ( i > 0 &&
 			    (teamPoints(stats[i], groupName) != teamPoints(stats[i-1], groupName) ||
 				 teamGoalDiff(stats[i], groupName) != teamGoalDiff(stats[i-1], groupName) ||
-				 teamGoals(stats[i], groupName) != teamGoals(stats[i-1], groupName)))
+				 teamGoalsPlus(stats[i], groupName) != teamGoalsPlus(stats[i-1], groupName)))
 				currentRank = i + 1;
 			out[stats[i]] = currentRank;
 		}
@@ -199,7 +199,7 @@ class Matchday with _$Matchday {
 	}
 
 	// Gives back Map of all games the team played and an
-	Map<Game, int> _teamGamesPlayed(String t, String group) {
+	Map<Game, int> teamGamesPlayed(String t, String group) {
 		if (groupFromName(group) == null); // TODO crash the program?
 
 		Map<Game, int> gamesPlayed = Map<Game, int>();
@@ -226,28 +226,50 @@ class Matchday with _$Matchday {
 		return gamesPlayed;
 	}
 
-	int teamPoints(String t, String g) {
-		int points = 0;
-		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
-			int goalsDiff = g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
-			if (goalsDiff > 0) points += 3;
-			else if (goalsDiff == 0) points++;
+	Map<Game, int> teamGamesWon(String t, String g) {
+		Map<Game, int> played = teamGamesPlayed(t, g);
+		played.removeWhere((g, gameTeamIndex) {
+			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) <= 0;
 		});
-		return points;
+		return played;
+	}
+
+	Map<Game, int> teamGamesLost(String t, String g) {
+		Map<Game, int> played = teamGamesPlayed(t, g);
+		played.removeWhere((g, gameTeamIndex) {
+			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) > 0;
+		});
+		return played;
+	}
+
+	Map<Game, int> teamGamesTied(String t, String g) {
+		Map<Game, int> played = teamGamesPlayed(t, g);
+		played.removeWhere((g, gameTeamIndex) {
+			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) != 0;
+		});
+		return played;
+	}
+
+	int teamPoints(String t, String g) {
+		return teamGamesWon(t, g).length * 3 + teamGamesTied(t, g).length;
 	}
 
 	int teamGoalDiff(String t, String g) {
-		int goalDiff = 0;
-		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
-			goalDiff += g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
-		});
-		return goalDiff;
+		return teamGoalsPlus(t, g) - teamGoalsMinus(t, g);
 	}
 
-	int teamGoals(String t, String g) {
+	int teamGoalsPlus(String t, String g) {
 		int goals = 0;
-		_teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
+		teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
 			goals += g.teamGoals(gameTeamIndex);
+		});
+		return goals;
+	}
+
+	int teamGoalsMinus(String t, String g) {
+		int goals = 0;
+		teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
+			goals += g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
 		});
 		return goals;
 	}

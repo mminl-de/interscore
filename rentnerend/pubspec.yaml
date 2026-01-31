@@ -30,8 +30,19 @@ dev_dependencies:
   freezed: ^2.4.5
   json_serializable: ^6.8.0
 
+fonts:
+  - family: Kanit
+    fonts:
+      - asset: assets/fonts/Kanit-Regular.ttf
+
 flutter:
   uses-material-design: true # Material Icons font is included
 
   assets:
+    - assets/
     - assets/sound_game_end_shorter.wav
+
+  fonts:
+    - family: Kanit
+      fonts:
+        - asset: assets/Kanit-Regular.ttf

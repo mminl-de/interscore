@@ -133,16 +133,25 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
 
 ### TODO 1.2.26
-- Make sure the delay drift is not happening, maybe edit ffmpeg options so we get low delay rtmp stream
-- make sure we can access obs VNC from the internet (or not)
-- activate rustdesk, deactivate slock
-- replays?
 - FINAL make the streaming status button accurate
-- fix Spielplan scrolling (scollt nicht)
-- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
-- Controller auf Android ziehen und testen
 - ewige 16/127 chains im backend investigaten
-- Zuschauer UI bauen, wenn die Zeit da ist
+### TODO 1.2.26 2
+- fix Spielplan scrolling (scrollt nicht) @SERGEY
+- ssh tunnel untersuchen
+- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
+- Handy version Info Window
+- Info Window ausgliedern
+- Info Window auf mminl.de hosten
+- rentnerend infos über connection
+- Controller auf Android ziehen
+- Font zu Kanit wechseln?
+- FINAL Info Window loggt wie viele leute da waren
+- FINAL Add Logo to Info Window
+- QR Codes ausdrucken
+
+- docker auf alenias rechner
+- Make sure the delay drift is not happening, maybe edit ffmpeg options so we get low delay rtmp stream
+- rentnerend reconnect testen!
 
 ## DEPRECATED Remoteend (rentnerend rewrite includes remoteend)
 - Add Ability to start and end replay of a game

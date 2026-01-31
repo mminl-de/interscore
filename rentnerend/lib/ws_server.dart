@@ -12,8 +12,9 @@ class WSServer {
 	final Set<WebSocket> _clients = <WebSocket>{};
 	HttpServer? _server;
 	ValueNotifier<Matchday> _mdl;
+	bool readonly = false;
 
-	WSServer(this._url, this._mdl);
+	WSServer(this._url, this._mdl, {readonly = false});
 
 	void close() {
 		for (var client in _clients)

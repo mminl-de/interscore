@@ -44,8 +44,8 @@ class _InputWindowState extends State<InputWindow> {
 		mdl = ValueNotifier(widget.md);
 
 		mdl.addListener(() {
-			inputJsonWriteState(mdl.value);
-			ws.server.sendSignal(MessageType.DATA_JSON);
+			// inputJsonWriteState(mdl.value);
+			// ws.server.sendSignal(MessageType.DATA_JSON);
 
 			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.currentGamepart) {
 				_controller.animateToItem(
@@ -149,50 +149,83 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void startTimer() {
-		debugPrint("STARTING TIMER BROOOOOOOOOO");
-		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
-			final Matchday md = mdl.value;
-			if (!md.meta.paused) {
-				if (md.meta.currentTime != 0) {
-					mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
-					ws.sendSignal(MessageType.DATA_TIME);
-				}
-				if (mdl.value.meta.currentTime == 0) {
-					debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
-					mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-					ws.sendSignal(MessageType.DATA_PAUSE_ON);
-
-					// TODO FINAL so far, on Linux, you need this for audio to work:
-					//     gst-plugins-base
-					//     gst-plugins-good
-					//     gst-plugins-bad
-					//     gst-plugins-ugly
-					//     gst-plugins-libav
-					// mb make it self-contained
-					await player.play(AssetSource("sound_game_end_shorter.wav"));
-					//player.setUrl("file://../assets/sound_game_end_shorter.wav");
-					//await player.play();
-				}
-
-				//if (md.meta.currentTime == 0) {
-				//	debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
-				//	mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
-				//	ws.sendSignal(MessageType.DATA_PAUSE_ON);
-
-				//	//player.setUrl("asset://../assets/sound_game_end_shorter.wav");
-				//	await player.play(UrlSource("https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3"));
-				//} else {
-				//	mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
-				//	ws.sendSignal(MessageType.DATA_TIME);
-
-				//	if(mdl.value.meta.currentTime == 0) {
-				//		mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
-				//		ws.sendSignal(MessageType.DATA_PAUSE_ON);
-				//	}
-				//}
-			}
+		ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+			_onTick();
 		});
 	}
+
+	bool _tickRunning = false;
+
+	Future<void> _onTick() async {
+		if (_tickRunning) return;
+		_tickRunning = true;
+
+		try {
+			final md = mdl.value;
+
+			if (!md.meta.paused && md.meta.currentTime > 0) {
+				mdl.value = md.copyWith(
+					meta: md.meta.copyWith(currentTime: md.meta.currentTime - 1),
+				);
+			}
+
+			if (mdl.value.meta.currentTime == 0 && !mdl.value.meta.paused) {
+				mdl.value = mdl.value.copyWith(
+					meta: mdl.value.meta.copyWith(paused: true),
+				);
+				ws.sendSignal(MessageType.DATA_PAUSE_ON);
+				await player.play(AssetSource("sound_game_end_shorter.wav"));
+			}
+		} finally {
+		  _tickRunning = false;
+		}
+	}
+
+	// void startTimer() {
+	// 	debugPrint("STARTING TIMER BROOOOOOOOOO");
+	// 	ticker ??= Timer.periodic(const Duration(seconds: 1), (_) async {
+	// 		final Matchday md = mdl.value;
+	// 		if (!md.meta.paused) {
+	// 			if (md.meta.currentTime != 0) {
+	// 				mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+	// 				// ws.sendSignal(MessageType.DATA_TIME);
+	// 			}
+	// 			if (mdl.value.meta.currentTime == 0) {
+	// 				debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+	// 				mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+	// 				ws.sendSignal(MessageType.DATA_PAUSE_ON);
+
+	// 				// TODO FINAL so far, on Linux, you need this for audio to work:
+	// 				//     gst-plugins-base
+	// 				//     gst-plugins-good
+	// 				//     gst-plugins-bad
+	// 				//     gst-plugins-ugly
+	// 				//     gst-plugins-libav
+	// 				// mb make it self-contained
+	// 				await player.play(AssetSource("sound_game_end_shorter.wav"));
+	// 				//player.setUrl("file://../assets/sound_game_end_shorter.wav");
+	// 				//await player.play();
+	// 			}
+
+	// 			//if (md.meta.currentTime == 0) {
+	// 			//	debugPrint("NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO BROOOOOOOOOOOOOOOOOOO");
+	// 			//	mdl.value = md.copyWith(meta: md.meta.copyWith(paused: true));
+	// 			//	ws.sendSignal(MessageType.DATA_PAUSE_ON);
+
+	// 			//	//player.setUrl("asset://../assets/sound_game_end_shorter.wav");
+	// 			//	await player.play(UrlSource("https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3"));
+	// 			//} else {
+	// 			//	mdl.value = md.copyWith(meta: md.meta.copyWith(currentTime: md.meta.currentTime-1));
+	// 			//	ws.sendSignal(MessageType.DATA_TIME);
+
+	// 			//	if(mdl.value.meta.currentTime == 0) {
+	// 			//		mdl.value = mdl.value.copyWith(meta: mdl.value.meta.copyWith(paused: true));
+	// 			//		ws.sendSignal(MessageType.DATA_PAUSE_ON);
+	// 			//	}
+	// 			//}
+	// 		}
+	// 	});
+	// }
 
 	void stopTimer() {
 		ticker?.cancel();
@@ -258,8 +291,8 @@ class _InputWindowState extends State<InputWindow> {
 		return widgets;
 	}
 
+	final teamsTextGroup = AutoSizeGroup();
 	Widget blockTeams(Matchday md, RecommendedAction recAct) {
-		final teamsTextGroup = AutoSizeGroup();
 
 		String t1name = md.currentGame.team1.whenOrNull(
 			byName: (name, _) => name,

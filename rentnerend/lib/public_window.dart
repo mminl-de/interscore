@@ -85,19 +85,19 @@ class _PublicWindowState extends State<PublicWindow> {
 
 	final teamsTextGroup = AutoSizeGroup();
 
-	Widget blockTeam(String name, int goals) {
+	Widget blockTeam(String name, int goals, Color textColor) {
 		return Column(children: [
 			Expanded(flex: 5, child: SizedBox(width: 5)),
 			Expanded(flex: 15, child: Center(child: AutoSizeText(
 				name,
 				maxLines: 1,
 				group: teamsTextGroup,
-				style: const TextStyle(fontSize: 1000, fontWeight: FontWeight.bold, height: 0.9)
+				style: TextStyle(fontSize: 1000, fontWeight: FontWeight.bold, height: 0.9, color: textColor, fontFamily: 'Kanit')
 			))),
 			Expanded(flex: 73, child: Center(child: AutoSizeText(
 				goals.toString(),
 				maxLines: 1,
-				style: const TextStyle(fontSize: 1000, height: 0.9,)
+				style: TextStyle(fontSize: 1000, height: 0.9, color: textColor, fontFamily: 'Kanit')
 			))),
 			Expanded(flex: 2, child: SizedBox(width: 5)),
 		]);
@@ -143,19 +143,26 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);
 
+		Color contrastColor(Color background) {
+			// computeLuminance returns 0 (dark) → 1 (light)
+			return background.computeLuminance() > 0.5
+				? Colors.black
+				: Colors.white;
+		}
+
 		return Column(children: [
 			Expanded(flex: 140, child: Container(color: Colors.black, child:
 				Center(child: AutoSizeText(
 					gameName,
 					maxLines: 1,
-					style: const TextStyle(fontSize: 1000, height: 1.5)
+					style: const TextStyle(fontSize: 1000, height: 1.5, fontFamily: 'Kanit')
 				))
 			)),
 			Expanded(flex: 610, child:
 				Row(children: [
-					Expanded(flex: 150, child: Container(color: t1_color, child: blockTeam(t1name, t1_score))),
+					Expanded(flex: 150, child: Container(color: t1_color, child: blockTeam(t1name, t1_score, contrastColor(t1_color)))),
 					Expanded(flex: 2, child: Container(color: Colors.black, child: SizedBox.expand())),
-					Expanded(flex: 150, child: Container(color: t2_color, child: blockTeam(t2name, t2_score))),
+					Expanded(flex: 150, child: Container(color: t2_color, child: blockTeam(t2name, t2_score, contrastColor(t2_color)))),
 				])
 			),
 			Expanded(flex: 10, child: Container(color: Colors.black, child: SizedBox.expand())),
@@ -165,12 +172,12 @@ class _PublicWindowState extends State<PublicWindow> {
 
 					return Stack(children: [
 						Container(width: constraints.maxWidth * progress, color: Colors.green),
-						Center(child: Transform.translate(
+						Padding(padding: const EdgeInsets.all(10), child: Center(child: Transform.translate(
 							offset: const Offset(0, -8), child: AutoSizeText(
 							curTimeString,
 							maxLines: 1,
-							style: const TextStyle(fontSize: 1000, height: 0.85,   fontFamily: 'RobotoMono',)
-						)))
+							style: const TextStyle(fontSize: 1000, height: 0.85, fontFamily: 'Kanit', fontFeatures: [FontFeature.tabularFigures()])
+						))))
 					]);
 				})
 			)),
