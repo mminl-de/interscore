@@ -56,17 +56,17 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 
 ### rn
 - FINAL TEST:
-	- whether time flows correctly
-	- new devices joining
-	- ssh tunnel stress test
-	- scoreboard in non-game situations (like pause)
+	- [X] scoreboard in non-game situations (like pause)
+	- [X] whether time flows correctly
+	- [ ] new devices joining
+	- [ ] ssh tunnel stress test
 - frontend:
-	- change md struct
-	- implement setting delay
-	- change time calculation logic
-	- implement handshake (PLS_SEND_TIMESTAMP and DATA_TIMESTAMP)
-	- update UI accordingly
-	- correctly handle pausing, unpausing and timeskipping
+	- [ ] correctly handle pausing, unpausing and timeskipping
+	- [X] update UI accordingly
+	- [X] change md struct
+	- [ ] implement setting delay
+	- [X] change time calculation logic
+	- [ ] implement handshake
 - rentnerend:
 	- change md struct
 	- recv & send time handshake

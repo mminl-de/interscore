@@ -876,15 +876,15 @@ function connect() {
 	socket.binaryType = "arraybuffer";
 
 	socket.onopen = () => {
-		function to_string(v: any) {
-			if (typeof v === "string") return v;
-			if (v instanceof Error) return v.stack || v.message;
-			try {
-				return JSON.stringify(v);
-			} catch {
-				return String(v);
-			}
-		}
+		//function to_string(v: any) {
+		//	if (typeof v === "string") return v;
+		//	if (v instanceof Error) return v.stack || v.message;
+		//	try {
+		//		return JSON.stringify(v);
+		//	} catch {
+		//		return String(v);
+		//	}
+		//}
 		// TODO NOW wtf is origLog?
 		// const origLog = console.log;
 		// const origErr = console.error;
@@ -898,8 +898,8 @@ function connect() {
 		// 	origErr(...args); // optional
 		// };
 
-		// console.log("Connected to WebSocket server!");
-		// socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
+		console.log("Connected to WebSocket server!");
+		socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
 	}
 
 	socket.onmessage = (event: MessageEvent) => {
@@ -1003,6 +1003,7 @@ function connect() {
 				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength));
 				md = json_parse(str);
 				update_ui();
+				console.log(md); // TODO
 				break;
 			//case MessageType.SCOREBOARD_SET_TIMER:
 			// TODO This is actually useful, implement in rentnerend
