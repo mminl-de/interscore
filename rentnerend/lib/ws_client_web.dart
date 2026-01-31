@@ -25,6 +25,7 @@ class WSClient {
 	}
 
 	Future<void> connect() async {
+		if (connected.value) return;
 		debugPrint("Connecting to Server: ${_url}");
 		try {
 			final ws = WebSocket(_url);
