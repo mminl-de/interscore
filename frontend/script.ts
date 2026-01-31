@@ -297,8 +297,8 @@ function cur_gamepart(): (GamePart | null) {
 }
 
 function running_time(md: Matchday): number {
+	if (md.meta.paused) return md.meta.remaining_time;
 	const now = Math.floor(Date.now() / 1_000);
-	console.log(`running_time:\n\tnow: ${now}\n\rlast_unpaused: ${md.meta.last_unpaused}\n\rremaining_time: ${md.meta.remaining_time}`);
 	return md.meta.remaining_time - (now + delay - md.meta.last_unpaused);
 }
 
