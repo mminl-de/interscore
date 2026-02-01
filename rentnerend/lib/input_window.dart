@@ -44,8 +44,8 @@ class _InputWindowState extends State<InputWindow> {
 		mdl = ValueNotifier(widget.md);
 
 		mdl.addListener(() {
-			// inputJsonWriteState(mdl.value);
-			// ws.server.sendSignal(MessageType.DATA_JSON);
+			inputJsonWriteState(mdl.value);
+			ws.server.sendSignal(MessageType.DATA_JSON);
 
 			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.currentGamepart) {
 				_controller.animateToItem(
@@ -400,7 +400,10 @@ class _InputWindowState extends State<InputWindow> {
 	void startTimer() {
 		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
 			final curTime = mdl.value.currentTime();
-			if(curTime <= 0 && !mdl.value.meta.paused) togglePause(mdl.value);
+			if(curTime <= 0 && !mdl.value.meta.paused) {
+				togglePause(mdl.value);
+				playSound();
+			}
 			if(remainingTime.value != curTime)
 				remainingTime.value = curTime;
 		});
@@ -562,12 +565,15 @@ class _InputWindowState extends State<InputWindow> {
 						switch (recAct) {
 							case RecommendedAction.TIME_START:
 								togglePause(mdl.value);
+								ws.sendSignal(MessageType.DATA_JSON);
 								break;
 							case RecommendedAction.GAMEPART_NEXT:
 								mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.currentGamepart+1);
+								ws.sendSignal(MessageType.DATA_JSON);
 								break;
 							case RecommendedAction.GAME_NEXT:
 								mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex+1);
+								ws.sendSignal(MessageType.DATA_JSON);
 								break;
 							case RecommendedAction.NOTHING:
 								break;
