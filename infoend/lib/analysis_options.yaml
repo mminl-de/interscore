@@ -1,0 +1,7 @@
+analyzer:
+  errors:
+    unnecessary_this: ignore
+
+linter:
+  rules:
+    todo: false
