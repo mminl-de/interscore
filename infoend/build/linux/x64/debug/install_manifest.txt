@@ -1,0 +1,17 @@
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/flutter_rentnerend
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/icudtl.dat
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/lib/libaudioplayers_linux_plugin.so
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/version.json
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/AssetManifest.bin
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/kernel_blob.bin
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/NOTICES.Z
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/fonts/MaterialIcons-Regular.otf
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/shaders/ink_sparkle.frag
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/shaders/stretch_effect.frag
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/assets/Kanit-Regular.ttf
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/assets/sound_game_end.mp3
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/assets/sound_game_end_shorter.wav
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/NativeAssetsManifest.json
+/home/mrmine/prg/interscore/infoend/build/linux/x64/debug/bundle/data/flutter_assets/FontManifest.json

@@ -1,0 +1,48 @@
+name: flutter_rentnerend
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1 # version and build number for this application.
+
+environment:
+  sdk: ^3.9.2
+  flutter: ^3.38.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  auto_size_text: ^3.0.0
+  path_provider: ^2.1.5
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+  collection: ^1.18.0
+  audioplayers: ^6.5.1
+  just_audio: ^0.10.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.6
+  freezed: ^2.4.5
+  json_serializable: ^6.8.0
+
+fonts:
+  - family: Kanit
+    fonts:
+      - asset: assets/fonts/Kanit-Regular.ttf
+
+flutter:
+  uses-material-design: true # Material Icons font is included
+
+  assets:
+    - assets/
+    - assets/sound_game_end_shorter.wav
+
+  fonts:
+    - family: Kanit
+      fonts:
+        - asset: assets/Kanit-Regular.ttf
