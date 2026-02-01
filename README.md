@@ -79,6 +79,18 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 		- recv & send time handshake
 		- change time calculation logic
 		- update UI accordingly
+- post game:
+	- [ ] signal to tell frontend who's left and right:
+		- rentnerend/remoteend info on which is which (standard/reverse or frontside/backside)
+	- [ ] infoend shows connection status
+	- [ ] verletzungscounter
+	- [ ] DEBUG rentnerend UI reset wird nicht geupdatet
+	- [ ] zeit in public window ist rot, wenn paused
+	- [ ] CONSIDER frontend: zeit gelb, wenn HZpause
+	- [ ] infoend: zeit als bar um den oval rum
+	- [ ] WCAG wieder fixen (sangerhausen)
+	- [ ] rentnerend: goal hotkeys vertauscht
+	- [ ] time reset führt zu 07:04 statt 07:00
 
 ## frontend
 - Fix Font Problems wth Umlaute in Cards section?
