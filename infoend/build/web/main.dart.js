@@ -56841,7 +56841,7 @@ for(;;)switch(s){case 0:n=new A.fK(A.a8r(!1,0,0,A.c([],t.yT),0,0,!0,0,!1,!1,!1,!
 m=$.az()
 q.d!==$&&A.bl()
 p=q.d=new A.dv(n,m)
-m=new A.a_N("wss://mminl.de/ws",p,new A.dv(!1,m))
+m=new A.a_N("wss://mminl.de/ws/",p,new A.dv(!1,m))
 q.e=m
 s=2
 return A.Z(m.ww(),$async$kH)
