@@ -566,17 +566,14 @@ function write_gamestart() {
 	const left_col_cur = teams_cur[0]?.color ?? default_col;
 	const right_col_cur = teams_cur[1]?.color ?? default_col;
 
-	const t1_keeper = teams_cur[0]?.players.find((p) => p.role === "keeper")?.name ?? "[???]";
-	const t1_field = teams_cur[0]?.players.find((p) => p.role === "field")?.name ?? "[???]";
-	const t2_keeper = teams_cur[1]?.players.find((p) => p.role === "keeper")?.name ?? "[???]";
-	const t2_field = teams_cur[1]?.players.find((p) => p.role === "field")?.name ?? "[???]";
+	const t1_keeper = teams_cur[0]?.players.find(p => p.role === "keeper")?.name ?? "[???]";
+	const t1_field = teams_cur[0]?.players.find(p => p.role === "field")?.name ?? "[???]";
+	const t2_keeper = teams_cur[1]?.players.find(p => p.role === "keeper")?.name ?? "[???]";
+	const t2_field = teams_cur[1]?.players.find(p => p.role === "field")?.name ?? "[???]";
 
 	const teams_next = get_teams(md.games[md.meta.game_i + 1] ?? null);
 	const left_col_next = teams_next[0]?.color ?? default_col;
 	const right_col_next = teams_next[1]?.color ?? default_col;
-
-	const t1_el = document.createElement("div");
-	t1_el.classList.add("team");
 
 	const t1_name_el = document.createElement("div");
 	t1_name_el.classList.add("bordered");

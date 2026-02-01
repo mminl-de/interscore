@@ -67,6 +67,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- [ ] implement setting delay
 	- [X] change time calculation logic
 	- [ ] implement handshake
+	- [ ] fix rendering of the last game at gamestart
 - rentnerend:
 	- change md struct
 	- recv & send time handshake
@@ -80,8 +81,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 		- update UI accordingly
 
 ## frontend
-- Fix Font Problems wth Umlaute in Cards section
-- Widget spawn animation fixen(manchmal kaputt)
+- Fix Font Problems wth Umlaute in Cards section?
 - Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
 - Dislpay Widgets for single groups/multiple groups etc
 - FINAL^0 cards
