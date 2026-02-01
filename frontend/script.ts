@@ -625,9 +625,10 @@ function write_gamestart() {
 			gradient2str(str2col(left_col_next), str2coldark(left_col_next));
 		gamestart_next_t2.innerHTML = teams_next[1]?.name.toString() ?? "[???]";
 		gamestart_next_t2.style.background =
-			gradient2str(str2col(right_col_next), str2coldark(right_col_next));
-		gamestart_next_t1.style.color = color_font_contrast(str2col(gamestart_next_t1.style.backgroundColor));
-		gamestart_next_t2.style.color = color_font_contrast(str2col(gamestart_next_t2.style.backgroundColor));
+			gradient2str(str2coldark(right_col_next), str2col(right_col_next));
+		console.log(`TODO SHIT: ${left_col_next}`);
+		gamestart_next_t1.style.color = color_font_contrast(str2col(left_col_next));
+		gamestart_next_t2.style.color = color_font_contrast(str2col(right_col_next));
 	}
 }
 
