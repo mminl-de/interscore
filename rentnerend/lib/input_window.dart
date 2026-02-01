@@ -285,7 +285,17 @@ class _InputWindowState extends State<InputWindow> {
 							}, Icons.arrow_forward_rounded,
 							highlighted: (recAct == RecommendedAction.GAME_NEXT))
 						)
-					)
+					),
+					// TODO NEW NOW
+					Expanded(
+						flex: 3,
+						child: SizedBox.expand(
+							child: buttonWithIcon(context, () {
+								this.connectWS();
+							}, Icons.arrow_circle_up,
+							highlighted: (recAct == RecommendedAction.GAME_NEXT))
+						)
+					),
 				]))
 			])
 		);
@@ -523,6 +533,7 @@ class _InputWindowState extends State<InputWindow> {
 				bindings: {
 					LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
 					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
 					LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
 					LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
 					LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1),
