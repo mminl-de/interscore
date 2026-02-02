@@ -8,8 +8,8 @@ This project goal is to make it as easy as possible to livestream cycleball, tha
 We want to achieve this by providing an high quality judge software running on Windows, MacOS, Linux, Web, Android and theoretically iOS (everything that flutter runs on), while the user additionally just has to install an andorid app or quickly configure a GoPro and stable internet connection.
 On a technical level, we just need a RTMP stream to our server and a connected judge software.
 
-We host all the backend via docker.
-The OBS overlay is a single HTML file launched via the Browser source.
+We host all the backend via docker compose.
+The OBS overlay is a single HTML file launched via the OBS Browser source.
 The DOM contents are controlled in Typescript via WebSocket using the judges software/android app via a backend, which serves as websockets-server.
 The overlay supports multiple "widgets" showing goals and the timer, teams participating in the tournament, currently playing teams and even red and yellow cards.
 
@@ -24,20 +24,18 @@ This project was made for our personal use prior to a Cycleball tournament under
 ## Usage
 
 ### Docker
-The current version is tailord to my server setup. A vps for static IP, connection to a dommainname. OBS hosted on a PC with dynamic IP and enough CPU/GPU Power to run obs and stream. This will be abstracted/automated in the future to be more flexible and easy to setup.
-0. The VPS needs a user (interscore-tunnel) for which the Host-PC has a ssh-key.
-1. make sure all ports are open on the VPS (8081, 4444)
-2. `make b-install js-new`
-3. cd docker/
-4. Download obs binary with WebSocket support into ./ as obs
-5. Change the path to the .ssh folder in the Makefile (default /home/mrmine/.ssh/) for yours
-6. make build run
-In docker we host a rtmp server. The streaming camera publishes to this server through rtmp. In order to have a static rtmp link we use a ddns service (and a CNAME DNS-Entry if you want to use your domain for rtmp as well). The config assumes a dyndns2 with dynu, the config can easily be changed though (docker/ddclient.conf)
-1. set up an free account on dynu.com
-2. change the address in docker/ddclient.conf to your ddns address
-3. If wanted create CNAME DNS Entry in your Domain Registrar to forward to the ddns address
-4. Add a port forwarding to the Docker-PC's local router with TCP and UDP on Port 1935 and a few above if you plan to host multiple docker instances
-5. Give DNS credentials When running the image: cd docker; make run DYNU_LOGIN=blibla DYNU_PASSWORD=blub
+The current version is tailord to my server setup, but can easily be replaced for a different setup.
+We have 1 incoming (rtmp signal) and 1 incoming/outgoing(ws server) connection.
+- The ws server is hosted on port 8081 by default. *On my setup we use an autossh container, portforwarding 8081 to mminl.de (my vps). For this you need to specify a ssh folder or file from the docker host machine and change the login user, that shall be bind into the container in docker-compose.yaml. If you dont want to portforward, but rather forward to the host machine, add the port forwarding in the backend section of docker-compose.yaml and dont start the ssh-tunnel container*
+- We host an mediamtx container, as a rtmp-server, the port 1935 is used by default. The sending device has to stream to: `rtmp://IP_OF_HOST:1935/live/stream`
+*In my setup the host has a ddns server, so the camera can connect to a static domain*
+- OBS *should* be hardware accelerated on both amd and nvidia gpus, but amd is *not* tested well.
+Building and running:
+- For debugging purposes the obs image has a vncserver integrated. It broadcasts the obs UI on the host machine on port 5900
+#### Building
+- `cd docker/ && sudo docker compose build`
+#### Running
+- `cd docker/ && sudo docker compose up`
 
 ## Demonstrations
 - https://www.youtube.com/watch?v=m4PdxYp68SQ (stream in early development)
@@ -45,6 +43,7 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 # TODO
 
 ## meta
+- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
 1. should requester gauge delay between request & response?
 2. should backend broadcast DATA_TIMESTAMP to everyone or only the requester?
 - rename rentnerend to controller
@@ -54,13 +53,9 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 - FINAL^4 abstract program further to support other sports
 	- Count time up instead of down (e.g. football)
 
-### rn
-- FINAL TEST:
-	- [X] scoreboard in non-game situations (like pause)
-	- [X] whether time flows correctly
-	- [ ] new devices joining
-	- [ ] ssh tunnel stress test
-- frontend:
+
+## frontend
+- new time system:
 	- [ ] correctly handle pausing, unpausing and timeskipping
 	- [X] update UI accordingly
 	- [X] change md struct
@@ -68,40 +63,21 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- [X] change time calculation logic
 	- [ ] implement handshake
 	- [ ] fix rendering of the last game at gamestart
-- rentnerend:
-	- change md struct
-	- recv & send time handshake
-	- change time calculation logic
-	- update UI accordingly
-	- implement pausing, unpausing and timeskipping
-	- ditto for client:
-		- change md struct
-		- recv & send time handshake
-		- change time calculation logic
-		- update UI accordingly
-- post game:
-	- [ ] signal to tell frontend who's left and right:
-		- rentnerend/remoteend info on which is which (standard/reverse or frontside/backside)
-	- [ ] infoend shows connection status
-	- [ ] verletzungscounter
-	- [ ] DEBUG rentnerend UI reset wird nicht geupdatet
-	- [ ] zeit in public window ist rot, wenn paused
-	- [ ] CONSIDER frontend: zeit gelb, wenn HZpause
-	- [ ] infoend: zeit als bar um den oval rum
-	- [ ] WCAG wieder fixen (sangerhausen)
-	- [ ] rentnerend: goal hotkeys vertauscht
-	- [ ] time reset führt zu 07:04 statt 07:00
-
-## frontend
-- Fix Font Problems wth Umlaute in Cards section?
-- Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
-- Dislpay Widgets for single groups/multiple groups etc
-- FINAL^0 cards
+- BUG time reset führt zu 07:04 statt 07:00 (probably )
+- BUG Spielplan scrollt nur einmalig
+- CONSIDER frontend: zeit gelb, wenn HZpause
+- cards
+	- BUG Fix Font Problems wth Umlaute in Cards section?
+	- Display Team in Cards Widget (Color/Background Color/Border Color/Logo)
+	- Kartengrund
+	- FINAL handle dealing multiple cards
+- Display Widgets for single groups/multiple groups etc
 - FINAL^0 team logos for gamestart
+- FINAL Reversing der anzeige, je nach Kameraposition (in input.json)
+	- rentnerend/remoteend info on which is which (standard/reverse or frontside/backside)
 - FINAL make json_load resilient to bad input.json
 - FINAL animate line by line
 - FINAL comment all relevant CSS
-- FINAL handle dealing multiple cards
 - FINAL IDEA Time estimates:
 	- time key in json
 	- sending signal to frontend to calculate all estimates
@@ -110,98 +86,72 @@ In docker we host a rtmp server. The streaming camera publishes to this server t
 	- calculations done only when calling the gameplan
 - FINAL IDEA Fullscreen Endscore with Team Badge (maybe only winning) (Could have false positives when referee calls "letzter Schlag" or wants more time):
 	- post-tournament stats (game data, nothing fancy)
-- FINAL Wenn z.B. mind. 3 Tore hintereinander von einem Team innerhalb von 2 min passieren ohne Gegentore, ist Team "on fire" (siehe CS):
+- FINAL^2 Wenn z.B. mind. 3 Tore hintereinander von einem Team innerhalb von 2 min passieren ohne Gegentore, ist Team "on fire" (siehe CS):
 	- integer for streak (0 by default)
 	- fixed size timer for streak
 	- if a team scores, timer resets and streak increments
 	- if timer runs out of opponents scores, streak gets reset
-- FINAL Kartengrund unterstützen:
-	- second dropdown in the rentnerend
-	- with default values ("refusing to elaborate") or a custom one
 - FINAL Seite: Ads unten (or Vollbild/Seite)
 - FINAL kompliziertere Animation vom Spielwidget (einzelne Elemente kurz hintereinander reinanimieren, so dass es sich aufbaut)
 - FINAL² Widget: Stats für Teams (Win/Loss/Tie, Tor geschossen/Tor gekriegt, %nach Halbzeitführung converted, Torwart/Feldspieler, vorherige Liga, aktueller Ligaplatz) Daten aus cycleball.eu/radball.at
-- FINAL translations
-- FINAL² Reversing der anzeige, je nach Kameraposition (in input.json)
+- FINAL³ translations
 
 ## rentnerend
+- URGENT rentnerend infos über connection
+- BUG goal hotkeys vertauscht (input_window)
+- zeit sollte rot werden (oder gelb), wenn pausiert (im public window)
+- BUG UI reset wird nicht geupdatet (input_window)
+- verletzungscounter
+- recv & send time handshake
 - URGENT widget pipelines:
 	- 5s this widget, 5s that
 	- absolute cinema
 - JSON-Creator GUI for non-technical users
-- more keyboard binds
-	- bind Ctrl-N for create new tournament
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
+- FINAL make the streaming status button accurate
 - FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
-- FINAL additional button + functionality for half time and side switch (mark the button somehow, so the user just has to press space or enter and the halfs switch, the clock resets and Halftimeclock starts):
-	- visual guides
 - FINAL Add cycleball.eu push support
 - FINAL Cards for Coaches: "Coach von Gifhorn 1 bekommt eine gelbe Karte"
 - FINAL Ads in public window, e.g. fullscreen video/picture during a pause
 - FINAL Next Game in public window, e.g. before the fullscreen ad during a pause
 - FINAL delte cards
-- FINAL deal with non-existing assets
-- FINAL FINAL add export to Spielplan-pdf:
+- FINAL² add export to Spielplan-pdf:
 	- we define a standard for what formular keys we expect
 	- users can upload their template only if their matches our standard:
 		- otherwise error dialog ig
 	- we export the results as a writable formular
 - FINAL² Add referees
-- FINAL³ Idee: Ansagen durch KI bei der Hälfte
-
-### design
-- gray-black colorscheme
-- primary colors for accents
-- flat design language
-
-## backend
-- Handle missing files for copy and ffmpeg commands gracefully (dont call them)
-
-## Docker
-### Misc
-- FINAL better live.mminl.de setup without ddns on host...
-- FINAL build multiple stream support
-- FINAL check if we actually use gpu rendering
-
-### OBS
-- Make replay System work properly, test it throughly
-- Find a robust solution to combat delay (like blinking square)
-- Let remoteend/rentnerend remotely start a stream-session
-- Better UI for replays
-- Better Transition-Animations
-- Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
-
-### TODO 1.2.26
-- FINAL make the streaming status button accurate
-### TODO 1.2.26 2
-- fix Spielplan scrolling (scrollt nicht) @SERGEY
-- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
-- rentnerend infos über connection
-- RUSTDESK INSTALLIEREN BEI ALENIA (rustdesk-bin)
-- FINAL Info Window loggt wie viele leute da waren
-- FINAL Add Logo to Info Window
-- QR Codes ausdrucken
-
-- Make sure the delay drift is not happening, maybe edit ffmpeg options so we get low delay rtmp stream
-- rentnerend reconnect testen!
-
-- Farben ändern
-
-## DEPRECATED Remoteend (rentnerend rewrite includes remoteend)
-- Add Ability to start and end replay of a game
-- FINAL Waterboard remoteend (dont kill websocket connection)
-- FINAL server sends widgets status (on/off)
+- FINAL³ IDEA Ansagen durch KI bei der Hälfte
+### Remoteend
 - FINAL Display Gamerelated information:
 	- Scoreboard Infos: Teams playing, Score, Time, Half
 	- Connection Status of all Clients (backend, rentnerend, frontend)
 	- OBS Scene / replay situation
-- FINAL FINAL Add different replay possibilities (?? make setting for: speed of replay, length of replay)
-- FINAL FINAL Allow changing/select Streaming Service
-- FINAL FINAL basically clone capabilities of rentnerend, so we dont actually need rentnerend if not wanted
-	- Change input.json (e.g. Gameplan order, later create whole input.json with remoteend, import from cycleball.eu)
-	- sync game data with rentnerend
-	- Change game data: pause time, scores, cards, next game, etc.
+
+## backend
+
+## Docker
+### Misc
+- FINAL better live.mminl.de setup without ddns on host...
+- build multiple stream support
+
+### OBS
+- Make sure the delay drift is not happening, maybe edit ffmpeg options so we get low delay rtmp stream
+- Make replay System work properly, test it throughly
+- Find a robust solution to combat delay (like blinking square)
+- FINAL Let remoteend/rentnerend remotely start a stream-session
+- Better UI for replays
+- Better Transition-Animations
+- Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
+- FINAL Add different replay possibilities (?? make setting for: speed of replay, length of replay)
+- FINAL Allow changing/select Streaming Service
+
+## Infoend
+- show connection status
+- zeit als bar um den oval rum
+- FINAL Info Window loggt wie viele leute da waren
+- FINAL Add Logo to Info Window
 
 ## interscore.mminl.de
 - UX improvement: look like frontend
