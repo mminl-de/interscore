@@ -46,8 +46,9 @@ class InterscoreWS {
 		// TODO CONSIDER only send games, not gameparts
 		// TODO TEMP this seems odd, but we dont send gameactions right now, but rather the whole json
 		// the other device doesnt accept json data though. It only acceps games. Therefor we also send the game
+		// TODO Is this still needed? Who doesnt accept DATA_JSON but DATA_GAME?
 		if(signal == MessageType.DATA_JSON)
-			sendSignal(MessageType.DATA_GAME, additionalInfo: _mdl.value.meta.gameIndex);
+			sendSignal(MessageType.DATA_GAME, additionalInfo: _mdl.value.meta.game.index);
 	}
 
 	void send(List<int> msg) {

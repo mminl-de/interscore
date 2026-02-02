@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
 							child: const Text('Public Window'),
 							onPressed: () async {
 								// Create a default Matchday
-								final md = Matchday(Meta(formats: []), [], [], []);
+								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								final ws = WSClient("ws://localhost:6464", mdl);
 								await ws.connect();
@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
 							child: const Text('Controller'),
 							onPressed: () async {
 								// Create a default Matchday
-								final md = Matchday(Meta(formats: []), [], [], []);
+								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
 								final ws = WSClient("ws://mminl.de:8081", mdl);
@@ -115,7 +115,7 @@ class _MyAppState extends State<MyApp> {
 							child: const Text('Info Screen'),
 							onPressed: () async {
 								// Create a default Matchday
-								final md = Matchday(Meta(formats: []), [], [], []);
+								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
 								final ws = WSClient("ws://mminl.de:8081", mdl);

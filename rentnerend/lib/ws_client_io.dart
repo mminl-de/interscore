@@ -84,11 +84,9 @@ class WSClient {
 				games[g_index] = game;
 				_mdl.value = _mdl.value.copyWith(games: games);
 			}
-			else if(_mdl.value.meta.allowRemoteGameCreation) {
-				List<Game> games = List<Game>.from(_mdl.value.games);
-				games.add(game);
-				_mdl.value = _mdl.value.copyWith(games: games);
-			}
+			List<Game> games = List<Game>.from(_mdl.value.games);
+			games.add(game);
+			_mdl.value = _mdl.value.copyWith(games: games);
 		}
 		else if(msg[0] == MessageType.DATA_GAME_ACTION) {
 			_mdl.value = md.addGameAction(GameAction.fromJson(jsonDecode(msg.sublist(1).toString())));
