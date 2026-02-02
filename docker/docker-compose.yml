@@ -8,7 +8,7 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: docker-new/backend/Dockerfile
+      dockerfile: docker/backend/Dockerfile
     container_name: backend
     networks:
       mynet:
@@ -27,13 +27,13 @@ services:
     command: >
       sh -c "
         apk add --no-cache openssh autossh &&
-        autossh -M 0 -N -R 8081:backend:8081 -R 1935:mediamtx:1935 interscore-tunnel@mminl.de
+        autossh -M 0 -N -R 8081:backend:8081 interscore-tunnel@mminl.de
       "
 
   http-server:
     build:
       context: ..
-      dockerfile: docker-new/http-server/Dockerfile
+      dockerfile: docker/http-server/Dockerfile
     container_name: http-server
     networks:
       mynet:
@@ -53,7 +53,7 @@ services:
   obs:
     build:
       context: ..
-      dockerfile: docker-new/obs/Dockerfile
+      dockerfile: docker/obs/Dockerfile
     container_name: obs
     depends_on:
       - http-server

@@ -2,7 +2,7 @@
 *.js
 frontend/*.js
 MessageType.ts
-frontend/bun.lockb
+frontend/bun.lock
 frontend/node_modules/
 
 # backend
