@@ -587,7 +587,10 @@ function write_gamestart() {
 
 	const default_col = "white";
 
-	const teams_cur = get_teams(md.games[md.meta.game.index] ?? null);
+	console.log(md.games);
+	console.log(md.meta);
+	const teams_cur = get_teams(md.games[md.meta.game.index]);
+	console.log(teams_cur);
 	const left_col_cur = teams_cur[0]?.color ?? default_col;
 	const right_col_cur = teams_cur[1]?.color ?? default_col;
 
@@ -596,9 +599,9 @@ function write_gamestart() {
 	const t2_keeper = teams_cur[1]?.players.find(p => p.role === "keeper")?.name ?? "[???]";
 	const t2_field = teams_cur[1]?.players.find(p => p.role === "field")?.name ?? "[???]";
 
-	const teams_next = get_teams(md.games[md.meta.game.index + 1] ?? null);
-	const left_col_next = teams_next[0]?.color ?? default_col;
-	const right_col_next = teams_next[1]?.color ?? default_col;
+	const teams_next = md.meta.game.index+1 < md.games.length ? get_teams(md.games[md.meta.game.index + 1]) : null;
+	const left_col_next = teams_next?.[0]?.color ?? default_col;
+	const right_col_next = teams_next?.[1]?.color ?? default_col;
 
 	const t1_name_el = document.createElement("div");
 	t1_name_el.classList.add("bordered");
@@ -642,7 +645,7 @@ function write_gamestart() {
 	gamestart_t2.appendChild(t2_keeper_el);
 	gamestart_t2.appendChild(t2_field_el);
 
-	if (teams_next[0] == null && teams_next[1] == null) gamestart_next.style.display = "none";
+	if (teams_next?.[0] == null && teams_next?.[1] == null) gamestart_next.style.display = "none";
 	else {
 		gamestart_next.style.display = "block";
 		gamestart_next_t1.innerHTML = teams_next[0]?.name.toString() ?? "[???]";

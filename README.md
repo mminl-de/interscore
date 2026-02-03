@@ -56,14 +56,12 @@ Building and running:
 
 ## frontend
 - new time system:
-	- [ ] correctly handle pausing, unpausing and timeskipping
+	- [x] correctly handle pausing, unpausing and timeskipping
 	- [X] update UI accordingly
 	- [X] change md struct
 	- [ ] implement setting delay
 	- [X] change time calculation logic
 	- [ ] implement handshake
-	- [ ] fix rendering of the last game at gamestart
-- BUG time reset führt zu 07:04 statt 07:00 (probably )
 - BUG Spielplan scrollt nur einmalig
 - CONSIDER frontend: zeit gelb, wenn HZpause
 - cards
