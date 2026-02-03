@@ -182,8 +182,9 @@ const GameActionBaseSchema = z.object({
 
 const GameActionGoalSchema = GameActionBaseSchema.extend({
 	type: z.literal("goal"),
+	id: z.number(),
 	change: z.object({
-		type: z.literal("score"),
+		// type: z.literal("score"),
 		score: z.object({
 			'1': z.number().default(0),
 			'2': z.number().default(0),
@@ -194,11 +195,13 @@ const GameActionGoalSchema = GameActionBaseSchema.extend({
 
 const GameActionFoulSchema = GameActionBaseSchema.extend({
 	type: z.literal("foul"),
+	id: z.number(),
 	triggers_action: z.number().nullable().default(null),
 });
 
 const GameActionPenaltySchema = GameActionBaseSchema.extend({
 	type: z.literal("penalty"),
+	id: z.number(),
 	// No 'triggers_action' field here, just using base fields
 });
 
@@ -219,14 +222,37 @@ const FormatSchema  = z.object({
 	gameparts: z.array(GamePartSchema)
 });
 
-const MetaSchema = z.object({
-	game_i: z.number().default(0),
-	cur_gamepart: z.number().default(0),
-	sides_inverted: z.boolean().default(false),
-	paused: z.boolean().default(true),
-	remaining_time: z.number().default(0),
+const MetaGameSchema = z.object({
+	index: z.number().default(0),
+	gamepart: z.number().default(0),
+	sides_inverted: z.boolean().default(false)
+});
+
+const MetaTimeSchema = z.object({
+	remaining: z.number().default(0),
 	last_unpaused: z.number().default(0),
-	formats: z.array(FormatSchema)
+	paused: z.boolean().default(true),
+	delay: z.number().default(0) // TODO make delay work correctly
+})
+
+const MetaWidgetsSchema = z.object({
+	scoreboard: z.boolean().default(false),
+	gameplan: z.boolean().default(false),
+	liveplan: z.boolean().default(false),
+	gamestart: z.boolean().default(false),
+	ad: z.boolean().default(false),
+})
+
+const MetaObsSchema = z.object({
+	streamStarted: z.boolean().default(false),
+	replayStarted: z.boolean().default(false)
+})
+
+const MetaSchema = z.object({
+	game: MetaGameSchema,
+	time: MetaTimeSchema,
+	widgets: MetaWidgetsSchema,
+	obs: MetaObsSchema
 });
 
 export const GameSchema = z.object({
@@ -241,6 +267,7 @@ export const GameSchema = z.object({
 
 const MatchdaySchema = z.object({
 	meta: MetaSchema,
+	formats: z.array(FormatSchema),
 	teams: z.array(TeamSchema),
 	groups: z.array(GroupSchema),
 	games: z.array(GameSchema)
@@ -259,14 +286,30 @@ export type GameQuery = z.infer<typeof GameQuerySchema>;
 
 let md: Matchday = {
 	meta: {
-		game_i: 0,
-		paused: true,
-		remaining_time: 0,
-		last_unpaused: 0,
-		cur_gamepart: 0,
-		formats: [],
-		sides_inverted: false
+		game: {
+			index: 0,
+			gamepart: 0,
+			sides_inverted: false
+		},
+		time: {
+			remaining: 0,
+			last_unpaused: 0,
+			paused: true,
+			delay: 0
+		},
+		widgets: {
+			scoreboard: false,
+			gameplan: false,
+			liveplan: false,
+			gamestart: false,
+			ad: false
+		},
+		obs: {
+			streamStarted: false,
+			replayStarted: false
+		}
 	},
+	formats: [],
 	games: [],
 	groups: [],
 	teams: []
@@ -275,31 +318,22 @@ let md: Matchday = {
 // Time delay relative to the Interscore Controller
 let delay = 0;
 
-// TODO FINAL CONSIDER bitmap lmao
-let shown = {
-	scoreboard: false,
-	gameplan: false,
-	livetable: false,
-	gamestart: false,
-	ad: false
-};
-
 function cur_game(): (Game | null) {
-	return md.games[md.meta.game_i];
+	return md.games[md.meta.game.index];
 }
 
 function cur_format(): (Format | null) {
-	return (md.meta.formats.find((f) => f.name === cur_game()?.format.name)) ?? null;
+	return (md.formats.find((f) => f.name === cur_game()?.format.name)) ?? null;
 }
 
 function cur_gamepart(): (GamePart | null) {
-	return cur_format()?.gameparts[md.meta.cur_gamepart] ?? null;
+	return cur_format()?.gameparts[md.meta.game.gamepart] ?? null;
 }
 
 function running_time(md: Matchday): number {
-	if (md.meta.paused) return md.meta.remaining_time;
+	if (md.meta.time.paused) return md.meta.time.remaining;
 	const now = Math.floor(Date.now() / 1_000);
-	return md.meta.remaining_time - (now + delay - md.meta.last_unpaused);
+	return md.meta.time.remaining - (now + delay - md.meta.time.last_unpaused);
 }
 
 function resolve_GameTeamSlot(gts: GameTeamSlot): Team | null {
@@ -327,7 +361,7 @@ function get_scores(g: Game): [scoreT1: number, scoreT2: number] {
 function get_teams(g: Game): [t1: Team | null, t2: Team | null] {
 	const team_left = resolve_GameTeamSlot(g[1]);
 	const team_right = resolve_GameTeamSlot(g[2]);
-	return md.meta.sides_inverted ? [team_right, team_left] : [team_left, team_right];
+	return md.meta.game.sides_inverted ? [team_right, team_left] : [team_left, team_right];
 }
 
 function json_parse(s: string): Matchday {
@@ -424,19 +458,12 @@ function query_set_to_string(query: GameQuery): string {
 //}
 
 function write_scoreboard() {
-	const game = md.games[md.meta.game_i];
-	//console.log(md.meta.game_i);
-	console.log(md);
+	const game = md.games[md.meta.game.index];
 
 	const teams = get_teams(game);
 
-	console.log(teams);
-	console.log(`TEAM 1: ${teams[0]?.name}`);
-	console.log(`TEAM 2: ${teams[1]?.name}`);
 	scoreboard_t1.innerHTML = teams[0]?.name ?? '[???]';
 	scoreboard_t2.innerHTML = teams[1]?.name ?? '[???]';
-	console.log(`HTML T1: ${scoreboard_t1.innerHTML}`);
-	console.log(`HTML T2: ${scoreboard_t2.innerHTML}`);
 
 	//file_exists("../" + teams[0]?.logo_uri).then((exists: boolean) => {
 	//	if (exists) scoreboard_logo_1.src = "../" + teams[0]?.logo_uri
@@ -448,9 +475,8 @@ function write_scoreboard() {
 	//})
 
 	const scores: [number, number] = get_scores(game);
-	console.log(`scores: ${scores}`);
-	scoreboard_s1.innerHTML = md.meta.sides_inverted ? scores[1].toString() : scores[0].toString();
-	scoreboard_s2.innerHTML = md.meta.sides_inverted ? scores[0].toString() : scores[1].toString();
+	scoreboard_s1.innerHTML = md.meta.game.sides_inverted ? scores[1].toString() : scores[0].toString();
+	scoreboard_s2.innerHTML = md.meta.game.sides_inverted ? scores[0].toString() : scores[1].toString();
 
 	const default_col = "white";
 	const left_col = teams[0]?.color ?? default_col;
@@ -462,7 +488,6 @@ function write_scoreboard() {
 	scoreboard_t2.style.color = color_font_contrast(str2coldark(right_col));
 
 	const rt = running_time(md);
-	console.log("TODO running_time from write_scoreboard: ", rt);
 	update_timer_html(rt);
 	update_scoreboard_timer(rt);
 }
@@ -470,7 +495,7 @@ function write_scoreboard() {
 function write_gameplan() {
 	while (gameplan.children.length > 1) gameplan.removeChild(gameplan.lastChild!);
 
-	const cur = md.meta.game_i; // TODO Index ab 0 so richtig?
+	const cur = md.meta.game.index; // TODO Index ab 0 so richtig?
 
 	md.games.forEach((g: Game, i: number) => {
 		const team_left = resolve_GameTeamSlot(g[1]);
@@ -562,7 +587,7 @@ function write_gamestart() {
 
 	const default_col = "white";
 
-	const teams_cur = get_teams(md.games[md.meta.game_i] ?? null);
+	const teams_cur = get_teams(md.games[md.meta.game.index] ?? null);
 	const left_col_cur = teams_cur[0]?.color ?? default_col;
 	const right_col_cur = teams_cur[1]?.color ?? default_col;
 
@@ -571,7 +596,7 @@ function write_gamestart() {
 	const t2_keeper = teams_cur[1]?.players.find(p => p.role === "keeper")?.name ?? "[???]";
 	const t2_field = teams_cur[1]?.players.find(p => p.role === "field")?.name ?? "[???]";
 
-	const teams_next = get_teams(md.games[md.meta.game_i + 1] ?? null);
+	const teams_next = get_teams(md.games[md.meta.game.index + 1] ?? null);
 	const left_col_next = teams_next[0]?.color ?? default_col;
 	const right_col_next = teams_next[1]?.color ?? default_col;
 
@@ -626,7 +651,6 @@ function write_gamestart() {
 		gamestart_next_t2.innerHTML = teams_next[1]?.name.toString() ?? "[???]";
 		gamestart_next_t2.style.background =
 			gradient2str(str2coldark(right_col_next), str2col(right_col_next));
-		console.log(`TODO SHIT: ${left_col_next}`);
 		gamestart_next_t1.style.color = color_font_contrast(str2col(left_col_next));
 		gamestart_next_t2.style.color = color_font_contrast(str2col(right_col_next));
 	}
@@ -650,7 +674,7 @@ function write_gamestart() {
 //			return // TODO can we do that and no UI appears?
 //	}
 //
-//	md.games[md.meta.game_i].cards[md.games[md.meta.game_i].cards.length] = {
+//	md.games[md.meta.game.index].cards[md.games[md.meta.game_i].cards.length] = {
 //		player_index: player_index,
 //		card_type: type
 //	}
@@ -683,12 +707,11 @@ function write_livetable() {
 	let teams: LivetableLine[] = [];
 
 	md.teams.forEach((t) => {
-		console.log("Name: ", t.name);
 		teams.push({
 			name: t.name.toString(),
 			points: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) { // TODO Count the game right now?
+				for (let j = 0; j < md.meta.game.index; j++) { // TODO Count the game right now?
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) {
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 3 : 0;
@@ -702,7 +725,7 @@ function write_livetable() {
 			})(),
 			played: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t || resolve_GameTeamSlot(g[2]) === t) p++;
 				}
@@ -710,7 +733,7 @@ function write_livetable() {
 			})(),
 			won: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
@@ -721,7 +744,7 @@ function write_livetable() {
 			})(),
 			tied: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
@@ -732,7 +755,7 @@ function write_livetable() {
 			})(),
 			lost: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
@@ -743,7 +766,7 @@ function write_livetable() {
 			})(),
 			goals: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[1];
@@ -752,7 +775,7 @@ function write_livetable() {
 			})(),
 			goals_taken: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game_i; j++) {
+				for (let j = 0; j < md.meta.game.index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[0];
@@ -824,9 +847,9 @@ function write_livetable() {
 	}
 }
 
-let countdown = 0; // TODO ASK what is this?
+let countdown = 0;
 
-// Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
+// TODO Will this work sub second when it only runs each second? We dont set timer each time we pause/unpause
 function async_handle_time() {
 	clearInterval(countdown);
 	update_timer_html(running_time(md));
@@ -834,15 +857,14 @@ function async_handle_time() {
 		const rt = running_time(md);
 		update_scoreboard_timer(rt);
 
-		if (md.meta.paused) return;
-		if (rt <= 0) clearInterval(countdown);
+		if (md.meta.time.paused) return;
 
 		update_timer_html(rt);
 	}, TIME_UPDATE_INTERVAL_MS);
 }
 
 function update_scoreboard_timer(rt: number) {
-	if (md.meta.remaining_time <= 0 || rt <= 0) return;
+	if (md.meta.time.remaining <= 0 || rt <= 0) return;
 
 	const gp = cur_gamepart();
 	if (gp?.type != "timed") return;
@@ -852,57 +874,30 @@ function update_scoreboard_timer(rt: number) {
 }
 
 function update_timer_html(rt: number) {
-	console.log("TODO remaining_time from update_timer_html: ", rt);
 	const minutes = Math.floor(rt / 60).toString().padStart(2, "0");
 	const seconds = (rt % 60).toString().padStart(2, "0");
-	console.log("update timer: min: " +  minutes +  "sec: " + seconds);
 	scoreboard_time_minutes.innerHTML = minutes;
 	scoreboard_time_seconds.innerHTML = seconds;
 }
 
 function update_ui() {
-	console.log("updating ui")
-	if (shown.scoreboard) write_scoreboard();
-	if (shown.gameplan) write_gameplan();
-	if (shown.livetable) write_livetable();
-	if (shown.gamestart) write_gamestart();
-	if (shown.ad) return; // write_ad() //TODO This does not exist, right?
+	if (md.meta.widgets.scoreboard) write_scoreboard();
+	if (md.meta.widgets.gameplan) write_gameplan();
+	if (md.meta.widgets.liveplan) write_livetable();
+	if (md.meta.widgets.gamestart) write_gamestart();
+	if (md.meta.widgets.ad) return; // write_ad() //TODO This does not exist, right?
 }
 
 function connect() {
-	socket = new WebSocket("ws://mminl.de:8081", "interscore");
+	socket = new WebSocket("ws://localhost:8081", "interscore");
 	socket.binaryType = "arraybuffer";
 
 	socket.onopen = () => {
-		//function to_string(v: any) {
-		//	if (typeof v === "string") return v;
-		//	if (v instanceof Error) return v.stack || v.message;
-		//	try {
-		//		return JSON.stringify(v);
-		//	} catch {
-		//		return String(v);
-		//	}
-		//}
-		// TODO NOW wtf is origLog?
-		// const origLog = console.log;
-		// const origErr = console.error;
-		// console.log = (...args) => {
-		// 	socket.send(args.map(to_string).join(" "));
-		// 	origLog(...args); // optional
-		// };
-
-		// console.error = (...args) => {
-		// 	socket.send("[ERROR] " + args.map(to_string).join(" "));
-		// 	origErr(...args); // optional
-		// };
-
 		console.log("Connected to WebSocket server!");
 		socket.send(Uint8Array.of(MessageType.PLS_SEND_JSON).buffer);
 	}
 
 	socket.onmessage = (event: MessageEvent) => {
-		console.log(`Received: stuff`);
-		console.log(`Received: ${event.data}`);
 		if (!(event.data instanceof ArrayBuffer)) {
 			console.error("The backend didn't send proper binary data. There's nothing we can do...");
 			return;
@@ -910,104 +905,235 @@ function connect() {
 
 		const dv = new DataView(event.data as ArrayBuffer);
 		const mode = dv.getUint8(0);
-		console.log(`mode: ${mode}, ${MessageType.DATA_WIDGET_SCOREBOARD_ON}`);
 
 		switch (mode) {
-			case MessageType.DATA_WIDGET_SCOREBOARD_ON: {
-				console.log(`show: ${shown.scoreboard}`);
-				scoreboard.style.opacity = "0"; // TODO READ why is this line present on both show and hide
-				if (shown.scoreboard = dv.getUint8(1) == 1) {
-					scoreboard.style.display = "inline-flex";
-					setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW);
-					console.log(`writing scoreboard!`);
-				} else
-					setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE);
-				// TODO FINAL CONSIDER REPLACE write_scoreboard() etc...
+			case MessageType.DATA_META: {
+				console.log("Received DATA_META");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				md.meta = MetaSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
 			}
-			case MessageType.DATA_WIDGET_GAMEPLAN_ON: {
-				gameplan.style.opacity = "0";
-				if (shown.gameplan = dv.getUint8(1) == 1) {
-					gameplan.style.display = "inline-flex";
-					setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW);
-				} else
-					setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE);
+			case MessageType.DATA_META_GAME: {
+				console.log("Received DATA_META_GAME");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				md.meta.game = MetaGameSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
 			}
-			case MessageType.DATA_WIDGET_LIVETABLE_ON: {
-				livetable.style.opacity = "0";
-				if (shown.livetable = dv.getUint8(1) == 1) {
-					livetable.style.display = "inline-flex";
-					setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW);
-				} else
-					setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE);
+			case MessageType.DATA_META_TIME: {
+				console.log("Received DATA_META_TIME");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				md.meta.time = MetaTimeSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
 			}
-			case MessageType.DATA_WIDGET_GAMESTART_ON: {
-				gamestart.style.opacity = "0";
-				if (shown.gamestart = dv.getUint8(1) == 1) {
-					gamestart.style.display = "flex";
-					setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW);
-				} else
-					setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE);
+			case MessageType.DATA_META_OBS: {
+				console.log("Received DATA_META_OBS");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				md.meta.obs = MetaObsSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
 			}
-			case MessageType.DATA_WIDGET_AD_ON: { // TODO does this work?
-				if (shown.ad = dv.getUint8(1) == 1) {
+			case MessageType.DATA_META_WIDGETS: {
+				console.log("Received DATA_META_WIDGETS");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+
+				const new_meta_widgets = MetaWidgetsSchema.parse(JSON.parse(str))
+				if(new_meta_widgets.scoreboard != md.meta.widgets.scoreboard) {
+					// TODO READ why is this line present on both show and hide
+					scoreboard.style.opacity = "0";
+					if (new_meta_widgets.scoreboard) {
+						scoreboard.style.display = "inline-flex";
+						setTimeout(() => scoreboard.style.opacity = "1", TIMEOUT_SHOW);
+					} else
+						setTimeout(() => scoreboard.style.display = "none", TIMEOUT_HIDE);
+				}
+				if(new_meta_widgets.gameplan != md.meta.widgets.gameplan) {
+					// TODO READ why is this line present on both show and hide
+					gameplan.style.opacity = "0";
+					if (new_meta_widgets.gameplan) {
+						gameplan.style.display = "inline-flex";
+						setTimeout(() => gameplan.style.opacity = "1", TIMEOUT_SHOW);
+					} else
+						setTimeout(() => gameplan.style.display = "none", TIMEOUT_HIDE);
+				}
+				if(new_meta_widgets.liveplan != md.meta.widgets.liveplan) {
+					// TODO READ why is this line present on both show and hide
+					livetable.style.opacity = "0";
+					if (new_meta_widgets.liveplan) {
+						livetable.style.display = "inline-flex";
+						setTimeout(() => livetable.style.opacity = "1", TIMEOUT_SHOW);
+					} else
+						setTimeout(() => livetable.style.display = "none", TIMEOUT_HIDE);
+				}
+				if(new_meta_widgets.gamestart != md.meta.widgets.gamestart) {
+					// TODO READ why is this line present on both show and hide
+					gamestart.style.opacity = "0";
+					if (new_meta_widgets.gamestart) {
+						gamestart.style.display = "inline-flex";
+						setTimeout(() => gamestart.style.opacity = "1", TIMEOUT_SHOW);
+					} else
+						setTimeout(() => gamestart.style.display = "none", TIMEOUT_HIDE);
+				}
+				if(new_meta_widgets.ad != md.meta.widgets.ad) {
+					// TODO READ why is this line present on both show and hide
 					ad.style.opacity = "0";
-					ad.style.display = "block";
-					setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW);
-				} else
-					setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE);
+					if (new_meta_widgets.ad) {
+						ad.style.display = "inline-flex";
+						setTimeout(() => ad.style.opacity = "1", TIMEOUT_SHOW);
+					} else
+						setTimeout(() => ad.style.display = "none", TIMEOUT_HIDE);
+				}
+				md.meta.widgets = new_meta_widgets; // TODO is this a shallow copy?
 				update_ui();
 				break;
 			}
-			//case MessageType.DATA_GAME_ACTION: {
-			//	const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength))
-			//	console.log(str);
-			//	cur_game()?.actions.push(GameActionSchema.parse(str)); // TODO what if this fails somehow?
-			//	update_ui()
-			//	break
-			//}
-			case MessageType.DATA_GAMEINDEX:
-				// ^ TODO CONSIDER RENAME
-				console.log("Received DATA Gameindex: ", dv.getUint8(1));
-				md.meta.game_i = dv.getUint8(1);
+			case MessageType.DATA_GAMES: {
+				console.log("Received DATA_GAMES");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				const GamesSchema = z.array(GameSchema);
+				md.games = GamesSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
-			case MessageType.DATA_PAUSE_ON:
-				console.warn("DATA_PAUSE_ON: TODO DEPRECATED")
-				// TODO
-				// console.log("Received DATA is_pause: ", dv.getUint8(1) === 1);
-				// md.meta.paused = dv.getUint8(1) === 1;
-				break;
-			case MessageType.DATA_TIME:
-				console.log("Received DATA time: ", dv.getUint16(1, false));
-				md.meta.remaining_time = dv.getUint16(1, false);
-				console.log("TODO remaining_time DATA_TIME: ", md.meta.remaining_time);
+			}
+			case MessageType.DATA_GAME: {
+				console.log("Received DATA_GAME");
+				if(dv.byteLength < 2) {
+					console.log("DATA_GAME's length is only 1... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.games.length) {
+					console.log(`DATA_GAME's index is out of bound: ${0}-${md.games.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, 2, dv.byteLength-2));
+				md.games[index] = GameSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
-			case MessageType.DATA_SIDES_SWITCHED:
-				md.meta.sides_inverted = dv.getUint8(1) == 1;
+			}
+			case MessageType.DATA_GAMEACTIONS: {
+				console.log("Received DATA_GAMEACTIONS");
+				if(dv.byteLength < 3) {
+					console.log("DATA_GAMEACTIONS's length is less than 3... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.games.length) {
+					console.log(`DATA_GAME's index is out of bound: ${0}-${md.games.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset + 2, dv.byteLength-2));
+				const GameActionsSchema = z.array(GameActionSchema);
+				md.games[index].actions = GameActionsSchema.parse(JSON.parse(str));
 				update_ui();
 				break;
-			case MessageType.DATA_JSON:
-				// ^ TODO CONSIDER RENAME
+			}
+			case MessageType.DATA_GAMEACTION: {
+				console.log("Received DATA_GAMEACTION");
+				if(dv.byteLength < 3) {
+					console.log("DATA_GAMEACTION's length is less than 3... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.games.length) {
+					console.log(`DATA_GAMEACTION's index is out of bound: ${0}-${md.games.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset + 2, dv.byteLength-2));
+				const action = GameActionSchema.parse(JSON.parse(str));
+
+				const action_index = md.games[index].actions.findIndex((a) => a.id == action.id);
+				if(action_index != -1)
+					md.games[index].actions[action_index] = action;
+				else
+					md.games[index].actions.push(action);
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_FORMATS: {
+				console.log("Received DATA_FORMATS");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				const FormatsSchema = z.array(FormatSchema);
+				md.formats = FormatsSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_FORMAT: {
+				console.log("Received DATA_FORMAT");
+				if(dv.byteLength < 3) {
+					console.log("DATA_FORMAT's length is less than 3... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.formats.length) {
+					console.log(`DATA_FORMAT's index is out of bound: ${0}-${md.formats.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, 2, dv.byteLength-2));
+				md.formats[index] = FormatSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_TEAMS: {
+				console.log("Received DATA_TEAMS");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				const TeamsSchema = z.array(TeamSchema);
+				md.teams = TeamsSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_TEAM: {
+				console.log("Received DATA_TEAM");
+				if(dv.byteLength < 3) {
+					console.log("DATA_TEAM's length is less than 3... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.teams.length) {
+					console.log(`DATA_TEAM's index is out of bound: ${0}-${md.teams.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, 2, dv.byteLength-2));
+				md.teams[index] = TeamSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_GROUPS: {
+				console.log("Received DATA_GROUPS");
+				const str = decoder.decode(new Uint8Array(dv.buffer, 1, dv.byteLength-1));
+				const GroupsSchema = z.array(GroupSchema);
+				md.groups = GroupsSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_GROUP: {
+				console.log("Received DATA_GROUP");
+				if(dv.byteLength < 3) {
+					console.log("DATA_GROUP's length is less than 3... Ragebait... ignoring");
+					break;
+				}
+				const index = dv.getUint8(1);
+				if(index < 0 || index > md.groups.length) {
+					console.log(`DATA_GROUP's index is out of bound: ${0}-${md.teams.length} but is: ${index}`);
+					break;
+				}
+				const str = decoder.decode(new Uint8Array(dv.buffer, 2, dv.byteLength-2));
+				md.groups[index] = GroupSchema.parse(JSON.parse(str));
+				update_ui();
+				break;
+			}
+			case MessageType.DATA_IM_BOSS:
+				console.log("WARN: We received DATA_IM_BOSS, but we should never receive this! Ignoring...");
+				break;
+			case MessageType.DATA_JSON: {
 				console.log("Received DATA JSON");
-				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength));
+				const str = decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset + 1, dv.byteLength-1));
 				md = json_parse(str);
 				update_ui();
-				console.log(md); // TODO
 				break;
-			//case MessageType.SCOREBOARD_SET_TIMER:
-			// TODO This is actually useful, implement in rentnerend
-			// TODO make this work
-			//scoreboard_set_timer(parseInt(buffer.charCodeAt(1) + buffer.charCodeAt(2)))
-			//	break
+			}
 		}
 	}
 
@@ -1019,7 +1145,6 @@ function connect() {
 }
 
 connect();
-console.log("TODO remaining time: ", md.meta.remaining_time);
 async_handle_time();
 console.log("Client loaded!");
 
