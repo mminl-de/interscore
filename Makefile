@@ -23,4 +23,4 @@ f-run:
 	${MAKE} --no-print-directory -C rentnerend flutter
 
 clean:
-	rm -f backend interscore frontend/script.js
+	rm -f frontend/script.js MessageType.js MessageType.ts backend/interscore-backend
