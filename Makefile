@@ -23,4 +23,4 @@ f-run:
 e-run:
 	${MAKE} --no-print-directory -C echo run
 clean:
-	rm -f backend interscore frontend/script.js
+	rm -f frontend/script.js MessageType.js MessageType.ts backend/interscore-backend
