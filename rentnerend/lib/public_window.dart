@@ -22,7 +22,7 @@ class _PublicWindowState extends State<PublicWindow> {
 	late WSClient ws;
 
 	int _lastSecond = 0;
-	int _lastSecondTimestamp = 0;
+	// int _lastSecondTimestamp = 0;
 	late final Ticker _ticker;
 
 	@override
@@ -42,12 +42,12 @@ class _PublicWindowState extends State<PublicWindow> {
 			final cur = mdl.value.currentTime();
 			if (cur != _lastSecond) {
 				_lastSecond = cur;
-				_lastSecondTimestamp = DateTime.now().millisecondsSinceEpoch;
+				// _lastSecondTimestamp = DateTime.now().millisecondsSinceEpoch;
 			}
 		});
 
 		_ticker = Ticker((_) {
-			if (!mdl.value.meta.paused) {
+			if (!mdl.value.meta.time.paused) {
 			  setState(() {});
 			}
   		})..start();
@@ -58,18 +58,20 @@ class _PublicWindowState extends State<PublicWindow> {
 		ws.close();
 		mdl.dispose();
 
+		_ticker.dispose();
+
 		super.dispose();
 	}
 
+	// TODO Test this
 	double get smoothSeconds {
 		final Matchday md = mdl.value;
-		//if (md.meta.paused)
-			return md.currentTime().toDouble();
+		return md.currentTime().toDouble();
 
-		final now = DateTime.now().millisecondsSinceEpoch;
-		final deltaMs = now - _lastSecondTimestamp;
+		// final now = DateTime.now().millisecondsSinceEpoch;
+		// final deltaMs = now - _lastSecondTimestamp;
 
-		return md.currentTime() - (deltaMs / 1000.0);
+		// return md.currentTime() - (deltaMs / 1000.0);
 	}
 
 	double get progress {
@@ -114,13 +116,13 @@ class _PublicWindowState extends State<PublicWindow> {
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		final int inverted = ((md.meta.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
+		final int inverted = ((md.meta.game.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
 		final int t1_score = md.currentGame.teamGoals(2 - inverted);
 		final int t2_score = md.currentGame.teamGoals(1 + inverted);
 
 		final String gameName = md.currentGame.name;
 
-		if(md.meta.sidesInverted) {
+		if(md.meta.game.sidesInverted) {
 			final tmp = t1name;
 			t1name = t2name;
 			t2name = tmp;
@@ -133,8 +135,6 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final t1_color = colorFromHexString(md.teamFromName(t1name)?.color ?? "#ffffff");
 		final t2_color = colorFromHexString(md.teamFromName(t2name)?.color ?? "#ffffff");
-		debugPrint("colors: t1: $t1_color, t2: $t2_color");
-		debugPrint("orig colors: t1: ${md.teamFromName(t1name)?.color}, t2: ${md.teamFromName(t2name)?.color}");
 
 		final String curTimeMin = (md.currentTime() ~/ 60).toString().padLeft(2, '0');
 		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');

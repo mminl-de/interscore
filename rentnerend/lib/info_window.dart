@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_rentnerend/lib.dart';
 
 import 'md.dart';
 import 'ws_client.dart';
@@ -32,10 +33,14 @@ class _InfoWindowState extends State<InfoWindow> {
 				Navigator.of(context).pop();
 			}
 		});
+
+		startTimer();
 	}
 
 	@override
 	void dispose() {
+		_timer?.cancel();
+
 		ws.close();
 		mdl.dispose();
 
@@ -44,11 +49,18 @@ class _InfoWindowState extends State<InfoWindow> {
 
 	final textGroup = AutoSizeGroup();
 
-	Widget blockCurGame(Matchday md) {
-		final String curTimeMin = (md.currentTime() ~/ 60).toString().padLeft(2, '0');
-		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');
-		final curTimeString = "${curTimeMin}:${curTimeSec}";
+	final remainingTime = ValueNotifier<int>(0);
+	Timer? _timer;
 
+	void startTimer() {
+		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+			final curTime = mdl.value.currentTime();
+			if(remainingTime.value != curTime)
+				remainingTime.value = curTime;
+		});
+	}
+
+	Widget blockCurGame(Matchday md, Color bg) {
 		String t1name = md.currentGame.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
@@ -77,19 +89,29 @@ class _InfoWindowState extends State<InfoWindow> {
 			padding: EdgeInsetsGeometry.symmetric(vertical: 20, horizontal: 20),
 			child: Container(
 				decoration: BoxDecoration(
-					color: Colors.black,
+					color: bg,
 					borderRadius: BorderRadius.circular(40),
 				),
 				child: Row(children: [
 						Expanded(flex: 15, child:
 							Padding(padding: EdgeInsetsGeometry.all(5), child:
-							Container(
-								decoration: BoxDecoration(
-								color: md.meta.paused ? Colors.red : Colors.green,
-								borderRadius: BorderRadius.circular(40),
+								Container(
+									decoration: BoxDecoration(
+										color: md.meta.time.paused ? Colors.red : Colors.green,
+										borderRadius: BorderRadius.circular(40),
+									),
+									child: ValueListenableBuilder<int>(
+										valueListenable: remainingTime,
+										builder: (_, time, __) {
+											final String curTimeMin = (time ~/ 60).toString().padLeft(2, '0');
+											final String curTimeSec = (time % 60).toString().padLeft(2, '0');
+											final curTimeString = "${curTimeMin}:${curTimeSec}";
+
+											return Center(child: AutoSizeText(group: textGroup, curTimeString));
+										}
+									)
+								)
 							),
-							child: Center(child: AutoSizeText(group: textGroup, curTimeString)))
-							)
 						),
 						Expanded(flex: 30, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t1name))),
 						Expanded(flex: 20, child: Center(child: AutoSizeText.rich(group: textGroup, maxLines: 1, softWrap: true,
@@ -106,7 +128,7 @@ class _InfoWindowState extends State<InfoWindow> {
 		);
 	}
 
-	Widget blockGame(Matchday md, Game g, int index) {
+	Widget blockGame(Matchday md, Game g, int index, Color bg) {
 		String t1name = g.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
@@ -117,8 +139,8 @@ class _InfoWindowState extends State<InfoWindow> {
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		final int? t1_score = index <= md.meta.gameIndex ? g.teamGoals(1) : null;
-		final int? t2_score = index <= md.meta.gameIndex ? g.teamGoals(2) : null;
+		final int? t1_score = index <= md.meta.game.index ? g.teamGoals(1) : null;
+		final int? t2_score = index <= md.meta.game.index ? g.teamGoals(2) : null;
 
 		Color t1_color = Colors.grey;
 		Color t2_color = Colors.grey;
@@ -130,42 +152,40 @@ class _InfoWindowState extends State<InfoWindow> {
 				t1_color = Colors.red;
 				t2_color = Colors.green;
 			} else {
-				t1_color = Colors.yellow;
-				t2_color = Colors.yellow;
+				t1_color = Colors.orange;
+				t2_color = Colors.orange;
 			}
 		}
-
-		final textColor = TextStyle(color: md.currentGame == g ? Colors.black : null);
 
 		return Padding(
 			padding: EdgeInsetsGeometry.symmetric(vertical: 2, horizontal: 20),
 			child: Container(
 				decoration: BoxDecoration(
-					color: md.currentGame == g ? Colors.white.withValues(alpha: 0.8): Colors.black,
+					color: md.currentGame == g ? Colors.white.withValues(alpha: 0.3): bg,
 					borderRadius: BorderRadius.circular(40),
 				),
 				child: Row(children: [
-						Expanded(flex: 10, child: Center(child: Padding(padding: EdgeInsetsGeometry.only(left: 5), child: AutoSizeText(group: textGroup, maxLines: 1, style: textColor, g.name)))),
-						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, style: textColor, softWrap: true, t1name))),
-						Expanded(flex: 20, child: Center(child: AutoSizeText.rich(group: textGroup, maxLines: 1, style: textColor, softWrap: true,
+						Expanded(flex: 10, child: Center(child: Padding(padding: EdgeInsetsGeometry.only(left: 5), child: AutoSizeText(group: textGroup, maxLines: 1, g.name)))),
+						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t1name))),
+						Expanded(flex: 20, child: Center(child: AutoSizeText.rich(group: textGroup, maxLines: 1, softWrap: true,
 							TextSpan(children: [
 								TextSpan(text: "${t1_score ?? '?'}", style: TextStyle(color: t1_color, fontWeight: FontWeight.bold)),
 								const TextSpan(text: ' : '),
 								TextSpan(text: "${t2_score ?? '?'}", style: TextStyle(color: t2_color, fontWeight: FontWeight.bold))
 							])
 						))),
-						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, style: textColor, softWrap: true, t2name)))
+						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t2name)))
 				]),
 			)
 
 		);
 	}
 
-	Widget blockGameplan(Matchday md) {
+	Widget blockGameplan(Matchday md, Color bg) {
 		return Column(children:
 			List.generate(
 				md.games.length,
-				(i) => blockGame(md, md.games[i], i)
+				(i) => blockGame(md, md.games[i], i, bg)
 			)
 		);
 	}
@@ -217,7 +237,7 @@ class _InfoWindowState extends State<InfoWindow> {
 	// 		md.rankingFromGroup(g.name)!.entries.map((t) => blockLivetableTeam(md, g, md.teamFromName(t.key)!)).toList()
 	// 	);
 	// }
-	TableRow blockLivetableTeam(Matchday md, Group g, Team t, int index) {
+	TableRow blockLivetableTeam(Matchday md, Group g, Team t, int index, Color bg) {
 		final gamesAmount = md.teamGamesPlayed(t.name, g.name).length;
 		final gamesWon = md.teamGamesWon(t.name, g.name).length;
 		final gamesTied = md.teamGamesTied(t.name, g.name).length;
@@ -237,7 +257,7 @@ class _InfoWindowState extends State<InfoWindow> {
 
 		return TableRow(
 			decoration: BoxDecoration(
-				color: index > 1 ? Colors.black : Colors.green.withValues(alpha: 0.5),
+				color: index > 1 ? bg : Colors.green.withValues(alpha: 0.5),
 				borderRadius: BorderRadius.circular(40),
     		),
     		children: [
@@ -266,7 +286,7 @@ class _InfoWindowState extends State<InfoWindow> {
 	}
 
 
-	Widget blockLivetable(Matchday md, Group g) {
+	Widget blockLivetable(Matchday md, Group g, Color bg) {
 		return LayoutBuilder(
 			builder: (context, constraints) {
 				return SingleChildScrollView(
@@ -302,7 +322,7 @@ class _InfoWindowState extends State<InfoWindow> {
 								...md
             						.rankingFromGroup(g.name)!
             						.entries.toList().asMap().entries
-            						.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key))
+            						.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key, bg))
             						.toList(),
 								]
       						),
@@ -327,9 +347,9 @@ class _InfoWindowState extends State<InfoWindow> {
 						return Column(
 							children: [
 								Expanded(flex: 3, child: Container(color: Colors.yellow, alignment: Alignment.center, child: Text(style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold,), "BETA"))),
-								Expanded(flex: 10, child: blockCurGame(md)),
-								Expanded(flex: 40, child: blockGameplan(md)),
-								Expanded(flex: 30, child: blockLivetable(md, md.groups[0])),
+								Expanded(flex: 10, child: blockCurGame(md, secondBgColor)),
+								Expanded(flex: 40, child: blockGameplan(md, secondBgColor)),
+								Expanded(flex: 30, child: blockLivetable(md, md.groups[0], secondBgColor)),
 							]
 						);
 					}

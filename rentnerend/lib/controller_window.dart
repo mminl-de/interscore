@@ -52,33 +52,36 @@ class _InputControllerState extends State<ControllerWindow> {
 			Expanded(child: SizedBox(
 				width: double.infinity,
 				child: buttonWithChild(context, () {
-					mdl.value = md.copyWith(meta: md.meta.copyWith(widgetScoreboard: !md.meta.widgetScoreboard));
-					ws.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
-			}, Text("Scoreboard"), inverted: md.meta.widgetScoreboard))),
+					mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(scoreboard: !md.meta.widgets.scoreboard)));
+					ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Text("Scoreboard"), inverted: md.meta.widgets.scoreboard))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGameplan: !md.meta.widgetGameplan));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
-			}, Text("Gameplan"), inverted: md.meta.widgetGameplan))),
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gameplan: !md.meta.widgets.gameplan)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Text("Gameplan"), inverted: md.meta.widgets.gameplan))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetLiveplan: !md.meta.widgetLiveplan));
-				ws.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
-			}, Text("Liveplan"), inverted: md.meta.widgetLiveplan))),
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(liveplan: !md.meta.widgets.liveplan)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Text("Liveplan"), inverted: md.meta.widgets.liveplan))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGamestart: !md.meta.widgetGamestart));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
-			}, Text("Gamestart"), inverted: md.meta.widgetGamestart))),
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gamestart: !md.meta.widgets.gamestart)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Text("Gamestart"), inverted: md.meta.widgets.gamestart))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
-				ws.sendSignal(MessageType.DATA_WIDGET_AD_ON);
-			}, Text("Ad"), inverted: md.meta.widgetAd))),
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(ad: !md.meta.widgets.ad)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Text("Ad"), inverted: md.meta.widgets.ad))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
-				ws.sendSignal(MessageType.DATA_OBS_STREAM_ON);
-			}, Text("Stream starten"), inverted: md.meta.streamStarted))),
+				debugPrint("WARN: This action is disabled at the moment!");
+				// mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(streamStarted: !md.meta.obs.streamStarted)));
+				// mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
+				// ws.sendSignal(MessageType.DATA_OBS_STREAM_ON);
+			}, Text("Stream starten"), inverted: md.meta.obs.streamStarted ?? false))), // TODO This is tmp
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(replayStarted: !md.meta.replayStarted));
-				ws.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
-			}, Text("Start Replay"), inverted: md.meta.replayStarted)))
+				debugPrint("WARN: This action is disabled at the moment!");
+				// mdl.value = md.copyWith(meta: md.meta.copyWith(replayStarted: !md.meta.replayStarted));
+				// ws.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
+			}, Text("Start Replay"), inverted: md.meta.obs.replayStarted ?? false))) // TODO This is tmp
 		]);
 	}
 

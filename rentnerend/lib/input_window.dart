@@ -45,11 +45,10 @@ class _InputWindowState extends State<InputWindow> {
 
 		mdl.addListener(() {
 			inputJsonWriteState(mdl.value);
-			ws.server.sendSignal(MessageType.DATA_JSON);
 
-			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.currentGamepart) {
+			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.game.gamepart) {
 				_controller.animateToItem(
-					mdl.value.meta.currentGamepart,
+					mdl.value.meta.game.gamepart,
 					duration: const Duration(milliseconds: 300),
 					curve: Curves.easeOutCubic,
 				);
@@ -58,7 +57,7 @@ class _InputWindowState extends State<InputWindow> {
 			setState(() => recAct = calcRecommendedAction(mdl.value));
 		});
 
-		_controller = FixedExtentScrollController(initialItem: mdl.value.meta.currentGamepart);
+		_controller = FixedExtentScrollController(initialItem: mdl.value.meta.game.gamepart);
 
 		setState(() => recAct = calcRecommendedAction(mdl.value));
 
@@ -68,14 +67,14 @@ class _InputWindowState extends State<InputWindow> {
 
 	RecommendedAction calcRecommendedAction(Matchday md) {
 		RecommendedAction recAct = RecommendedAction.NOTHING;
-		// debugPrint("calcRecommend: paused: ${md.meta.paused}, time: ${md.meta.currentTime}, gamepart: ${md.meta.currentGamepart} (MAX: ${md.currentFormatUnwrapped!.gameparts.length - 1})");
-		if(md.meta.paused && md.meta.remainingTime == 0) {
-			if(md.currentFormatUnwrapped!.gameparts.length - 1 == md.meta.currentGamepart ||
-			  ((md.gamepartFromIndex(md.meta.currentGamepart+1)?.decider ?? false) && md.currentGame.winner != 0))
+		// debugPrint("calcRecommend: paused: ${md.meta.time.paused}, time: ${md.meta.currentTime}, gamepart: ${md.meta.game.gamepart} (MAX: ${md.currentFormatUnwrapped!.gameparts.length - 1})");
+		if(md.meta.time.paused && md.meta.time.remaining == 0) {
+			if(md.currentFormatUnwrapped!.gameparts.length - 1 == md.meta.game.gamepart ||
+			  ((md.gamepartFromIndex(md.meta.game.gamepart+1)?.decider ?? false) && md.currentGame.winner != 0))
 				recAct = RecommendedAction.GAME_NEXT;
 			else
 				recAct = RecommendedAction.GAMEPART_NEXT;
-		} else if(md.meta.paused)
+		} else if(md.meta.time.paused)
 			recAct = RecommendedAction.TIME_START;
 
 		debugPrint("Recommended: ${recAct.toString()}");
@@ -162,8 +161,7 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	void togglePause(Matchday md) {
-		mdl.value = md.setPause(!md.meta.paused);
-		ws.sendSignal(MessageType.DATA_JSON);
+		mdl.value = md.setPause(!md.meta.time.paused, send: ws.sendSignal);
 	}
 
 	// startGaepartIndex is the index of the first gamepart in the format. This is needed for nested formats
@@ -183,7 +181,7 @@ class _InputWindowState extends State<InputWindow> {
 				format: (_, _, _, _) {
 					final Format subFormat = md.formatFromName(name)!;
 					final int subLen = md.formatUnwrap(subFormat)!.gameparts.length;
-					final isActive = md.meta.currentGamepart >= curInd && md.meta.currentGamepart <= curInd + subLen;
+					final isActive = md.meta.game.gamepart >= curInd && md.meta.game.gamepart <= curInd + subLen;
 					widgets.add(
 						ExpandableButton(
 							child: Row(mainAxisAlignment: MainAxisAlignment.start, spacing: 6, children: [
@@ -206,8 +204,8 @@ class _InputWindowState extends State<InputWindow> {
 							Icon(icon),
 							Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis))
 						]),
-						hidden: md.meta.currentGamepart != curInd,
-						inverted: md.meta.currentGamepart == curInd
+						hidden: md.meta.game.gamepart != curInd,
+						inverted: md.meta.game.gamepart == curInd
 					));
 					curInd++;
 				}
@@ -231,7 +229,7 @@ class _InputWindowState extends State<InputWindow> {
 
 		final String gameName = md.currentGame.name;
 
-		if(md.meta.sidesInverted) {
+		if(md.meta.game.sidesInverted) {
 			final tmp = t1name;
 			t1name = t2name;
 			t2name = tmp;
@@ -251,14 +249,13 @@ class _InputWindowState extends State<InputWindow> {
 						// height: teamsHeight, // use max height
 						child: SizedBox.expand(
 							child: buttonWithIcon(context, () {
-								mdl.value = md.setGameIndex(md.meta.gameIndex-1);
-								ws.sendSignal(MessageType.DATA_GAMEINDEX);
+								mdl.value = md.setGameIndex(md.meta.game.index-1, send: ws.sendSignal);
 							}, Icons.arrow_back_rounded)
 						)
 					),
 					Expanded(
 						flex: 40,
-						//child: Center(child: AutoSizeText(md.games[md.meta.gameIndex].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
+						//child: Center(child: AutoSizeText(md.games[md.meta.game.index].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
 						child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
 					),
 					Expanded(
@@ -266,8 +263,7 @@ class _InputWindowState extends State<InputWindow> {
 						// height: teamsHeight, // use max height
 						child: SizedBox.expand(
 							child: buttonWithIcon(context, () {
-								mdl.value = md.setSidesInverted(!md.meta.sidesInverted);
-								ws.sendSignal(MessageType.DATA_SIDES_SWITCHED);
+								mdl.value = md.setSidesInverted(!md.meta.game.sidesInverted, send: ws.sendSignal);
 							}, Icons.compare_arrows_rounded)
 						)
 					),
@@ -280,8 +276,7 @@ class _InputWindowState extends State<InputWindow> {
 						// height: teamsHeight, // use max height
 						child: SizedBox.expand(
 							child: buttonWithIcon(context, () {
-								mdl.value = md.setGameIndex(md.meta.gameIndex+1);
-								ws.sendSignal(MessageType.DATA_GAMEINDEX);
+								mdl.value = md.setGameIndex(md.meta.game.index+1, send: ws.sendSignal);
 							}, Icons.arrow_forward_rounded,
 							highlighted: (recAct == RecommendedAction.GAME_NEXT))
 						)
@@ -302,7 +297,7 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Widget blockGoals(Matchday md, RecommendedAction recAct) {
-		final int inverted = ((md.meta.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
+		final int inverted = ((md.meta.game.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
 		int t1 = 1 + inverted;
 		int t2 = 2 - inverted;
 
@@ -313,15 +308,13 @@ class _InputWindowState extends State<InputWindow> {
 				//Expanded( child: Column(spacing: -(height * 0.05), children:[
 				Expanded(flex: 40, child: Column(children:[
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalAdd(t1);
-						ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
+						mdl.value = md.goalAdd(t1, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded)),
 					Expanded(flex: 70, child: Center(child:
 						AutoSizeText(md.currentGame.teamGoals(t1).toString(),
 						maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalRemoveLast(t1);
-						ws.sendSignal(MessageType.DATA_JSON); // TODO implement game action sending
+						mdl.value = md.goalRemoveLast(t1, send: ws.sendSignal);
 					}, Icons.arrow_downward_rounded)),
 				])),
 				Expanded(flex: 20, child: Column( children: [
@@ -341,7 +334,7 @@ class _InputWindowState extends State<InputWindow> {
 							overAndUnderCenterOpacity: 0.5, // Fades the non-selected items
 							onSelectedItemChanged: (index) {
 								// Only update state if it's a user scroll (prevent loops)
-								if (index != md.meta.currentGamepart) {
+								if (index != md.meta.game.gamepart) {
 									mdl.value = md.setCurrentGamepart(index);
 								}
 							},
@@ -355,7 +348,7 @@ class _InputWindowState extends State<InputWindow> {
 										format: (p) => label = p.format,
 										penalty: (p) => label = p.name,
 									);
-									final isSelected = index == md.meta.currentGamepart;
+									final isSelected = index == md.meta.game.gamepart;
 									return Center(
 									 	child: Text(
 									 		label,
@@ -374,14 +367,12 @@ class _InputWindowState extends State<InputWindow> {
 					})),
 					Expanded(flex: 20, child: Row(children: [
 						Expanded(child: buttonWithIcon(context, () {
-							mdl.value = md.setCurrentGamepart(md.meta.currentGamepart - 1);
-							ws.sendSignal(MessageType.DATA_JSON);
+							mdl.value = md.setCurrentGamepart(md.meta.game.gamepart - 1, send: ws.sendSignal);
 							},
 							Icons.arrow_upward_rounded
 						)),
 						Expanded(child: buttonWithIcon(context, () {
-							mdl.value = md.setCurrentGamepart(md.meta.currentGamepart + 1);
-							ws.sendSignal(MessageType.DATA_JSON);
+							mdl.value = md.setCurrentGamepart(md.meta.game.gamepart + 1, send: ws.sendSignal);
 							},
 							Icons.arrow_downward_rounded,
 							highlighted: recAct == RecommendedAction.GAMEPART_NEXT
@@ -391,13 +382,11 @@ class _InputWindowState extends State<InputWindow> {
         ),//Expanded( child: Column(spacing: -(height * 0.05), children:[
 				Expanded(flex: 40, child: Column(children:[
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalAdd(t2);
-						ws.sendSignal(MessageType.DATA_JSON);
+						mdl.value = md.goalAdd(t2, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded)),
 					Expanded(flex: 70, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalRemoveLast(t2);
-						ws.sendSignal(MessageType.DATA_JSON);
+						mdl.value = md.goalRemoveLast(t2, send: ws.sendSignal);
 					}, Icons.arrow_downward_rounded)),
 				])),
 			])
@@ -410,7 +399,7 @@ class _InputWindowState extends State<InputWindow> {
 	void startTimer() {
 		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
 			final curTime = mdl.value.currentTime();
-			if(curTime <= 0 && !mdl.value.meta.paused) {
+			if(curTime <= 0 && !mdl.value.meta.time.paused) {
 				togglePause(mdl.value);
 				playSound();
 			}
@@ -427,22 +416,20 @@ class _InputWindowState extends State<InputWindow> {
 			child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: 8, children: [
 				Expanded(flex: 5, child: SizedBox.expand(
 					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(-20);
-						ws.sendSignal(MessageType.DATA_TIME);
+						mdl.value = md.timeChange(-20, send: ws.sendSignal);
 					}, Icons.arrow_downward_rounded)),
 				),
 				Expanded(flex: 5, child: SizedBox.expand(
 					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(-1);
-						ws.sendSignal(MessageType.DATA_TIME);
+						mdl.value = md.timeChange(-1, send: ws.sendSignal);
 					}, Icons.arrow_downward_rounded)),
 				),
 				Expanded(flex: 80, child: Column( children: [
 					Expanded(flex: 20, child: Row(spacing: 5, children: [
 						Expanded(flex: 50, child: SizedBox.expand(child: buttonWithIcon(
 							context, () => togglePause(md),
-							md.meta.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-							inverted: !md.meta.paused,
+							md.meta.time.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+							inverted: !md.meta.time.paused,
 							highlighted: recAct == RecommendedAction.TIME_START
 						))),
 						Expanded(flex: 50, child: SizedBox.expand(child: buttonWithIcon(
@@ -450,8 +437,7 @@ class _InputWindowState extends State<InputWindow> {
 							md.currentTime() == defTime
 								? null
 								: () {
-									mdl.value = md.timeReset();
-									ws.sendSignal(MessageType.DATA_TIME);
+									mdl.value = md.timeReset(send: ws.sendSignal);
 								},
 							Icons.autorenew,
 							inverted: md.currentTime() == defTime
@@ -472,14 +458,12 @@ class _InputWindowState extends State<InputWindow> {
 				])),
 				Expanded(flex: 5, child: SizedBox.expand(
 					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(1);
-						ws.sendSignal(MessageType.DATA_TIME);
+						mdl.value = md.timeChange(1, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded)),
 				),
 				Expanded(flex: 5, child: SizedBox.expand(
 					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(20);
-						ws.sendSignal(MessageType.DATA_TIME);
+						mdl.value = md.timeChange(20, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded))
 				)
 			])
@@ -487,39 +471,39 @@ class _InputWindowState extends State<InputWindow> {
 		);
 	}
 
-	Widget blockWidgets(Matchday md, RecommendedAction recAct) {
-		return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetScoreboard: !md.meta.widgetScoreboard));
-				ws.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
-			}, Icons.arrow_downward_rounded, inverted: md.meta.widgetScoreboard)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGameplan: !md.meta.widgetGameplan));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
-			}, Icons.arrow_downward_rounded, inverted: md.meta.widgetGameplan)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetLiveplan: !md.meta.widgetLiveplan));
-				ws.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgetLiveplan)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGamestart: !md.meta.widgetGamestart));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgetGamestart)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
-				ws.sendSignal(MessageType.DATA_WIDGET_AD_ON);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
-				ws.sendSignal(MessageType.DATA_OBS_STREAM_ON);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.streamStarted)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(replayStarted: !md.meta.replayStarted));
-				ws.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.replayStarted))
-			])
-		;
-	}
+	// Widget blockWidgets(Matchday md, RecommendedAction recAct) {
+	// 	return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetScoreboard: !md.meta.widgetScoreboard));
+	// 			ws.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
+	// 		}, Icons.arrow_downward_rounded, inverted: md.meta.widgetScoreboard)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGameplan: !md.meta.widgetGameplan));
+	// 			ws.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
+	// 		}, Icons.arrow_downward_rounded, inverted: md.meta.widgetGameplan)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetLiveplan: !md.meta.widgetLiveplan));
+	// 			ws.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
+	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetLiveplan)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGamestart: !md.meta.widgetGamestart));
+	// 			ws.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
+	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetGamestart)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
+	// 			ws.sendSignal(MessageType.DATA_WIDGET_AD_ON);
+	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
+	// 			ws.sendSignal(MessageType.DATA_OBS_STREAM_ON);
+	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.streamStarted)),
+	// 		Expanded(child: buttonWithIcon(context, () {
+	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(replayStarted: !md.meta.replayStarted));
+	// 			ws.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
+	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.replayStarted))
+	// 		])
+	// 	;
+	// }
 
 	@override
 	Widget build(BuildContext context) {
@@ -535,56 +519,55 @@ class _InputWindowState extends State<InputWindow> {
 			child: CallbackShortcuts(
 				bindings: {
 					LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(send: ws.sendSignal),
 					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
-					LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
-					LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex - 1),
-					LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1),
-					LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex + 1),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0),
+					LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
 					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyL): () {
 						Matchday next, old = mdl.value;
-						while((next = old.setGameIndex(old.meta.gameIndex + 1)) != old)
+						while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
 							old = next;
 						mdl.value = old;
+						ws.sendSignal(MessageType.DATA_META_GAME, md: old);
 					},
 					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowRight): () {
 						Matchday next, old = mdl.value;
-						while((next = old.setGameIndex(old.meta.gameIndex + 1)) != old)
+						while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
 							old = next;
 						mdl.value = old;
+						ws.sendSignal(MessageType.DATA_META_GAME, md: old);
 					},
-					LogicalKeySet(LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-1),
-					LogicalKeySet(LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-1),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-20),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-20),
-					LogicalKeySet(LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(1),
-					LogicalKeySet(LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(1),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(20),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(20),
-					LogicalKeySet(LogicalKeyboardKey.digit1): () => mdl.value = mdl.value.goalRemoveLast(1),
-					LogicalKeySet(LogicalKeyboardKey.digit2): () => mdl.value = mdl.value.goalAdd(1),
-					LogicalKeySet(LogicalKeyboardKey.digit3): () => mdl.value = mdl.value.goalRemoveLast(2),
-					LogicalKeySet(LogicalKeyboardKey.digit4): () => mdl.value = mdl.value.goalAdd(2),
-					LogicalKeySet(LogicalKeyboardKey.keyS): () => mdl.value = mdl.value.setSidesInverted(!mdl.value.meta.sidesInverted),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(0),
-					LogicalKeySet(LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.currentGamepart-1),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart((mdl.value.currentFormatUnwrapped?.gameparts.length ?? 1) - 1),
-					LogicalKeySet(LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.currentGamepart+1),
+					LogicalKeySet(LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.digit1): () => mdl.value = mdl.value.goalRemoveLast(1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.digit2): () => mdl.value = mdl.value.goalAdd(1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.digit3): () => mdl.value = mdl.value.goalRemoveLast(2, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.digit4): () => mdl.value = mdl.value.goalAdd(2, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.keyS): () => mdl.value = mdl.value.setSidesInverted(!mdl.value.meta.game.sidesInverted, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(0, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart-1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart((mdl.value.currentFormatUnwrapped?.gameparts.length ?? 1) - 1, send: ws.sendSignal),
+					LogicalKeySet(LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal),
 					LogicalKeySet(LogicalKeyboardKey.enter): () {
 						switch (recAct) {
 							case RecommendedAction.TIME_START:
 								togglePause(mdl.value);
-								ws.sendSignal(MessageType.DATA_JSON);
 								break;
 							case RecommendedAction.GAMEPART_NEXT:
-								mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.currentGamepart+1);
-								ws.sendSignal(MessageType.DATA_JSON);
+								mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
 								break;
 							case RecommendedAction.GAME_NEXT:
-								mdl.value = mdl.value.setGameIndex(mdl.value.meta.gameIndex+1);
-								ws.sendSignal(MessageType.DATA_JSON);
+								mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index+1, send: ws.sendSignal);
 								break;
 							case RecommendedAction.NOTHING:
 								break;
@@ -601,13 +584,13 @@ class _InputWindowState extends State<InputWindow> {
 							builder: (context, md, _) {
 								return Column(
 									children: [
-										Expanded(flex: 18, child: blockTeams(md, recAct)),
-										Expanded(flex: 25, child: blockGoals(md, recAct)),
-										Expanded(flex: 35, child: blockTime(md, recAct)),
-										Expanded(flex: 22, child: blockWidgets(md, recAct))
-										//Expanded(flex: 25, child: blockTeams(md, recAct)),
-										//Expanded(flex: 33, child: blockGoals(md, recAct)),
-										//Expanded(flex: 42, child: blockTime(md, recAct)),
+										// Expanded(flex: 18, child: blockTeams(md, recAct)),
+										// Expanded(flex: 25, child: blockGoals(md, recAct)),
+										// Expanded(flex: 35, child: blockTime(md, recAct)),
+										// Expanded(flex: 22, child: blockWidgets(md, recAct))
+										Expanded(flex: 25, child: blockTeams(md, recAct)),
+										Expanded(flex: 33, child: blockGoals(md, recAct)),
+										Expanded(flex: 42, child: blockTime(md, recAct)),
 									]
 								);
 							}

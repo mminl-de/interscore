@@ -1,0 +1,71 @@
+networks:
+  mynet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    container_name: backend
+    networks:
+      mynet:
+    restart: unless-stopped
+
+  ssh-tunnel:
+    image: alpine:3.19
+    container_name: ssh-tunnel
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - ~/.ssh:/root/.ssh:ro
+    networks:
+      mynet:
+    command: >
+      sh -c "
+        apk add --no-cache openssh autossh &&
+        autossh -M 0 -N -R 8081:backend:8081 interscore-tunnel@mminl.de
+      "
+
+  http-server:
+    build:
+      context: ..
+      dockerfile: docker/http-server/Dockerfile
+    container_name: http-server
+    networks:
+      mynet:
+    restart: unless-stopped
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    networks:
+      mynet:
+    ports:
+      - "1935:1935"
+    restart: unless-stopped
+
+  obs:
+    build:
+      context: ..
+      dockerfile: docker/obs/Dockerfile
+    container_name: obs
+    depends_on:
+      - http-server
+      - backend
+    environment:
+      - DISPLAY=:99
+    devices:
+      - /dev/dri:/dev/dri  # optional, VAAPI acceleration
+      - /dev/snd:/dev/snd  # optional, audio
+    ports:
+      - "5900:5900"  # vnc
+    networks:
+      mynet:
+        ipv4_address: 172.28.0.10
+    restart: unless-stopped

@@ -3,7 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flutter_rentnerend/lib.dart';
+import 'lib.dart';
+import 'MessageType.dart';
 
 part 'md.freezed.dart';
 part 'md.g.dart';
@@ -15,6 +16,7 @@ class Matchday with _$Matchday {
 	@JsonSerializable(includeIfNull: false)
 	const factory Matchday(
 		Meta meta,
+		List<Format> formats,
 		List<Team> teams,
 		List<Group> groups,
 		List<Game> games,
@@ -23,42 +25,42 @@ class Matchday with _$Matchday {
 	factory Matchday.fromJson(Map<String, dynamic> json) => _$MatchdayFromJson(json);
 
 	int currentTime() {
-		if(meta.paused) return meta.remainingTime;
+		if(meta.time.paused) return meta.time.remaining;
 		else {
 			final unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-			final t = meta.remainingTime - (unixTime + meta.delay - meta.lastUnpaused);
+			final t = meta.time.remaining - (unixTime + meta.time.delay - meta.time.lastUnpaused);
 			return t >= 0 ? t : 0;
 		}
 	}
 
 	Game get currentGame {
-		final i = meta.gameIndex;
+		final i = meta.game.index;
 		return games[i];
 	}
 
 	Format? get currentFormat {
-		Format? f = formatFromName(currentGame.format.name);
+		final Format? f = formatFromName(currentGame.format.name);
 		if(f == null) return null;
 		return f.copyWith(gameparts: f.gameparts.where((gp) => (!gp.decider || currentGame.format.decider)).toList());
 	}
 
 	Format? get currentFormatUnwrapped {
-		Format? f = currentFormat;
+		final Format? f = currentFormat;
 		if(f == null) return null;
 		return formatUnwrap(f);
 	}
 
 	Gamepart? get currentGamepart {
-		return gamepartFromIndex(meta.currentGamepart);
+		return gamepartFromIndex(meta.game.gamepart);
 	}
 
-	Matchday setGameIndex(int index, {bool applySideEffects = true}) {
+	Matchday setGameIndex(final int index, {final bool applySideEffects = true, final void Function(MessageType, {Matchday? md})? send = null}) {
 		if (index < 0 || index >= games.length) return this;
-		debugPrint("Setting Gameindex: ${meta.gameIndex} -> ${index}");
+		debugPrint("Setting Gameindex: ${meta.game.index} -> ${index}");
 		// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
 		// from the last game, because they arent resolved anymore
 		List<Game> new_games = List.from(games);
-		for(int i = meta.gameIndex; i > index; i--) {
+		for(int i = meta.game.index; i > index; i--) {
 			debugPrint("unresolve game ${i}");
 			new_games[i] = games[i].copyWith(
 				team1: games[i].team1.map(byName: (x) => x, byQuery: (x) => x, byQueryResolved: (x) => x.q),
@@ -67,7 +69,7 @@ class Matchday with _$Matchday {
 		}
 		// Now we resolve the GameTeamSlot.byQuery -> GameTeamSlot.byQueryResolved
 		// because all games already played and the one we are playing now have to be resolved
-		for(int i = meta.gameIndex+1; i <= index; i++) {
+		for(int i = meta.game.index+1; i <= index; i++) {
 			debugPrint("resolve game ${i}");
 			GameTeamSlot? t1 = games[i].team1.resolveQuery(this);
 			GameTeamSlot? t2 = games[i].team2.resolveQuery(this);
@@ -77,43 +79,45 @@ class Matchday with _$Matchday {
 				team2: t2,
 			);
 		}
-		Matchday md = copyWith(games: new_games, meta: meta.copyWith(gameIndex: index));
-		if(applySideEffects && md.meta.paused && md.currentTime() == 0)
-			md = md.setCurrentGamepart(0);
+		Matchday md = copyWith(games: new_games, meta: meta.copyWith(game: meta.game.copyWith(index: index)));
+		if(applySideEffects && md.meta.time.paused && md.currentTime() == 0)
+			md = md.setCurrentGamepart(0, send: send);
+
+		send?.call(MessageType.DATA_META_GAME, md: md);
+
 		return md;
 	}
 
-	Matchday setSidesInverted(bool inverted) {
-		return copyWith(meta: meta.copyWith(sidesInverted: inverted));
+	Matchday setSidesInverted(final bool inverted, {final void Function(MessageType, {Matchday? md})? send = null}) {
+		Matchday md = copyWith(meta: meta.copyWith(game: meta.game.copyWith(sidesInverted: inverted)));
+		send?.call(MessageType.DATA_META_GAME, md: md);
+		return md;
 	}
 
-	Matchday addGameAction(GameAction ga) {
-		final newGames = games;
-		newGames[meta.gameIndex] = currentGame.copyWith(actions: [...? currentGame.actions, ga]);
-		return copyWith(games: newGames);
+	Matchday addGameAction(final GameAction ga, final int gameIndex, {final void Function(MessageType, {int? additionalInfo, int? additionalInfo2, Matchday? md})? send = null}) {
+		List<Game> newGames = List<Game>.from(games);
+		newGames[gameIndex] = games[gameIndex].copyWith(actions: [...? games[gameIndex].actions, ga]);
+		Matchday md = copyWith(games: newGames);
+		send?.call(MessageType.DATA_GAMEACTION, additionalInfo: gameIndex, additionalInfo2: md.games[gameIndex].actions!.length-1, md: md);
+		return md;
 	}
 
-	Matchday goalAdd(int team) {
-		Game g = currentGame;
-		int id = g.actions?.length ?? 0;
+	Matchday goalAdd(final int team, {final int? gameIndex, final void Function(MessageType, {int? additionalInfo, int? additionalInfo2, Matchday? md})? send = null}) {
+		final Game g = games[gameIndex ?? meta.game.index];
+		final int id = g.actions?.length ?? 0;
 
-		GameActionChange change = GameActionChange.score(
+		final GameActionChange change = GameActionChange.score(
 			GameActionChangeScore(
 				t1: team == 1 ? 1 : 0,
 				t2: team == 2 ? 1 : 0
 			)
 		);
 		final goalAction = GameAction.goal(id: id, change: change);
-		final updatedGame = g.copyWith(actions: [...?g.actions, goalAction]);
-		final newGames = [...games];
-		newGames[meta.gameIndex] = updatedGame;
-
-		// TODO test this, looks very suspicious
-		return copyWith(games: newGames);
+		return addGameAction(goalAction, gameIndex ?? meta.game.index, send: send);
 	}
 
-	Matchday goalRemoveLast(int team) {
-		Game g = currentGame;
+	Matchday goalRemoveLast(final int team, {final int? gameIndex, final void Function(MessageType, {int? additionalInfo, Matchday? md})? send = null}) {
+		final Game g = games[gameIndex ?? meta.game.index];
 		if (g.actions == null || g.actions!.isEmpty) return this;
 
 		// Find last index of a goal for the team
@@ -136,55 +140,64 @@ class Matchday with _$Matchday {
 
 		final updatedGame = g.copyWith(actions: newActions);
 		final newGames = [...games];
-		newGames[meta.gameIndex] = updatedGame;
+		newGames[meta.game.index] = updatedGame;
 
-		return copyWith(games: newGames);
+		final Matchday md = copyWith(games: newGames);
+		send?.call(MessageType.DATA_GAMEACTIONS, additionalInfo: (gameIndex ?? meta.game.index), md: md);
+		return md;
 	}
 
 	// Time can be positive or negative
-	Matchday timeChange(int change) {
+	Matchday timeChange(int change, {final void Function(MessageType, {Matchday? md})? send = null}) {
 		if (change + currentTime() < 0) change = -currentTime();
-		return copyWith(meta: meta.copyWith(remainingTime: meta.remainingTime + change));
+		final Matchday md = copyWith(meta: meta.copyWith(time: meta.time.copyWith(remaining: meta.time.remaining + change)));
+		send?.call(MessageType.DATA_META_TIME, md: md);
+		return md;
 	}
 
 	// Time can be positive or negative
-	Matchday timeReset() {
+	Matchday timeReset({final void Function(MessageType, {Matchday? md})? send = null}) {
 		if (currentGamepart == null) return this;
 		int? defTime = currentGamepart!.whenOrNull(timed: (_, len, _, _, _) => len);
 		if (defTime == null) return this;
-		return timeChange(defTime - currentTime());
+		return timeChange(defTime - currentTime(), send: send);
 	}
 
-	Matchday setPause(bool pause) {
-		if (meta.paused && meta.remainingTime == 0) return this;
+	Matchday setPause(final bool pause, {final void Function(MessageType, {Matchday? md})? send = null}) {
+		if (meta.time.paused && meta.time.remaining == 0) return this;
+		Matchday md;
 		if(pause)
-			return copyWith(meta: meta.copyWith(paused: pause, remainingTime: currentTime()));
+			md = copyWith(meta: meta.copyWith(time: meta.time.copyWith(paused: pause, remaining: currentTime())));
 		else {
 			final unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-			return copyWith(meta: meta.copyWith(paused: pause, lastUnpaused: unixTime));
+			md = copyWith(meta: meta.copyWith(time: meta.time.copyWith(paused: pause, lastUnpaused: unixTime)));
 		}
+		send?.call(MessageType.DATA_META_TIME, md: md);
+		return md;
 	}
 
-	Matchday setCurrentGamepart(int index, {bool applySideEffect = true}) {
-		Gamepart? gp = gamepartFromIndex(index);
+	Matchday setCurrentGamepart(final int index, {final bool applySideEffect = true, final void Function(MessageType, {Matchday? md})? send = null}) {
+		final Gamepart? gp = gamepartFromIndex(index);
 		if(gp == null) return this;
 		Matchday md = this;
 		if(applySideEffect) {
 			md = gp.maybeWhen(
-				timed: (_, len, _, _, _) {
-					if(meta.paused)
-						return copyWith(meta: meta.copyWith(remainingTime: len));
+				timed: (_, defTime, _, _, _) {
+					if(meta.time.paused)
+						return timeChange(defTime - currentTime(), send: send);
 					else return this;
 				},
 				orElse: () => this
 			);
 		}
-		return md.copyWith(meta: md.meta.copyWith(currentGamepart: index));
+		md = md.copyWith(meta: md.meta.copyWith(game: md.meta.game.copyWith(gamepart: index)));
+		send?.call(MessageType.DATA_META_GAME, md: md);
+		return md;
 	}
 
 	// Returns a Map with Team and an associated integer to it.
 	// This allows e.g. for 2 teams who are equally ranked
-	Map<String, int>? rankingFromGroup(String groupName) {
+	Map<String, int>? rankingFromGroup(final String groupName) {
 		final Group? group = groupFromName(groupName);
 		if (group == null) return null; // TODO This should probably crash the program
 
@@ -213,12 +226,12 @@ class Matchday with _$Matchday {
 	}
 
 	// Gives back Map of all games the team played and an
-	Map<Game, int> teamGamesPlayed(String t, String group) {
+	Map<Game, int> teamGamesPlayed(final String t, final String group) {
 		if (groupFromName(group) == null); // TODO crash the program?
 
 		Map<Game, int> gamesPlayed = Map<Game, int>();
-		for(int i=0; i < meta.gameIndex; i++) {
-			Game game = games[i];
+		for(int i=0; i < meta.game.index; i++) {
+			final Game game = games[i];
 			if (game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
 			int? gameTeamIndex;
 			if (game.team1.map(
@@ -240,7 +253,7 @@ class Matchday with _$Matchday {
 		return gamesPlayed;
 	}
 
-	Map<Game, int> teamGamesWon(String t, String g) {
+	Map<Game, int> teamGamesWon(final String t, final String g) {
 		Map<Game, int> played = teamGamesPlayed(t, g);
 		played.removeWhere((g, gameTeamIndex) {
 			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) <= 0;
@@ -248,7 +261,7 @@ class Matchday with _$Matchday {
 		return played;
 	}
 
-	Map<Game, int> teamGamesLost(String t, String g) {
+	Map<Game, int> teamGamesLost(final String t, final String g) {
 		Map<Game, int> played = teamGamesPlayed(t, g);
 		played.removeWhere((g, gameTeamIndex) {
 			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) > 0;
@@ -256,7 +269,7 @@ class Matchday with _$Matchday {
 		return played;
 	}
 
-	Map<Game, int> teamGamesTied(String t, String g) {
+	Map<Game, int> teamGamesTied(final String t, final String g) {
 		Map<Game, int> played = teamGamesPlayed(t, g);
 		played.removeWhere((g, gameTeamIndex) {
 			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) != 0;
@@ -264,15 +277,15 @@ class Matchday with _$Matchday {
 		return played;
 	}
 
-	int teamPoints(String t, String g) {
+	int teamPoints(final String t, final String g) {
 		return teamGamesWon(t, g).length * 3 + teamGamesTied(t, g).length;
 	}
 
-	int teamGoalDiff(String t, String g) {
+	int teamGoalDiff(final String t, final String g) {
 		return teamGoalsPlus(t, g) - teamGoalsMinus(t, g);
 	}
 
-	int teamGoalsPlus(String t, String g) {
+	int teamGoalsPlus(final String t, final String g) {
 		int goals = 0;
 		teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
 			goals += g.teamGoals(gameTeamIndex);
@@ -280,7 +293,7 @@ class Matchday with _$Matchday {
 		return goals;
 	}
 
-	int teamGoalsMinus(String t, String g) {
+	int teamGoalsMinus(final String t, final String g) {
 		int goals = 0;
 		teamGamesPlayed(t, g).forEach((g, gameTeamIndex) {
 			goals += g.teamGoals(gameTeamIndex == 1 ? 2 : 1);
@@ -288,26 +301,26 @@ class Matchday with _$Matchday {
 		return goals;
 	}
 
-	Team? teamFromName(String name) {
+	Team? teamFromName(final String name) {
 		return this.teams.firstWhere((team) => name == team.name);
 	}
 
-	Group? groupFromName(String name) {
+	Group? groupFromName(final String name) {
 		return this.groups.firstWhere((group) => name == group.name);
 	}
 
-	Format? formatFromName(String name) {
-		return this.meta.formats.firstWhere((format) => name == format.name);
+	Format? formatFromName(final String name) {
+		return this.formats.firstWhere((format) => name == format.name);
 	}
 
-	Format? formatUnwrap(Format f) {
+	Format? formatUnwrap(final Format f) {
 		return f.copyWith(gameparts: f.gameparts.expand((gp) => gp.maybeWhen(
 			format: (name, _, _, _) => formatUnwrap(formatFromName(name)!)!.gameparts,
 			orElse: () => [ gp ]
 		)).toList());
 	}
 
-	Gamepart? gamepartFromIndex(int index) {
+	Gamepart? gamepartFromIndex(final int index) {
 		final Format? f = currentFormatUnwrapped;
 		if (f == null) return null;
 		if (index < 0) return null;
@@ -320,28 +333,70 @@ class Matchday with _$Matchday {
 class Meta with _$Meta {
 	@JsonSerializable(includeIfNull: false)
 	const factory Meta({
-		@JsonKey(name: 'game_i', toJson: intOrNullNot0) @Default(0) int gameIndex,
-		@JsonKey(name: 'cur_gamepart', toJson: intOrNullNot0) @Default(0) int currentGamepart,
+		@Default(MetaGame(index: 0, gamepart: 0, sidesInverted: false))
+		MetaGame game,
+		@Default(MetaTime(paused: true, remaining: 0, lastUnpaused: 0, delay: 0))
+		MetaTime time,
+		@Default(MetaWidgets(scoreboard: false, gameplan: false, liveplan: false, gamestart: false, ad: false))
+		MetaWidgets widgets,
+		@Default(MetaObs(streamStarted: null, replayStarted: null))
+		MetaObs obs,
+	}) = _Meta;
+
+	factory Meta.fromJson(Map<String, dynamic> json) => _$MetaFromJson(json);
+}
+
+@freezed
+class MetaGame with _$MetaGame {
+	@JsonSerializable(includeIfNull: false)
+	const factory MetaGame({
+		@JsonKey(toJson: intOrNullNot0) @Default(0) int index,
+		@JsonKey(toJson: intOrNullNot0) @Default(0) int gamepart,
 		// This is for an EXTRA invert, not the normal side switching.
 		// The normal side switching is done through formats!
 		// This is still needed, because maybe the teams are standing the other way around at the beginning
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
-		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
-		@JsonKey(name: 'remaining_time') @Default(0) int remainingTime,
-		@JsonKey(name: 'last_unpaused') @Default(0) int lastUnpaused,
-		@JsonKey(name: 'allow_remote_game_creation', toJson: boolOrNullTrue) @Default(false) bool allowRemoteGameCreation,
-		@JsonKey(name: 'delay', toJson: null) @Default(0) int delay,
-		@Default(false) bool widgetScoreboard,
-		@Default(false) bool widgetGameplan,
-		@Default(false) bool widgetLiveplan,
-		@Default(false) bool widgetGamestart,
-		@Default(false) bool widgetAd,
-		@Default(false) bool streamStarted,
-		@Default(false) bool replayStarted,
-		required List<Format> formats,
-	}) = _Meta;
+	}) = _MetaGame;
 
-	factory Meta.fromJson(Map<String, dynamic> json) => _$MetaFromJson(json);
+	factory MetaGame.fromJson(Map<String, dynamic> json) => _$MetaGameFromJson(json);
+}
+
+@freezed
+class MetaTime with _$MetaTime {
+	@JsonSerializable(includeIfNull: false)
+	const factory MetaTime({
+		@JsonKey(toJson: boolOrNullFalse) @Default(true) bool paused,
+		@Default(0) int remaining,
+		@JsonKey(name: 'last_unpaused') @Default(0) int lastUnpaused,
+		@JsonKey(name: 'delay', toJson: null) @Default(0) int delay,
+	}) = _MetaTime;
+
+	factory MetaTime.fromJson(Map<String, dynamic> json) => _$MetaTimeFromJson(json);
+}
+
+@freezed
+class MetaWidgets with _$MetaWidgets {
+	@JsonSerializable(includeIfNull: false)
+	const factory MetaWidgets({
+		@Default(false) bool scoreboard,
+		@Default(false) bool gameplan,
+		@Default(false) bool liveplan,
+		@Default(false) bool gamestart,
+		@Default(false) bool ad,
+	}) = _MetaWidgets;
+
+	factory MetaWidgets.fromJson(Map<String, dynamic> json) => _$MetaWidgetsFromJson(json);
+}
+
+@freezed
+class MetaObs with _$MetaObs {
+	@JsonSerializable(includeIfNull: false)
+	const factory MetaObs({
+		@Default(null) bool? streamStarted,
+		@Default(null) bool? replayStarted,
+	}) = _MetaObs;
+
+	factory MetaObs.fromJson(Map<String, dynamic> json) => _$MetaObsFromJson(json);
 }
 
 @freezed
@@ -356,7 +411,6 @@ class Game with _$Game {
 		List<String>? groups,
 		required GameFormat format,
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
-		@Default(true) bool protected,
 		List<GameAction>? actions,
 	}) = _Game;
 
@@ -568,7 +622,7 @@ class GameQuery with _$GameQuery {
 	}
 
 	static String? _resolveTeamGameWinner(_GameQueryByGameWinner gq, Matchday m) {
-		if (gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		if (gq.gameIndex >= m.meta.game.index || gq.gameIndex < 0) return null;
 		final Game g = m.games[gq.gameIndex];
 		final int winner = g.winner;
 		final GameTeamSlot winnerTeamSlot = winner == 1 ? g.team1 : g.team2;
@@ -576,7 +630,7 @@ class GameQuery with _$GameQuery {
 	}
 
 	static String? _resolveTeamGameLoser(_GameQueryByGameLoser gq, Matchday m) {
-		if (gq.gameIndex >= m.meta.gameIndex || gq.gameIndex < 0) return null;
+		if (gq.gameIndex >= m.meta.game.index || gq.gameIndex < 0) return null;
 		final Game g = m.games[gq.gameIndex];
 		final int loser = g.loser;
 		final GameTeamSlot loserTeamSlot = loser == 1 ? g.team1 : g.team2;
