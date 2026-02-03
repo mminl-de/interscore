@@ -1,2 +1,3 @@
-# github-readme-stats shouldn't think that _we_ actually wrote the mongoose code
+# github-readme-stats shouldn't think that _we_ actually wrote the library code
 backend/mongoose/* linguist-vendored
+echo/websocket.zig/* linguist-vendored

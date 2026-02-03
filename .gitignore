@@ -1,25 +1,35 @@
-*.o
+## Rentnerend
+rentnerend/lib/*.freezed.dart
+rentnerend/lib/*.g.dart
+rentnerend/lib/MessageType.dart
+rentnerend/pubspec.lock
+
+## Frontend
+frontend/bun.lockb
+frontend/node_modules/
+frontend/script.js
+
+## Echo
+echo/websocket.zig
+echo/.zig-cache
+echo/zig-out
+
+## Etc
+project.seer
+replays/
+win-pacman/msys2-root/
+test/backend/tests
 .vscode/
 MessageType.js
 MessageType.ts
 backend/interscore-backend
 docker/obs
-rentnerend/lib/*.freezed.dart
-rentnerend/lib/*.g.dart
-rentnerend/lib/MessageType.dart
-rentnerend/pubspec.lock
-frontend/bun.lockb
-frontend/node_modules/
-frontend/script.js
-project.seer
-replays/
-win-pacman/msys2-root/
-test/backend/tests
 
 # Dead weight
 rentnerend/macos
 
 # Binaries
+*.o
 interscore
 rentnerend/interscore-old
 rentnerend/interscore-server
