@@ -1,0 +1,13 @@
+.{
+	.name = .echo,
+	.version = "0.0.1",
+	.dependencies = .{
+		.websocket = .{
+			.url = "websocket.zig.tar.gz",
+			.hash = "websocket-0.1.0-ZPISdRNzAwAGszh62EpRtoQxu8wb1MSMVI6Ow0o2dmyJ",
+		},
+	},
+	.minimum_zig_version = "0.15.1",
+	.paths = .{""},
+	.fingerprint = 0x1704303229af022a,
+}

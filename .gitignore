@@ -1,31 +1,41 @@
-# frontend
-*.js
-frontend/*.js
-MessageType.ts
-frontend/bun.lock
-frontend/node_modules/
-
-# backend
-backend/interscore-backend
-
-#rentnerend
+## Rentnerend
+rentnerend/interscore-old
+rentnerend/interscore-server
 rentnerend/lib/*.freezed.dart
 rentnerend/lib/*.g.dart
 rentnerend/lib/MessageType.dart
-rentnerend/pubspec.lock
 rentnerend/macos
+rentnerend/pubspec.lock
 
-#infoend
+## Backend
+backend/interscore-backend
+docker/obs
+
+## Frontend
+*.js
+MessageType.ts
+frontend/*.js
+frontend/bun.lock
+frontend/bun.lockb
+frontend/node_modules/
+frontend/script.js
+
+# Infoend
 infoend/lib/*.freezed.dart
 infoend/lib/*.g.dart
 infoend/lib/MessageType.dart
-infoend/pubspec.lock
 infoend/macos
+infoend/pubspec.lock
 
-# tests
-test/backend/tests
+## Echo
+echo/.zig-cache
+echo/websocket.zig
+echo/zig-out
 
-# Other
-*.o
+## Etc
 .vscode/
+MessageType.js
 project.seer
+replays/
+test/backend/tests
+win-pacman/msys2-root/
