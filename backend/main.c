@@ -126,22 +126,23 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 	log_msg(LOG, "Received a Input from con %lu: %d\n", con->id, *msg);
 	switch (*msg) {
 		// All of these cases should be forwarded to frontend
-		case PLS_SEND_SIDES_SWITCHED:
-		case PLS_SEND_GAMEPART:
-		case PLS_SEND_GAMEINDEX:
-		case PLS_SEND_IS_PAUSE:
-		case PLS_SEND_TIME:
-		case PLS_SEND_JSON:
-		case PLS_SEND_OBS_REPLAY_ON:
-		case PLS_SEND_OBS_STREAM_ON:
-		case PLS_SEND_WIDGET_AD_ON:
-		case PLS_SEND_WIDGET_GAMESTART_ON:
-		case PLS_SEND_WIDGET_GAMEPLAN_ON:
-		case PLS_SEND_WIDGET_LIVETABLE_ON:
-		case PLS_SEND_WIDGET_SCOREBOARD_ON:
-		case PLS_SEND_GAME_ACTION:
-		case PLS_SEND_TIMESTAMP:
+		case PLS_SEND_META:
+		case PLS_SEND_META_GAME:
+		case PLS_SEND_META_OBS:
+		case PLS_SEND_META_WIDGETS:
+		case PLS_SEND_META_TIME:
+		case PLS_SEND_GAMES:
 		case PLS_SEND_GAME:
+		case PLS_SEND_GAMEACTIONS:
+		case PLS_SEND_GAMEACTION:
+		case PLS_SEND_FORMATS:
+		case PLS_SEND_FORMAT:
+		case PLS_SEND_TEAMS:
+		case PLS_SEND_TEAM:
+		case PLS_SEND_GROUPS:
+		case PLS_SEND_GROUP:
+		case PLS_SEND_TIMESTAMP:
+		case PLS_SEND_JSON:
 			log_msg(LOG, "clients.boss: %p\n", clients.boss);
 			ws_send(clients.boss, (char *)msg, msg_len);
 			break;
@@ -151,30 +152,30 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			ws_send(con, tmp, 2);
 			break;
 		}
-		case DATA_OBS_STREAM_ON: {
-			if (msg_len < 2) {
-				log_msg(WARN, "Received DATA_OBS_STREAM_ON without data about the Status\n");
-				break;
-			}
-			if (msg[1])
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
-			else
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
-			break;
-		}
-		case DATA_OBS_REPLAY_ON: {
-			if (!replays_instant_working) break;
-			if (msg_len < 2) {
-				log_msg(WARN, "Received DATA_OBS_STREAM_ON without data about the Status\n");
-				break;
-			}
-			if (msg[1])
-				// Tell OBS to save replay buffer
-				obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
-			else
-				obs_switch_scene("live");
-			break;
-		}
+		// case DATA_OBS_STREAM_ON: {
+		// 	if (msg_len < 2) {
+		// 		log_msg(WARN, "Received DATA_OBS_STREAM_ON without data about the Status\n");
+		// 		break;
+		// 	}
+		// 	if (msg[1])
+		// 		obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StartStream\", \"requestId\": \"1\"}}");
+		// 	else
+		// 		obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"StopStream\", \"requestId\": \"2\"}}");
+		// 	break;
+		// }
+		// case DATA_OBS_REPLAY_ON: {
+		// 	if (!replays_instant_working) break;
+		// 	if (msg_len < 2) {
+		// 		log_msg(WARN, "Received DATA_OBS_STREAM_ON without data about the Status\n");
+		// 		break;
+		// 	}
+		// 	if (msg[1])
+		// 		// Tell OBS to save replay buffer
+		// 		obs_send_cmd("{\"op\": 6, \"d\": {\"requestType\": \"SaveReplayBuffer\", \"requestId\": \"save_replay\"}}");
+		// 	else
+		// 		obs_switch_scene("live");
+		// 	break;
+		// }
 		case IM_THE_BOSS:
 			if (msg_len < 2 || !msg[1]) { log_msg(WARN, "Boss sent illegal message\n"); break;}
 			if (clients.boss == con) {
@@ -192,11 +193,12 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 			char tmp[2] = {DATA_IM_BOSS, true};
 			ws_send(clients.boss, tmp, 2);
 			break;
-		case DATA_GAMEINDEX:
-			log_msg(LOG, "Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
-			gameindex = msg[1];
-			// Now we go into default
-			__attribute__((fallthrough)); // silence compiler warning
+		// TODO gameindex is now not available anymore
+		// case DATA_GAMEINDEX:
+		// 	log_msg(LOG, "Received DATA: Gameindex: %d\n", ((char *)msg)[1]);
+		// 	gameindex = msg[1];
+		// 	// Now we go into default
+		// 	__attribute__((fallthrough)); // silence compiler warning
 		default:
 			for (Client *c = clients.first; c != NULL; c = c->next) {
 				if (c->con == clients.boss && *msg != DATA_GAME) continue;
