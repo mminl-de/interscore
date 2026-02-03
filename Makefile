@@ -6,7 +6,6 @@ b-fast:
 	${MAKE} --no-print-directory -C backend fast
 b-run:
 	${MAKE} --no-print-directory -C backend run
-
 js:
 	m4 -DTS MessageType.m4 > MessageType.ts
 	cp MessageType.ts frontend/MessageType.ts # TODO
@@ -21,6 +20,7 @@ f-freezed:
 
 f-run:
 	${MAKE} --no-print-directory -C rentnerend flutter
-
+e-run:
+	${MAKE} --no-print-directory -C echo run
 clean:
 	rm -f backend interscore frontend/script.js
