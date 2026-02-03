@@ -179,7 +179,7 @@ void handle_message(enum MessageType *msg, int msg_len, struct mg_connection * c
 		case IM_THE_BOSS:
 			if (msg_len < 2 || !msg[1]) { log_msg(WARN, "Boss sent illegal message\n"); break;}
 			if (clients.boss == con) {
-				log_msg(LOG, "Con %lu is trying to be boss, but is already... Sending DATA_IM_BOSS");
+				log_msg(LOG, "Con %lu is trying to be boss, but is already... Sending DATA_IM_BOSS\n");
 				char tmp[2] = {DATA_IM_BOSS, true};
 				ws_send(clients.boss, tmp, 2);
 				break;
