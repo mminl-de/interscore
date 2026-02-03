@@ -135,8 +135,6 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		final t1_color = colorFromHexString(md.teamFromName(t1name)?.color ?? "#ffffff");
 		final t2_color = colorFromHexString(md.teamFromName(t2name)?.color ?? "#ffffff");
-		debugPrint("colors: t1: $t1_color, t2: $t2_color");
-		debugPrint("orig colors: t1: ${md.teamFromName(t1name)?.color}, t2: ${md.teamFromName(t2name)?.color}");
 
 		final String curTimeMin = (md.currentTime() ~/ 60).toString().padLeft(2, '0');
 		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');

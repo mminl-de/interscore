@@ -8,6 +8,7 @@ import 'md.dart';
 
 import 'ws_server.dart';
 import 'ws_client.dart';
+import 'ws_client_factory.dart';
 
 class InterscoreWS {
 	late WSServer server;
@@ -19,7 +20,7 @@ class InterscoreWS {
 
 	// We have to use a "factory" so the constructor can be async
 	InterscoreWS(String server_url, String client_url, this._mdl) {
-		this.client = WSClient(client_url, _mdl);
+		this.client = createWSClient(client_url, _mdl, false, true);
 		this.server = WSServer(server_url, _mdl);
 		init();
 	}
@@ -37,8 +38,8 @@ class InterscoreWS {
 		// await this.client.connect();
 	}
 
-	void sendSignal(MessageType signal, {int? additionalInfo}) {
-		final List<int>? msg = lib.signalToMsg(signal, _mdl.value, additionalInfo: additionalInfo);
+	void sendSignal(final MessageType signal, {final int? additionalInfo, final int? additionalInfo2, final Matchday? md}) {
+		final List<int>? msg = lib.signalToMsg(signal, md ?? _mdl.value, additionalInfo: additionalInfo, additionalInfo2: additionalInfo2);
 		if(msg == null) return;
 
 		send(msg);

@@ -2,10 +2,11 @@ dnl WHEN FILE IS CHANGED, RUN:
 dnl make js-new flutter
 changequote(<, >)
 define(<ENUM_NAMES>, <
-DATA_META
-DATA_GAMESTATE,
-DATA_OBS,
-DATA_WIDGETS,
+DATA_META,
+DATA_META_GAME,
+DATA_META_TIME,
+DATA_META_OBS,
+DATA_META_WIDGETS,
 DATA_GAMES,
 DATA_GAME,
 DATA_GAMEACTIONS,dnl Additional: u8 = gameindex
@@ -21,9 +22,10 @@ DATA_TIMESTAMP,
 DATA_JSON,
 IM_THE_BOSS,
 PLS_SEND_META,
-PLS_SEND_GAMESTATE,
-PLS_SEND_OBS,
-PLS_SEND_WIDGETS,
+PLS_SEND_META_GAME,
+PLS_SEND_META_TIME,
+PLS_SEND_META_OBS,
+PLS_SEND_META_WIDGETS,
 PLS_SEND_GAMES,
 PLS_SEND_GAME,
 PLS_SEND_GAMEACTIONS,
@@ -65,7 +67,7 @@ pub const MessageType = enum(u8) {
 
 ifdef(<DART>, <
 enum MessageType {
-	next_enum(ENUM_NAMES)
+	next_enum(ENUM_NAMES);
 
 	final int value;
 	const MessageType(this.value);

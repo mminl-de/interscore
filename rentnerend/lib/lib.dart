@@ -274,49 +274,73 @@ List<int> i64ToBytes(int value, {bool littleEndian = false}) {
   return bytes;
 }
 
-List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo}) {
+int i64FromBytes(List<int> bytes, int offset, {bool littleEndian = false}) {
+  int value = 0;
+
+  for (int i = 0; i < 8; i++) {
+    final shift = littleEndian ? i * 8 : (7 - i) * 8;
+    value |= (bytes[offset + i] & 0xFF) << shift;
+  }
+
+  // Sign extend if the top bit is set
+  if ((value & (1 << 63)) != 0) {
+    value = value - (1 << 64);
+  }
+
+  return value;
+}
+
+List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo, int? additionalInfo2}) {
 	debugPrint("signalToMsg: ${msg}");
-	if(msg == MessageType.DATA_GAME_ACTION)
-		debugPrint("WARN: Game Actions sending is not implemented yet!");
-	if(msg == MessageType.DATA_GAME) {
+	if(msg == MessageType.DATA_META) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.meta.toJson()))];
+	} else if(msg == MessageType.DATA_META_GAME) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.meta.game.toJson()))];
+	} else if(msg == MessageType.DATA_META_TIME) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.meta.time.toJson()))];
+	} else if(msg == MessageType.DATA_META_OBS) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.meta.obs.toJson()))];
+	} else if(msg == MessageType.DATA_META_WIDGETS) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.meta.widgets.toJson()))];
+	} else if(msg == MessageType.DATA_GAMES) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.games.map((g) => g.toJson()).toList()))];
+	} else if(msg == MessageType.DATA_GAME) {
 		if((additionalInfo ?? md.games.length) >= md.games.length) return null;
-		return [msg.value, ... utf8.encode(jsonEncode(md.games[additionalInfo!]))];
-	} else if(msg == MessageType.DATA_GAMEINDEX)
-		return [msg.value, md.meta.game.index];
-	else if(msg == MessageType.DATA_GAMEPART)
-		return [msg.value, md.meta.game.gamepart];
-	else if(msg == MessageType.DATA_PAUSE_ON)
-		debugPrint("WARN: DATA_PAUSE_ON IS DEPRECATED!!!");
-	else if(msg == MessageType.DATA_TIME)
-		return utf8.encode(jsonEncode(md.toJson()));
-		//return [msg.value, ... u16ToBytes(md.meta.remainingTime)];
-	else if(msg == MessageType.DATA_GAMESCOUNT)
-		return [msg.value, md.games.length];
-	else if(msg == MessageType.DATA_SIDES_SWITCHED)
-		return [msg.value, md.meta.game.sidesInverted ? 1 : 0];
-	else if(msg == MessageType.DATA_JSON)
-	  return utf8.encode(jsonEncode(md.toJson()));
-	else if(msg == MessageType.DATA_WIDGET_SCOREBOARD_ON)
-		return [msg.value, md.meta.widgets.scoreboard ? 1 : 0];
-	else if(msg == MessageType.DATA_WIDGET_GAMEPLAN_ON)
-		return [msg.value, md.meta.widgets.gameplan ? 1 : 0];
-	else if(msg == MessageType.DATA_WIDGET_LIVETABLE_ON)
-		return [msg.value, md.meta.widgets.liveplan ? 1 : 0];
-	else if(msg == MessageType.DATA_WIDGET_GAMESTART_ON)
-		return [msg.value, md.meta.widgets.gamestart ? 1 : 0];
-	else if(msg == MessageType.DATA_WIDGET_AD_ON)
-		return [msg.value, md.meta.widgets.ad ? 1 : 0];
-	else if(msg == MessageType.DATA_OBS_STREAM_ON)
-		return [msg.value, (md.meta.obs.streamStarted ?? false) ? 1 : 0];
-	else if(msg == MessageType.DATA_OBS_REPLAY_ON)
-		return [msg.value, (md.meta.obs.replayStarted ?? false) ? 1 : 0];
-	else if(msg == MessageType.DATA_TIMESTAMP)
+		return [msg.value, ... utf8.encode(jsonEncode(md.games[additionalInfo!].toJson()))];
+	} else if(msg == MessageType.DATA_GAMEACTIONS) {
+		if((additionalInfo ?? md.games.length) >= md.games.length) return null;
+		return [msg.value, additionalInfo!, ... utf8.encode(jsonEncode(md.games[additionalInfo].actions?.map((g) => g.toJson()).toList()))];
+	} else if(msg == MessageType.DATA_GAMEACTION) {
+		if((additionalInfo ?? md.games.length) >= md.games.length) return null;
+		if(md.games[additionalInfo!].actions == null) return null;
+		final List<GameAction> actions = md.games[additionalInfo].actions!;
+		if((additionalInfo2 ?? actions.length) >= actions.length) return null;
+		return [msg.value, additionalInfo, ... utf8.encode(jsonEncode(actions[additionalInfo2!]))];
+	} else if(msg == MessageType.DATA_FORMATS) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.formats.map((g) => g.toJson()).toList()))];
+	} else if(msg == MessageType.DATA_FORMAT) {
+		if((additionalInfo ?? md.formats.length) >= md.formats.length) return null;
+		return [msg.value, ... utf8.encode(jsonEncode(md.formats[additionalInfo!]))];
+	} else if(msg == MessageType.DATA_TEAMS) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.teams.map((g) => g.toJson()).toList()))];
+	} else if(msg == MessageType.DATA_TEAM) {
+		if((additionalInfo ?? md.teams.length) >= md.teams.length) return null;
+		return [msg.value, ... utf8.encode(jsonEncode(md.teams[additionalInfo!]))];
+	} else if(msg == MessageType.DATA_GROUPS) {
+		return [msg.value, ... utf8.encode(jsonEncode(md.groups.map((g) => g.toJson()).toList()))];
+	} else if(msg == MessageType.DATA_GROUP) {
+		if((additionalInfo ?? md.groups.length) >= md.groups.length) return null;
+		return [msg.value, ... utf8.encode(jsonEncode(md.groups[additionalInfo!]))];
+	} else if(msg == MessageType.DATA_JSON) {
+	  return [msg.value, ... utf8.encode(jsonEncode(md.toJson()))];
+	} else if(msg == MessageType.DATA_TIMESTAMP) {
 		return [msg.value, ... i64ToBytes(DateTime.now().millisecondsSinceEpoch ~/ 1000)];
-	else if(msg == MessageType.IM_THE_BOSS)
+	} else if(msg == MessageType.IM_THE_BOSS) {
 		return [msg.value, 1];
-	else
+	} else {
 		return [msg.value];
-	return null;
+	}
+	// DATA_IM_BOSS should not be send by us because we are not a server!
 }
 
 // Returns if b == wanted, else null

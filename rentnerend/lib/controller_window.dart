@@ -53,23 +53,23 @@ class _InputControllerState extends State<ControllerWindow> {
 				width: double.infinity,
 				child: buttonWithChild(context, () {
 					mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(scoreboard: !md.meta.widgets.scoreboard)));
-					ws.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
+					ws.sendSignal(MessageType.DATA_META_WIDGETS);
 			}, Text("Scoreboard"), inverted: md.meta.widgets.scoreboard))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
 				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gameplan: !md.meta.widgets.gameplan)));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
 			}, Text("Gameplan"), inverted: md.meta.widgets.gameplan))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
 				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(liveplan: !md.meta.widgets.liveplan)));
-				ws.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
 			}, Text("Liveplan"), inverted: md.meta.widgets.liveplan))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
 				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gamestart: !md.meta.widgets.gamestart)));
-				ws.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
 			}, Text("Gamestart"), inverted: md.meta.widgets.gamestart))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
 				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(ad: !md.meta.widgets.ad)));
-				ws.sendSignal(MessageType.DATA_WIDGET_AD_ON);
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
 			}, Text("Ad"), inverted: md.meta.widgets.ad))),
 			Expanded(child: SizedBox(width: double.infinity, child: buttonWithChild(context, () {
 				debugPrint("WARN: This action is disabled at the moment!");

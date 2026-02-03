@@ -8,7 +8,7 @@ import "info_window.dart";
 import "controller_window.dart";
 import "md.dart";
 import "lib.dart";
-import "ws_client.dart";
+import "ws_client_factory.dart";
 import "MessageType.dart";
 
 Future<void> main() async {
@@ -64,7 +64,7 @@ class _MyAppState extends State<MyApp> {
 								// Create a default Matchday
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
-								final ws = WSClient("ws://localhost:6464", mdl);
+								final ws = createWSClient("ws://localhost:6464", mdl, false, true);
 								await ws.connect();
 								await Future.doWhile(() async {
 									await Future.delayed(Duration(milliseconds: 10));
@@ -91,7 +91,8 @@ class _MyAppState extends State<MyApp> {
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
-								final ws = WSClient("ws://mminl.de:8081", mdl);
+								// TODO is true, true correct?
+								final ws = createWSClient("ws://mminl.de:8081", mdl, true, true);
 								await ws.connect();
 								await Future.doWhile(() async {
 									await Future.delayed(Duration(milliseconds: 10));
@@ -118,7 +119,7 @@ class _MyAppState extends State<MyApp> {
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
-								final ws = WSClient("ws://mminl.de:8081", mdl);
+								final ws = createWSClient("ws://mminl.de:8081", mdl, false, true);
 								await ws.connect();
 								await Future.doWhile(() async {
 									await Future.delayed(Duration(milliseconds: 10));
