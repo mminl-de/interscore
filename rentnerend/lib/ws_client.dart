@@ -25,6 +25,12 @@ abstract class WSClient {
 			return;
 		}
 
+		// This is a "write operation, but shouldnt be forbidden by allowWriteTo
+		if(msg[0] == MessageType.DATA_IM_BOSS.value) {
+			if(msg.length < 2) return;
+			debugPrint("Received DATA_IM_BOSS: ${msg[1] == 1}");
+			this.boss = msg[1] == 1 ? true : false;
+		}
 		// Parse the message
 		if(allowReadFrom) _listenRead(msg);
 		if(allowWriteTo) _listenWrite(msg);
@@ -193,11 +199,6 @@ abstract class WSClient {
 				mdl.value = md.copyWith(groups: newGroups);
 			} else
 				mdl.value = md.copyWith(groups: [newGroup, ... md.groups]);
-		}
-		else if(msg[0] == MessageType.DATA_IM_BOSS.value) {
-			if(msg.length < 2) return;
-			debugPrint("Received DATA_IM_BOSS: ${msg[1] == 1}");
-			this.boss = msg[1] == 1 ? true : false;
 		}
 		else if(msg[0] == MessageType.DATA_TIMESTAMP.value) {
 			mdl.value = md.copyWith(meta: md.meta.copyWith(time: md.meta.time.copyWith(delay: lib.i64FromBytes(msg, 1))));

@@ -20,7 +20,7 @@ class InterscoreWS {
 
 	// We have to use a "factory" so the constructor can be async
 	InterscoreWS(String server_url, String client_url, this._mdl) {
-		this.client = createWSClient(client_url, _mdl, false, true);
+		this.client = createWSClient(client_url, _mdl, true, false);
 		this.server = WSServer(server_url, _mdl);
 		init();
 	}

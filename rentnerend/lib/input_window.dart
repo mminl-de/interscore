@@ -471,39 +471,39 @@ class _InputWindowState extends State<InputWindow> {
 		);
 	}
 
-	// Widget blockWidgets(Matchday md, RecommendedAction recAct) {
-	// 	return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetScoreboard: !md.meta.widgetScoreboard));
-	// 			ws.sendSignal(MessageType.DATA_WIDGET_SCOREBOARD_ON);
-	// 		}, Icons.arrow_downward_rounded, inverted: md.meta.widgetScoreboard)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGameplan: !md.meta.widgetGameplan));
-	// 			ws.sendSignal(MessageType.DATA_WIDGET_GAMEPLAN_ON);
-	// 		}, Icons.arrow_downward_rounded, inverted: md.meta.widgetGameplan)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetLiveplan: !md.meta.widgetLiveplan));
-	// 			ws.sendSignal(MessageType.DATA_WIDGET_LIVETABLE_ON);
-	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetLiveplan)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetGamestart: !md.meta.widgetGamestart));
-	// 			ws.sendSignal(MessageType.DATA_WIDGET_GAMESTART_ON);
-	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetGamestart)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(widgetAd: !md.meta.widgetAd));
-	// 			ws.sendSignal(MessageType.DATA_WIDGET_AD_ON);
-	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.widgetAd)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(streamStarted: !md.meta.streamStarted));
-	// 			ws.sendSignal(MessageType.DATA_OBS_STREAM_ON);
-	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.streamStarted)),
-	// 		Expanded(child: buttonWithIcon(context, () {
-	// 			mdl.value = md.copyWith(meta: md.meta.copyWith(replayStarted: !md.meta.replayStarted));
-	// 			ws.sendSignal(MessageType.DATA_OBS_REPLAY_ON);
-	// 		}, Icons.arrow_upward_rounded, inverted: md.meta.replayStarted))
-	// 		])
-	// 	;
-	// }
+	Widget blockWidgets(Matchday md, RecommendedAction recAct) {
+		return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(scoreboard: !md.meta.widgets.scoreboard)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Icons.arrow_downward_rounded, inverted: md.meta.widgets.scoreboard)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gameplan: !md.meta.widgets.gameplan)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Icons.arrow_downward_rounded, inverted: md.meta.widgets.gameplan)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(liveplan: !md.meta.widgets.liveplan)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.liveplan)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gamestart: !md.meta.widgets.gamestart)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.gamestart)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(ad: !md.meta.widgets.ad)));
+				ws.sendSignal(MessageType.DATA_META_WIDGETS);
+			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.ad)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(streamStarted: !(md.meta.obs.streamStarted ?? false))));
+				ws.sendSignal(MessageType.DATA_META_OBS);
+			}, Icons.arrow_upward_rounded, inverted: md.meta.obs.streamStarted ?? false)),
+			Expanded(child: buttonWithIcon(context, () {
+				mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(replayStarted: !(md.meta.obs.replayStarted ?? false))));
+				ws.sendSignal(MessageType.DATA_META_OBS);
+			}, Icons.arrow_upward_rounded, inverted: md.meta.obs.replayStarted ?? false))
+			])
+		;
+	}
 
 	@override
 	Widget build(BuildContext context) {
@@ -584,13 +584,13 @@ class _InputWindowState extends State<InputWindow> {
 							builder: (context, md, _) {
 								return Column(
 									children: [
-										// Expanded(flex: 18, child: blockTeams(md, recAct)),
-										// Expanded(flex: 25, child: blockGoals(md, recAct)),
-										// Expanded(flex: 35, child: blockTime(md, recAct)),
-										// Expanded(flex: 22, child: blockWidgets(md, recAct))
-										Expanded(flex: 25, child: blockTeams(md, recAct)),
-										Expanded(flex: 33, child: blockGoals(md, recAct)),
-										Expanded(flex: 42, child: blockTime(md, recAct)),
+										Expanded(flex: 18, child: blockTeams(md, recAct)),
+										Expanded(flex: 25, child: blockGoals(md, recAct)),
+										Expanded(flex: 35, child: blockTime(md, recAct)),
+										Expanded(flex: 10, child: blockWidgets(md, recAct))
+										// Expanded(flex: 25, child: blockTeams(md, recAct)),
+										// Expanded(flex: 33, child: blockGoals(md, recAct)),
+										// Expanded(flex: 42, child: blockTime(md, recAct)),
 									]
 								);
 							}
