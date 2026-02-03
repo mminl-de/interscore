@@ -103,16 +103,15 @@ class Matchday with _$Matchday {
 	}
 
 	Matchday goalAdd(final int team, {final int? gameIndex, final void Function(MessageType, {int? additionalInfo, int? additionalInfo2, Matchday? md})? send = null}) {
-		final Game g = games[gameIndex ?? meta.game.index];
-		final int id = g.actions?.length ?? 0;
-
-		final GameActionChange change = GameActionChange.score(
-			GameActionChangeScore(
-				t1: team == 1 ? 1 : 0,
-				t2: team == 2 ? 1 : 0
+		final goalAction = GameAction.goal(
+			id: generateId(),
+			change: GameActionChange.score(
+				GameActionChangeScore(
+					t1: team == 1 ? 1 : 0,
+					t2: team == 2 ? 1 : 0
+				)
 			)
 		);
-		final goalAction = GameAction.goal(id: id, change: change);
 		return addGameAction(goalAction, gameIndex ?? meta.game.index, send: send);
 	}
 

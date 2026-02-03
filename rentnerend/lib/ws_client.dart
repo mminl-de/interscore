@@ -108,7 +108,7 @@ abstract class WSClient {
 				return;
 			}
 			Game newGame = md.games[index].copyWith(
-				actions: (jsonDecode(utf8.decode(msg.sublist(1))) as List)
+				actions: (jsonDecode(utf8.decode(msg.sublist(2))) as List)
 					.map((e) => GameAction.fromJson(e as Map<String, dynamic>))
 					.toList()
 			);

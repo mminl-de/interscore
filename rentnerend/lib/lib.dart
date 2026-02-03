@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 
 import 'MessageType.dart';
@@ -341,6 +342,14 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo, int? 
 		return [msg.value];
 	}
 	// DATA_IM_BOSS should not be send by us because we are not a server!
+}
+
+final _rng = Random.secure();
+
+int generateId() {
+  final t = DateTime.now().millisecondsSinceEpoch; // ~41 bits
+  final r = _rng.nextInt(1 << 7); // 7 random bits
+  return (t << 7) | r;
 }
 
 // Returns if b == wanted, else null
