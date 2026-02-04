@@ -1,0 +1,112 @@
+name: Build & Push Compose Images
+
+# run on pushes to main and on tags; adjust to taste
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write   # needed to push to GHCR via GITHUB_TOKEN
+  id-token: write   # optional; remove if not used
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      # registry to push to. Change to docker.io if you prefer.
+      REGISTRY: ghcr.io
+      # owner that will own the pushed images. Defaults to repository owner.
+      OWNER: ${{ github.repository_owner }}
+      # short commit SHA tag
+      COMMIT_SHORT: ${{ github.sha }}
+    steps:
+      - name: Shorten commit SHA
+        id: sha
+        run: echo "COMMIT_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU (optional for multi-arch builds)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          # For GHCR the GITHUB_TOKEN usually works. For Docker Hub use a secret (DOCKERHUB_USERNAME/DOCKERHUB_TOKEN).
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build all compose services
+        # uses the Docker Compose CLI shipped with Docker; this runs 'docker compose build'
+        run: |
+          docker compose build --pull
+
+      - name: Tag & push built images
+        # This step:
+        # 1. lists services from docker compose
+        # 2. obtains the built image ID for each service
+        # 3. tags each image as: $REGISTRY/$OWNER/<service>:<sha>
+        # 4. pushes the tag, and also pushes :latest when on main or when the ref is a tag
+        run: |
+          set -euo pipefail
+
+          REGISTRY=${{ env.REGISTRY }}
+          OWNER=${{ env.OWNER }}
+          SHA=${{ env.COMMIT_SHORT }}
+
+          echo "Registry: $REGISTRY"
+          echo "Owner: $OWNER"
+          echo "Tag: $SHA"
+
+          # get list of services defined in compose
+          services=$(docker compose config --services)
+          if [ -z "$services" ]; then
+            echo "No services found in docker-compose.yml"
+            exit 1
+          fi
+
+          # decide whether to push 'latest' as well
+          ref="${GITHUB_REF:-}"
+          push_latest=false
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]] || [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            push_latest=true
+          fi
+
+          for svc in $services; do
+            echo "Processing service: $svc"
+
+            # image id produced by compose build for this service
+            imgid=$(docker compose images -q "$svc" 2>/dev/null || true)
+            if [ -z "$imgid" ]; then
+              echo "Failed to get image id for service $svc"
+              exit 1
+            fi
+
+            target="$REGISTRY/$OWNER/${{ github.event.repository.name }}-$svc:$SHA"
+            echo "Tagging $imgid -> $target"
+            docker tag "$imgid" "$target"
+
+            echo "Pushing $target"
+            docker push "$target"
+
+            if [ "$push_latest" = true ]; then
+              latest_tag="$REGISTRY/$OWNER/${{ github.event.repository.name }}-$svc:latest"
+              echo "Also tagging & pushing latest: $latest_tag"
+              docker tag "$imgid" "$latest_tag"
+              docker push "$latest_tag"
+            fi
+          done
+
+      - name: Output pushed images
+        run: |
+          echo "Images pushed for commit $COMMIT_SHORT"

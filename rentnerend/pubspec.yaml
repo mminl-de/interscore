@@ -6,7 +6,7 @@ version: 1.0.0+1 # version and build number for this application.
 
 environment:
   sdk: ^3.9.2
-  flutter: ^3.38.5
+  flutter: 3.38.5
 
 dependencies:
   flutter:
