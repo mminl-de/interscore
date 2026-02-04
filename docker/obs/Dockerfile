@@ -39,7 +39,7 @@ WORKDIR /app
 # Copy optional OBS config/scripts
 RUN mkdir -p /root/.config/ \
  && mkdir -p /root/replays/
-COPY docker-new/obs/obs-config/ /root/.config/obs-studio/
+COPY docker/obs/obs-config/ /root/.config/obs-studio/
 
 # Create virtual display and start OBS headless
 CMD bash -c "\
