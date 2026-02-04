@@ -49,7 +49,7 @@ jobs:
       - name: Build all compose services
         # uses the Docker Compose CLI shipped with Docker; this runs 'docker compose build'
         run: |
-          docker compose build --pull
+          docker compose -f docker/docker-compose.yml build --pull
 
       - name: Tag & push built images
         # This step:
@@ -69,7 +69,7 @@ jobs:
           echo "Tag: $SHA"
 
           # get list of services defined in compose
-          services=$(docker compose config --services)
+          services=$(docker compose -f docker/docker-compose.yml config --services)
           if [ -z "$services" ]; then
             echo "No services found in docker-compose.yml"
             exit 1
@@ -86,7 +86,7 @@ jobs:
             echo "Processing service: $svc"
 
             # image id produced by compose build for this service
-            imgid=$(docker compose images -q "$svc" 2>/dev/null || true)
+            imgid=$(docker compose -f docker/docker-compose.yml images -q "$svc" 2>/dev/null || true)
             if [ -z "$imgid" ]; then
               echo "Failed to get image id for service $svc"
               exit 1
