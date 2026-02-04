@@ -490,7 +490,7 @@ class _InputWindowState extends State<InputWindow> {
 				// borderColor: Theme.of(context).scaffoldBackgroundColor,
 				// color: Theme.of(context).buttonTheme.colorScheme?.secondary,
 				borderWidth: 1.5,
-				borderRadius: BorderRadius.circular(80),
+				borderRadius: BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40)),
 				isSelected: [
 					md.meta.widgets.scoreboard,
 					md.meta.widgets.gameplan,
