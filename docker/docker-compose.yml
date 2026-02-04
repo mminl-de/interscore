@@ -6,6 +6,7 @@ networks:
         - subnet: 172.28.0.0/16
 services:
   backend:
+	image: ghcr.io/mminl-de/interscore-backend
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
@@ -15,6 +16,7 @@ services:
     restart: unless-stopped
 
   ssh-tunnel:
+	image: ghcr.io/mminl-de/interscore-ssh-tunnel
     image: alpine:3.19
     container_name: ssh-tunnel
     restart: unless-stopped
@@ -31,6 +33,7 @@ services:
       "
 
   http-server:
+	image: ghcr.io/mminl-de/interscore-http-server
     build:
       context: ..
       dockerfile: docker/http-server/Dockerfile
@@ -40,6 +43,7 @@ services:
     restart: unless-stopped
 
   mediamtx:
+	image: ghcr.io/mminl-de/interscore-mediamtx
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     volumes:
@@ -51,6 +55,7 @@ services:
     restart: unless-stopped
 
   obs:
+	image: ghcr.io/mminl-de/obs
     build:
       context: ..
       dockerfile: docker/obs/Dockerfile
