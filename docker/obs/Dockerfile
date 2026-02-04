@@ -1,6 +1,9 @@
 # Stage 1: Base GUI + noVNC + Xvfb
 FROM ubuntu:24.04
 
+# This is needed so we link to the repo
+LABEL org.opencontainers.image.source="https://github.com/mminl-de/interscore"
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY=:99
 ENV DEBIAN_PRIORITY=critical
