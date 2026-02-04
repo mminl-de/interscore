@@ -13,6 +13,7 @@ class WSServer {
 	HttpServer? _server;
 	ValueNotifier<Matchday> _mdl;
 	bool readonly = true;
+	ValueNotifier<int> clientsConnected = ValueNotifier(0);
 
 	WSServer(this._url, this._mdl, {this.readonly = true});
 
@@ -44,12 +45,13 @@ class WSServer {
 			final client = await WebSocketTransformer.upgrade(req);
 			debugPrint("WS Server: upgraded client to WS");
 			_clients.add(client);
+			_updateClientCount();
 
 			// Listen is empty, because The server is write only.
 			// Writing clients should connect to the real backend!
 			client.listen(
 				_listen,
-				onDone: () => _clients.remove(client),
+				onDone: () { _clients.remove(client); _updateClientCount(); },
 				onError: (e) => debugPrint("grrr, client couldnt be connected properly!")
 			);
 		}
@@ -125,5 +127,9 @@ class WSServer {
 		for (final client in _clients) {
 			client.add(data);
 		}
+	}
+
+	void _updateClientCount() {
+		clientsConnected.value = _clients.length;
 	}
 }

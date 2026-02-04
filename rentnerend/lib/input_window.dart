@@ -36,6 +36,7 @@ class _InputWindowState extends State<InputWindow> {
 	RecommendedAction recAct = RecommendedAction.NOTHING;
 	late FixedExtentScrollController _controller;
 	Timer? _reconnectTimer;
+	bool _showWidgets = true;
 
 	@override
 	void initState() {
@@ -83,7 +84,7 @@ class _InputWindowState extends State<InputWindow> {
 
 	Future<void> startWS() async {
 		// TODO normally client connects to mminl.de!
-		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
+		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://localhost:8081", mdl);
 
 		await connectWS();
 
@@ -94,15 +95,17 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Future<void> connectWS() async {
+		debugPrint("connectWS: connecting... now: ${ws.clientConnected}");
 		ws.client.connect();
 		await Future.doWhile(() async {
 			await Future.delayed(Duration(milliseconds: 10));
 			return !ws.client.connected.value;
 		});
+		debugPrint("connectWS: connected? ${ws.clientConnected}");
 		if(!ws.clientConnected) return;
 
 		ws.client.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client.boss) {
+		while(mounted && !ws.client.boss.value) {
 			ws.client.sendSignal(MessageType.IM_THE_BOSS);
 			await Future.delayed(Duration(seconds: 10));
 		}
@@ -242,7 +245,11 @@ class _InputWindowState extends State<InputWindow> {
 
 		return Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
 			child: Column( children: [
-				Expanded(flex: 35, child: Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+				Expanded(flex: 35, child: Stack(fit: StackFit.expand, children: [
+					Align( alignment: Alignment.centerLeft, child:
+						BackButton(onPressed: () => Navigator.of(context).maybePop())),
+					Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))
+				])),
 				Expanded(flex: 65, child: Row( children: [
 					Expanded(
 						flex: 5,
@@ -282,15 +289,15 @@ class _InputWindowState extends State<InputWindow> {
 						)
 					),
 					// TODO NEW NOW
-					Expanded(
-						flex: 3,
-						child: SizedBox.expand(
-							child: buttonWithIcon(context, () {
-								this.connectWS();
-							}, Icons.arrow_circle_up,
-							highlighted: (recAct == RecommendedAction.GAME_NEXT))
-						)
-					),
+					//Expanded(
+					//	flex: 3,
+					//	child: SizedBox.expand(
+					//		child: buttonWithIcon(context, () {
+					//			this.connectWS();
+					//		}, Icons.arrow_circle_up,
+					//		highlighted: (recAct == RecommendedAction.GAME_NEXT))
+					//	)
+					//),
 				]))
 			])
 		);
@@ -440,7 +447,7 @@ class _InputWindowState extends State<InputWindow> {
 									mdl.value = md.timeReset(send: ws.sendSignal);
 								},
 							Icons.autorenew,
-							inverted: md.currentTime() == defTime
+							inverted: md.currentTime() == defTime && md.meta.time.paused // TODO approve this UI. Its lazy but look ok imo
 						)))
 					])),
 
@@ -472,37 +479,154 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Widget blockWidgets(Matchday md, RecommendedAction recAct) {
-		return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(scoreboard: !md.meta.widgets.scoreboard)));
-				ws.sendSignal(MessageType.DATA_META_WIDGETS);
-			}, Icons.arrow_downward_rounded, inverted: md.meta.widgets.scoreboard)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gameplan: !md.meta.widgets.gameplan)));
-				ws.sendSignal(MessageType.DATA_META_WIDGETS);
-			}, Icons.arrow_downward_rounded, inverted: md.meta.widgets.gameplan)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(liveplan: !md.meta.widgets.liveplan)));
-				ws.sendSignal(MessageType.DATA_META_WIDGETS);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.liveplan)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gamestart: !md.meta.widgets.gamestart)));
-				ws.sendSignal(MessageType.DATA_META_WIDGETS);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.gamestart)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(ad: !md.meta.widgets.ad)));
-				ws.sendSignal(MessageType.DATA_META_WIDGETS);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.widgets.ad)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(streamStarted: !(md.meta.obs.streamStarted ?? false))));
-				ws.sendSignal(MessageType.DATA_META_OBS);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.obs.streamStarted ?? false)),
-			Expanded(child: buttonWithIcon(context, () {
-				mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(replayStarted: !(md.meta.obs.replayStarted ?? false))));
-				ws.sendSignal(MessageType.DATA_META_OBS);
-			}, Icons.arrow_upward_rounded, inverted: md.meta.obs.replayStarted ?? false))
-			])
-		;
+
+	return Padding(padding: EdgeInsetsGeometry.symmetric(horizontal: 15), child: LayoutBuilder(builder: (context, constraints) {
+		const double borderThickness = 1.5;
+		final double totalBorderWidth = borderThickness * (7 + 1);
+		final double itemWidth = (constraints.maxWidth - totalBorderWidth) / 7;
+		return ToggleButtons(
+				constraints: BoxConstraints.expand(width: itemWidth),
+				renderBorder: true,
+				// borderColor: Theme.of(context).scaffoldBackgroundColor,
+				// color: Theme.of(context).buttonTheme.colorScheme?.secondary,
+				borderWidth: 1.5,
+				borderRadius: BorderRadius.circular(80),
+				isSelected: [
+					md.meta.widgets.scoreboard,
+					md.meta.widgets.gameplan,
+					md.meta.widgets.liveplan,
+					md.meta.widgets.gamestart,
+					md.meta.widgets.ad,
+					md.meta.obs.streamStarted ?? false,
+					md.meta.obs.replayStarted ?? false,
+				],
+				onPressed: (index) {
+					// Handle your logic based on index 0-6
+					setState(() {
+						if (index == 0)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(scoreboard: !md.meta.widgets.scoreboard)));
+						if (index == 1)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gameplan: !md.meta.widgets.gameplan)));
+						if (index == 2)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(liveplan: !md.meta.widgets.liveplan)));
+						if (index == 3)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(gamestart: !md.meta.widgets.gamestart)));
+						if (index == 4)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(widgets: md.meta.widgets.copyWith(ad: !md.meta.widgets.ad)));
+						if (index == 5)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(streamStarted: !(md.meta.obs.streamStarted ?? false))));
+						if (index == 6)
+							mdl.value = md.copyWith(meta: md.meta.copyWith(obs: md.meta.obs.copyWith(replayStarted: !(md.meta.obs.replayStarted ?? false))));
+						ws.sendSignal(MessageType.DATA_META_WIDGETS);
+					});
+				},
+				children: const [
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.scoreboard_rounded), Text("Scoreboard")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.table_rows_rounded), Text("Gameplan")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.leaderboard), Text("Liveplan")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.card_membership_rounded), Text("Gamestart")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.campaign_rounded), Text("Ad")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.podcasts_rounded), Text("Stream Started")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.replay_rounded), Text("Replay Started")]),
+				],
+			);
+		}));
+	}
+
+	Widget blockWSStatus(Matchday md) {
+		String? error;
+		Color c = Colors.green;
+		Function? f;
+		if(!ws.client.connected.value) {
+			error = "NOT CONNECTED TO BACKEND";
+			c = Colors.red;
+			f = () => connectWS();
+		} else if (!ws.client.boss.value) {
+			error = "CONNECTED BUT NOT BOSS";
+			c = Colors.orange;
+			f = () => ws.client.sendSignal(MessageType.IM_THE_BOSS);
+		} else if (ws.server.clientsConnected.value == 0) {
+			error = "NO PUBLIC WINDOW CONNECTED";
+			c = Colors.orange;
+		}
+		// TODO Add OBS, frontend connection status
+
+		final size = error == null ? 1 : 5;
+		return Expanded(flex: size, child:
+			Material(color: c, child: InkWell(
+      			onTap: f as void Function()?,
+      			child: SizedBox.expand(child:
+					FittedBox(
+						fit: BoxFit.contain,
+						child: Padding(
+							padding: const EdgeInsets.all(3.0),
+							child: Text( error ?? "", style: TextStyle(fontWeight: FontWeight.bold),
+							),
+						),
+					)
+				)
+			))
+		);
+	}
+
+	Map<ShortcutActivator, void Function()> shortcuts() {
+		return {
+			LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
+			LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyL): () {
+				Matchday next, old = mdl.value;
+				while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
+					old = next;
+				mdl.value = old;
+				ws.sendSignal(MessageType.DATA_META_GAME, md: old);
+			},
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowRight): () {
+				Matchday next, old = mdl.value;
+				while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
+					old = next;
+				mdl.value = old;
+				ws.sendSignal(MessageType.DATA_META_GAME, md: old);
+			},
+			LogicalKeySet(LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.digit1): () => mdl.value = mdl.value.goalRemoveLast(mdl.value.meta.game.sidesInverted ? 2 : 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.digit2): () => mdl.value = mdl.value.goalAdd(mdl.value.meta.game.sidesInverted ? 2 : 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.digit3): () => mdl.value = mdl.value.goalRemoveLast(mdl.value.meta.game.sidesInverted ? 1 : 2, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.digit4): () => mdl.value = mdl.value.goalAdd(mdl.value.meta.game.sidesInverted ? 1 : 2, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyS): () => mdl.value = mdl.value.setSidesInverted(!mdl.value.meta.game.sidesInverted, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(0, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart-1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart((mdl.value.currentFormatUnwrapped?.gameparts.length ?? 1) - 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.enter): () {
+				switch (recAct) {
+					case RecommendedAction.TIME_START:
+						togglePause(mdl.value);
+						break;
+					case RecommendedAction.GAMEPART_NEXT:
+						mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
+						break;
+					case RecommendedAction.GAME_NEXT:
+						mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index+1, send: ws.sendSignal);
+						break;
+					case RecommendedAction.NOTHING:
+						break;
+				}
+			}
+		};
 	}
 
 	@override
@@ -517,80 +641,37 @@ class _InputWindowState extends State<InputWindow> {
 				if(shouldClose == true) Navigator.of(context).pop();
 			},
 			child: CallbackShortcuts(
-				bindings: {
-					LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
-					LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyL): () {
-						Matchday next, old = mdl.value;
-						while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
-							old = next;
-						mdl.value = old;
-						ws.sendSignal(MessageType.DATA_META_GAME, md: old);
-					},
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowRight): () {
-						Matchday next, old = mdl.value;
-						while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
-							old = next;
-						mdl.value = old;
-						ws.sendSignal(MessageType.DATA_META_GAME, md: old);
-					},
-					LogicalKeySet(LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyJ): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowDown): () => mdl.value = mdl.value.timeChange(-20, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyK): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowUp): () => mdl.value = mdl.value.timeChange(20, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.digit1): () => mdl.value = mdl.value.goalRemoveLast(1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.digit2): () => mdl.value = mdl.value.goalAdd(1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.digit3): () => mdl.value = mdl.value.goalRemoveLast(2, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.digit4): () => mdl.value = mdl.value.goalAdd(2, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.keyS): () => mdl.value = mdl.value.setSidesInverted(!mdl.value.meta.game.sidesInverted, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(0, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.keyP): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart-1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart((mdl.value.currentFormatUnwrapped?.gameparts.length ?? 1) - 1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal),
-					LogicalKeySet(LogicalKeyboardKey.enter): () {
-						switch (recAct) {
-							case RecommendedAction.TIME_START:
-								togglePause(mdl.value);
-								break;
-							case RecommendedAction.GAMEPART_NEXT:
-								mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
-								break;
-							case RecommendedAction.GAME_NEXT:
-								mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index+1, send: ws.sendSignal);
-								break;
-							case RecommendedAction.NOTHING:
-								break;
-						}
-					}
-
-				},
+				bindings: shortcuts(),
 				child: Focus(
 					autofocus: true,
 					child: Scaffold(
-						appBar: AppBar(title: const Text('Input Window')),
 						body: ValueListenableBuilder<Matchday>(
 							valueListenable: mdl,
 							builder: (context, md, _) {
 								return Column(
 									children: [
+										AnimatedBuilder(
+											animation: Listenable.merge([ws.connection, ws.client.boss, ws.server.clientsConnected]),
+											builder: (conext, _) { return blockWSStatus(md); }),
 										Expanded(flex: 18, child: blockTeams(md, recAct)),
 										Expanded(flex: 25, child: blockGoals(md, recAct)),
 										Expanded(flex: 35, child: blockTime(md, recAct)),
-										Expanded(flex: 10, child: blockWidgets(md, recAct))
-										// Expanded(flex: 25, child: blockTeams(md, recAct)),
-										// Expanded(flex: 33, child: blockGoals(md, recAct)),
-										// Expanded(flex: 42, child: blockTime(md, recAct)),
+										Expanded(flex: 5, child: TextButton(
+											style: TextButton.styleFrom(
+												padding: EdgeInsets.zero,
+												tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+											),
+        									onPressed: () => setState(() => _showWidgets = !_showWidgets),
+        									child: LayoutBuilder(builder: (context, constraints) {
+      											return
+													Icon(
+														_showWidgets
+														? Icons.keyboard_arrow_down
+														: Icons.keyboard_arrow_up,
+													size: constraints.biggest.shortestSide);}
+        								))),
+										if (_showWidgets)
+        								  Expanded(flex: 10, child: blockWidgets(md, recAct)),
 									]
 								);
 							}

@@ -8,9 +8,9 @@ import 'lib.dart' as lib;
 abstract class WSClient {
 	final String url;
 	final ValueNotifier<Matchday> mdl;
-	bool boss = false;
 	final bool allowReadFrom, allowWriteTo;
 	final ValueNotifier<bool> connected = ValueNotifier(false);
+	final ValueNotifier<bool> boss = ValueNotifier(false);
 
 	WSClient(this.url, this.mdl, this.allowReadFrom, this.allowWriteTo);
 
@@ -29,7 +29,7 @@ abstract class WSClient {
 		if(msg[0] == MessageType.DATA_IM_BOSS.value) {
 			if(msg.length < 2) return;
 			debugPrint("Received DATA_IM_BOSS: ${msg[1] == 1}");
-			this.boss = msg[1] == 1 ? true : false;
+			boss.value = msg[1] == 1 ? true : false;
 		}
 		// Parse the message
 		if(allowReadFrom) _listenRead(msg);

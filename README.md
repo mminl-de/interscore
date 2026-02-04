@@ -95,37 +95,41 @@ Building and running:
 - FINAL³ translations
 
 ## rentnerend
-- URGENT rentnerend infos über connection
-- BUG goal hotkeys vertauscht (input_window)
-- zeit sollte rot werden (oder gelb), wenn pausiert (im public window)
-- BUG UI reset wird nicht geupdatet (input_window)
-- verletzungscounter
-- recv & send time handshake
-- URGENT widget pipelines:
-	- 5s this widget, 5s that
-	- absolute cinema
-- JSON-Creator GUI for non-technical users
+### JSON-Creator
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
-- FINAL make the streaming status button accurate
-- FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
-- FINAL Add cycleball.eu push support
-- FINAL Cards for Coaches: "Coach von Gifhorn 1 bekommt eine gelbe Karte"
-- FINAL Ads in public window, e.g. fullscreen video/picture during a pause
-- FINAL Next Game in public window, e.g. before the fullscreen ad during a pause
-- FINAL delte cards
 - FINAL² add export to Spielplan-pdf:
 	- we define a standard for what formular keys we expect
 	- users can upload their template only if their matches our standard:
 		- otherwise error dialog ig
 	- we export the results as a writable formular
 - FINAL² Add referees
+### Input Window
+- verletzungscounter
+- widget pipelines: 5s this widget, 5s that
+- JSON-Creator GUI for non-technical users
+- support and create more gameactions easily
+- FINAL make the streaming status button accurate
+- FINAL Add cycleball.eu push support
+- FINAL Cards for Coaches: "Coach von Gifhorn 1 bekommt eine gelbe Karte"
+- FINAL delte cards
+### Public Window
+- zeit sollte rot werden (oder gelb), wenn pausiert (im public window)
+- FINAL Reversing der anzeige im Anzeigefenster, je nach Position des Bildschirms/Beamers (maybe button anzeigen, wenn window im fokus?)
+- recv & send time handshake
+- FINAL Ads, e.g. fullscreen video/picture during a pause
+- FINAL Next Game in public window, e.g. before the fullscreen ad during a pause
 - FINAL³ IDEA Ansagen durch KI bei der Hälfte
-### Remoteend
+### Remote Window
 - FINAL Display Gamerelated information:
 	- Scoreboard Infos: Teams playing, Score, Time, Half
 	- Connection Status of all Clients (backend, rentnerend, frontend)
 	- OBS Scene / replay situation
+### Infoend
+- show connection status
+- zeit als bar um den oval rum
+- FINAL Info Window loggt wie viele leute da waren
+- FINAL Add Logo to Info Window
 
 ## backend
 
@@ -144,12 +148,6 @@ Building and running:
 - Explore "hotkeys": {"ObsBrowser.Refresh"} option and others to hot reload frontend/rmtp stream etc.
 - FINAL Add different replay possibilities (?? make setting for: speed of replay, length of replay)
 - FINAL Allow changing/select Streaming Service
-
-## Infoend
-- show connection status
-- zeit als bar um den oval rum
-- FINAL Info Window loggt wie viele leute da waren
-- FINAL Add Logo to Info Window
 
 ## interscore.mminl.de
 - UX improvement: look like frontend

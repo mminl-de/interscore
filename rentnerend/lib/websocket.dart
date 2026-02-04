@@ -16,7 +16,7 @@ class InterscoreWS {
 	// This is needed, so Matchday can be updated and trigger a UI redraw
 	// Also we need the Matchday informations in sendSignal() to send them
 	late final ValueNotifier<Matchday> _mdl;
-	ValueNotifier<bool>? get connection => client.connected;
+	ValueNotifier<bool> get connection => client.connected;
 
 	// We have to use a "factory" so the constructor can be async
 	InterscoreWS(String server_url, String client_url, this._mdl) {
