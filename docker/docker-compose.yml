@@ -16,7 +16,6 @@ services:
     restart: unless-stopped
 
   ssh-tunnel:
-    image: ghcr.io/mminl-de/interscore-ssh-tunnel
     image: alpine:3.19
     container_name: ssh-tunnel
     restart: unless-stopped
@@ -43,7 +42,6 @@ services:
     restart: unless-stopped
 
   mediamtx:
-    image: ghcr.io/mminl-de/interscore-mediamtx
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     volumes:
