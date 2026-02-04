@@ -6,7 +6,7 @@ networks:
         - subnet: 172.28.0.0/16
 services:
   backend:
-    image: ghcr.io/mminl-de/interscore-backend
+    image: mrminede/interscore-backend
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
@@ -32,7 +32,7 @@ services:
       "
 
   http-server:
-    image: ghcr.io/mminl-de/interscore-http-server
+    image: mrminede/interscore-http-server
     build:
       context: ..
       dockerfile: docker/http-server/Dockerfile
@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
 
   obs:
-    image: ghcr.io/mminl-de/obs
+    image: mrminede/obs
     build:
       context: ..
       dockerfile: docker/obs/Dockerfile
