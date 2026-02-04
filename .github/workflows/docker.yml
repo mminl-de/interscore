@@ -1,4 +1,4 @@
-name: Build & Push Compose Images
+name: docker
 
 # run on pushes to main and on tags; adjust to taste
 on:
