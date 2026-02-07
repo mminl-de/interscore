@@ -5,6 +5,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 
 import 'md.dart';
 import 'ws_client.dart';
+import 'MessageType.dart';
 
 
 class InfoWindow extends StatefulWidget {
@@ -20,6 +21,7 @@ class InfoWindow extends StatefulWidget {
 class _InfoWindowState extends State<InfoWindow> {
 	late ValueNotifier<Matchday> mdl;
 	late WSClient ws;
+	late Timer _reconnectTimer;
 
 	@override
 	void initState() {
@@ -28,9 +30,9 @@ class _InfoWindowState extends State<InfoWindow> {
 		mdl = widget.mdl;
 		ws = widget.ws;
 
-		ws.connected.addListener(() {
+		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!ws.connected.value && mounted) {
-				Navigator.of(context).pop();
+				connectWS();
 			}
 		});
 
@@ -40,11 +42,24 @@ class _InfoWindowState extends State<InfoWindow> {
 	@override
 	void dispose() {
 		_timer?.cancel();
+		_reconnectTimer.cancel();
 
 		ws.close();
 		mdl.dispose();
 
 		super.dispose();
+	}
+
+	Future<void> connectWS() async {
+		ws.connect();
+		// TODO add quitting after 1sec or smth
+		await Future.doWhile(() async {
+			await Future.delayed(Duration(milliseconds: 10));
+			return !ws.connected.value;
+		});
+		if(!ws.connected.value) return;
+
+		ws.sendSignal(MessageType.DATA_JSON);
 	}
 
 	final textGroup = AutoSizeGroup();
@@ -97,7 +112,7 @@ class _InfoWindowState extends State<InfoWindow> {
 							Padding(padding: EdgeInsetsGeometry.all(5), child:
 								Container(
 									decoration: BoxDecoration(
-										color: md.meta.time.paused ? Colors.red : Colors.green,
+										color: md.meta.time.paused ? Colors.yellow : Colors.green,
 										borderRadius: BorderRadius.circular(40),
 									),
 									child: ValueListenableBuilder<int>(
@@ -107,7 +122,7 @@ class _InfoWindowState extends State<InfoWindow> {
 											final String curTimeSec = (time % 60).toString().padLeft(2, '0');
 											final curTimeString = "${curTimeMin}:${curTimeSec}";
 
-											return Center(child: AutoSizeText(group: textGroup, curTimeString));
+											return Center(child: AutoSizeText(group: textGroup, curTimeString, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)));
 										}
 									)
 								)
@@ -157,14 +172,13 @@ class _InfoWindowState extends State<InfoWindow> {
 			}
 		}
 
-		return Padding(
-			padding: EdgeInsetsGeometry.symmetric(vertical: 2, horizontal: 20),
-			child: Container(
+		return Container(
 				decoration: BoxDecoration(
-					color: md.currentGame == g ? Colors.white.withValues(alpha: 0.3): bg,
-					borderRadius: BorderRadius.circular(40),
+					color: md.currentGame == g ? Colors.white.withValues(alpha: 0.3) : null,
 				),
-				child: Row(children: [
+				child: Padding(
+					padding: EdgeInsetsGeometry.symmetric(vertical: 5),
+					child: Row(children: [
 						Expanded(flex: 10, child: Center(child: Padding(padding: EdgeInsetsGeometry.only(left: 5), child: AutoSizeText(group: textGroup, maxLines: 1, g.name)))),
 						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t1name))),
 						Expanded(flex: 20, child: Center(child: AutoSizeText.rich(group: textGroup, maxLines: 1, softWrap: true,
@@ -177,66 +191,30 @@ class _InfoWindowState extends State<InfoWindow> {
 						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t2name)))
 				]),
 			)
-
 		);
 	}
 
 	Widget blockGameplan(Matchday md, Color bg) {
-		return Column(children:
-			List.generate(
-				md.games.length,
-				(i) => blockGame(md, md.games[i], i, bg)
+		return Padding(
+			padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 40),
+			child: Material(
+				color: bg,
+				borderRadius: BorderRadius.circular(13),
+				clipBehavior: Clip.hardEdge,
+				child: Column(
+					mainAxisSize: MainAxisSize.min,
+					children: [
+						for(int i=0; i < md.games.length; i++) ...[
+							if (i > 0)
+								const Divider(height: 1, thickness: 0.5, color: Colors.white),
+							blockGame(md, md.games[i], i, bg)
+						]
+					]
+				)
 			)
 		);
 	}
 
-	// Widget blockLivetableTeam(Matchday md, Group g, Team t) {
-	// 	final games_amount = md.teamGamesPlayed(t.name, g.name).length;
-	// 	final games_won = md.teamGamesWon(t.name, g.name).length;
-	// 	final games_tied = md.teamGamesTied(t.name, g.name).length;
-	// 	final games_lost = md.teamGamesLost(t.name, g.name).length;
-	// 	final goals_plus = md.teamGoalsPlus(t.name, g.name);
-	// 	final goals_minus = md.teamGoalsMinus(t.name, g.name);
-
-	// 	const style = TextStyle( fontFeatures: [FontFeature.tabularFigures()]);
-
-	// 	return Padding(
-	// 		padding: EdgeInsetsGeometry.symmetric(vertical: 2, horizontal: 20),
-	// 		child: Container(
-	// 			decoration: BoxDecoration(
-	// 				color: md.currentGame == g ? Colors.white: Colors.black,
-	// 				borderRadius: BorderRadius.circular(40),
-	// 			),
-	// 			child: Row(children: [
-	// 				Expanded(flex: 20, child:
-	// 					Padding(padding: EdgeInsetsGeometry.all(4), child:
-	// 						Container(
-	// 							decoration: BoxDecoration(
-	// 								color: colorFromHexString(t.color),
-	// 								borderRadius: BorderRadius.circular(40),
-	// 							),
-	// 							child: Padding(padding: EdgeInsetsGeometry.only(left: 3), child: Text(style: style, t.name)),
-	// 						)
-	// 					)
-	// 				),
-	// 				Expanded(flex: 20, child: SizedBox()),
-	// 				Expanded(flex: 7, child: Text(style: style, "$games_amount")),
-	// 				Expanded(flex: 3, child: Text(style: style, "$games_won")),
-	// 				Expanded(flex: 3, child: Text(style: style, "$games_tied")),
-	// 				Expanded(flex: 15, child: Text(style: style, "$games_lost")),
-	// 				Expanded(flex: 10, child: Text(style: style, "$goals_plus : $goals_minus")),
-	// 				Expanded(flex: 15, child: Text(style: style, "${goals_plus-goals_minus}")),
-	// 				Expanded(flex: 10, child: Text(style: style, "${md.teamPoints(t.name, g.name)}")),
-	// 			])
-	// 		)
-	// 	);
-	// }
-
-	// Widget blockLivetable(Matchday md, Group g) {
-	// 	return Column(children:
-	// 		md.rankingFromGroup(g.name)!.entries.map((t) => blockLivetableTeam(md, g, md.teamFromName(t.key)!)).toList()
-	// 	);
-	// }
 	TableRow blockLivetableTeam(Matchday md, Group g, Team t, int index, Color bg) {
 		final gamesAmount = md.teamGamesPlayed(t.name, g.name).length;
 		final gamesWon = md.teamGamesWon(t.name, g.name).length;
@@ -258,19 +236,11 @@ class _InfoWindowState extends State<InfoWindow> {
 		return TableRow(
 			decoration: BoxDecoration(
 				color: index > 1 ? bg : Colors.green.withValues(alpha: 0.5),
-				borderRadius: BorderRadius.circular(40),
+				//borderRadius: BorderRadius.circular(40),
     		),
     		children: [
-				Container(
-					decoration: BoxDecoration(
-						// gradient: LinearGradient(
-						// 	colors: [colorFromHexString(t.color), Colors.black],
-						// 	stops: [0, 1],
-						// 	begin: Alignment.centerLeft,
-						// 	end: Alignment.centerRight,
-						// ),
-            			borderRadius: BorderRadius.only(topLeft: Radius.circular(40), bottomLeft: Radius.circular(40)),
-          			),
+      			Padding( padding: const EdgeInsets.symmetric(horizontal: 6), child: num(index+1)),
+				Padding(
 					padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
 					child: Text(t.name, style: style, maxLines: 1)
 				),
@@ -287,52 +257,74 @@ class _InfoWindowState extends State<InfoWindow> {
 
 
 	Widget blockLivetable(Matchday md, Group g, Color bg) {
-		return LayoutBuilder(
-			builder: (context, constraints) {
-				return SingleChildScrollView(
-					scrollDirection: Axis.horizontal,
-					child: ConstrainedBox(
-						constraints: BoxConstraints(minWidth: constraints.maxWidth),
-						child: Padding(
-							padding: const EdgeInsets.symmetric(horizontal: 5),
-    						child: Table(
-        						defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        						columnWidths: const {
-									0: FlexColumnWidth(),   // team
-          							1: IntrinsicColumnWidth(), // GP
-          							2: IntrinsicColumnWidth(), // W
-          							3: IntrinsicColumnWidth(), // D
-          							4: IntrinsicColumnWidth(), // L
-          							5: IntrinsicColumnWidth(), // goals
-          							6: IntrinsicColumnWidth(), // diff
-          							7: IntrinsicColumnWidth(), // pts
-								},
-        						children: [
-									TableRow( children: [
-										Padding(padding: const EdgeInsets.only(left: 12), child: Text("Team")),
-										Center(child: Text("SP")),
-										Center(child: Text("S")),
-										Center(child: Text("U")),
-										Center(child: Text("N")),
-										Center(child: Text("Tore")),
-										Center(child: Text("Diff")),
-										Center(child: Text("P")),
-									],
-								),
-								...md
-            						.rankingFromGroup(g.name)!
-            						.entries.toList().asMap().entries
-            						.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key, bg))
-            						.toList(),
-								]
-      						),
-    					),
-					)
-				);
-			}
+		return Padding(
+			padding: const EdgeInsets.symmetric(horizontal: 10),
+			child: Material(
+				color: bg,
+				borderRadius: BorderRadius.circular(13),
+				clipBehavior: Clip.hardEdge,
+				child: Padding(padding: const EdgeInsets.only(top: 4), child: Table(
+					defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+					columnWidths: const {
+						0: IntrinsicColumnWidth(), // GP
+						1: FlexColumnWidth(),   // team
+						2: IntrinsicColumnWidth(), // GP
+						3: IntrinsicColumnWidth(), // W
+						4: IntrinsicColumnWidth(), // D
+						5: IntrinsicColumnWidth(), // L
+						6: IntrinsicColumnWidth(), // goals
+						7: IntrinsicColumnWidth(), // diff
+						8: IntrinsicColumnWidth(), // pts
+					},
+					children: [
+						TableRow( children: [
+							Padding(padding: const EdgeInsets.only(left: 14), child: Text("P")),
+							Padding(padding: const EdgeInsets.only(left: 12), child: Text("Team")),
+							Center(child: Text("SP")),
+							Center(child: Text("S")),
+							Center(child: Text("U")),
+							Center(child: Text("N")),
+							Center(child: Text("Tore")),
+							Center(child: Text("Diff")),
+							Center(child: Text("P")),
+						],
+					),
+					...md
+					.rankingFromGroup(g.name)!
+					.entries.toList().asMap().entries
+					.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key, bg))
+					.toList(),
+					]
+				)),
+			)
 		);
 	}
 
+	Widget blockWSStatus(Matchday md) {
+		String? error;
+		Color c = Colors.green;
+		Function? f;
+		if(!ws.connected.value) {
+			error = "NOT CONNECTED TO SERVER";
+			c = Colors.red;
+			f = () => connectWS();
+		}
+
+		final double size = (error == null) ? 5 : 18;
+		return Material(color: c, child:
+			InkWell(
+      			onTap: f as void Function()?,
+				child: Container(
+					width: double.infinity,
+					child: Center(child: Text(
+					   	error ?? "",
+            		   	textAlign: TextAlign.center,
+            		   	style: TextStyle( fontWeight: FontWeight.bold, fontSize: size),
+					)),
+				),
+			)
+		);
+	}
 
 	@override
 	Widget build(BuildContext context) {
@@ -341,18 +333,26 @@ class _InfoWindowState extends State<InfoWindow> {
 		return PopScope(
 			child: Scaffold(
 				backgroundColor: Colors.black,
-				body: ValueListenableBuilder<Matchday>(
-					valueListenable: mdl,
-					builder: (context, md, _) {
-						return Column(
-							children: [
-								Expanded(flex: 3, child: Container(color: Colors.yellow, alignment: Alignment.center, child: Text(style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold,), "BETA"))),
-								Expanded(flex: 10, child: blockCurGame(md, secondBgColor)),
-								Expanded(flex: 40, child: blockGameplan(md, secondBgColor)),
-								Expanded(flex: 30, child: blockLivetable(md, md.groups[0], secondBgColor)),
-							]
-						);
-					}
+				body: SingleChildScrollView(
+					child: ValueListenableBuilder<Matchday>(
+						valueListenable: mdl,
+						builder: (context, md, _) {
+							return Column(
+								mainAxisSize: MainAxisSize.min,
+								children: [
+									ValueListenableBuilder<bool>(
+										valueListenable: ws.connected,
+										builder: (context, _, __) {
+											return blockWSStatus(md);
+										}
+									),
+									blockCurGame(md, secondBgColor),
+									blockGameplan(md, secondBgColor),
+									blockLivetable(md, md.groups[0], secondBgColor),
+								]
+							);
+						}
+					)
 				)
 			)
 		);
