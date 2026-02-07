@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'lib.dart' as lib;
 
 abstract class WSClient {
-	final String url;
+	String url;
 	final ValueNotifier<Matchday> mdl;
 	final bool allowReadFrom, allowWriteTo;
 	final ValueNotifier<bool> connected = ValueNotifier(false);
@@ -216,6 +216,10 @@ abstract class WSClient {
 		if(msg == null) return;
 
 		send(msg);
+	}
+
+	void setUrl(final String url) {
+		this.url = url;
 	}
 
 	Future<void> connect();

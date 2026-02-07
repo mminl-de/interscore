@@ -37,6 +37,8 @@ class _InputWindowState extends State<InputWindow> {
 	late FixedExtentScrollController _controller;
 	Timer? _reconnectTimer;
 	bool _showWidgets = true;
+	final FocusNode _urlEditFocus = FocusNode();
+	late final TextEditingController _urlEditController;
 
 	@override
 	void initState() {
@@ -58,12 +60,16 @@ class _InputWindowState extends State<InputWindow> {
 			setState(() => recAct = calcRecommendedAction(mdl.value));
 		});
 
-		_controller = FixedExtentScrollController(initialItem: mdl.value.meta.game.gamepart);
-
 		setState(() => recAct = calcRecommendedAction(mdl.value));
 
 		startWS();
 		startTimer();
+
+		_controller = FixedExtentScrollController(initialItem: mdl.value.meta.game.gamepart);
+		_urlEditController = TextEditingController(text: ws.client.url);
+		_urlEditController.addListener(() {
+			ws.client.url = _urlEditController.text;
+		});
 	}
 
 	RecommendedAction calcRecommendedAction(Matchday md) {
@@ -117,6 +123,9 @@ class _InputWindowState extends State<InputWindow> {
 		remainingTime.dispose();
 
 		_reconnectTimer?.cancel();
+
+		_urlEditFocus.dispose();
+		_urlEditController.dispose();
 
 		ws.close();
 
@@ -541,35 +550,26 @@ class _InputWindowState extends State<InputWindow> {
 			error = "NOT CONNECTED TO BACKEND";
 			c = Colors.red;
 			f = () => connectWS();
-		} else if (!ws.client.boss.value) {
-			error = "CONNECTED BUT NOT BOSS";
-			c = Colors.orange;
-			f = () => ws.client.sendSignal(MessageType.IM_THE_BOSS);
-		} else if (ws.server.clientsConnected.value == 0) {
-			error = "NO PUBLIC WINDOW CONNECTED";
-			c = Colors.orange;
 		}
-		// TODO Add OBS, frontend connection status
 
 		final size = error == null ? 1 : 5;
 		return Expanded(flex: size, child:
 			Material(color: c, child: InkWell(
-      			onTap: f as void Function()?,
-      			child: SizedBox.expand(child:
-					FittedBox(
-						fit: BoxFit.contain,
-						child: Padding(
-							padding: const EdgeInsets.all(3.0),
-							child: Text( error ?? "", style: TextStyle(fontWeight: FontWeight.bold),
-							),
-						),
-					)
-				)
+      			onTap: f as void Function()?, child:
+				Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), child:
+					Stack(fit: StackFit.expand, alignment: Alignment.center, children: [
+						Center(child: Text(error ?? "",
+            		      textAlign: TextAlign.center,
+            		      style: const TextStyle( fontWeight: FontWeight.bold, fontSize: 18,),
+            		    )),
+					]),
+				),
 			))
 		);
 	}
 
 	Map<ShortcutActivator, void Function()> shortcuts() {
+		if(FocusManager.instance.primaryFocus == _urlEditFocus) return {};
 		return {
 			LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(send: ws.sendSignal),
