@@ -7,10 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
-import 'package:flutter_rentnerend/MessageType.dart';
-import 'package:flutter_rentnerend/lib.dart';
-import 'package:flutter_rentnerend/md.dart';
-import 'package:flutter_rentnerend/websocket.dart';
+import 'MessageType.dart';
+import 'lib.dart';
+import 'md.dart';
+import 'websocket.dart';
+import 'input_end_window.dart';
 
 enum RecommendedAction {
 	TIME_START,
@@ -77,7 +78,7 @@ class _InputWindowState extends State<InputWindow> {
 		// debugPrint("calcRecommend: paused: ${md.meta.time.paused}, time: ${md.meta.currentTime}, gamepart: ${md.meta.game.gamepart} (MAX: ${md.currentFormatUnwrapped!.gameparts.length - 1})");
 		if(md.meta.time.paused && md.meta.time.remaining == 0) {
 			if(md.currentFormatUnwrapped!.gameparts.length - 1 == md.meta.game.gamepart ||
-			  ((md.gamepartFromIndex(md.meta.game.gamepart+1)?.decider ?? false) && md.currentGame.winner != 0))
+			  ((md.gamepartFromIndex(md.meta.game.gamepart+1)?.decider ?? false) && md.currentGame!.winner != 0))
 				recAct = RecommendedAction.GAME_NEXT;
 			else
 				recAct = RecommendedAction.GAMEPART_NEXT;
@@ -135,19 +136,54 @@ class _InputWindowState extends State<InputWindow> {
 		super.dispose();
 	}
 
-	// returns if the window should close
-	Future<bool> onWindowClose() async {
-		final result = await showDialog<int>(
+	Future<int> dialog(final String title, final String description, final List<String> options, {final int def = 0}) async {
+		return await showDialog<int>(
 			context: context,
 			builder: (context) => AlertDialog(
-				title: const Text("Save?"),
-				content: const Text("Do you want to save? This will overwrite the original"),
+				title: Text(title),
+				content: Text(description),
 				actions: [
-				TextButton(onPressed: () => Navigator.pop(context, 0), child: const Text("Stay")),
-				TextButton(onPressed: () => Navigator.pop(context, 1), child: const Text("Don't Save")),
-				TextButton(onPressed: () => Navigator.pop(context, 2), child: const Text("Save")),
+					for(int i=0; i < options.length; i++)
+						TextButton(onPressed: () => Navigator.pop(context, i), child: Text(options[i])),
 				],
 			),
+		) ?? def;
+	}
+
+	Future<void> gotoEndscreen() async {
+		bool end = true;
+		Matchday md = mdl.value;
+		// TODO when can currentFormat fail and what to do about it
+		if( md.meta.game.gamepart != md.currentFormat!.gameparts.length-1
+		 || md.meta.time.paused == false
+		 || md.meta.time.remaining != 0) {
+			end = await dialog(
+				"Spieltag beenden?",
+				"Es sieht so aus, als würde das aktuelle Spiel noch laufen.\n"
+				"Bist du sicher, dass du den Spieltag trotzdem beenden willst?\n"
+				"Die Ergebnisse werden gespeichert und du kannst jederzeit zurückgehen, allerdings wird die Zeit gestoppt!",
+				["Hier bleiben", "Trotzem beenden"]
+			) == 1 ? true : false;
+		}
+
+		if(!end) return;
+		else {
+			mdl.value = mdl.value.setPause(true, send: ws.sendSignal);
+			// Save the json
+			inputJsonWrite(mdl.value);
+			deleteMatchdayStateFile();
+
+			mdl.value = mdl.value.setEnded(true, send: ws.sendSignal);
+			Navigator.push(context, MaterialPageRoute<void>(builder: (context) => InputEndWindow(mdl: mdl, ws: ws)));
+		}
+	}
+
+	// returns if the window should close
+	Future<bool> onWindowClose() async {
+		final result = await dialog(
+			"Save?",
+			"Do you want to save? This will overwrite the original",
+			["Stay", "Don't Save", "Save"]
 		);
 
 		if (result == 2) {
@@ -155,7 +191,7 @@ class _InputWindowState extends State<InputWindow> {
 			deleteMatchdayStateFile();
 		} else if (result == 1)
 			deleteMatchdayStateFile();
-		else if (result == null || result == 0)
+		else if (result == 0)
 			return false;
 
 		return true;
@@ -229,17 +265,17 @@ class _InputWindowState extends State<InputWindow> {
 	final teamsTextGroup = AutoSizeGroup();
 	Widget blockTeams(Matchday md, RecommendedAction recAct) {
 
-		String t1name = md.currentGame.team1.whenOrNull(
+		String t1name = md.currentGame!.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame.team2.whenOrNull(
+		String t2name = md.currentGame!.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		final String gameName = md.currentGame.name;
+		final String gameName = md.currentGame!.name;
 
 		if(md.meta.game.sidesInverted) {
 			final tmp = t1name;
@@ -292,7 +328,10 @@ class _InputWindowState extends State<InputWindow> {
 						// height: teamsHeight, // use max height
 						child: SizedBox.expand(
 							child: buttonWithIcon(context, () {
-								mdl.value = md.setGameIndex(md.meta.game.index+1, send: ws.sendSignal);
+								if(md.meta.game.index == md.games.length-1)
+									gotoEndscreen();
+								else
+									mdl.value = md.setGameIndex(md.meta.game.index+1, send: ws.sendSignal);
 							}, Icons.arrow_forward_rounded,
 							highlighted: (recAct == RecommendedAction.GAME_NEXT))
 						)
@@ -327,7 +366,7 @@ class _InputWindowState extends State<InputWindow> {
 						mdl.value = md.goalAdd(t1, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded)),
 					Expanded(flex: 70, child: Center(child:
-						AutoSizeText(md.currentGame.teamGoals(t1).toString(),
+						AutoSizeText(md.currentGame!.teamGoals(t1).toString(),
 						maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
 						mdl.value = md.goalRemoveLast(t1, send: ws.sendSignal);
@@ -400,7 +439,7 @@ class _InputWindowState extends State<InputWindow> {
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
 						mdl.value = md.goalAdd(t2, send: ws.sendSignal);
 					}, Icons.arrow_upward_rounded)),
-					Expanded(flex: 70, child: Center(child: AutoSizeText(md.currentGame.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
+					Expanded(flex: 70, child: Center(child: AutoSizeText(md.currentGame!.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
 					Expanded(flex: 15, child: buttonWithIcon(context, () {
 						mdl.value = md.goalRemoveLast(t2, send: ws.sendSignal);
 					}, Icons.arrow_downward_rounded)),
@@ -550,6 +589,13 @@ class _InputWindowState extends State<InputWindow> {
 			error = "NOT CONNECTED TO BACKEND";
 			c = Colors.red;
 			f = () => connectWS();
+		} else if (!ws.client.boss.value) {
+			error = "CONNECTED BUT NOT BOSS";
+			c = Colors.orange;
+			f = () => ws.client.sendSignal(MessageType.IM_THE_BOSS);
+		} else if (ws.server.clientsConnected.value == 0) {
+			error = "NO PUBLIC WINDOW CONNECTED";
+			c = Colors.orange;
 		}
 
 		final size = error == null ? 1 : 5;
@@ -576,20 +622,32 @@ class _InputWindowState extends State<InputWindow> {
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
 			LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
-			LogicalKeySet(LogicalKeyboardKey.keyL): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
-			LogicalKeySet(LogicalKeyboardKey.arrowRight): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal),
+			LogicalKeySet(LogicalKeyboardKey.keyL): () {
+				if(mdl.value.meta.game.index == mdl.value.games.length-1)
+					gotoEndscreen();
+				else
+					mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal);
+			},
+			LogicalKeySet(LogicalKeyboardKey.arrowRight): () {
+				if(mdl.value.meta.game.index == mdl.value.games.length-1)
+					gotoEndscreen();
+				else
+					mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index + 1, send: ws.sendSignal);
+			},
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(0, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyL): () {
+				// We need to do this, because if we go to the last game, we may cant resolve it
 				Matchday next, old = mdl.value;
-				while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
+				while(old.meta.game.index < old.games.length-1 && (next = old.setGameIndex(old.meta.game.index + 1)) != old)
 					old = next;
 				mdl.value = old;
 				ws.sendSignal(MessageType.DATA_META_GAME, md: old);
 			},
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.arrowRight): () {
+				// We need to do this, because if we go to the last game, we may cant resolve it
 				Matchday next, old = mdl.value;
-				while((next = old.setGameIndex(old.meta.game.index + 1)) != old)
+				while(old.meta.game.index < old.games.length-1 && (next = old.setGameIndex(old.meta.game.index + 1)) != old)
 					old = next;
 				mdl.value = old;
 				ws.sendSignal(MessageType.DATA_META_GAME, md: old);
@@ -620,7 +678,10 @@ class _InputWindowState extends State<InputWindow> {
 						mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
 						break;
 					case RecommendedAction.GAME_NEXT:
-						mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index+1, send: ws.sendSignal);
+						if(mdl.value.meta.game.index == mdl.value.games.length-1)
+							gotoEndscreen();
+						else
+							mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index+1, send: ws.sendSignal);
 						break;
 					case RecommendedAction.NOTHING:
 						break;
@@ -648,6 +709,7 @@ class _InputWindowState extends State<InputWindow> {
 						body: ValueListenableBuilder<Matchday>(
 							valueListenable: mdl,
 							builder: (context, md, _) {
+								if(md.meta.game.ended) return Column();
 								return Column(
 									children: [
 										AnimatedBuilder(

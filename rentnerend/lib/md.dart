@@ -33,15 +33,18 @@ class Matchday with _$Matchday {
 		}
 	}
 
-	Game get currentGame {
+	Game? get currentGame {
+		if(meta.game.ended) return null;
 		final i = meta.game.index;
 		return games[i];
 	}
 
 	Format? get currentFormat {
-		final Format? f = formatFromName(currentGame.format.name);
+		final g = currentGame;
+		if(g == null) return null;
+		final Format? f = formatFromName(g.format.name);
 		if(f == null) return null;
-		return f.copyWith(gameparts: f.gameparts.where((gp) => (!gp.decider || currentGame.format.decider)).toList());
+		return f.copyWith(gameparts: f.gameparts.where((gp) => (!gp.decider || g.format.decider)).toList());
 	}
 
 	Format? get currentFormatUnwrapped {
@@ -55,7 +58,16 @@ class Matchday with _$Matchday {
 	}
 
 	Matchday setGameIndex(final int index, {final bool applySideEffects = true, final void Function(MessageType, {Matchday? md})? send = null}) {
-		if (index < 0 || index >= games.length) return this;
+		Matchday md;
+		if (index < 0) return this;
+		if (index >= games.length) {
+			md = copyWith(meta: meta.copyWith(game: meta.game.copyWith(ended: true)));
+			send?.call(MessageType.DATA_META_GAME, md: md);
+			return md;
+		}
+		else if (meta.game.ended)
+			md = copyWith(meta: meta.copyWith(game: meta.game.copyWith(ended: false)));
+
 		debugPrint("Setting Gameindex: ${meta.game.index} -> ${index}");
 		// Now we resolve the GameTeamSlot.byQueryResolved -> GameTeamSlot.byQuery
 		// from the last game, because they arent resolved anymore
@@ -79,7 +91,7 @@ class Matchday with _$Matchday {
 				team2: t2,
 			);
 		}
-		Matchday md = copyWith(games: new_games, meta: meta.copyWith(game: meta.game.copyWith(index: index)));
+		md = copyWith(games: new_games, meta: meta.copyWith(game: meta.game.copyWith(index: index)));
 		if(applySideEffects && md.meta.time.paused && md.currentTime() == 0)
 			md = md.setCurrentGamepart(0, send: send);
 
@@ -194,6 +206,12 @@ class Matchday with _$Matchday {
 		return md;
 	}
 
+	Matchday setEnded(final bool ended, {final void Function(MessageType, {Matchday? md})? send = null}) {
+		final md = copyWith(meta: meta.copyWith(game: meta.game.copyWith(ended: ended)));
+		send?.call(MessageType.DATA_META_GAME, md: md);
+		return md;
+	}
+
 	// Returns a Map with Team and an associated integer to it.
 	// This allows e.g. for 2 teams who are equally ranked
 	Map<String, int>? rankingFromGroup(final String groupName) {
@@ -226,10 +244,11 @@ class Matchday with _$Matchday {
 
 	// Gives back Map of all games the team played and an
 	Map<Game, int> teamGamesPlayed(final String t, final String group) {
+		final gamesAmount = meta.game.ended ? games.length : meta.game.index;
 		if (groupFromName(group) == null); // TODO crash the program?
 
 		Map<Game, int> gamesPlayed = Map<Game, int>();
-		for(int i=0; i < meta.game.index; i++) {
+		for(int i=0; i < gamesAmount; i++) {
 			final Game game = games[i];
 			if (game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
 			int? gameTeamIndex;
@@ -263,7 +282,7 @@ class Matchday with _$Matchday {
 	Map<Game, int> teamGamesLost(final String t, final String g) {
 		Map<Game, int> played = teamGamesPlayed(t, g);
 		played.removeWhere((g, gameTeamIndex) {
-			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) > 0;
+			return g.teamGoals(gameTeamIndex) - g.teamGoals(gameTeamIndex == 1 ? 2 : 1) >= 0;
 		});
 		return played;
 	}
@@ -332,7 +351,7 @@ class Matchday with _$Matchday {
 class Meta with _$Meta {
 	@JsonSerializable(includeIfNull: false)
 	const factory Meta({
-		@Default(MetaGame(index: 0, gamepart: 0, sidesInverted: false))
+		@Default(MetaGame(index: 0, gamepart: 0, sidesInverted: false, ended: false))
 		MetaGame game,
 		@Default(MetaTime(paused: true, remaining: 0, lastUnpaused: 0, delay: 0))
 		MetaTime time,
@@ -355,6 +374,7 @@ class MetaGame with _$MetaGame {
 		// The normal side switching is done through formats!
 		// This is still needed, because maybe the teams are standing the other way around at the beginning
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool ended,
 	}) = _MetaGame;
 
 	factory MetaGame.fromJson(Map<String, dynamic> json) => _$MetaGameFromJson(json);

@@ -105,22 +105,23 @@ class _PublicWindowState extends State<PublicWindow> {
 	}
 
 	Widget blockTeams(Matchday md) {
+		Game g = md.currentGame ?? md.games[md.games.length-1];
 		// We invert by default
-		String t1name = md.currentGame.team2.whenOrNull(
+		String t1name = g.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame.team1.whenOrNull(
+		String t2name = g.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
 		final int inverted = ((md.meta.game.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
-		final int t1_score = md.currentGame.teamGoals(2 - inverted);
-		final int t2_score = md.currentGame.teamGoals(1 + inverted);
+		final int t1_score = g.teamGoals(2 - inverted);
+		final int t2_score = g.teamGoals(1 + inverted);
 
-		final String gameName = md.currentGame.name;
+		final String gameName = g.name;
 
 		if(md.meta.game.sidesInverted) {
 			final tmp = t1name;
@@ -191,7 +192,8 @@ class _PublicWindowState extends State<PublicWindow> {
 			child: Scaffold(
 				body: ValueListenableBuilder<Matchday>(
 					valueListenable: mdl,
-					builder: (context, md, _) {
+					builder: (context, mdOld, _) {
+						final md = mdOld.setEnded(false, send: ws.sendSignal);
 						return Column(
 							children: [
 								Expanded(child: blockTeams(md)),

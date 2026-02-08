@@ -96,6 +96,7 @@ Building and running:
 
 ## rentnerend
 ### JSON-Creator
+- JSON-Creator GUI for non-technical users
 - @julian :) Import tournaments from cycleball.eu (and Radball.at when library is ready)
 - @julian FINAL Import Spieler, Teams, Vereine, Ligen, Schiedsrichter for custom tournaments from cycleball.eu (and Radball.at)
 - FINAL² add export to Spielplan-pdf:
@@ -107,7 +108,6 @@ Building and running:
 ### Input Window
 - verletzungscounter
 - widget pipelines: 5s this widget, 5s that
-- JSON-Creator GUI for non-technical users
 - support and create more gameactions easily
 - FINAL make the streaming status button accurate
 - FINAL Add cycleball.eu push support
@@ -126,12 +126,12 @@ Building and running:
 	- Connection Status of all Clients (backend, rentnerend, frontend)
 	- OBS Scene / replay situation
 ### Infoend
-- show connection status
+- know if boss is connected and if no, warn about incorrect info @backend
 - zeit als bar um den oval rum
-- FINAL Info Window loggt wie viele leute da waren
 - FINAL Add Logo to Info Window
 
 ## backend
+- FINAL loggt wie viele leute connecten (Info Window)
 
 ## Docker
 ### Misc

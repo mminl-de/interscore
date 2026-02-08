@@ -91,7 +91,6 @@ class _MyAppState extends State<MyApp> {
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
-								// TODO is true, true correct?
 								final ws = createWSClient("ws://mminl.de:8081", mdl, true, true);
 								await ws.connect();
 								await Future.doWhile(() async {
@@ -119,7 +118,7 @@ class _MyAppState extends State<MyApp> {
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
-								final ws = createWSClient("ws://mminl.de:8081", mdl, false, true);
+								final ws = createWSClient("ws://localhost:8081", mdl, false, true);
 								await ws.connect();
 								await Future.doWhile(() async {
 									await Future.delayed(Duration(milliseconds: 10));
