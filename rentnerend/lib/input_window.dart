@@ -569,13 +569,13 @@ class _InputWindowState extends State<InputWindow> {
 					});
 				},
 				children: const [
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.scoreboard_rounded), Text("Scoreboard")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.table_rows_rounded), Text("Gameplan")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.leaderboard), Text("Liveplan")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.card_membership_rounded), Text("Gamestart")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.campaign_rounded), Text("Ad")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.podcasts_rounded), Text("Stream Started")]),
-					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.replay_rounded), Text("Replay Started")]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.scoreboard_rounded), Text("Scoreboard", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.table_rows_rounded), Text("Gameplan", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.leaderboard), Text("Liveplan", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.card_membership_rounded), Text("Gamestart", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.campaign_rounded), Text("Ad", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.podcasts_rounded), Text("Stream Started", maxLines: 1, overflow: TextOverflow.ellipsis)]),
+					Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.replay_rounded), Text("Replay Started", maxLines: 1, overflow: TextOverflow.ellipsis)]),
 				],
 			);
 		}));
@@ -598,19 +598,20 @@ class _InputWindowState extends State<InputWindow> {
 			c = Colors.orange;
 		}
 
-		final size = error == null ? 1 : 5;
-		return Expanded(flex: size, child:
-			Material(color: c, child: InkWell(
+		if(error == null)
+			return SizedBox.fromSize(size: Size.fromHeight(10), child: ColoredBox(color: c));
+
+		return Material(color: c, child: InkWell(
       			onTap: f as void Function()?, child:
-				Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), child:
-					Stack(fit: StackFit.expand, alignment: Alignment.center, children: [
-						Center(child: Text(error ?? "",
-            		      textAlign: TextAlign.center,
-            		      style: const TextStyle( fontWeight: FontWeight.bold, fontSize: 18,),
-            		    )),
-					]),
-				),
-			))
+				SizedBox(height: 30, child:
+					Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), child:
+							Center(child: Text(error,
+            			      textAlign: TextAlign.center,
+            			      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            			    )),
+					),
+				)
+			)
 		);
 	}
 
@@ -690,6 +691,71 @@ class _InputWindowState extends State<InputWindow> {
 		};
 	}
 
+	Widget widgets(Matchday md) {
+		return CustomScrollView(slivers: [
+			SliverToBoxAdapter(child:
+				AnimatedBuilder(
+					animation: Listenable.merge([ws.connection, ws.client.boss, ws.server.clientsConnected]),
+					builder: (conext, _) { return blockWSStatus(md); }),
+			),
+			SliverLayoutBuilder( builder: (context, constraints) {
+				final double visibleHeight = constraints.remainingPaintExtent;
+
+				final double teamMinHeight = 120;
+				final double goalsMinHeight = 120;
+				final double timeMinHeight = 120;
+				final double toggleButtonMinHeight = 10;
+				final double widgetsMinHeight = 60;
+
+				final double allMinHeight
+					= teamMinHeight + goalsMinHeight + timeMinHeight
+					+ toggleButtonMinHeight + widgetsMinHeight;
+
+				final double minRequiredHeight = _showWidgets
+					? allMinHeight
+					: allMinHeight - widgetsMinHeight;
+
+				final double safeHeight = visibleHeight > minRequiredHeight
+					? visibleHeight
+					: minRequiredHeight;
+
+				return SliverToBoxAdapter(child: SizedBox(height: safeHeight, child:
+					Column(children: [
+						Expanded(flex: 20, child: Container(
+							constraints: BoxConstraints(minHeight: teamMinHeight),
+							child: blockTeams(md, recAct))),
+						Expanded(flex: 28, child: Container(
+							constraints: BoxConstraints(minHeight: goalsMinHeight),
+							child: blockGoals(md, recAct))),
+						Expanded(flex: 35, child: Container(
+							constraints: BoxConstraints(minHeight: timeMinHeight),
+							child: blockTime(md, recAct))),
+						Expanded(flex: 5, child: Container(
+							constraints: BoxConstraints(minHeight: toggleButtonMinHeight, maxWidth: 40),
+							child: TextButton(
+								style: TextButton.styleFrom(
+									padding: EdgeInsets.zero,
+									tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+								),
+								onPressed: () => setState(() => _showWidgets = !_showWidgets),
+								child: LayoutBuilder(builder: (context, constraints) {
+									return
+										Icon(
+											_showWidgets
+											? Icons.keyboard_arrow_down
+											: Icons.keyboard_arrow_up,
+										size: constraints.biggest.shortestSide);}
+							))
+						)),
+						if (_showWidgets)
+							Expanded(flex: 12, child: Container(
+								constraints: BoxConstraints(minHeight: widgetsMinHeight),
+								child: blockWidgets(md, recAct))),
+					])));
+			})
+		]);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		// debugPrint("Matchday: ${mdl.value}\n\n");
@@ -709,33 +775,13 @@ class _InputWindowState extends State<InputWindow> {
 						body: ValueListenableBuilder<Matchday>(
 							valueListenable: mdl,
 							builder: (context, md, _) {
-								if(md.meta.game.ended) return Column();
-								return Column(
-									children: [
-										AnimatedBuilder(
-											animation: Listenable.merge([ws.connection, ws.client.boss, ws.server.clientsConnected]),
-											builder: (conext, _) { return blockWSStatus(md); }),
-										Expanded(flex: 18, child: blockTeams(md, recAct)),
-										Expanded(flex: 25, child: blockGoals(md, recAct)),
-										Expanded(flex: 35, child: blockTime(md, recAct)),
-										Expanded(flex: 5, child: TextButton(
-											style: TextButton.styleFrom(
-												padding: EdgeInsets.zero,
-												tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-											),
-        									onPressed: () => setState(() => _showWidgets = !_showWidgets),
-        									child: LayoutBuilder(builder: (context, constraints) {
-      											return
-													Icon(
-														_showWidgets
-														? Icons.keyboard_arrow_down
-														: Icons.keyboard_arrow_up,
-													size: constraints.biggest.shortestSide);}
-        								))),
-										if (_showWidgets)
-        								  Expanded(flex: 10, child: blockWidgets(md, recAct)),
-									]
-								);
+								if(md.meta.game.ended) {
+									return TextButton(
+										child: Text("UNEND GAME"),
+										onPressed: () => mdl.value.setEnded(false, send: ws.sendSignal)
+									);
+								}
+								return widgets(md);
 							}
 						)
 					)
