@@ -52,14 +52,16 @@ class _InfoWindowState extends State<InfoWindow> {
 
 	Future<void> connectWS() async {
 		ws.connect();
-		// TODO add quitting after 1sec or smth
+		final start = DateTime.now();
 		await Future.doWhile(() async {
 			await Future.delayed(Duration(milliseconds: 10));
-			return !ws.connected.value;
+			return
+				!ws.connected.value
+         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
 		});
 		if(!ws.connected.value) return;
 
-		ws.sendSignal(MessageType.DATA_JSON);
+		ws.sendSignal(MessageType.PLS_SEND_JSON);
 	}
 
 	final textGroup = AutoSizeGroup();
@@ -347,7 +349,7 @@ class _InfoWindowState extends State<InfoWindow> {
 											return blockWSStatus(md);
 										}
 									),
-									if (!md.meta.game.ended && md.currentGame == null)
+									if (!md.meta.game.ended && md.currentGame != null)
 										blockCurGame(md, secondBgColor),
 									blockGameplan(md, secondBgColor),
 									blockLivetable(md, md.groups[0], secondBgColor),

@@ -47,16 +47,19 @@ class _InputEndWindowState extends State<InputEndWindow> {
 	}
 
 	Future<void> connectWS() async {
+		debugPrint("connectWS: connecting...");
 		ws.client.connect();
-		// TODO add quitting after 1sec or smth
+		final start = DateTime.now();
 		await Future.doWhile(() async {
 			await Future.delayed(Duration(milliseconds: 10));
-			return !ws.client.connected.value;
+			return
+				!ws.clientConnected
+         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
 		});
 		if(!ws.clientConnected) return;
 
-		ws.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client.boss.value) {
+		ws.client.sendSignal(MessageType.DATA_JSON);
+		while(mounted && !ws.client.boss.value && ws.client.connected.value) {
 			ws.client.sendSignal(MessageType.IM_THE_BOSS);
 			await Future.delayed(Duration(seconds: 10));
 		}
@@ -312,7 +315,7 @@ class _InputEndWindowState extends State<InputEndWindow> {
 													}
 												)
 											),
-											Center(child: Text("SPIELTAGS-ZUSAMMENFASSUNG", maxLines: 1, style: const TextStyle(fontSize: 25)))
+											Center(child: Padding(padding: EdgeInsets.only(left: 40), child: AutoSizeText("ERGEBNISSE", maxLines: 1, style: const TextStyle(fontSize: 25))))
 										]),
 										blockGameplan(md, secondBgColor),
 										blockLivetable(md, md.groups[0], secondBgColor),

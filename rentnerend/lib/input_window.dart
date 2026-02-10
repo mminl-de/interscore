@@ -97,22 +97,23 @@ class _InputWindowState extends State<InputWindow> {
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!mounted) return;
-			if(!ws.clientConnected) await connectWS();
+			if(!ws.clientConnected) connectWS();
 		});
 	}
 
 	Future<void> connectWS() async {
-		debugPrint("connectWS: connecting... now: ${ws.clientConnected}");
 		ws.client.connect();
+		final start = DateTime.now();
 		await Future.doWhile(() async {
 			await Future.delayed(Duration(milliseconds: 10));
-			return !ws.client.connected.value;
+			return
+				!ws.clientConnected
+         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
 		});
-		debugPrint("connectWS: connected? ${ws.clientConnected}");
 		if(!ws.clientConnected) return;
 
 		ws.client.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client.boss.value) {
+		while(mounted && !ws.client.boss.value && ws.client.connected.value) {
 			ws.client.sendSignal(MessageType.IM_THE_BOSS);
 			await Future.delayed(Duration(seconds: 10));
 		}
@@ -160,8 +161,8 @@ class _InputWindowState extends State<InputWindow> {
 			end = await dialog(
 				"Spieltag beenden?",
 				"Es sieht so aus, als würde das aktuelle Spiel noch laufen.\n"
-				"Bist du sicher, dass du den Spieltag trotzdem beenden willst?\n"
-				"Die Ergebnisse werden gespeichert und du kannst jederzeit zurückgehen, allerdings wird die Zeit gestoppt!",
+				"Bist du sicher, dass du den Spieltag trotzdem beenden willst?\n\n"
+				"Die Ergebnisse werden gespeichert und du kannst jederzeit zurückgehen, aber die Zeit wird gestoppt!",
 				["Hier bleiben", "Trotzem beenden"]
 			) == 1 ? true : false;
 		}
