@@ -1,6 +1,5 @@
 name: docker
 
-# run on pushes to main and on tags; adjust to taste
 on:
   push:
     branches: [ main ]
@@ -16,11 +15,8 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      # registry to push to. Change to docker.io if you prefer.
-      REGISTRY: ghcr.io
-      # owner that will own the pushed images. Defaults to repository owner.
-      OWNER: ${{ github.repository_owner }}
-      # short commit SHA tag
+      REGISTRY: docker.io
+      OWNER: mrminede
       COMMIT_SHORT: ${{ github.sha }}
     steps:
       - name: Shorten commit SHA
@@ -32,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up QEMU (optional for multi-arch builds)
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
@@ -41,103 +37,11 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          # For GHCR the GITHUB_TOKEN usually works. For Docker Hub use a secret (DOCKERHUB_USERNAME/DOCKERHUB_TOKEN).
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build all compose services
-        # uses the Docker Compose CLI shipped with Docker; this runs 'docker compose build'
-        run: |
-          docker compose -f docker/docker-compose.yml build --pull
+      - name: Build images
+        run: docker compose -f docker/docker-compose.yml build --pull
 
-      - name: Tag & push built images
-        run: |
-          set -euo pipefail
-
-          REGISTRY=${{ env.REGISTRY }}
-          OWNER=${{ env.OWNER }}
-          SHA=${{ env.COMMIT_SHORT }}
-          REPO_NAME=${{ github.event.repository.name }}
-
-          echo "Registry: $REGISTRY"
-          echo "Owner: $OWNER"
-          echo "Repo: $REPO_NAME"
-          echo "Tag: $SHA"
-
-          # list services defined in compose
-          services=$(docker compose -f docker/docker-compose.yml config --services)
-          if [ -z "$services" ]; then
-            echo "No services found in docker-compose.yml"
-            exit 1
-          fi
-
-          # decide whether to push 'latest' as well
-          push_latest=false
-          if [[ "${GITHUB_REF:-}" == "refs/heads/main" ]] || [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
-            push_latest=true
-          fi
-
-          for svc in $services; do
-            echo "Checking service: $svc"
-
-            # Extract IMAGE and whether a build: exists for this service from 'docker compose config'
-            svc_info=$(docker compose -f docker/docker-compose.yml config | awk -v svc="$svc" '
-              $0 ~ "services:" { in_services=1 }
-              in_services && $0 ~ "^[[:space:]]*"svc":" { in_svc=1; next }
-              in_svc && $0 ~ "^[[:space:]]*[^[:space:]]" { exit }
-              in_svc {
-                if ($1 == "image:") { gsub(/"/,"",$2); print "IMAGE="$2 }
-                if ($1 == "build:") { print "HASBUILD=1" }
-              }
-            ')
-
-            # evaluate the small KEY=VAL output (safe in CI)
-            unset IMAGE HASBUILD
-            eval "$svc_info" || true
-
-            # only process services that have both build: and image:
-            if [ -z "${IMAGE:-}" ] || [ -z "${HASBUILD:-}" ]; then
-              echo "Skipping $svc (requires both build: and image:)."
-              continue
-            fi
-
-            echo "Service $svc has build and image -> $IMAGE"
-
-            # determine source reference for tagging: prefer compose image id, then image:latest, then image (no tag)
-            src_ref=""
-            imgid=$(docker compose -f docker/docker-compose.yml images -q "$svc" 2>/dev/null || true)
-            if [ -n "$imgid" ]; then
-              src_ref="$imgid"
-            elif docker image inspect "$IMAGE:latest" >/dev/null 2>&1; then
-              src_ref="$IMAGE:latest"
-            elif docker image inspect "$IMAGE" >/dev/null 2>&1; then
-              src_ref="$IMAGE"
-            else
-              echo "No built image found for $svc (expected $IMAGE). Did the build step succeed?"
-              exit 1
-            fi
-
-            target="$REGISTRY/$OWNER/${REPO_NAME}-$svc:$SHA"
-            echo "Tagging $src_ref -> $target"
-            docker tag "$src_ref" "$target"
-
-            echo "Pushing $target"
-            docker push "$target"
-
-            if [ "$push_latest" = true ]; then
-              latest_tag="$REGISTRY/$OWNER/${REPO_NAME}-$svc:latest"
-              echo "Also tagging & pushing latest: $latest_tag"
-              docker tag "$src_ref" "$latest_tag"
-              docker push "$latest_tag"
-            fi
-
-            # clean up variables for next iteration
-            unset IMAGE HASBUILD src_ref imgid
-          done
-
-          echo "All done. Images pushed."
-
-      - name: Output pushed images
-        run: |
-          echo "Images pushed for commit $COMMIT_SHORT"
+      - name: Push images
+        run: docker compose -f docker/docker-compose.yml push
