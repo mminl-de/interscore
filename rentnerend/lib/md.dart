@@ -169,7 +169,10 @@ class Matchday with _$Matchday {
 	// Time can be positive or negative
 	Matchday timeReset({final void Function(MessageType, {Matchday? md})? send = null}) {
 		if (currentGamepart == null) return this;
-		int? defTime = currentGamepart!.whenOrNull(timed: (_, len, _, _, _) => len);
+		int? defTime = currentGamepart!.whenOrNull(
+			timed: (_, len, _, _, _) => len,
+			pause_timed: (_, len, _, _, _) => len
+		);
 		if (defTime == null) return this;
 		return timeChange(defTime - currentTime(), send: send);
 	}
