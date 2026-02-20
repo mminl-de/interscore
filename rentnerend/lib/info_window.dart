@@ -5,7 +5,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 
 import 'md.dart';
 import 'ws_client.dart';
-import 'MessageType.dart';
+import 'lib.dart' as lib;
 
 
 class InfoWindow extends StatefulWidget {
@@ -32,7 +32,7 @@ class _InfoWindowState extends State<InfoWindow> {
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!ws.connected.value && mounted) {
-				connectWS();
+				lib.connectWS(ws);
 			}
 		});
 
@@ -48,20 +48,6 @@ class _InfoWindowState extends State<InfoWindow> {
 		mdl.dispose();
 
 		super.dispose();
-	}
-
-	Future<void> connectWS() async {
-		ws.connect();
-		final start = DateTime.now();
-		await Future.doWhile(() async {
-			await Future.delayed(Duration(milliseconds: 10));
-			return
-				!ws.connected.value
-         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
-		});
-		if(!ws.connected.value) return;
-
-		ws.sendSignal(MessageType.PLS_SEND_JSON);
 	}
 
 	final textGroup = AutoSizeGroup();
@@ -310,7 +296,7 @@ class _InfoWindowState extends State<InfoWindow> {
 		if(!ws.connected.value) {
 			error = "NOT CONNECTED TO SERVER";
 			c = Colors.red;
-			f = () => connectWS();
+			f = () => lib.connectWS(ws);
 		}
 
 		final double size = (error == null) ? 5 : 18;

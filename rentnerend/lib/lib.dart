@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rentnerend/ws_client.dart';
 
 import 'dart:io';
 import 'dart:convert';
@@ -8,6 +9,36 @@ import 'package:path_provider/path_provider.dart';
 
 import 'MessageType.dart';
 import 'md.dart';
+
+const cornerDef = Radius.circular(20);
+
+class ToggleIconButton extends StatelessWidget {
+	final bool value;
+	final ValueChanged<bool> onChanged;
+
+	const ToggleIconButton({super.key, required this.value, required this.onChanged});
+
+	@override
+	Widget build(BuildContext context) {
+		return TextButton(
+			style: TextButton.styleFrom(
+				padding: EdgeInsets.zero,
+				tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+			),
+			onPressed: () => onChanged(!value),
+			child: LayoutBuilder(
+				builder: (context, constraints) {
+					return Icon(
+						value
+						  ? Icons.keyboard_arrow_down
+						  : Icons.keyboard_arrow_up,
+						size: constraints.biggest.shortestSide,
+					);
+				},
+			),
+		);
+	}
+}
 
 class ExpandableButton extends StatefulWidget {
 	final Widget child;
@@ -54,17 +85,58 @@ class _ExpandableButtonState extends State<ExpandableButton> {
 	}
 }
 
-Widget buttonWithIcon (BuildContext c, void Function()? onPressed, IconData icon, {bool inverted = false, bool highlighted = false}){
+Widget buttonWithIcon (
+	BuildContext c,
+	void Function()? onPressed,
+	IconData icon, {
+		bool inverted = false,
+		bool highlighted = false,
+		bool hidden = false,
+		BorderRadius borderRadius = const BorderRadius.only(
+			topLeft: cornerDef,
+			topRight: cornerDef,
+			bottomLeft: cornerDef,
+			bottomRight: cornerDef,
+		)
+	}
+){
 	const double maxHeight = 10000; // This value should be an unreachable height
 
-	return buttonWithChild(c, onPressed, FittedBox(fit: BoxFit.contain, child: Icon(icon, size: maxHeight)), inverted: inverted, highlighted: highlighted);
+	return buttonWithChild(
+		c,
+		onPressed,
+		FittedBox(
+			fit: BoxFit.contain,
+			child: Icon(icon, size: maxHeight)
+		),
+		inverted: inverted,
+		highlighted: highlighted,
+		hidden: hidden,
+		borderRadius: borderRadius);
 }
 
-Widget buttonWithChild (BuildContext c, void Function()? onPressed, Widget child, {bool inverted = false, bool highlighted = false, bool hidden = false}){
+Widget buttonWithChild (
+	BuildContext c,
+	void Function()? onPressed,
+	Widget child, {
+		bool inverted = false,
+		bool highlighted = false,
+		bool hidden = false,
+		BorderRadius borderRadius = const BorderRadius.only(
+			topLeft: cornerDef,
+			topRight: cornerDef,
+			bottomLeft: cornerDef,
+			bottomRight: cornerDef,
+		)
+	}
+){
 	final cs = Theme.of(c).colorScheme;
 
 	final style = ButtonStyle(
 		backgroundColor: WidgetStateProperty.resolveWith((states) {
+			if (states.contains(WidgetState.disabled))
+				return cs.onSurface.withValues(alpha: 0.02);
+
 			var c = inverted ? cs.primary.withValues(alpha: 0.7) : null;
 			if(!hidden) return c;
 			if(states.contains(WidgetState.hovered)) {
@@ -72,14 +144,20 @@ Widget buttonWithChild (BuildContext c, void Function()? onPressed, Widget child
 			}
 			return Colors.transparent;
 		}),
-		foregroundColor: WidgetStateProperty.resolveWith(
-			(states) { return inverted ? cs.onPrimary : null; }),
+		foregroundColor: WidgetStateProperty.resolveWith((states) {
+			if (states.contains(WidgetState.disabled))
+				return cs.onSurface.withValues(alpha: 0.1);
+			return inverted ? cs.onPrimary : null;
+		}),
 		padding: const WidgetStatePropertyAll(
 			EdgeInsets.symmetric(horizontal: 4, vertical: 4),	),
 		side: WidgetStateProperty.resolveWith(
 			(states) => highlighted
-				? const BorderSide(color: Colors.red, width: 2)
+				? const BorderSide(color: Colors.red, width: 4)
 				: BorderSide.none,
+		),
+		shape: WidgetStateProperty.resolveWith((states) =>
+			RoundedRectangleBorder(borderRadius: borderRadius)
 		)
 	);
 
@@ -342,6 +420,29 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo, int? 
 		return [msg.value];
 	}
 	// DATA_IM_BOSS should not be send by us because we are not a server!
+}
+
+Future<void> connectWS(final WSClient ws, {final bool boss = false}) async {
+	ws.connect();
+	final start = DateTime.now();
+	await Future.doWhile(() async {
+		await Future.delayed(Duration(milliseconds: 10));
+		return
+			!ws.connected.value
+     	 && DateTime.now().difference(start) < const Duration(seconds: 3);
+	});
+	if(!ws.connected.value) return;
+
+	if(!boss) {
+		ws.sendSignal(MessageType.PLS_SEND_JSON);
+		return;
+	}
+
+	ws.sendSignal(MessageType.DATA_JSON);
+	while(!ws.boss.value && ws.connected.value) {
+		ws.sendSignal(MessageType.IM_THE_BOSS);
+		await Future.delayed(Duration(seconds: 10));
+	}
 }
 
 final _rng = Random.secure();

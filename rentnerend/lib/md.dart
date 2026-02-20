@@ -198,6 +198,11 @@ class Matchday with _$Matchday {
 						return timeChange(defTime - currentTime(), send: send);
 					else return this;
 				},
+				pause_timed: (_, defTime, _, _, _) {
+					if(meta.time.paused)
+						return timeChange(defTime - currentTime(), send: send);
+					else return this;
+				},
 				orElse: () => this
 			);
 		}
@@ -710,6 +715,15 @@ class Gamepart with _$Gamepart {
 		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
 		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
 	}) = _GamepartTimed;
+
+	@JsonSerializable(includeIfNull: false)
+	const factory Gamepart.pause_timed({
+		required String name,
+		required int length,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool repeat,
+		@JsonKey(toJson: boolOrNullTrue) @Default(false) bool decider,
+		@JsonKey(name: 'sides_inverted', toJson: boolOrNullTrue) @Default(false) bool sidesInverted,
+	}) = _GamepartPauseTimed;
 
 	@JsonSerializable(includeIfNull: false)
 	const factory Gamepart.format({

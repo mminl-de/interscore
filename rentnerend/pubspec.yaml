@@ -20,6 +20,8 @@ dependencies:
   collection: ^1.18.0
   audioplayers: ^6.5.1
   just_audio: ^0.10.5
+  google_fonts: ^8.0.1
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +36,9 @@ fonts:
   - family: Kanit
     fonts:
       - asset: assets/fonts/Kanit-Regular.ttf
+  - family: Copperplate
+    fonts:
+      - asset: assets/Copperplate.otf
 
 flutter:
   uses-material-design: true # Material Icons font is included

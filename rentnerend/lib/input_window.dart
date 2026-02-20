@@ -2,19 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 //import 'package:just_audio/just_audio.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 import 'MessageType.dart';
-import 'lib.dart';
+import 'lib.dart' as lib;
 import 'md.dart';
 import 'websocket.dart';
 import 'input_end_window.dart';
 
 enum RecommendedAction {
-	TIME_START,
+	TIME_TOGGLE,
 	GAMEPART_NEXT,
 	GAME_NEXT,
 	NOTHING,
@@ -40,6 +42,7 @@ class _InputWindowState extends State<InputWindow> {
 	bool _showWidgets = true;
 	final FocusNode _urlEditFocus = FocusNode();
 	late final TextEditingController _urlEditController;
+	bool dialogMutex = false;
 
 	@override
 	void initState() {
@@ -48,7 +51,7 @@ class _InputWindowState extends State<InputWindow> {
 		mdl = ValueNotifier(widget.md);
 
 		mdl.addListener(() {
-			inputJsonWriteState(mdl.value);
+			lib.inputJsonWriteState(mdl.value);
 
 			if (_controller.hasClients && _controller.selectedItem != mdl.value.meta.game.gamepart) {
 				_controller.animateToItem(
@@ -83,7 +86,12 @@ class _InputWindowState extends State<InputWindow> {
 			else
 				recAct = RecommendedAction.GAMEPART_NEXT;
 		} else if(md.meta.time.paused)
-			recAct = RecommendedAction.TIME_START;
+			recAct = RecommendedAction.TIME_TOGGLE;
+		else
+			md.currentGamepart!.mapOrNull(
+				pause_timed: (_) => recAct = RecommendedAction.GAMEPART_NEXT,
+				timed: (_) => recAct = RecommendedAction.TIME_TOGGLE,
+			);
 
 		debugPrint("Recommended: ${recAct.toString()}");
 		return recAct;
@@ -93,30 +101,12 @@ class _InputWindowState extends State<InputWindow> {
 		// TODO normally client connects to mminl.de!
 		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://localhost:8081", mdl);
 
-		await connectWS();
+		await lib.connectWS(ws.client, boss: true);
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!mounted) return;
-			if(!ws.clientConnected) connectWS();
+			if(!ws.clientConnected) lib.connectWS(ws.client, boss: true);
 		});
-	}
-
-	Future<void> connectWS() async {
-		ws.client.connect();
-		final start = DateTime.now();
-		await Future.doWhile(() async {
-			await Future.delayed(Duration(milliseconds: 10));
-			return
-				!ws.clientConnected
-         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
-		});
-		if(!ws.clientConnected) return;
-
-		ws.client.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client.boss.value && ws.client.connected.value) {
-			ws.client.sendSignal(MessageType.IM_THE_BOSS);
-			await Future.delayed(Duration(seconds: 10));
-		}
 	}
 
 	@override
@@ -138,7 +128,9 @@ class _InputWindowState extends State<InputWindow> {
 	}
 
 	Future<int> dialog(final String title, final String description, final List<String> options, {final int def = 0}) async {
-		return await showDialog<int>(
+		if(dialogMutex == true) return def;
+		dialogMutex = true;
+		final int ret = await showDialog<int>(
 			context: context,
 			builder: (context) => AlertDialog(
 				title: Text(title),
@@ -149,6 +141,8 @@ class _InputWindowState extends State<InputWindow> {
 				],
 			),
 		) ?? def;
+		dialogMutex = false;
+		return ret;
 	}
 
 	Future<void> gotoEndscreen() async {
@@ -171,8 +165,8 @@ class _InputWindowState extends State<InputWindow> {
 		else {
 			mdl.value = mdl.value.setPause(true, send: ws.sendSignal);
 			// Save the json
-			inputJsonWrite(mdl.value);
-			deleteMatchdayStateFile();
+			lib.inputJsonWrite(mdl.value);
+			lib.deleteMatchdayStateFile();
 
 			mdl.value = mdl.value.setEnded(true, send: ws.sendSignal);
 			Navigator.push(context, MaterialPageRoute<void>(builder: (context) => InputEndWindow(mdl: mdl, ws: ws)));
@@ -188,10 +182,10 @@ class _InputWindowState extends State<InputWindow> {
 		);
 
 		if (result == 2) {
-			inputJsonWrite(mdl.value);
-			deleteMatchdayStateFile();
+			lib.inputJsonWrite(mdl.value);
+			lib.deleteMatchdayStateFile();
 		} else if (result == 1)
-			deleteMatchdayStateFile();
+			lib.deleteMatchdayStateFile();
 		else if (result == 0)
 			return false;
 
@@ -215,53 +209,53 @@ class _InputWindowState extends State<InputWindow> {
 
 	// startGaepartIndex is the index of the first gamepart in the format. This is needed for nested formats
 	// because we need to set the currentGamepart in md to the correct global number, not a local Format one.
-	List<Widget> formatMenu(Matchday md, Format format, int startGamepartIndex) {
-		int curInd = startGamepartIndex;
-		final widgets = <Widget>[];
-		for(final gp in format.gameparts) {
-			late IconData icon;
-			late String name;
-			gp.map(
-				timed: (p) { icon = Icons.timer; name = p.name;},
-				format: (p) { icon = Icons.list; name = p.format;},
-				penalty: (p) { icon = Icons.sports; name = p.name;},
-			);
-			gp.maybeWhen(
-				format: (_, _, _, _) {
-					final Format subFormat = md.formatFromName(name)!;
-					final int subLen = md.formatUnwrap(subFormat)!.gameparts.length;
-					final isActive = md.meta.game.gamepart >= curInd && md.meta.game.gamepart <= curInd + subLen;
-					widgets.add(
-						ExpandableButton(
-							child: Row(mainAxisAlignment: MainAxisAlignment.start, spacing: 6, children: [
-								Icon(icon),
-								Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis))
-							]),
-							children: formatMenu(md, subFormat, curInd),
-							inverted: isActive,
-							hidden: !isActive,
-						)
-					);
-					curInd += subLen;
-				},
-				orElse: () {
-					final int index = curInd;
-					widgets.add(buttonWithChild(
-						context,
-						() => mdl.value = md.setCurrentGamepart(index),
-						Row(mainAxisAlignment: MainAxisAlignment.start, spacing: 6, children: [
-							Icon(icon),
-							Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis))
-						]),
-						hidden: md.meta.game.gamepart != curInd,
-						inverted: md.meta.game.gamepart == curInd
-					));
-					curInd++;
-				}
-			);
-		};
-		return widgets;
-	}
+	//List<Widget> formatMenu(Matchday md, Format format, int startGamepartIndex) {
+	//	int curInd = startGamepartIndex;
+	//	final widgets = <Widget>[];
+	//	for(final gp in format.gameparts) {
+	//		late IconData icon;
+	//		late String name;
+	//		gp.map(
+	//			timed: (p) { icon = Icons.timer; name = p.name;},
+	//			format: (p) { icon = Icons.list; name = p.format;},
+	//			penalty: (p) { icon = Icons.sports; name = p.name;},
+	//		);
+	//		gp.maybeWhen(
+	//			format: (_, _, _, _) {
+	//				final Format subFormat = md.formatFromName(name)!;
+	//				final int subLen = md.formatUnwrap(subFormat)!.gameparts.length;
+	//				final isActive = md.meta.game.gamepart >= curInd && md.meta.game.gamepart <= curInd + subLen;
+	//				widgets.add(
+	//					lib.ExpandableButton(
+	//						child: Row(mainAxisAlignment: MainAxisAlignment.start, spacing: 6, children: [
+	//							Icon(icon),
+	//							Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis))
+	//						]),
+	//						children: formatMenu(md, subFormat, curInd),
+	//						inverted: isActive,
+	//						hidden: !isActive,
+	//					)
+	//				);
+	//				curInd += subLen;
+	//			},
+	//			orElse: () {
+	//				final int index = curInd;
+	//				widgets.add(lib.buttonWithChild(
+	//					context,
+	//					() => mdl.value = md.setCurrentGamepart(index),
+	//					Row(mainAxisAlignment: MainAxisAlignment.start, spacing: 6, children: [
+	//						Icon(icon),
+	//						Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis))
+	//					]),
+	//					hidden: md.meta.game.gamepart != curInd,
+	//					inverted: md.meta.game.gamepart == curInd
+	//				));
+	//				curInd++;
+	//			}
+	//		);
+	//	};
+	//	return widgets;
+	//}
 
 	final teamsTextGroup = AutoSizeGroup();
 	Widget blockTeams(Matchday md, RecommendedAction recAct) {
@@ -296,57 +290,60 @@ class _InputWindowState extends State<InputWindow> {
 						BackButton(onPressed: () => Navigator.of(context).maybePop())),
 					Center(child: AutoSizeText(gameName, maxLines: 1, style: const TextStyle(fontSize: 1000)))
 				])),
-				Expanded(flex: 65, child: Row( children: [
-					Expanded(
-						flex: 5,
-						// height: teamsHeight, // use max height
-						child: SizedBox.expand(
-							child: buttonWithIcon(context, () {
-								mdl.value = md.setGameIndex(md.meta.game.index-1, send: ws.sendSignal);
-							}, Icons.arrow_back_rounded)
+				Expanded(flex: 65, child: Row(children: [
+					Expanded(flex: 5, child: SizedBox.expand(child:
+						lib.buttonWithIcon(
+							context,
+							md.meta.game.index == 0
+							  ? null
+							  : () => mdl.value = md.setGameIndex(md.meta.game.index-1, send: ws.sendSignal),
+							Icons.arrow_back_rounded,
+							borderRadius: BorderRadius.only(
+								topLeft: lib.cornerDef,
+								bottomLeft: lib.cornerDef,
+							)
 						)
-					),
-					Expanded(
-						flex: 40,
-						//child: Center(child: AutoSizeText(md.games[md.meta.game.index].team1.name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-						child: Center(child: AutoSizeText(t1name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-					),
-					Expanded(
-						flex: 10,
-						// height: teamsHeight, // use max height
-						child: SizedBox.expand(
-							child: buttonWithIcon(context, () {
-								mdl.value = md.setSidesInverted(!md.meta.game.sidesInverted, send: ws.sendSignal);
-							}, Icons.compare_arrows_rounded)
+					)),
+					Expanded(flex: 40, child: Center(child:
+						AutoSizeText(
+							t1name,
+							maxLines: 1,
+							group: teamsTextGroup,
+							style: const TextStyle(fontSize: 1000)
 						)
-					),
-					Expanded(
-						flex: 40,
-						child: Center(child: AutoSizeText(t2name, maxLines: 1, group: teamsTextGroup, style: const TextStyle(fontSize: 1000)))
-					),
-					Expanded(
-						flex: 5,
-						// height: teamsHeight, // use max height
-						child: SizedBox.expand(
-							child: buttonWithIcon(context, () {
-								if(md.meta.game.index == md.games.length-1)
-									gotoEndscreen();
-								else
-									mdl.value = md.setGameIndex(md.meta.game.index+1, send: ws.sendSignal);
-							}, Icons.arrow_forward_rounded,
-							highlighted: (recAct == RecommendedAction.GAME_NEXT))
+					)),
+					Expanded(flex: 10, child: SizedBox.expand(child:
+						lib.buttonWithIcon(
+							context,
+							() => mdl.value = md.setSidesInverted(!md.meta.game.sidesInverted, send: ws.sendSignal),
+							Icons.compare_arrows_rounded
 						)
-					),
-					// TODO NEW NOW
-					//Expanded(
-					//	flex: 3,
-					//	child: SizedBox.expand(
-					//		child: buttonWithIcon(context, () {
-					//			this.connectWS();
-					//		}, Icons.arrow_circle_up,
-					//		highlighted: (recAct == RecommendedAction.GAME_NEXT))
-					//	)
-					//),
+					)),
+					Expanded(flex: 40, child: Center(child:
+						AutoSizeText(
+							t2name,
+							maxLines: 1,
+							group: teamsTextGroup,
+							style: const TextStyle(fontSize: 1000)
+						)
+					)),
+					Expanded(flex: 5, child: SizedBox.expand(child:
+						lib.buttonWithIcon(
+							context,
+							md.meta.game.index == md.games.length-1
+							  ? gotoEndscreen
+							  : () => mdl.value = md.setGameIndex(md.meta.game.index+1, send: ws.sendSignal),
+							md.meta.game.index == md.games.length-1
+							  ? Icons.done_rounded
+							  : Icons.arrow_forward_rounded,
+							inverted: md.meta.game.index == md.games.length-1,
+							highlighted: (recAct == RecommendedAction.GAME_NEXT),
+							borderRadius: BorderRadius.only(
+								topRight: lib.cornerDef,
+								bottomRight: lib.cornerDef,
+							)
+						)
+					)),
 				]))
 			])
 		);
@@ -359,22 +356,65 @@ class _InputWindowState extends State<InputWindow> {
 
 		final gameparts = md.currentFormatUnwrapped?.gameparts ?? [];
 
+		Color textColor = Theme.of(context).colorScheme.onSurface;
+
+		Widget wNumbers(int team) {
+			return Column(children:[
+				Expanded(flex: 25, child: lib.buttonWithIcon(
+						context,
+						() => mdl.value = md.goalAdd(team, send: ws.sendSignal),
+						Icons.arrow_upward_rounded,
+						borderRadius: BorderRadius.only(
+							topLeft: lib.cornerDef,
+							topRight: lib.cornerDef,
+						)
+					)
+				),
+				Expanded(flex: 50, child: Align(
+					alignment: Alignment.center,
+					child: AutoSizeText(
+						md.currentGame!.teamGoals(team).toString(),
+						maxLines: 1,
+						style: const TextStyle(
+							fontSize: 1000,
+							height: 0.85,
+							fontFeatures: [FontFeature.tabularFigures()]
+						)
+					))
+				),
+				Expanded(flex: 25, child:
+					lib.buttonWithIcon(
+						context,
+						() => mdl.value = md.goalRemoveLast(team, send: ws.sendSignal),
+						Icons.arrow_downward_rounded,
+						borderRadius: BorderRadius.only(
+							bottomLeft: lib.cornerDef,
+							bottomRight: lib.cornerDef,
+						)
+					)
+				),
+			]);
+		}
+
 		return Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
 			child: Row( children: [
 				//Expanded( child: Column(spacing: -(height * 0.05), children:[
-				Expanded(flex: 40, child: Column(children:[
-					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalAdd(t1, send: ws.sendSignal);
-					}, Icons.arrow_upward_rounded)),
-					Expanded(flex: 70, child: Center(child:
-						AutoSizeText(md.currentGame!.teamGoals(t1).toString(),
-						maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalRemoveLast(t1, send: ws.sendSignal);
-					}, Icons.arrow_downward_rounded)),
-				])),
+				Expanded(flex: 40, child: wNumbers(t1)),
 				Expanded(flex: 20, child: Column( children: [
-					Expanded(flex: 80, child: LayoutBuilder(builder: (context, constraints) {
+					Expanded(flex: 15, child: SizedBox.expand(child:
+						lib.buttonWithIcon(
+							context,
+							md.meta.game.gamepart == 0
+							  ? null
+							  : () => mdl.value = md.setCurrentGamepart(md.meta.game.gamepart - 1, send: ws.sendSignal),
+							Icons.arrow_upward_rounded,
+							borderRadius: BorderRadius.only(
+								topLeft: lib.cornerDef,
+								topRight: lib.cornerDef
+							)
+						)
+					)),
+					Expanded(flex: 70, child: LayoutBuilder(builder: (context, constraints) {
 						final double height = constraints.maxHeight;
 						final double itemHeight = height / 3 > 0 ? height / 3 : 50.0;
 
@@ -391,7 +431,7 @@ class _InputWindowState extends State<InputWindow> {
 							onSelectedItemChanged: (index) {
 								// Only update state if it's a user scroll (prevent loops)
 								if (index != md.meta.game.gamepart) {
-									mdl.value = md.setCurrentGamepart(index);
+									mdl.value = md.setCurrentGamepart(index, send: ws.sendSignal);
 								}
 							},
 							childDelegate: ListWheelChildBuilderDelegate(
@@ -401,6 +441,7 @@ class _InputWindowState extends State<InputWindow> {
 									String label = "";
 									gp.map(
 										timed: (p) => label = p.name,
+										pause_timed: (p) => label = p.name,
 										format: (p) => label = p.format,
 										penalty: (p) => label = p.name,
 									);
@@ -412,7 +453,8 @@ class _InputWindowState extends State<InputWindow> {
 									 		overflow: TextOverflow.ellipsis,
 									 		style: TextStyle(
 									 			fontSize: isSelected ? 18 : 14,
-									 			color: isSelected ? Colors.white : Colors.grey,
+									 			//color: isSelected ? textColor : textColor,
+									 			color: textColor,
 									 			fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
 									 		),
 									 	),
@@ -421,30 +463,23 @@ class _InputWindowState extends State<InputWindow> {
 							),
 						);
 					})),
-					Expanded(flex: 20, child: Row(children: [
-						Expanded(child: buttonWithIcon(context, () {
-							mdl.value = md.setCurrentGamepart(md.meta.game.gamepart - 1, send: ws.sendSignal);
-							},
-							Icons.arrow_upward_rounded
-						)),
-						Expanded(child: buttonWithIcon(context, () {
-							mdl.value = md.setCurrentGamepart(md.meta.game.gamepart + 1, send: ws.sendSignal);
-							},
+					Expanded(flex: 15, child: SizedBox.expand(child:
+						lib.buttonWithIcon(
+							context,
+							md.meta.game.gamepart == md.currentFormat!.gameparts.length-1
+							  ? null
+							  : () => mdl.value = md.setCurrentGamepart(md.meta.game.gamepart + 1, send: ws.sendSignal),
 							Icons.arrow_downward_rounded,
-							highlighted: recAct == RecommendedAction.GAMEPART_NEXT
-						)),
-					]))],
-          ),
-        ),//Expanded( child: Column(spacing: -(height * 0.05), children:[
-				Expanded(flex: 40, child: Column(children:[
-					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalAdd(t2, send: ws.sendSignal);
-					}, Icons.arrow_upward_rounded)),
-					Expanded(flex: 70, child: Center(child: AutoSizeText(md.currentGame!.teamGoals(t2).toString(), maxLines: 1, style: const TextStyle(fontSize: 1000)))),
-					Expanded(flex: 15, child: buttonWithIcon(context, () {
-						mdl.value = md.goalRemoveLast(t2, send: ws.sendSignal);
-					}, Icons.arrow_downward_rounded)),
-				])),
+							highlighted: recAct == RecommendedAction.GAMEPART_NEXT,
+							borderRadius: BorderRadius.only(
+								bottomLeft: lib.cornerDef,
+								bottomRight: lib.cornerDef
+							)
+						)
+					)),
+        		])),
+				//Expanded( child: Column(spacing: -(height * 0.05), children:[
+				Expanded(flex: 40, child: wNumbers(t2)),
 			])
 		);
 	}
@@ -464,64 +499,184 @@ class _InputWindowState extends State<InputWindow> {
 		});
 	}
 
-	Widget blockTime(Matchday md, RecommendedAction recAct) {
+	final timeDigitsGroup = AutoSizeGroup();
 
-		final defTime = md.currentGamepart?.whenOrNull(timed: (_, len, _, _, _) => len);
+	Widget blockTime(Matchday md, RecommendedAction recAct) {
+		final defTime = md.currentGamepart?.whenOrNull(
+			timed: (_, len, _, _, _) => len,
+			pause_timed: (_, len, _, _, _) => len
+		);
+
+		final List<Widget> gameactions = [
+			SizedBox.expand(child: lib.buttonWithIcon(
+				context, () => togglePause(md),
+				md.meta.time.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+				inverted: !md.meta.time.paused,
+				highlighted: recAct == RecommendedAction.TIME_TOGGLE
+			)),
+			SizedBox.expand(child: lib.buttonWithIcon(
+				context,
+				md.currentTime() == defTime
+					? null
+					: () {
+						mdl.value = md.timeReset(send: ws.sendSignal);
+					},
+				Icons.autorenew,
+				inverted: md.currentTime() == defTime && md.meta.time.paused // TODO approve this UI. Its lazy but look ok imo
+			)),
+			SizedBox.expand(child: lib.buttonWithIcon(
+				context, () => togglePause(md),
+				md.meta.time.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+				inverted: !md.meta.time.paused,
+				highlighted: recAct == RecommendedAction.TIME_TOGGLE
+			)),
+			SizedBox.expand(child:
+				lib.buttonWithIcon(
+					context,
+					md.currentTime() == defTime
+						? null
+						: () => mdl.value = md.timeReset(send: ws.sendSignal),
+					Icons.autorenew,
+					inverted: md.currentTime() == defTime && md.meta.time.paused // TODO approve this UI. Its lazy but look ok imo
+				)
+			)
+		];
 
 		return Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
 			child: Row(mainAxisAlignment: MainAxisAlignment.center, spacing: 8, children: [
-				Expanded(flex: 5, child: SizedBox.expand(
-					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(-20, send: ws.sendSignal);
-					}, Icons.arrow_downward_rounded)),
-				),
-				Expanded(flex: 5, child: SizedBox.expand(
-					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(-1, send: ws.sendSignal);
-					}, Icons.arrow_downward_rounded)),
-				),
-				Expanded(flex: 80, child: Column( children: [
-					Expanded(flex: 20, child: Row(spacing: 5, children: [
-						Expanded(flex: 50, child: SizedBox.expand(child: buttonWithIcon(
-							context, () => togglePause(md),
-							md.meta.time.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-							inverted: !md.meta.time.paused,
-							highlighted: recAct == RecommendedAction.TIME_START
-						))),
-						Expanded(flex: 50, child: SizedBox.expand(child: buttonWithIcon(
-							context,
-							md.currentTime() == defTime
-								? null
-								: () {
-									mdl.value = md.timeReset(send: ws.sendSignal);
-								},
-							Icons.autorenew,
-							inverted: md.currentTime() == defTime && md.meta.time.paused // TODO approve this UI. Its lazy but look ok imo
-						)))
-					])),
-
-					Expanded(flex: 80, child:
-						ValueListenableBuilder<int>(
-							valueListenable: remainingTime,
-							builder: (_, time, __) {
-								final String curTimeMin = (time ~/ 60).toString().padLeft(2, '0');
-								final String curTimeSec = (time % 60).toString().padLeft(2, '0');
-								final curTimeString = "${curTimeMin}:${curTimeSec}";
-								return Center(child: AutoSizeText(curTimeString, maxLines: 1, style: const TextStyle(fontSize: 1000)));
-							}
-						)
+				Expanded(child: Align(alignment: Alignment.centerRight, child:
+					FractionallySizedBox(widthFactor: 0.2, child:
+						Column(spacing: 8, children: [
+							Expanded(flex: 48, child: SizedBox.expand(child:
+								lib.buttonWithIcon(
+									context,
+									() => togglePause(md),
+									md.meta.time.paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+									inverted: !md.meta.time.paused,
+									highlighted: recAct == RecommendedAction.TIME_TOGGLE,
+									borderRadius: BorderRadius.only(
+										topLeft: lib.cornerDef,
+									)
+							))),
+							Expanded(flex: 48, child: SizedBox.expand(child:
+								lib.buttonWithIcon(
+									context,
+									md.currentTime() == defTime && md.meta.time.paused
+									  ? null
+									  : () => mdl.value = md.timeReset(send: ws.sendSignal),
+									Icons.autorenew,
+									inverted: md.currentTime() == defTime && md.meta.time.paused,
+									borderRadius: BorderRadius.only(
+										bottomLeft: lib.cornerDef,
+									)
+								)
+							))
+						])
 					)
-				])),
-				Expanded(flex: 5, child: SizedBox.expand(
-					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(1, send: ws.sendSignal);
-					}, Icons.arrow_upward_rounded)),
+				)),
+				ValueListenableBuilder<int>(
+					valueListenable: remainingTime,
+					builder: (_, time, __) {
+						final int minutes = time ~/ 60;
+						final int seconds = time % 60;
+
+						final List<String> timeDigits = [
+							(seconds % 10).toString(),
+							(seconds ~/ 10).toString(),
+							(minutes % 10).toString(),
+							(minutes ~/ 10).toString(),
+						];
+
+
+						Widget digit(int digit) {
+							int change = switch(digit) {
+								1 => 1,
+								2 => 10,
+								3 => 60,
+								4 => 600,
+								_ => 0,
+							};
+
+							if(change == 0) const SizedBox.shrink(); // TODO crash?
+
+							Radius rleft = Radius.circular(0);
+							Radius rright = Radius.circular(0);
+							if(digit != 4) {
+								if(digit % 2 == 1)
+									rright = lib.cornerDef;
+								else
+									rleft = lib.cornerDef;
+							}
+
+							//return IntrinsicWidth(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+							return Column(mainAxisSize: MainAxisSize.min, children: [
+								Expanded(flex: 20, child: ElevatedButton(
+									onPressed: () => mdl.value = md.timeChange(change, send: ws.sendSignal),
+									child: FittedBox(child: Icon(Icons.arrow_upward_rounded, size: 10000)),
+									style: ElevatedButton.styleFrom(
+										shape: RoundedRectangleBorder(borderRadius: BorderRadius.only(
+											topLeft: rleft,
+											topRight: rright,
+										))
+									),
+								)),
+								Expanded(flex: 60, child: FittedBox(
+									fit: BoxFit.contain,
+									child: AutoSizeText(
+										timeDigits[digit-1],
+										maxLines: 1,
+										group: timeDigitsGroup,
+										style: const TextStyle(
+											fontSize: 1000,
+											height: 0.85,
+											fontFeatures: [FontFeature.tabularFigures()]
+										),
+									)
+								)),
+								Expanded(flex: 20, child: ElevatedButton(
+									onPressed: () => mdl.value = md.timeChange(-change, send: ws.sendSignal),
+									child: FittedBox(child: Icon(Icons.arrow_downward_rounded, size: 10000)),
+									style: ElevatedButton.styleFrom(
+										shape: RoundedRectangleBorder(borderRadius: BorderRadius.only(
+											bottomLeft: rleft,
+											bottomRight: rright,
+										))
+									),
+								)),
+							]);
+						}
+						return Row(
+							mainAxisAlignment: MainAxisAlignment.center,
+							//spacing: 8,
+							children: [
+								digit(4),
+								digit(3),
+								AutoSizeText(":", group: timeDigitsGroup, style: const TextStyle(fontSize: 1000)),
+								digit(2),
+								digit(1)
+							]
+						);
+					}
 				),
-				Expanded(flex: 5, child: SizedBox.expand(
-					child: buttonWithIcon(context, () {
-						mdl.value = md.timeChange(20, send: ws.sendSignal);
-					}, Icons.arrow_upward_rounded))
-				)
+				Expanded(child: Align(
+					alignment: Alignment.centerRight, child:
+					FractionallySizedBox(widthFactor: 0.33, child: SizedBox.expand())))
+				//Expanded(flex: 10, child: SizedBox.expand())
+				//Expanded(flex: 20, child:
+				//	GridView.builder(
+				//		padding: const EdgeInsets.all(8),
+				//		gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+				//			crossAxisCount: 2,
+				//			crossAxisSpacing: 8,
+				//			mainAxisSpacing: 8,
+				//			childAspectRatio: 1,
+				//		),
+				//		itemCount: gameactions.length,
+				//		itemBuilder: (context, index) {
+				//			return gameactions[index];
+				//		}
+				//	)
+				//),
 			])
 
 		);
@@ -589,7 +744,7 @@ class _InputWindowState extends State<InputWindow> {
 		if(!ws.client.connected.value) {
 			error = "NOT CONNECTED TO BACKEND";
 			c = Colors.red;
-			f = () => connectWS();
+			f = () => lib.connectWS(ws.client, boss: true);
 		} else if (!ws.client.boss.value) {
 			error = "CONNECTED BUT NOT BOSS";
 			c = Colors.orange;
@@ -621,7 +776,7 @@ class _InputWindowState extends State<InputWindow> {
 		return {
 			LogicalKeySet(LogicalKeyboardKey.space): () => togglePause(mdl.value),
 			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyR): () => mdl.value = mdl.value.timeReset(send: ws.sendSignal),
-			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => this.connectWS(),
+			LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.keyW): () => lib.connectWS(ws.client, boss: true),
 			LogicalKeySet(LogicalKeyboardKey.keyH): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.arrowLeft): () => mdl.value = mdl.value.setGameIndex(mdl.value.meta.game.index - 1, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.keyL): () {
@@ -673,11 +828,16 @@ class _InputWindowState extends State<InputWindow> {
 			LogicalKeySet(LogicalKeyboardKey.keyN): () => mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal),
 			LogicalKeySet(LogicalKeyboardKey.enter): () {
 				switch (recAct) {
-					case RecommendedAction.TIME_START:
+					case RecommendedAction.TIME_TOGGLE:
 						togglePause(mdl.value);
 						break;
 					case RecommendedAction.GAMEPART_NEXT:
-						mdl.value = mdl.value.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
+						Matchday md = mdl.value = mdl.value.setPause(true, send: ws.sendSignal);
+						md = md.setCurrentGamepart(mdl.value.meta.game.gamepart+1, send: ws.sendSignal);
+						md.currentGamepart?.mapOrNull(
+							pause_timed: (_) => md = md.setPause(false, send: ws.sendSignal),
+						);
+						mdl.value = md;
 						break;
 					case RecommendedAction.GAME_NEXT:
 						if(mdl.value.meta.game.index == mdl.value.games.length-1)
@@ -761,6 +921,11 @@ class _InputWindowState extends State<InputWindow> {
 	Widget build(BuildContext context) {
 		// debugPrint("Matchday: ${mdl.value}\n\n");
 		// debugPrint("Matchday Generated: ${JsonEncoder.withIndent('  ').convert(mdl.value.toJson())}");
+		rootBundle.load("assets/Copperplate.otf").then((_) {
+  print("✅ Font file found in assets!");
+}).catchError((e) {
+  print("❌ Font file NOT found: $e");
+});
 		return PopScope(
 			canPop: false,
 			onPopInvokedWithResult: (didPop, _) async {

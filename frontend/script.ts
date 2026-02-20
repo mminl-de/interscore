@@ -71,6 +71,14 @@ const GamePartTimedSchema = z.object({
 	decider: z.boolean().default(false),
 	sides_inverted: z.boolean().default(false),
 });
+const GamePartPausedTimedSchema = z.object({
+	type: z.literal("pause_timed"),
+	name: z.string(),
+	length: z.number(),
+	repeat: z.boolean().default(false),
+	decider: z.boolean().default(false),
+	sides_inverted: z.boolean().default(false),
+});
 const GamePartFormatSchema = z.object({
 	type: z.literal("format"),
 	format: z.string(),
@@ -88,6 +96,7 @@ const GamePartPenaltySchema = z.object({
 });
 const GamePartSchema = z.discriminatedUnion("type", [
 	GamePartTimedSchema,
+	GamePartPausedTimedSchema,
 	GamePartFormatSchema,
 	GamePartPenaltySchema
 ]);
@@ -225,7 +234,8 @@ const FormatSchema  = z.object({
 const MetaGameSchema = z.object({
 	index: z.number().default(0),
 	gamepart: z.number().default(0),
-	sides_inverted: z.boolean().default(false)
+	sides_inverted: z.boolean().default(false),
+	ended: z.boolean().default(false)
 });
 
 const MetaTimeSchema = z.object({
@@ -289,7 +299,8 @@ let md: Matchday = {
 		game: {
 			index: 0,
 			gamepart: 0,
-			sides_inverted: false
+			sides_inverted: false,
+			ended: false
 		},
 		time: {
 			remaining: 0,
@@ -708,13 +719,14 @@ function write_livetable() {
 	while (livetable.children.length > 2) livetable.removeChild(livetable.lastChild!);
 
 	let teams: LivetableLine[] = [];
+	let last_index = md.meta.game.ended ? md.games.length : md.meta.game.index;
 
 	md.teams.forEach((t) => {
 		teams.push({
 			name: t.name.toString(),
 			points: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) { // TODO Count the game right now?
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) {
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 3 : 0;
@@ -728,7 +740,7 @@ function write_livetable() {
 			})(),
 			played: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t || resolve_GameTeamSlot(g[2]) === t) p++;
 				}
@@ -736,7 +748,7 @@ function write_livetable() {
 			})(),
 			won: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] > 0) ? 1 : 0;
@@ -747,7 +759,7 @@ function write_livetable() {
 			})(),
 			tied: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] === 0) ? 1 : 0;
@@ -758,7 +770,7 @@ function write_livetable() {
 			})(),
 			lost: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t)
 						p += (get_scores(g)[0] - get_scores(g)[1] < 0) ? 1 : 0;
@@ -769,7 +781,7 @@ function write_livetable() {
 			})(),
 			goals: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[0];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[1];
@@ -778,7 +790,7 @@ function write_livetable() {
 			})(),
 			goals_taken: (() => {
 				let p = 0;
-				for (let j = 0; j < md.meta.game.index; j++) {
+				for (let j = 0; j < last_index; j++) {
 					const g: Game = md.games[j];
 					if (resolve_GameTeamSlot(g[1]) === t) p += get_scores(g)[1];
 					else if (resolve_GameTeamSlot(g[2]) === t) p += get_scores(g)[0];
@@ -870,7 +882,7 @@ function update_scoreboard_timer(rt: number) {
 	if (md.meta.time.remaining <= 0 || rt <= 0) return;
 
 	const gp = cur_gamepart();
-	if (gp?.type != "timed") return;
+	if (gp?.type != "timed" && gp?.type != "pause_timed") return;
 
 	const bar_width = Math.min(100, Math.max(0, (rt / gp.length) * 100));
 	scoreboard_time_bar.style.width = bar_width + "%";

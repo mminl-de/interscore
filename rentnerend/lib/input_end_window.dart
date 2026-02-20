@@ -7,6 +7,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'md.dart';
 import 'websocket.dart';
 import 'MessageType.dart';
+import 'lib.dart' as lib;
 
 
 class InputEndWindow extends StatefulWidget {
@@ -33,7 +34,7 @@ class _InputEndWindowState extends State<InputEndWindow> {
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!ws.client.connected.value && mounted) {
-				connectWS();
+				lib.connectWS(ws.client, boss: true);
 			}
 		});
 	}
@@ -44,25 +45,6 @@ class _InputEndWindowState extends State<InputEndWindow> {
 		// We dont dispose the WS and mdl because the parent window can still use them again
 
 		super.dispose();
-	}
-
-	Future<void> connectWS() async {
-		debugPrint("connectWS: connecting...");
-		ws.client.connect();
-		final start = DateTime.now();
-		await Future.doWhile(() async {
-			await Future.delayed(Duration(milliseconds: 10));
-			return
-				!ws.clientConnected
-         	 && DateTime.now().difference(start) < const Duration(seconds: 3);
-		});
-		if(!ws.clientConnected) return;
-
-		ws.client.sendSignal(MessageType.DATA_JSON);
-		while(mounted && !ws.client.boss.value && ws.client.connected.value) {
-			ws.client.sendSignal(MessageType.IM_THE_BOSS);
-			await Future.delayed(Duration(seconds: 10));
-		}
 	}
 
 	final textGroup = AutoSizeGroup();
@@ -231,7 +213,7 @@ class _InputEndWindowState extends State<InputEndWindow> {
 		if(!ws.client.connected.value) {
 			error = "NOT CONNECTED TO BACKEND";
 			c = Colors.red;
-			f = () => connectWS();
+			f = () => lib.connectWS(ws.client, boss: true);
 		} else if (!ws.client.boss.value) {
 			error = "CONNECTED BUT NOT BOSS";
 			c = Colors.orange;

@@ -6,6 +6,7 @@ import "public_window.dart";
 import "input_window.dart";
 import "info_window.dart";
 import "controller_window.dart";
+import "creator_window.dart";
 import "md.dart";
 import "lib.dart";
 import "ws_client_factory.dart";
@@ -44,7 +45,7 @@ class _MyAppState extends State<MyApp> {
 				body: Center(child: Column(children: [
 					Row(children: [
 						ElevatedButton(
-							child: const Text('Load Input Window'),
+							child: const Text('Input Window'),
 							onPressed: () async {
 								final json = await inputJsonLoad(context);
 								if(json == null) {debugPrint("json does not exist"); return;}
@@ -91,7 +92,7 @@ class _MyAppState extends State<MyApp> {
 								final md = Matchday(Meta(), [], [], [], []);
 								ValueNotifier<Matchday> mdl = ValueNotifier(md);
 								// TODO normally mminl.de!
-								final ws = createWSClient("ws://mminl.de:8081", mdl, true, true);
+								final ws = createWSClient("ws://localhost:8081", mdl, true, true);
 								await ws.connect();
 								await Future.doWhile(() async {
 									await Future.delayed(Duration(milliseconds: 10));
@@ -139,8 +140,14 @@ class _MyAppState extends State<MyApp> {
 								);
 							},
 						), ElevatedButton(
-							child: const Text('Load JSON Creator'),
-							onPressed: () {},
+							child: const Text('JSON Creator'),
+							onPressed: () =>
+								Navigator.push(
+									context,
+									MaterialPageRoute<void>(
+										builder: (context) => CreatorWindow()
+									)
+								)
 						), ElevatedButton(
 							child: const Text('Load from Cycleball.eu'),
 							onPressed: () {},

@@ -43,7 +43,6 @@ Building and running:
 # TODO
 
 ## meta
-- Spiel 11 oder so final screen machen, dass 10 Spiel und finale Tabelle angezeit werden kann
 1. should requester gauge delay between request & response?
 2. should backend broadcast DATA_TIMESTAMP to everyone or only the requester?
 - rename rentnerend to controller
@@ -127,8 +126,7 @@ Building and running:
 	- OBS Scene / replay situation
 ### Infoend
 - know if boss is connected and if no, warn about incorrect info @backend
-- zeit als bar um den oval rum
-- FINAL Add Logo to Info Window
+- FINAL Add Logos to Info Window
 
 ## backend
 - FINAL loggt wie viele leute connecten (Info Window)
