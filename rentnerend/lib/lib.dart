@@ -422,7 +422,7 @@ List<int>? signalToMsg(MessageType msg, Matchday md, {int? additionalInfo, int? 
 	// DATA_IM_BOSS should not be send by us because we are not a server!
 }
 
-Future<void> connectWS(final WSClient ws, {final bool boss = false}) async {
+Future<bool> connectWS(final WSClient ws, {final bool boss = false, final int? timeout}) async {
 	ws.connect();
 	final start = DateTime.now();
 	await Future.doWhile(() async {
@@ -431,11 +431,11 @@ Future<void> connectWS(final WSClient ws, {final bool boss = false}) async {
 			!ws.connected.value
      	 && DateTime.now().difference(start) < const Duration(seconds: 3);
 	});
-	if(!ws.connected.value) return;
+	if(!ws.connected.value) return false;
 
 	if(!boss) {
 		ws.sendSignal(MessageType.PLS_SEND_JSON);
-		return;
+		return false;
 	}
 
 	ws.sendSignal(MessageType.DATA_JSON);
@@ -443,6 +443,8 @@ Future<void> connectWS(final WSClient ws, {final bool boss = false}) async {
 		ws.sendSignal(MessageType.IM_THE_BOSS);
 		await Future.delayed(Duration(seconds: 10));
 	}
+
+	return true;
 }
 
 final _rng = Random.secure();

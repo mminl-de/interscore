@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 
 //import 'package:just_audio/just_audio.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -99,7 +97,7 @@ class _InputWindowState extends State<InputWindow> {
 
 	Future<void> startWS() async {
 		// TODO normally client connects to mminl.de!
-		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://localhost:8081", mdl);
+		this.ws = InterscoreWS("ws://0.0.0.0:6464", "ws://mminl.de:8081", mdl);
 
 		await lib.connectWS(ws.client, boss: true);
 
