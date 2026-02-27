@@ -250,23 +250,21 @@ class Matchday with _$Matchday {
 		return out;
 	}
 
-	// Gives back Map of all games the team played and an
-	Map<Game, int> teamGamesPlayed(final String t, final String group) {
-		final gamesAmount = meta.game.ended ? games.length : meta.game.index;
-		if (groupFromName(group) == null); // TODO crash the program?
+	// Gives back Map of all games the team is in
+	Map<Game, int> teamGames(final String t, final String group) {
+		Map<Game, int> teamGames = Map<Game, int>();
 
-		Map<Game, int> gamesPlayed = Map<Game, int>();
-		for(int i=0; i < gamesAmount; i++) {
-			final Game game = games[i];
-			if (game.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
+		for(int i=0; i < games.length; i++) {
+			final Game g = games[i];
+			if (g.groups?.firstWhereOrNull((groupName) => group == groupName) == null) continue;
 			int? gameTeamIndex;
-			if (game.team1.map(
+			if (g.team1.map(
 			    byName: (t1) => t == t1.name,
 				byQueryResolved: (t1) => t == t1.name,
 				byQuery: (t1) => false,
 			))
 				gameTeamIndex = 1;
-			else if (game.team2.map(
+			else if (g.team2.map(
 				byName: (t2) => t == t2.name,
 				byQueryResolved: (t2) => t == t2.name,
 				byQuery: (t2) => false)
@@ -274,9 +272,20 @@ class Matchday with _$Matchday {
 				gameTeamIndex = 2;
 			else continue;
 
-			gamesPlayed[game] = gameTeamIndex;
+			teamGames[g] = gameTeamIndex;
 		}
-		return gamesPlayed;
+		return teamGames;
+	}
+
+	// Gives back Map of all games the team played and an
+	Map<Game, int> teamGamesPlayed(final String t, final String group) {
+		final lastGamePlayedIndex = meta.game.ended ? games.length : meta.game.index;
+		if (groupFromName(group) == null); // TODO crash the program?
+
+		final played = teamGames(t, group);
+		played.removeWhere((_, i) => i >= lastGamePlayedIndex);
+
+		return played;
 	}
 
 	Map<Game, int> teamGamesWon(final String t, final String g) {

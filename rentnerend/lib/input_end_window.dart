@@ -102,7 +102,7 @@ class _InputEndWindowState extends State<InputEndWindow> {
 
 	Widget blockGameplan(Matchday md, Color bg) {
 		return Padding(
-			padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 40),
+			padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 20),
 			child: Material(
 				color: bg,
 				borderRadius: BorderRadius.circular(13),
@@ -164,45 +164,48 @@ class _InputEndWindowState extends State<InputEndWindow> {
 
 	Widget blockLivetable(Matchday md, Group g, Color bg) {
 		return Padding(
-			padding: const EdgeInsets.symmetric(horizontal: 10),
-			child: Material(
-				color: bg,
-				borderRadius: BorderRadius.circular(13),
-				clipBehavior: Clip.hardEdge,
-				child: Padding(padding: const EdgeInsets.only(top: 4), child: Table(
-					defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-					columnWidths: const {
-						0: IntrinsicColumnWidth(), // Points
-						1: FlexColumnWidth(),   // team
-						2: IntrinsicColumnWidth(), // GP
-						3: IntrinsicColumnWidth(), // W
-						4: IntrinsicColumnWidth(), // D
-						5: IntrinsicColumnWidth(), // L
-						6: IntrinsicColumnWidth(), // goals
-						7: IntrinsicColumnWidth(), // diff
-						8: IntrinsicColumnWidth(), // pts
-					},
-					children: [
-						TableRow( children: [
-							Padding(padding: const EdgeInsets.only(left: 14), child: Text("P")),
-							Padding(padding: const EdgeInsets.only(left: 12), child: Text("Team")),
-							Center(child: Text("SP")),
-							Center(child: Text("S")),
-							Center(child: Text("U")),
-							Center(child: Text("N")),
-							Center(child: Text("Tore")),
-							Center(child: Text("Diff")),
-							Center(child: Text("P")),
-						],
-					),
-					...md
-					.rankingFromGroup(g.name)!
-					.entries.toList().asMap().entries
-					.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key, bg))
-					.toList(),
-					]
-				)),
-			)
+			padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+			child: Column(children: [
+				Text(g.name),
+				Material(
+					color: bg,
+					borderRadius: BorderRadius.circular(13),
+					clipBehavior: Clip.hardEdge,
+					child: Padding(padding: const EdgeInsets.only(top: 4), child: Table(
+						defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+						columnWidths: const {
+							0: IntrinsicColumnWidth(), // Points
+							1: FlexColumnWidth(),   // team
+							2: IntrinsicColumnWidth(), // GP
+							3: IntrinsicColumnWidth(), // W
+							4: IntrinsicColumnWidth(), // D
+							5: IntrinsicColumnWidth(), // L
+							6: IntrinsicColumnWidth(), // goals
+							7: IntrinsicColumnWidth(), // diff
+							8: IntrinsicColumnWidth(), // pts
+						},
+						children: [
+							TableRow( children: [
+								Padding(padding: const EdgeInsets.only(left: 14), child: Text("P")),
+								Padding(padding: const EdgeInsets.only(left: 12), child: Text("Team")),
+								Center(child: Text("SP")),
+								Center(child: Text("S")),
+								Center(child: Text("U")),
+								Center(child: Text("N")),
+								Center(child: Text("Tore")),
+								Center(child: Text("Diff")),
+								Center(child: Text("P")),
+							],
+						),
+						...md
+						.rankingFromGroup(g.name)!
+						.entries.toList().asMap().entries
+						.map((e) => blockLivetableTeam(md, g, md.teamFromName(e.value.key)!, e.key, bg))
+						.toList(),
+						]
+					)),
+				)
+			])
 		);
 	}
 
@@ -300,7 +303,8 @@ class _InputEndWindowState extends State<InputEndWindow> {
 											Center(child: Padding(padding: EdgeInsets.only(left: 40), child: AutoSizeText("ERGEBNISSE", maxLines: 1, style: const TextStyle(fontSize: 25))))
 										]),
 										blockGameplan(md, secondBgColor),
-										blockLivetable(md, md.groups[0], secondBgColor),
+										for(int i=0; i < md.groups.length; i++)
+											blockLivetable(md, md.groups[i], secondBgColor),
 									]
 								);
 							}

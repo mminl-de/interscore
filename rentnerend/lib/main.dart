@@ -4,7 +4,7 @@ import "package:flutter/material.dart";
 
 import "public_window.dart";
 import "input_window.dart";
-import "info_window.dart";
+import "info_window/main.dart";
 import "controller_window.dart";
 import "creator_window.dart";
 import "md.dart";
@@ -115,27 +115,10 @@ class _MyAppState extends State<MyApp> {
 						), ElevatedButton(
 							child: const Text('Info Screen'),
 							onPressed: () async {
-								// Create a default Matchday
-								final md = Matchday(Meta(), [], [], [], []);
-								ValueNotifier<Matchday> mdl = ValueNotifier(md);
-								// TODO normally mminl.de!
-								final ws = createWSClient("ws://localhost:8081", mdl, false, true);
-								await ws.connect();
-								await Future.doWhile(() async {
-									await Future.delayed(Duration(milliseconds: 10));
-									return !ws.connected.value;
-								});
-
-								ws.sendSignal(MessageType.PLS_SEND_JSON);
-
-								await Future.doWhile(() async {
-									await Future.delayed(Duration(milliseconds: 10));
-									return mdl.value == md;
-								});
 								Navigator.push(
 									context,
 									MaterialPageRoute<void>(
-										builder: (context) => InfoWindow(mdl: mdl, ws: ws)
+										builder: (context) => InfoMainWindow()
 									)
 								);
 							},

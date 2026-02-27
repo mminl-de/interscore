@@ -2,33 +2,45 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter_rentnerend/info_window/team_window.dart';
 
-import 'md.dart';
-import 'ws_client.dart';
-import 'lib.dart' as lib;
+import '../md.dart';
+import '../ws_client.dart';
+import '../ws_client_factory.dart';
+import '../lib.dart' as lib;
 
 
 class InfoWindow extends StatefulWidget {
-	const InfoWindow({super.key, required this.mdl, required this.ws});
+	const InfoWindow({super.key, required this.url});
 
-	final ValueNotifier<Matchday> mdl;
-	final WSClient ws;
+	final String url;
 
 	@override
 	State<InfoWindow> createState() => _InfoWindowState();
 }
 
-class _InfoWindowState extends State<InfoWindow> {
+class _InfoWindowState extends State<InfoWindow> with AutomaticKeepAliveClientMixin {
 	late ValueNotifier<Matchday> mdl;
 	late WSClient ws;
+	late String url;
 	late Timer _reconnectTimer;
+	bool ready = false;
+
+	@override
+	bool get wantKeepAlive => true;
 
 	@override
 	void initState() {
 		super.initState();
+		url = widget.url;
 
-		mdl = widget.mdl;
-		ws = widget.ws;
+		final md = Matchday(Meta(), [], [], [], []);
+		mdl = ValueNotifier(md);
+
+
+		ws = createWSClient(url, mdl, false, true);
+		lib.connectWS(ws);
+		_checkReady();
 
 		_reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
 			if (!ws.connected.value && mounted) {
@@ -38,7 +50,6 @@ class _InfoWindowState extends State<InfoWindow> {
 
 		startTimer();
 	}
-
 	@override
 	void dispose() {
 		_timer?.cancel();
@@ -54,6 +65,19 @@ class _InfoWindowState extends State<InfoWindow> {
 
 	final remainingTime = ValueNotifier<int>(0);
 	Timer? _timer;
+
+	Future<void> _checkReady() async {
+		final md = Matchday(Meta(), [], [], [], []);
+
+		await Future.doWhile(() async {
+			await Future.delayed(Duration(milliseconds: 10));
+			debugPrint("Checking: ${mdl.value == md}");
+			return mdl.value == md;
+		});
+
+		debugPrint("ready");
+		setState(() => ready = true);
+	}
 
 	void startTimer() {
 		_timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
@@ -161,6 +185,9 @@ class _InfoWindowState extends State<InfoWindow> {
 			}
 		}
 
+		final int t1index = md.teams.indexOf(md.teamFromName(t1name)!);
+		final int t2index = md.teams.indexOf(md.teamFromName(t2name)!);
+
 		return Container(
 				decoration: BoxDecoration(
 					color: md.currentGame == g ? Colors.white.withValues(alpha: 0.3) : null,
@@ -169,7 +196,15 @@ class _InfoWindowState extends State<InfoWindow> {
 					padding: EdgeInsetsGeometry.symmetric(vertical: 5),
 					child: Row(children: [
 						Expanded(flex: 10, child: Center(child: Padding(padding: EdgeInsetsGeometry.only(left: 5), child: AutoSizeText(group: textGroup, maxLines: 1, g.name)))),
-						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t1name))),
+						Expanded(flex: 35, child: GestureDetector(
+							onTap: () => Navigator.push(
+								context,
+								MaterialPageRoute<void>(
+									builder: (context) => TeamWindow(mdl: mdl, ws: ws, teamIndex: t1index)
+								)
+							),
+							child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t1name))
+						)),
 						Expanded(flex: 20, child: Center(child: AutoSizeText.rich(group: textGroup, maxLines: 1, softWrap: true,
 							TextSpan(children: [
 								TextSpan(text: "${t1_score ?? '?'}", style: TextStyle(color: t1_color, fontWeight: FontWeight.bold)),
@@ -177,7 +212,15 @@ class _InfoWindowState extends State<InfoWindow> {
 								TextSpan(text: "${t2_score ?? '?'}", style: TextStyle(color: t2_color, fontWeight: FontWeight.bold))
 							])
 						))),
-						Expanded(flex: 35, child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t2name)))
+						Expanded(flex: 35, child: GestureDetector(
+							onTap: () => Navigator.push(
+								context,
+								MaterialPageRoute<void>(
+									builder: (context) => TeamWindow(mdl: mdl, ws: ws, teamIndex: t2index)
+								)
+							),
+							child: Center(child: AutoSizeText(group: textGroup, maxLines: 1, softWrap: true, t2name))
+						)),
 				]),
 			)
 		);
@@ -224,7 +267,8 @@ class _InfoWindowState extends State<InfoWindow> {
 
 		return TableRow(
 			decoration: BoxDecoration(
-				color: index > 1 ? bg : Colors.green.withValues(alpha: 0.5),
+				//color: index > 1 ? bg : Colors.green.withValues(alpha: 0.5),
+				color: bg,
 				//borderRadius: BorderRadius.circular(40),
     		),
     		children: [
@@ -247,7 +291,7 @@ class _InfoWindowState extends State<InfoWindow> {
 
 	Widget blockLivetable(Matchday md, Group g, Color bg) {
 		return Padding(
-			padding: const EdgeInsets.symmetric(horizontal: 10),
+			padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
 			child: Material(
 				color: bg,
 				borderRadius: BorderRadius.circular(13),
@@ -319,10 +363,17 @@ class _InfoWindowState extends State<InfoWindow> {
 	Widget build(BuildContext context) {
 		final secondBgColor = Theme.of(context).scaffoldBackgroundColor;
 
-		return PopScope(
-			child: Scaffold(
+		super.build(context);
+
+		if (!ready) {
+			return const Scaffold(
 				backgroundColor: Colors.black,
-				body: SingleChildScrollView(
+				body: Center(child: CircularProgressIndicator()),
+			);
+		}
+
+		return PopScope(
+			child: SingleChildScrollView(
 					child: ValueListenableBuilder<Matchday>(
 						valueListenable: mdl,
 						builder: (context, md, _) {
@@ -344,7 +395,6 @@ class _InfoWindowState extends State<InfoWindow> {
 						}
 					)
 				)
-			)
 		);
 	}
 }
