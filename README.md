@@ -1,4 +1,4 @@
-# Interscoreread
+# Interscore
 A livestream system for Cycleball that includes an docker image with OBS, stream overlay, backend and advanced replay system as well as a software for the judges.
 [cycleball.eu](https://cycleball.eu) integration and if possible REWATT support as judge software are in progress.
 
