@@ -1,6 +1,6 @@
 const Build = @import("std").Build;
 
-// Latest Zig version as of writing this: 0.15.1
+// Latest Zig version as of writing this: 0.15.2
 pub fn build(b: *Build) void {
 	// Options
 	const target = b.standardTargetOptions(.{});
@@ -12,7 +12,8 @@ pub fn build(b: *Build) void {
 		.root_module = b.createModule(.{
 			.root_source_file = b.path("src/main.zig"),
 			.target = target,
-			.optimize = optimize
+			.optimize = optimize,
+			.link_libc = false
 		}),
 	});
 
@@ -20,8 +21,12 @@ pub fn build(b: *Build) void {
 	b.installArtifact(exe);
 
 	// Libraries
-	const websocket = b.dependency("websocket", .{ .target = target, .optimize = optimize });
+	const websocket = b.dependency("websocket",
+		.{ .target = target, .optimize = optimize });
+	const httpz = b.dependency("httpz",
+		.{ .target = target, .optimize = optimize });
 	exe.root_module.addImport("websocket", websocket.module("websocket"));
+	exe.root_module.addImport("httpz", httpz.module("httpz"));
 
 	// Run command
 	const run_exe = b.addRunArtifact(exe);

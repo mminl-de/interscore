@@ -1,28 +1,30 @@
+const root = @import("root");
 const std = @import("std");
 const ws = @import("websocket");
-const root = @import("root");
 const log = root.log;
-const ziglog = root.ziglog;
 
 const App = @import("App.zig");
-const Handler = @This();
 const MessageType = @import("MessageType.zig").MessageType;
+const Handler = @This();
 
+id: u16,
 app: *App,
 conn: *ws.Conn,
 
-// Callback running after connection establishment has been requested
+/// Callback running after connection establishment has been requested
 pub fn init(_: *ws.Handshake, conn: *ws.Conn, app: *App) !Handler {
-	log.info("Connecting new client!", .{});
-	return .{ .app = app, .conn = conn };
+	const id = App.nextId();
+	log.info("Connecting client #{d} ...", .{id});
+	return .{ .id = id, .app = app, .conn = conn };
 }
 
-// Callback running after connection has been established
-pub fn afterInit(_: *Handler) !void {
+/// Callback running after connection has been established
+pub fn afterInit(hlr: *Handler, app: *App) !void {
+	try hlr.app.clients.append(app.gpa, hlr.conn);
 	log.info("New client connected!", .{});
 }
 
-// Callback running when client sends message
+/// Callback running when client sends message
 pub fn clientMessage(self: *Handler, data: []const u8) !void {
 	const msg: MessageType = @enumFromInt(data[0]);
 	switch (msg) {
@@ -44,6 +46,7 @@ pub fn clientMessage(self: *Handler, data: []const u8) !void {
 		.PLS_SEND_TIMESTAMP,
 		.PLS_SEND_JSON => {
 			// Forwarding to frontend
+			// TODO NOW ALL CHECK if were using the right conn for the write
 			try self.conn.write(data);
 		},
 		.PLS_SEND_IM_BOSS => {
@@ -54,27 +57,28 @@ pub fn clientMessage(self: *Handler, data: []const u8) !void {
 		.IM_THE_BOSS => {
 			// TODO
 		},
-		else => for (self.app.clients.items) |client| {
-			if (client == self.app.boss and msg != .DATA_GAME) continue;
-			// TODO message: sending to conn <id>
-			try self.conn.write(data);
-		}
+		.DATA_GAME => {
+			const boss = self.app.boss orelse return;
+			try boss.write(data);
+			for (self.app.clients.items) |client| try client.write(data);
+		},
+		else => for (self.app.clients.items) |client| try client.write(data)
 	}
 }
 
-// Callback running when connection is about to be terminated
+/// Callback running when connection is about to be terminated
 pub fn close(self: *Handler) void {
 	// TODO NOW separate boss and client list
 	if (self.app.boss == self.conn) self.app.boss = null;
-	blk: {
-		for (self.app.clients.items) |*client| {
-			if (client.* == self.conn) {
-				client.* = self.app.clients.items[self.app.clients.items.len - 1];
-				self.app.clients.shrinkRetainingCapacity(self.app.clients.items.len - 1);
-				break :blk;
-			}
+
+	for (self.app.clients.items) |*client| {
+		if (client.* == self.conn) {
+			client.* = self.app.clients.items[self.app.clients.items.len - 1];
+			self.app.clients.shrinkRetainingCapacity(self.app.clients.items.len - 1);
+
+			log.info("Client #{d} disconnected!", .{self.id});
+			return;
 		}
-		unreachable;
 	}
-	log.info("Client disconnected!", .{}); // TODO CONSIDER printing conn id
+	unreachable;
 }

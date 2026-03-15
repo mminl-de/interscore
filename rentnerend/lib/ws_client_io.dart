@@ -26,19 +26,19 @@ class WSClientIO extends WSClient {
 					debugPrint("WS Client: Server \'${url}\' closed connection");
 					connected.value = false;
 					_ws = null;
-					boss = false;
+					boss.value = false;
 				},
 				onError: (err) {
 					debugPrint("WS Client: ERR ${err}");
 					connected.value = false;
 					_ws = null;
-					boss = false;
+					boss.value = false;
 				}
 			);
 		} catch (e) {
 			debugPrint("WS Client: Connection failed with error: ${e}");
 			_ws = null;
-			boss = false;
+			boss.value = false;
 		}
 	}
 
@@ -52,7 +52,7 @@ class WSClientIO extends WSClient {
 	void close() {
 		_ws?.close();
 		_ws = null;
-		boss = false;
+		boss.value = false;
 	}
 }
 

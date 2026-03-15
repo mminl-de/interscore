@@ -76,7 +76,10 @@ class _PublicWindowState extends State<PublicWindow> {
 
 	double get progress {
 		final Matchday md = mdl.value;
-		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);
+		final int? defTime = md.currentGamepart?.mapOrNull(
+			timed: (g) => g.length,
+			pause_timed: (g) => g.length,
+		);
 		if(defTime == null) return 1.0;
 
 		final remaining = (defTime - smoothSeconds)
@@ -104,23 +107,33 @@ class _PublicWindowState extends State<PublicWindow> {
 		]);
 	}
 
+
+	final gameNameTextGroup = AutoSizeGroup();
+
 	Widget blockTeams(Matchday md) {
+		Game g = md.currentGame ?? md.games[md.games.length-1];
 		// We invert by default
-		String t1name = md.currentGame.team2.whenOrNull(
+		String t1name = g.team2.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
-		String t2name = md.currentGame.team1.whenOrNull(
+		String t2name = g.team1.whenOrNull(
 			byName: (name, _) => name,
 			byQueryResolved: (name, __) => name,
 		) ?? "[???]";
 
 		final int inverted = ((md.meta.game.sidesInverted ? 1 : 0) - (md.currentGamepart!.sidesInverted ? 1 : 0)).abs();
-		final int t1_score = md.currentGame.teamGoals(2 - inverted);
-		final int t2_score = md.currentGame.teamGoals(1 + inverted);
+		final int t1_score = g.teamGoals(2 - inverted);
+		final int t2_score = g.teamGoals(1 + inverted);
 
-		final String gameName = md.currentGame.name;
+		final String gameName = g.name;
+		final String gamepart = md.currentGamepart?.map(
+			timed: (p) => p.name,
+			format: (p) => p.format,
+			penalty: (p) => p.name,
+			pause_timed: (p) => p.name,
+		) ?? "";
 
 		if(md.meta.game.sidesInverted) {
 			final tmp = t1name;
@@ -140,7 +153,10 @@ class _PublicWindowState extends State<PublicWindow> {
 		final String curTimeSec = (md.currentTime() % 60).toString().padLeft(2, '0');
 		final curTimeString = "${curTimeMin}:${curTimeSec}";
 
-		final int? defTime = md.currentGamepart?.mapOrNull(timed: (g) => g.length);
+		final int? defTime = md.currentGamepart?.mapOrNull(
+			timed: (g) => g.length,
+			pause_timed: (g) => g.length,
+		);
 
 		Color contrastColor(Color background) {
 			// computeLuminance returns 0 (dark) → 1 (light)
@@ -151,11 +167,17 @@ class _PublicWindowState extends State<PublicWindow> {
 
 		return Column(children: [
 			Expanded(flex: 140, child: Container(color: Colors.black, child:
-				Center(child: AutoSizeText(
-					gameName,
-					maxLines: 1,
-					style: const TextStyle(fontSize: 1000, height: 1.5, fontFamily: 'Kanit')
-				))
+				Row(children: [
+					Expanded(child: Align(alignment: Alignment.centerRight, child: AutoSizeText(gameName, maxLines: 1, group: gameNameTextGroup,
+						style: const TextStyle(fontSize: 1000, height: 1.5, fontFamily: 'Kanit')
+					))),
+					Padding(padding: const EdgeInsets.symmetric(horizontal: 12.0), child: AutoSizeText("•", maxLines: 1, group: gameNameTextGroup,
+						style: const TextStyle(fontSize: 1000, height: 1.5, fontFamily: 'Kanit')
+					)),
+					Expanded(child: Align(alignment: Alignment.centerLeft, child: AutoSizeText(gamepart, maxLines: 1, group: gameNameTextGroup,
+						style: const TextStyle(fontSize: 1000, height: 1.5, fontFamily: 'Kanit')
+					)))
+				])
 			)),
 			Expanded(flex: 610, child:
 				Row(children: [
@@ -191,7 +213,8 @@ class _PublicWindowState extends State<PublicWindow> {
 			child: Scaffold(
 				body: ValueListenableBuilder<Matchday>(
 					valueListenable: mdl,
-					builder: (context, md, _) {
+					builder: (context, mdOld, _) {
+						final md = mdOld.setEnded(false);
 						return Column(
 							children: [
 								Expanded(child: blockTeams(md)),

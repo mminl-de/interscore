@@ -6,11 +6,11 @@ import 'dart:convert';
 import 'lib.dart' as lib;
 
 abstract class WSClient {
-	final String url;
+	String url;
 	final ValueNotifier<Matchday> mdl;
-	bool boss = false;
 	final bool allowReadFrom, allowWriteTo;
 	final ValueNotifier<bool> connected = ValueNotifier(false);
+	final ValueNotifier<bool> boss = ValueNotifier(false);
 
 	WSClient(this.url, this.mdl, this.allowReadFrom, this.allowWriteTo);
 
@@ -25,6 +25,12 @@ abstract class WSClient {
 			return;
 		}
 
+		// This is a "write operation, but shouldnt be forbidden by allowWriteTo
+		if(msg[0] == MessageType.DATA_IM_BOSS.value) {
+			if(msg.length < 2) return;
+			debugPrint("Received DATA_IM_BOSS: ${msg[1] == 1}");
+			boss.value = msg[1] == 1 ? true : false;
+		}
 		// Parse the message
 		if(allowReadFrom) _listenRead(msg);
 		if(allowWriteTo) _listenWrite(msg);
@@ -194,11 +200,6 @@ abstract class WSClient {
 			} else
 				mdl.value = md.copyWith(groups: [newGroup, ... md.groups]);
 		}
-		else if(msg[0] == MessageType.DATA_IM_BOSS.value) {
-			if(msg.length < 2) return;
-			debugPrint("Received DATA_IM_BOSS: ${msg[1] == 1}");
-			this.boss = msg[1] == 1 ? true : false;
-		}
 		else if(msg[0] == MessageType.DATA_TIMESTAMP.value) {
 			mdl.value = md.copyWith(meta: md.meta.copyWith(time: md.meta.time.copyWith(delay: lib.i64FromBytes(msg, 1))));
 		}
@@ -215,6 +216,10 @@ abstract class WSClient {
 		if(msg == null) return;
 
 		send(msg);
+	}
+
+	void setUrl(final String url) {
+		this.url = url;
 	}
 
 	Future<void> connect();

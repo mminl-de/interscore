@@ -6,6 +6,7 @@ networks:
         - subnet: 172.28.0.0/16
 services:
   backend:
+    image: mrminede/interscore-backend
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
@@ -31,6 +32,7 @@ services:
       "
 
   http-server:
+    image: mrminede/interscore-http-server
     build:
       context: ..
       dockerfile: docker/http-server/Dockerfile
@@ -51,6 +53,7 @@ services:
     restart: unless-stopped
 
   obs:
+    image: mrminede/obs
     build:
       context: ..
       dockerfile: docker/obs/Dockerfile

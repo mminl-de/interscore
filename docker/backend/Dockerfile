@@ -1,6 +1,9 @@
 # We build backend here, because of GLIBC version mismatches etc
 FROM debian:12-slim AS build
 
+# This is needed, so we link the image to the repo
+LABEL org.opencontainers.image.source="https://github.com/mminl-de/interscore"
+
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     build-essential \

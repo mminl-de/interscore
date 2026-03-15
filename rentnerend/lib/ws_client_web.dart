@@ -38,17 +38,20 @@ class WSClientWeb extends WSClient{
 				debugPrint("WS Client: ERR");
 				connected.value = false;
 				_ws = null;
+				boss.value = false;
 			}).toJS;
 			ws.onclose = ((CloseEvent e) {
 				debugPrint("WS Client: Server '$url' closed connection");
 				connected.value = false;
 				_ws = null;
+				boss.value = false;
 			}).toJS;
 
 			_ws = ws;
 		} catch (e) {
 			debugPrint("WS Client: Connection failed with error: ${e}");
 			_ws = null;
+			boss.value = false;
 		}
 	}
 
@@ -62,7 +65,7 @@ class WSClientWeb extends WSClient{
 	void close() {
 		_ws?.close();
 		_ws = null;
-		boss = false;
+		boss.value = false;
 	}
 }
 

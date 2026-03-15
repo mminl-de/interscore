@@ -1,5 +1,9 @@
 # We compile Typescript first
 FROM ubuntu:24.04 AS builder
+
+# This is needed so we link to the repo
+LABEL org.opencontainers.image.source="https://github.com/mminl-de/interscore"
+
 WORKDIR /build
 
 RUN apt-get update && apt-get install -y \

@@ -2,17 +2,33 @@ const std = @import("std");
 const ws = @import("websocket");
 const ziglog = @import("root").ziglog;
 
+const Allocator = std.mem.Allocator;
+const Value = std.atomic.Value;
 const App = @This();
 
-clients: std.ArrayList(*const ws.Conn),
-boss: ?*const ws.Conn,
+gpa: Allocator,
+clients: std.ArrayList(*ws.Conn),
+boss: ?*ws.Conn,
 
-pub fn init(gpa: std.mem.Allocator) !App {
+var next_id: Value(u16) = Value(u16).init(0);
+
+/// Logs on error.
+pub fn init(gpa: Allocator) !App {
 	return .{
-		.clients = std.ArrayList(*const ws.Conn).initCapacity(gpa, 10) catch |err| {
+		.gpa = gpa,
+		.clients = std.ArrayList(*ws.Conn).initCapacity(gpa, 10) catch |e| {
 			ziglog.err("Failed to allocate memory for the client list!", .{});
-			return err;
+			return e;
 		},
-		.bosses = null
+		.boss = null
 	};
+}
+
+pub fn deinit(self: *App, gpa: Allocator) void {
+	self.clients.deinit(gpa);
+}
+
+pub fn nextId() u16 {
+	defer _ = next_id.fetchAdd(1, .monotonic);
+	return next_id.raw;
 }

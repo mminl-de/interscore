@@ -9,7 +9,6 @@ rentnerend/pubspec.lock
 
 ## Backend
 backend/interscore-backend
-docker/obs
 
 ## Frontend
 *.js

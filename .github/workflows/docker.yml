@@ -1,0 +1,47 @@
+name: docker
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write   # needed to push to GHCR via GITHUB_TOKEN
+  id-token: write   # optional; remove if not used
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: docker.io
+      OWNER: mrminede
+      COMMIT_SHORT: ${{ github.sha }}
+    steps:
+      - name: Shorten commit SHA
+        id: sha
+        run: echo "COMMIT_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to container registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build images
+        run: docker compose -f docker/docker-compose.yml build --pull
+
+      - name: Push images
+        run: docker compose -f docker/docker-compose.yml push
