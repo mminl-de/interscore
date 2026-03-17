@@ -1,7 +1,8 @@
+// TODO ALL
 const root = @import("root");
 const std = @import("std");
 const ws = @import("websocket");
-const log = root.log;
+const log = std.log;
 
 const App = @import("App.zig");
 const MessageType = @import("MessageType.zig").MessageType;

@@ -20,14 +20,6 @@ pub fn build(b: *Build) void {
 	// Actual installation
 	b.installArtifact(exe);
 
-	// Libraries
-	const websocket = b.dependency("websocket",
-		.{ .target = target, .optimize = optimize });
-	const httpz = b.dependency("httpz",
-		.{ .target = target, .optimize = optimize });
-	exe.root_module.addImport("websocket", websocket.module("websocket"));
-	exe.root_module.addImport("httpz", httpz.module("httpz"));
-
 	// Run command
 	const run_exe = b.addRunArtifact(exe);
 	const run_step = b.step("run", "Run the game");

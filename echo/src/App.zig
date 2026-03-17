@@ -1,6 +1,7 @@
+// TODO ALL
 const std = @import("std");
 const ws = @import("websocket");
-const ziglog = @import("root").ziglog;
+const log = std.log;
 
 const Allocator = std.mem.Allocator;
 const Value = std.atomic.Value;
@@ -17,7 +18,7 @@ pub fn init(gpa: Allocator) !App {
 	return .{
 		.gpa = gpa,
 		.clients = std.ArrayList(*ws.Conn).initCapacity(gpa, 10) catch |e| {
-			ziglog.err("Failed to allocate memory for the client list!", .{});
+			log.err("Failed to allocate memory for the client list!", .{});
 			return e;
 		},
 		.boss = null
